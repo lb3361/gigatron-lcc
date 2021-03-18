@@ -47,13 +47,14 @@ struct rule {		/* rules: */
 	int cost;		/* cost, if a constant */
 	char *code;		/* cost, if an expression */
 	char *template;		/* assembler template */
+	char *function;		/* assembler function */
 	Rule link;		/* next rule in ern order */
 	Rule next;		/* next rule with same pattern root */
 	Rule chain;		/* next chain rule with same rhs */
 	Rule decode;		/* next rule with same lhs */
 	Rule kids;		/* next rule with same _kids pattern */
 };
-extern Rule rule(char *id, Tree pattern, char *template, char *code);
+extern Rule rule(char *id, Tree pattern, char *template, char *function, char *code);
 
 /* gram.y: */
 void yyerror(char *fmt, ...);

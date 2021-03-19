@@ -1,4 +1,5 @@
-# $Id$
+# -*- Makefile -*-
+
 A=.a
 O=.o
 E=
@@ -57,6 +58,7 @@ RCCOBJS=$Balloc$O \
 	$Bsymbolic$O \
 	$Bgen$O \
 	$Bbytecode$O \
+	$Bgigatron$O \
 	$Balpha$O \
 	$Bmips$O \
 	$Bsparc$O \
@@ -103,6 +105,7 @@ $Btypes$O:	src/types.c;	$(CC) $(CFLAGS) -c -Isrc -o $@ src/types.c
 $Bstab$O:	src/stab.c src/stab.h;	$(CC) $(CFLAGS) -c -Isrc -o $@ src/stab.c
 
 $Bdagcheck$O:	$Bdagcheck.c;	$(CC) $(CFLAGS) -c -Isrc -o $@ $Bdagcheck.c
+$Bgigatron$O:	$Bgigatron.c;	$(CC) $(CFLAGS) -c -Isrc -o $@ $Bgigatron.c
 $Balpha$O:	$Balpha.c;	$(CC) $(CFLAGS) -c -Isrc -o $@ $Balpha.c
 $Bmips$O:	$Bmips.c;	$(CC) $(CFLAGS) -c -Isrc -o $@ $Bmips.c
 $Bsparc$O:	$Bsparc.c;	$(CC) $(CFLAGS) -c -Isrc -o $@ $Bsparc.c
@@ -110,6 +113,7 @@ $Bx86$O:	$Bx86.c;	$(CC) $(CFLAGS) -c -Isrc -o $@ $Bx86.c
 $Bx86linux$O:	$Bx86linux.c;	$(CC) $(CFLAGS) -c -Isrc -o $@ $Bx86linux.c
 
 $Bdagcheck.c:	$Blburg$E src/dagcheck.md; $Blburg src/dagcheck.md $@
+$Bgigatron.c:	$Blburg$E src/gigatron.md; $Blburg src/gigatron.md $@
 $Balpha.c:	$Blburg$E src/alpha.md;    $Blburg src/alpha.md    $@
 $Bmips.c:	$Blburg$E src/mips.md;     $Blburg src/mips.md     $@
 $Bsparc.c:	$Blburg$E src/sparc.md;    $Blburg src/sparc.md    $@
@@ -221,7 +225,7 @@ testclean:
 
 clean::		testclean
 		$(RM) $B*$O
-		$(RM) $Bdagcheck.c $Balpha.c $Bmips.c $Bx86.c $Bsparc.c $Bx86linux.c
+		$(RM) $Bdagcheck.c $Bgigatron.c $Balpha.c $Bmips.c $Bx86.c $Bsparc.c $Bx86linux.c
 		$(RM) $Brcc1$E $Brcc1$E $B1rcc$E $B2rcc$E
 		$(RM) $B*.ilk
 
@@ -259,6 +263,7 @@ RCCSRCS=src/alloc.c \
 	src/gen.c \
 	src/stab.c \
 	$Bdagcheck.c \
+	$Bgigatron.c \
 	$Balpha.c \
 	$Bmips.c \
 	$Bsparc.c \

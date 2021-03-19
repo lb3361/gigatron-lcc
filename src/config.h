@@ -8,12 +8,13 @@ typedef struct {
 	void (*blkloop)(int dreg, int doff,
 	                 int sreg, int soff,
 	                 int size, int tmps[]);
-	void (*_label)(Node);
+	int (*_label)(Node);
 	int (*_rule)(void*, int);
 	short **_nts;
 	void (*_kids)(Node, int, Node*);
 	char **_string;
 	char **_templates;
+	void (**_functions)(Node);  
 	char *_isinstruction;
 	char **_ntname;
 	void (*emit2)(Node);

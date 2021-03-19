@@ -1073,6 +1073,7 @@ Interface x86linuxIR = {
             _kids,
             _string,
             _templates,
+            _functions,
             _isinstruction,
             _ntname,
             emit2,

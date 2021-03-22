@@ -44,14 +44,21 @@ static Symbol iregw, lregw, fregw;
 #define REG_FAC   2
 #define REG_FARG  5
  
-#define REGMASK_VARS            0x00ffc000
-#define REGMASK_ARGS            0x00003f00
-#define REGMASK_TEMPS           0x3f003ffc
+#define REGMASK_VARS            0x00fff000
+#define REGMASK_ARGS            0x0000ff00
+#define REGMASK_TEMPS           0x3f000f00
+#define REGMASK_SAVED           0x00ff0000
  
+static int cseg;
 
-static char *rom = "v5a";
-static char has_POKEAs = 0;
- 
+#define CPU_V4 1
+#define CPU_V5 2
+#define CPU_V6 4
+static int cpumask = CPU_V4|CPU_V5|CPU_V6;
+#define has_POKEA (!(cpumask&(CPU_V4|CPU_V5)))
+#define has_CALLI  (!(cpumask&(CPU_V4)))
+#define has_CMPHI  (!(cpumask&(CPU_V4|CPU_V6)))
+
  
 /*---- END HEADER --*/
 %}
@@ -225,13 +232,6 @@ stmt: RETU2(reg)  "# ret\n"  1
 stmt: RETP2(reg)  "# ret\n"  1
 stmt: RETV(reg)   "# ret\n"  1
 
-
-#con: CNSTI1  "%a"
-#con: CNSTU1  "%a"
-#con: CNSTI2  "%a"
-#con: CNSTU2  "%a"
-#con: CNSTP2  "%a"
-
 con8: CNSTI1  "%a"
 con8: CNSTU1  "%a"  range(a,0,255)
 con8: CNSTI2  "%a"  range(a,0,255)
@@ -241,34 +241,65 @@ con8: CNSTP2  "%a"  range(a,0,255)
 stmt: ac ""
 stmt: reg  ""
 
-ac: reg "\tLDW(%0);" 20
+ac: reg "LDW(%0);" 20
 
-ac: ADDRGP2 "\tLDWI(%a);" 20
-ac: ADDRLP2 "\tLDWI(%a+%F);ADDW(SP);" 48
-ac: ADDRFP2 "\tLDWI(%a+%F);ADDW(SP);" 48
+ac: ADDRGP2 "LDWI(%a);" 20
+ac: ADDRLP2 "LDWI(%a+%F);ADDW(SP);" 48
+ac: ADDRFP2 "LDWI(%a+%F);ADDW(SP);" 48
 
-reg: ac "%0STW(%c)\n" 20
+reg: ac "\t%0STW(%c)\n" 20
+zpv: reg "%0" 
 
-ac: ADDI2(ac,reg)  "%0ADDW(%1);" 28 
-ac: ADDI2(reg,ac)  "%1ADDW(%0);" 28 
+ac: ADDI2(ac,zpv)  "%0ADDW(%1);" 28 
+ac: ADDI2(zpv,ac)  "%1ADDW(%0);" 28 
 ac: ADDI2(ac,con8) "%0ADDI(%1);" 28
+ac: ADDU2(ac,zpv)  "%0ADDW(%1);" 28 
+ac: ADDP2(zpv,ac)  "%1ADDW(%0);" 28 
+ac: ADDP2(ac,con8) "%0ADDI(%1);" 28
 
-ac: ADDI2(ac,reg)  "%0SUBW(%1);" 28 
-ac: ADDI2(ac,con8) "%0SUBI(%1);" 28
+ac: SUBI2(ac,zpv)  "%0SUBW(%1);" 28 
+ac: SUBI2(ac,con8) "%0SUBI(%1);" 28
+ac: SUBU2(ac,zpv)  "%0SUBW(%1);" 28 
+ac: SUBU2(ac,con8) "%0SUBI(%1);" 28
+ac: SUBP2(ac,zpv)  "%0SUBW(%1);" 28 
+ac: SUBP2(ac,con8) "%0SUBI(%1);" 28
 
-ac: INDIRI2(ac) "%0DEEK();" 26
+ac: INDIRP2(con8) "LDW(%0)" 20
+ac: INDIRP2(ac) "%0DEEK();" 28
+ac: INDIRI2(con8) "LDW(%0)" 20
+ac: INDIRI2(ac) "%0DEEK();" 28
+ac: INDIRI1(con8) "LD(%0)" 18
+ac: INDIRI1(ac) "%0PEEK();" 26
 
+stmt: ASGNP2(con8,ac) "\t%1STW(%0)\n" 20
+stmt: ASGNP2(zpv,ac) "\t%1DOKE(%0)\n" 28
+stmt: ASGNI2(con8,ac) "\t%1STW(%0)\n" 20
+stmt: ASGNI2(zpv,ac) "\t%1DOKE(%0)\n" 28
+stmt: ASGNI1(con8,ac) "\t%1ST(%0)\n" 20
+stmt: ASGNI1(zpv,ac) "\t%1POKE(%0)\n" 28
 
-stmt: ASGNI2(con8,ac) "%1STW(%0)\n" 20
-stmt: ASGNI2(reg,ac) "%1DOKE(%0)\n" 28
+reg: LOADI1(ac)  "\t%0ST(%c)\n" move(a)
+reg: LOADU1(ac)  "\t%0ST(%c)\n" move(a)
+reg: LOADI2(ac)  "\t%0STW(%c)\n" move(a)
+reg: LOADU2(ac)  "\t%0STW(%c)\n" move(a)
+reg: LOADP2(ac)  "\t%0STW(%c)\n" move(a)
 
-reg: LOADI1(ac)  "%0STW(%c)\n" move(a)
-reg: LOADU1(ac)  "%0STW(%c)\n" move(a)
-reg: LOADI2(ac)  "%0STW(%c)\n" move(a)
-reg: LOADU2(ac)  "%0STW(%c)\n" move(a)
+# Long int support
 
+# Floating point support
+fac: reg "LDW(%0);STW(FAC);LDW(%0+2);STW(FAC+2);LDW(%0+4);STW(FAC+4);" 60
+farg: reg "LDW(%0);STW(FARG);LDW(%0+2);STW(FARG+2);LDW(%0+4);STW(FARG+4);" 60
+reg: fac "%0LDW(FAC);STW(%c);LDW(FAC+2);STW(%c+2);LDW(FAC+4);STW(%c+4);" 60
+fac: INDIRF5(ac) "%0CALLI('__load_fac');" 100
+farg: INDIRF5(ac) "%0CALLI('__load_farg');" 100
+fac: ADDF5(fac,farg) "%0%1CALLI('__fadd');" 100
+fac: SUBF5(fac,farg) "%0%1CALLI('__fsub');" 100
+fac: MULF5(fac,farg) "%0%1CALLI('__fmul');" 100
+fac: DIVF5(fac,farg) "%0%1CALLI('__fdiv');" 100
+reg: LOADF5(reg) "LDW(%0);STW(%c);LDW(%0+2);STW(%c+2);LDW(%0+4);STW(%c+4)\n" move(a)
+stmt: ASGNF5(ac,fac) "\t%1%0CALLI('__store_fac')\n" 100
 
-
+# Labels and jumps
 stmt: LABELV "label(%a)\n"
 
 
@@ -290,28 +321,21 @@ static void progend(void)
 }
 
 
-enum ROMs { ROMv1=0, ROMv2, ROMv3, ROMv4, ROMv5a, ROMv5b };
-static const char *ROMn[] = { "v1", "v2", "v3", "v4", "v5a", "v5b" , 0 };
-
 static void progbeg(int argc, char *argv[])
 {
   int i;
   /* Parse flags */
   parseflags(argc, argv);
   for (i=0; i<argc; i++)
-    if (!strncmp(argv[i],"-rom=", 5))
-      rom = string(argv[i]+5);
-  for (i=0; ROMn[i]; i++)
-    if (!strcmp(rom, ROMn[i]))
-      break;
-  if (! ROMn[i])
-    error("Unrecognized ROM version '%s'\n", rom);
-  if (i < ROMv5a)
-    error("Unsupported ROM version '%s'\n", rom);
-  if (i >= ROMv5b)
-    has_POKEAs = 1;
+    if (!strncmp(argv[i],"-cpu=", 5))
+      {
+        char *eptr = 0;
+        cpumask = (int)strtol(argv[i]+5, &eptr, 0);
+        if (*eptr || cpumask<=0 || cpumask>7)
+          error("invalid cpu mask 0x%x\n", cpumask);
+      }
   /* Print header */
-  print("module('@@MODULENAME@@','ROM%s')\n", rom); /* more here */
+  print("module('@@MODULENAME@@',%d)\n", cpumask); /* more here */
   /* Prepare registers */
   ireg[0] = mkreg("AC", 0, 1, IREG);
   ireg[1] = mkreg("SR", 0, 1, IREG);
@@ -336,6 +360,8 @@ static void progbeg(int argc, char *argv[])
   tmask[IREG] = REGMASK_TEMPS;
   vmask[IREG] = REGMASK_VARS;
   tmask[FREG] = vmask[FREG] = 0;
+  /* No segment */
+  cseg = -1;
 }
 
 static Symbol rmap(int opk)
@@ -352,6 +378,26 @@ static Symbol rmap(int opk)
   }
 }
   
+static Symbol argreg(int argno, int ty, int sz, int *roffset)
+{
+  Symbol r;
+  if (argno == 0)
+    *roffset = 8; /* First register is R8 */
+  if (*roffset >= 16)
+    return 0;
+  if (ty == I || ty == U || ty == P)
+    if (sz <= 2)
+      r = ireg[*roffset];
+    else
+      r = lreg[*roffset];
+  else if (ty == F)
+    r = freg[*roffset];
+  if (r == 0 || r->x.regnode->mask & ~REGMASK_ARGS)
+    return 0;
+  *roffset += roundup(sz,2)/2;
+  return r;
+}
+
 static void target(Node p)
 {
   assert(p);
@@ -401,11 +447,6 @@ static void ld_sp_plus_offset(int offset)
     print("LDW(SP);SUBI(%d);",-offset);
   else
     print("LDW(SP);");
-}
-
-static Symbol argreg(int argno, int ty, int sz, int *roffset)
-{
-  return 0;
 }
 
 static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
@@ -462,7 +503,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   print("\tLDW('vLR');STW(LR)\n");
   if (ncalls)
     usedmask[IREG] |= (1 << REG_LR);
-  usedmask[IREG] &= REGMASK_VARS;
+  usedmask[IREG] &= REGMASK_SAVED;
   sizesave = 2 * bitcount(usedmask[IREG]);
   framesize = maxargoffset + sizesave + maxoffset;
   print("\t");
@@ -475,11 +516,11 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
       print("\t");
       if (first) {
         ld_sp_plus_offset(maxargoffset);
-        print(has_POKEAs ? "" : "STW(SR);");
+        print(has_POKEA ? "" : "STW(SR);");
       } else {
-        print(has_POKEAs ? "ADDI(2);" : "LDW(SR);ADDI(2);STW(SR);");
+        print(has_POKEA ? "ADDI(2);" : "LDW(SR);ADDI(2);STW(SR);");
       }
-      print(has_POKEAs ? "DOKEA(R%d)\n" : "LDW(R%d);DOKE(SR)\n", i);
+      print(has_POKEA ? "DOKEA(R%d)\n" : "LDW(R%d);DOKE(SR)\n", i);
       first = 0;
     }
   /* save args into new registers */
@@ -518,9 +559,9 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
         else if (sz == 4)
           print("CALLI('__store_lac')\n");
         else if (sz == 2)
-          print(has_POKEAs ? "DOKEA(R%d)\n" : "STW(SR);LDW(R%d);DOKE(SR)\n", rn);
+          print(has_POKEA ? "DOKEA(R%d)\n" : "STW(SR);LDW(R%d);DOKE(SR)\n", rn);
         else if (sz == 1)
-          print(has_POKEAs ? "POKEA(R%d)\n" : "STW(SR);LD(R%d);POKE(SR)\n", rn);
+          print(has_POKEA ? "POKEA(R%d)\n" : "STW(SR);LD(R%d);POKE(SR)\n", rn);
         else
           assert(0);
       }
@@ -539,11 +580,11 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
       print("\t");
       if (first) {
         ld_sp_plus_offset(maxargoffset);
-        print(has_POKEAs ? "" : "STW(SR);");
+        print(has_POKEA ? "" : "STW(SR);");
       } else {
-        print(has_POKEAs ? "ADDI(2);" : "LDW(SR);ADDI(2);STW(SR);");
+        print(has_POKEA ? "ADDI(2);" : "LDW(SR);ADDI(2);STW(SR);");
       }
-      print(has_POKEAs ? "DEEKA(R%d)\n" : "DEEK(SR);STW(R%d)\n", i);
+      print(has_POKEA ? "DEEKA(R%d)\n" : "DEEK(SR);STW(R%d)\n", i);
       first = 0;
     }
   print("\t");
@@ -639,12 +680,15 @@ static void global(Symbol p)
 
 static void segment(int n)
 {
+  if (n == cseg)
+    return;
   switch (n) {
   case CODE: print("\tsegment('CODE')\n"); break;
   case BSS:  print("\tsegment('BSS')\n");  break;
   case DATA: print("\tsegment('DATA')\n"); break;
   case LIT:  print("\tsegment('LIT')\n"); break;
   }
+  cseg = n;
 }
 
 static void space(int n)

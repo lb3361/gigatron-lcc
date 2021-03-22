@@ -32,6 +32,9 @@ static void segment(int);
 static void space(int);
 static void target(Node);
 
+static int  if_cv_from_size(Node,int,int);
+static int  if_cpu(Node,int,int);
+ 
 static Symbol ireg[32], lreg[32], freg[32];
 static Symbol iregw, lregw, fregw;
 
@@ -242,7 +245,6 @@ stmt: ac ""
 stmt: reg  ""
 
 ac: reg "LDW(%0);" 20
-
 ac: ADDRGP2 "LDWI(%a);" 20
 ac: ADDRLP2 "LDWI(%a+%F);ADDW(SP);" 48
 ac: ADDRFP2 "LDWI(%a+%F);ADDW(SP);" 48
@@ -266,10 +268,14 @@ ac: SUBP2(ac,con8) "%0SUBI(%1);" 28
 
 ac: INDIRP2(con8) "LDW(%0)" 20
 ac: INDIRP2(ac) "%0DEEK();" 28
+ac: INDIRU2(con8) "LDW(%0)" 20
+ac: INDIRU2(ac) "%0DEEK();" 28
 ac: INDIRI2(con8) "LDW(%0)" 20
 ac: INDIRI2(ac) "%0DEEK();" 28
 ac: INDIRI1(con8) "LD(%0)" 18
 ac: INDIRI1(ac) "%0PEEK();" 26
+ac: INDIRU1(con8) "LD(%0)" 18
+ac: INDIRU1(ac) "%0PEEK();" 26
 
 stmt: ASGNP2(con8,ac) "\t%1STW(%0)\n" 20
 stmt: ASGNP2(zpv,ac) "\t%1DOKE(%0)\n" 28
@@ -285,6 +291,25 @@ reg: LOADU2(ac)  "\t%0STW(%c)\n" move(a)
 reg: LOADP2(ac)  "\t%0STW(%c)\n" move(a)
 
 # Long int support
+lac: reg "LDW(%0);STW(LAC);LDW(%0+2);STW(LAC+2);" 40
+larg: reg "LDW(%0);STW(LARG);LDW(%0+2);STW(LARG+2);" 40
+reg: lac "%0LDW(LAC);STW(%c);LDW(LAC+2);STW(%c+2);" 40
+lac: INDIRI4(ac) "%0CALLI('__load_lac');" 100
+larg: INDIRI4(ac) "%0CALLI('__load_larg');" 100
+lac: INDIRU4(ac) "%0CALLI('__load_lac');" 100
+larg: INDIRU4(ac) "%0CALLI('__load_larg');" 100
+lac: ADDI4(lac,larg) "%0%1CALLI('__ladd');" 100
+lac: ADDU4(lac,larg) "%0%1CALLI('__ladd');" 100
+lac: SUBI4(lac,larg) "%0%1CALLI('__lsub');" 100
+lac: SUBU4(lac,larg) "%0%1CALLI('__lsub');" 100
+lac: MULI4(lac,larg) "%0%1CALLI('__lmuls');" 100
+lac: MULU4(lac,larg) "%0%1CALLI('__lmulu');" 100
+lac: DIVI4(lac,larg) "%0%1CALLI('__ldivs');" 100
+lac: DIVU4(lac,larg) "%0%1CALLI('__ldivu');" 100
+reg: LOADI4(reg) "\tLDW(%0);STW(%c);LDW(%0+2);STW(%c+2)\n" move(a)
+reg: LOADU4(reg) "\tLDW(%0);STW(%c);LDW(%0+2);STW(%c+2)\n" move(a)
+stmt: ASGNI4(ac,lac) "\t%1%0CALLI('__store_lac')\n" 100
+stmt: ASGNU4(ac,lac) "\t%1%0CALLI('__store_lac')\n" 100
 
 # Floating point support
 fac: reg "LDW(%0);STW(FAC);LDW(%0+2);STW(FAC+2);LDW(%0+4);STW(FAC+4);" 60
@@ -299,6 +324,13 @@ fac: DIVF5(fac,farg) "%0%1CALLI('__fdiv');" 100
 reg: LOADF5(reg) "LDW(%0);STW(%c);LDW(%0+2);STW(%c+2);LDW(%0+4);STW(%c+4)\n" move(a)
 stmt: ASGNF5(ac,fac) "\t%1%0CALLI('__store_fac')\n" 100
 
+# Conversions
+lac: CVFI4(fac) "%0CALLI('__cv_fac_to_lac');" 100
+ac: CVFI2(fac) "%0CALLI('__cv_fac_to_lac');LDW(LAC);" 120
+fac: CVIF5(ac) "%0STW(LAC);LDI(0);STW(LAC+2);CALLI('__cv_lac_to_fac');" if_cv_from_size(a,2,120)
+fac: CVIF5(lac) "%0CALLI('__cv_lac_to_fac');" if_cv_from_size(a,4,120)
+## TODO: int/unsigned/char conversions
+
 # Labels and jumps
 stmt: LABELV "label(%a)\n"
 
@@ -307,6 +339,21 @@ stmt: LABELV "label(%a)\n"
 %%
 /*---- BEGIN CODE --*/
 
+
+static int if_cv_from_size(Node p, int sz, int cost)
+{
+  assert(p->syms[0]);
+  assert(p->syms[0]->scope == CONSTANTS);
+  assert(p->syms[0]->type = inttype);
+  if (p->syms[0]->u.c.v.i == sz)
+    return cost;
+  return LBURG_MAX;
+}
+
+static int  if_cpu(Node p, int m, int cost)
+{
+  return ((cpumask & m) ? LBURG_MAX : cost);
+}
 
 static void comment(const char *fmt, ...) {
   va_list ap;

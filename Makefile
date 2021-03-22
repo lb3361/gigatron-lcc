@@ -6,11 +6,12 @@ TARGET=gigatron
 CFLAGS=-g -Wno-abi
 LDFLAGS=-g
 
-TARGETS=all rcc lburg cpp lcc bprint liblcc triple clean clobber
+TARGETS= all rcc lburg cpp lcc bprint ops \
+         liblcc triple clean clobber 
 
 default: all
 
-${TARGETS}: .PHONY
+${TARGETS}: FORCE
 	mkdir -p ${BUILDDIR}
 	${MAKE} -f makefile.lcc \
 		"BUILDDIR=${BUILDDIR}" \
@@ -19,6 +20,8 @@ ${TARGETS}: .PHONY
 		"LDFLAGS=${LDFLAGS}" \
 		$@
 
+
+FORCE: .PHONY
 
 .PHONY:
 

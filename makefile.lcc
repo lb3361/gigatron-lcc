@@ -26,6 +26,7 @@ rcc:	$Brcc$E
 lburg:	$Blburg$E
 cpp:	$Bcpp$E
 lcc:	$Blcc$E
+ops:	$Bops$E
 bprint:	$Bbprint$E
 liblcc:	$Bliblcc$A
 

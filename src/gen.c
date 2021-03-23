@@ -333,18 +333,14 @@ unsigned emitasm(Node p, int nt) {
 	short *nts;
 	char *fmt;
 	Node kids[10];
-	void (*function)(Node);
 
 	p = reuse(p, nt);
 	rulenum = getrule(p, nt);
 	nts = IR->x._nts[rulenum];
 	fmt = IR->x._templates[rulenum];
-	function = IR->x._functions ? IR->x._functions[rulenum] : NULL;
 	assert(fmt);
 	if (IR->x._isinstruction[rulenum] && p->x.emitted)
 		print("%s", p->syms[RX]->x.name);
-	else if (function)
-		function(p);
 	else if (*fmt == '#')
 		(*IR->x.emit2)(p);
 	else {

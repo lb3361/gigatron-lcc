@@ -35,26 +35,17 @@ static void target(Node);
 static int  if_cv_from_size(Node,int,int);
 static int  if_cpu(int,int);
  
-static Symbol ireg[32], lreg[32], freg[32];
-static Symbol iregw, lregw, fregw;
 
-#define REG_SP   31
-#define REG_LR   30
-#define REG_SR    1
-#define REG_AC    0
-#define REG_LAC   3
-#define REG_LARG  6
-#define REG_FAC   2
-#define REG_FARG  5
- 
 #define REGMASK_VARS            0x00fff000
 #define REGMASK_ARGS            0x0000ff00
 #define REGMASK_TEMPS           0x3f000f00
 #define REGMASK_SAVED           0x00ff0000
+#define REGMASK_LR              0x40000000
  
+static Symbol ireg[32], lreg[32], freg[32];
+static Symbol iregw, lregw, fregw;
 static int cseg;
 static int cpu = 5;
-
  
 /*---- END HEADER --*/
 %}
@@ -243,39 +234,38 @@ ac: ADDRLP2 "LDWI(%a+%F);ADDW(SP);" 48
 ac: ADDRFP2 "LDWI(%a+%F);ADDW(SP);" 48
 
 reg: ac "\t%0STW(%c)\n" 20
-zpv: reg "%0" 
 
-ac: ADDI2(ac,zpv)  "%0ADDW(%1);" 28 
-ac: ADDI2(zpv,ac)  "%1ADDW(%0);" 28 
+ac: ADDI2(ac,reg)  "%0ADDW(%1);" 28 
+ac: ADDI2(reg,ac)  "%1ADDW(%0);" 28 
 ac: ADDI2(ac,con8) "%0ADDI(%1);" 28
-ac: ADDU2(ac,zpv)  "%0ADDW(%1);" 28 
-ac: ADDP2(zpv,ac)  "%1ADDW(%0);" 28 
+ac: ADDU2(ac,reg)  "%0ADDW(%1);" 28 
+ac: ADDP2(reg,ac)  "%1ADDW(%0);" 28 
 ac: ADDP2(ac,con8) "%0ADDI(%1);" 28
 
-ac: SUBI2(ac,zpv)  "%0SUBW(%1);" 28 
+ac: SUBI2(ac,reg)  "%0SUBW(%1);" 28 
 ac: SUBI2(ac,con8) "%0SUBI(%1);" 28
-ac: SUBU2(ac,zpv)  "%0SUBW(%1);" 28 
+ac: SUBU2(ac,reg)  "%0SUBW(%1);" 28 
 ac: SUBU2(ac,con8) "%0SUBI(%1);" 28
-ac: SUBP2(ac,zpv)  "%0SUBW(%1);" 28 
+ac: SUBP2(ac,reg)  "%0SUBW(%1);" 28 
 ac: SUBP2(ac,con8) "%0SUBI(%1);" 28
 
 ac: NEGI2(ac) "%0ST(SR);LDI(0);SUBW(SR);" 68
 ac: BCOMI2(ac) "%0ST(SR);LDWI(-0);XORW(SR);" 68
 ac: BCOMU2(ac) "%0ST(SR);LDWI(-0);XORW(SR);" 68
 
-ac: BANDI2(ac,zpv)  "%0ANDW(%1);" 28
+ac: BANDI2(ac,reg)  "%0ANDW(%1);" 28
 ac: BANDI2(ac,con8)  "%0ANDI(%1);" 16 
-ac: BANDU2(ac,zpv)  "%0ANDW(%1);" 28
+ac: BANDU2(ac,reg)  "%0ANDW(%1);" 28
 ac: BANDU2(ac,con8)  "%0ANDI(%1);" 16 
 
-ac: BORI2(ac,zpv)  "%0ORW(%1);" 28
+ac: BORI2(ac,reg)  "%0ORW(%1);" 28
 ac: BORI2(ac,con8)  "%0ORI(%1);" 16 
-ac: BORU2(ac,zpv)  "%0ORW(%1);" 28
+ac: BORU2(ac,reg)  "%0ORW(%1);" 28
 ac: BORU2(ac,con8)  "%0ORI(%1);" 16 
 
-ac: BXORI2(ac,zpv)  "%0XORW(%1);" 28
+ac: BXORI2(ac,reg)  "%0XORW(%1);" 28
 ac: BXORI2(ac,con8)  "%0XORI(%1);" 16 
-ac: BXORU2(ac,zpv)  "%0XORW(%1);" 28
+ac: BXORU2(ac,reg)  "%0XORW(%1);" 28
 ac: BXORU2(ac,con8)  "%0XORI(%1);" 16
 
 ac: INDIRP2(con8) "LDW(%0)" 20
@@ -290,25 +280,21 @@ ac: INDIRU1(con8) "LD(%0)" 18
 ac: INDIRU1(ac) "%0PEEK();" 26
 
 stmt: ASGNP2(con8,ac) "\t%1STW(%0)\n" 20
-stmt: ASGNP2(zpv,ac) "\t%1DOKE(%0)\n" 28
+stmt: ASGNP2(reg,ac) "\t%1DOKE(%0)\n" 28
 stmt: ASGNI2(con8,ac) "\t%1STW(%0)\n" 20
-stmt: ASGNI2(zpv,ac) "\t%1DOKE(%0)\n" 28
+stmt: ASGNI2(reg,ac) "\t%1DOKE(%0)\n" 28
 stmt: ASGNU2(con8,ac) "\t%1STW(%0)\n" 20
-stmt: ASGNU2(zpv,ac) "\t%1DOKE(%0)\n" 28
+stmt: ASGNU2(reg,ac) "\t%1DOKE(%0)\n" 28
 stmt: ASGNI1(con8,ac) "\t%1ST(%0)\n" 20
-stmt: ASGNI1(zpv,ac) "\t%1POKE(%0)\n" 28
+stmt: ASGNI1(reg,ac) "\t%1POKE(%0)\n" 28
 stmt: ASGNU1(con8,ac) "\t%1ST(%0)\n" 20
-stmt: ASGNU1(zpv,ac) "\t%1POKE(%0)\n" 28
+stmt: ASGNU1(reg,ac) "\t%1POKE(%0)\n" 28
 
 reg: LOADI1(ac)  "\t%0ST(%c)\n" move(a)
 reg: LOADU1(ac)  "\t%0ST(%c)\n" move(a)
 reg: LOADI2(ac)  "\t%0STW(%c)\n" move(a)
 reg: LOADU2(ac)  "\t%0STW(%c)\n" move(a)
 reg: LOADP2(ac)  "\t%0STW(%c)\n" move(a)
-
-
-# More opcodes for cpu=5
-
 
 # More opcodes for cpu=6
 stmt: ASGNP2(ac,con8) "\t%0DOKEI(%1)\n" if_cpu(6,28)
@@ -325,7 +311,7 @@ stmt: ASGNU1(ac,reg) "\t%0POKEA(%1)\n" if_cpu(6,28)
 # Long int support
 lac: reg "LDW(%0);STW(LAC);LDW(%0+2);STW(LAC+2);" 40
 larg: reg "LDW(%0);STW(LARG);LDW(%0+2);STW(LARG+2);" 40
-reg: lac "%0LDW(LAC);STW(%c);LDW(LAC+2);STW(%c+2);" 40
+reg: lac "\t%0LDW(LAC);STW(%c);LDW(LAC+2);STW(%c+2)\n" 40
 lac: INDIRI4(ac) "%0CALLI('@.load_lac');" 256
 larg: INDIRI4(ac) "%0CALLI('@.load_larg');" 256
 lac: INDIRU4(ac) "%0CALLI('@.load_lac');" 256
@@ -338,25 +324,35 @@ lac: MULI4(lac,larg) "%0%1CALLI('@.lmul');" 256
 lac: MULU4(lac,larg) "%0%1CALLI('@.lmul');" 256
 lac: DIVI4(lac,larg) "%0%1CALLI('@.ldivs');" 256
 lac: DIVU4(lac,larg) "%0%1CALLI('@.ldivu');" 256
-lac: NEGI4(lac) "%0CALLI('@.lneg');" 50
-lac: BCOMU4(lac) "%0CALLI('@.lcom');" 50
-lac: BANDU4(lac,larg) "%0%1CALLI('@.land');"  50
-lac: BORU4(lac,larg) "%0%1CALLI('@.lor');"  50
-lac: BXORU4(lac,larg) "%0%1CALLI('@.lxor');"  50
-lac: BCOMI4(lac) "%0CALLI('@.lcom');" 50
-lac: BANDI4(lac,larg) "%0%1CALLI('@.land');"  50
-lac: BORI4(lac,larg) "%0%1CALLI('@.lor');"  50
-lac: BXORI4(lac,larg) "%0%1CALLI('@.lxor');"  50
-
+lac: NEGI4(lac) "%0CALLI('@.lneg');" 256
+lac: BCOMU4(lac) "%0CALLI('@.lcom');" 256
+lac: BANDU4(lac,larg) "%0%1CALLI('@.land');" 256
+lac: BORU4(lac,larg) "%0%1CALLI('@.lor');" 256
+lac: BXORU4(lac,larg) "%0%1CALLI('@.lxor');" 256
+lac: BCOMI4(lac) "%0CALLI('@.lcom');" 256
+lac: BANDI4(lac,larg) "%0%1CALLI('@.land');" 256
+lac: BORI4(lac,larg) "%0%1CALLI('@.lor');" 256
+lac: BXORI4(lac,larg) "%0%1CALLI('@.lxor');" 256
 reg: LOADI4(reg) "\tLDW(%0);STW(%c);LDW(%0+2);STW(%c+2)\n" move(a)
 reg: LOADU4(reg) "\tLDW(%0);STW(%c);LDW(%0+2);STW(%c+2)\n" move(a)
-stmt: ASGNI4(ac,lac) "\t%1%0CALLI('@.store_lac')\n" 256
-stmt: ASGNU4(ac,lac) "\t%1%0CALLI('@.store_lac')\n" 256
+stmt: ASGNI4(reg,lac) "\t%1LDW(%0);CALLI('@.store_lac')\n" 256
+stmt: ASGNU4(reg,lac) "\t%1LDW(%0);CALLI('@.store_lac')\n" 256
+
+# Calls  /** DOESNT WORK **/
+stmt: ARGF5(reg)  "# arg\n"  1
+stmt: ARGI4(reg)  '# arg\n"  1
+stmt: ARGU4(reg)  "# arg\n"  1
+stmt: ARGI2(reg)  '# arg\n"  1
+stmt: ARGU2(reg)  "# arg\n"  1
+stmt: ARGP2(reg)  "# arg\n"  1
+stmt: ARGB(INDIRB(reg))       "# argb %0\n"      1
+stmt: ASGNB(reg,INDIRB(reg))  "# asgnb %0 %1\n"  1
+
 
 # Floating point support
 fac: reg "LDW(%0);STW(FAC);LDW(%0+2);STW(FAC+2);LDW(%0+4);STW(FAC+4);" 60
 farg: reg "LDW(%0);STW(FARG);LDW(%0+2);STW(FARG+2);LDW(%0+4);STW(FARG+4);" 60
-reg: fac "%0LDW(FAC);STW(%c);LDW(FAC+2);STW(%c+2);LDW(FAC+4);STW(%c+4);" 60
+reg: fac "\t%0LDW(FAC);STW(%c);LDW(FAC+2);STW(%c+2);LDW(FAC+4);STW(%c+4)\n" 60
 fac: INDIRF5(ac) "%0CALLI('@.load_fac');" 256
 farg: INDIRF5(ac) "%0CALLI('@.load_farg');" 256
 fac: ADDF5(fac,farg) "%0%1CALLI('@.fadd');" 256
@@ -364,8 +360,8 @@ fac: SUBF5(fac,farg) "%0%1CALLI('@.fsub');" 256
 fac: MULF5(fac,farg) "%0%1CALLI('@.fmul');" 256
 fac: DIVF5(fac,farg) "%0%1CALLI('@.fdiv');" 256
 fac: NEGF5(fac) "%0CALLI('@.fneg');" 50
-reg: LOADF5(reg) "LDW(%0);STW(%c);LDW(%0+2);STW(%c+2);LDW(%0+4);STW(%c+4)\n" move(a)
-stmt: ASGNF5(ac,fac) "\t%1%0CALLI('@.store_fac')\n" 256
+reg: LOADF5(reg) "\tLDW(%0);STW(%c);LDW(%0+2);STW(%c+2);LDW(%0+4);STW(%c+4)\n" move(a)
+stmt: ASGNF5(reg,fac) "\t%1LDW(%0);CALLI('@.store_fac')\n" 256
 
 # Conversions
 ac: CVFI2(fac) "%0CALLI('@.cv_fac_to_lac');LDW(LAC);" 256
@@ -381,7 +377,7 @@ ac: CVIU2(lac) "%0LDW(LAC);" if_cv_from_size(a,4,20)
 ac: CVUI2(lac) "%0LDW(LAC);" if_cv_from_size(a,4,20)
 ac: CVUU2(lac) "%0LDW(LAC);" if_cv_from_size(a,4,20)
 lac: CVIU4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);" if_cv_from_size(a,2,50)
-lac: CVII4(ac) "%0STW(LAC);LD(LAC+1);XORI(128);SUBI(128);LD('vAH');ST(LAC+2);ST(LAC+3);" if_cv_from_size(a,2,120)
+lac: CVII4(ac) "%0STW(LAC);LD(LAC+1);XORI(128);SUBI(128);LD(vAH);ST(LAC+2);ST(LAC+3);" if_cv_from_size(a,2,120)
 lac: CVUU4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);" if_cv_from_size(a,2,50)
 lac: CVUI4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);" if_cv_from_size(a,2,50)
 
@@ -428,21 +424,25 @@ static void progbeg(int argc, char *argv[])
   /* Parse flags */
   parseflags(argc, argv);
   for (i=0; i<argc; i++)
-    if (!strcmp(argv[i],"-cpu=5"))
-      cpu = 5;
+    if (!strcmp(argv[i],"-cpu=4"))
+      cpu = 4; /* Asm should replace CALLIs */
+    else if (!strcmp(argv[i],"-cpu=5"))
+      cpu = 5; /* Has CALLI. Ignore CMPHI,CMPHS. */
     else if (!strcmp(argv[i],"-cpu=6"))
-      cpu = 6;
+      cpu = 6; /* TBD */
     else if (!strncmp(argv[i],"-cpu=",5))
-      error("invalid cpu %s\n", argv[i]+5);
+      warning("invalid cpu %s\n", argv[i]+5);
   /* Print header */
   print("module('@@modulename@@',%d)\n", cpu); /* more here */
   /* Prepare registers */
   ireg[0] = mkreg("AC", 0, 1, IREG);
-  ireg[1] = mkreg("SR", 0, 1, IREG);
-  for (i=2; i<30; i++)
+  ireg[1] = mkreg("SR", 1, 1, IREG);
+  ireg[3] = mkreg("IAC", 3, 1, IREG);
+  ireg[6] = mkreg("IARG", 6, 1, IREG);
+  ireg[30] = mkreg("LR", 30, 1, IREG);
+  ireg[31] = mkreg("SP", 31, 1, IREG);
+  for (i=8; i<30; i++)
     ireg[i] = mkreg("R%d", i, 1, IREG);
-  ireg[30] = mkreg("LR", 0, 1, IREG);
-  ireg[31] = mkreg("SP", 0, 1, IREG);
   /* Register pairs for longs */
   lreg[3] = mkreg("LAC", 3, 3, IREG);
   lreg[6] = mkreg("LARG", 6, 3, IREG);
@@ -450,7 +450,7 @@ static void progbeg(int argc, char *argv[])
     lreg[i] = mkreg("L%d", i, 3, IREG);
   /* Register triple for floats */
   freg[2] = mkreg("FAC", 2, 7, IREG);
-  freg[5] = mkreg("FARG", 2, 7, IREG);  
+  freg[5] = mkreg("FARG", 5, 7, IREG);  
   for (i=8; i<28; i++)
     freg[i] = mkreg("F%d", i, 7, IREG);
   /* Prepare wildcards */
@@ -500,15 +500,23 @@ static Symbol argreg(int argno, int ty, int sz, int *roffset)
 
 static void target(Node p)
 {
+  static int roffset;
   assert(p);
-  switch (specific(p->op)) {
-  case RET+I: case RET+U: case RET+P:
-    rtarget(p, 0, (opsize(p->op)==4) ? lreg[3]: ireg[3]);
-    break;
-  case RET+F:
-    rtarget(p, 0, freg[2]);
-    break;
-  }
+  switch (specific(p->op))
+    {
+    case RET+I: case RET+U: case RET+P:
+      /* Returns in IAC or LAC */
+      rtarget(p, 0, (opsize(p->op)==4) ? lreg[3]: ireg[3]);
+      break;
+    case RET+F:
+      /* Returns in FAC */
+      rtarget(p, 0, freg[2]);
+      break;
+    case ARG+F: case ARG+I: case ARG+P: case ARG+U: {
+      Symbol q = argreg(p->x.argno, optype(p->op), opsize(p->op), &roffset);
+      if (q) rtarget(p, 0, q);
+      break;
+    }
 }
 
 static void clobber(Node p)
@@ -517,6 +525,19 @@ static void clobber(Node p)
 
 static void emit2(Node p)
 {
+  /*** THIS DOES NOT WORK ****/
+  int sz, ty, src, dst;
+  static int roffset;
+  Symbol q;
+  
+  switch(specific(p->op))
+    {
+    case ARG+F: case ARG+I: case ARG+U: case ARG+P:
+      ty = optype(p->op);
+      sz = opsize(p->op);
+      q = argreg(p->x.argno, ty, sz, &roffset);
+      break;
+    }
 }
 
 static void doarg(Node p)
@@ -600,9 +621,9 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   comment("begin function %s\n", f->x.name);
   segment(CODE);
   global(f);
-  print("\tLDW('vLR');STW(LR)\n");
+  print("\tLDW(vLR);STW(LR)\n");
   if (ncalls)
-    usedmask[IREG] |= (1 << REG_LR);
+    usedmask[IREG] |= REGMASK_LR;
   usedmask[IREG] &= REGMASK_SAVED;
   sizesave = 2 * bitcount(usedmask[IREG]);
   framesize = maxargoffset + sizesave + maxoffset;
@@ -690,7 +711,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   print("\t");
   ld_sp_plus_offset(framesize);
   print("STW(SP)\n");
-  print("\tLDW(LR);STW('vLR');RET()\n");
+  print("\tLDW(LR);STW(vLR);RET()\n");
   comment("end function %s\n", f->x.name);
 }
 
@@ -825,7 +846,7 @@ Interface gigatronIR = {
         0,        /* little_endian */
         0,        /* mulops_calls */
         0,        /* wants_callb */
-        0,        /* wants_argb */
+        1,        /* wants_argb */
         1,        /* left_to_right */
         0,        /* wants_dag */
         0,        /* unsigned_char */

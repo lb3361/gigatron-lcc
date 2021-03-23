@@ -235,6 +235,12 @@ con8: CNSTI2  "%a"  range(a,0,255)
 con8: CNSTU2  "%a"  range(a,0,255)
 con8: CNSTP2  "%a"  range(a,0,255)
 
+con: CNSTI1  "%a"
+con: CNSTU1  "%a"
+con: CNSTI2  "%a"
+con: CNSTU2  "%a"
+con: CNSTP2  "%a"
+
 stmt: ac ""
 stmt: reg  ""
 
@@ -242,6 +248,8 @@ ac: reg "%{src!=AC:LDW(%0);}" 20
 ac: ADDRGP2 "LDWI(%a);" 20
 ac: ADDRLP2 "LDWI(%a+%F);ADDW(SP);" 48
 ac: ADDRFP2 "LDWI(%a+%F);ADDW(SP);" 48
+ac: con8 "LDI(%0)" 16
+ac: con "LDWI(%0)" 20
 
 reg: ac "\t%0%{dst!=AC:STW(%c);}\n" 20
 
@@ -553,12 +561,12 @@ static void emit3(const char *fmt, Node p, Node *kids, short *nts)
 {
   int i=0;
   while (fmt[i] && fmt[i++] != ':') { }
-  if (!strncmp(fmt,"dst!=",5))
+  if (!strncmp(fmt,"dst!=",5) && fmt[i])
     {
       if (p->syms[2]->x.name != stringn(fmt+5,i-6))
         emitfmt(fmt+i, p, kids, nts);
     }
-  else if (!strncmp(fmt,"src!=", 5))
+  else if (!strncmp(fmt,"src!=", 5) && fmt[i])
     {
       if (!kids[0] || !kids[0]->syms[0] || kids[0]->syms[0]->x.name != stringn(fmt+5,i-6))
         emitfmt(fmt+i, p, kids, nts);

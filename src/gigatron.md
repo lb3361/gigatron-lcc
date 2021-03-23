@@ -20,6 +20,7 @@ static void defstring(int, char *);
 static void defsymbol(Symbol);
 static void doarg(Node);
 static void emit2(Node);
+static void emit3(const char*, Node, Node*, short*);
 static void export(Symbol);
 static void clobber(Node);
 static void function(Symbol, Symbol [], Symbol [], int);
@@ -32,18 +33,27 @@ static void segment(int);
 static void space(int);
 static void target(Node);
 
+/* emitasm_ext() replace the standard emitter.
+   IThe emit2() mechanism is insufficient for us.
+*/   
+extern unsigned (*emitter)(Node, int);
+static unsigned emitasm_ext(Node, int);
+
+/* Cost functions */
 static int  if_cv_from_size(Node,int,int);
 static int  if_cpu(int,int);
  
+/* Registers */
+static Symbol ireg[32], lreg[32], freg[32];
+static Symbol iregw, lregw, fregw;
 
 #define REGMASK_VARS            0x00fff000
 #define REGMASK_ARGS            0x0000ff00
 #define REGMASK_TEMPS           0x3f000f00
 #define REGMASK_SAVED           0x00ff0000
 #define REGMASK_LR              0x40000000
- 
-static Symbol ireg[32], lreg[32], freg[32];
-static Symbol iregw, lregw, fregw;
+
+/* Misc */ 
 static int cseg;
 static int cpu = 5;
  
@@ -340,9 +350,9 @@ stmt: ASGNU4(reg,lac) "\t%1LDW(%0);CALLI('@.store_lac')\n" 256
 
 # Calls  /** DOESNT WORK **/
 stmt: ARGF5(reg)  "# arg\n"  1
-stmt: ARGI4(reg)  '# arg\n"  1
+stmt: ARGI4(reg)  "# arg\n"  1
 stmt: ARGU4(reg)  "# arg\n"  1
-stmt: ARGI2(reg)  '# arg\n"  1
+stmt: ARGI2(reg)  "# arg\n"  1
 stmt: ARGU2(reg)  "# arg\n"  1
 stmt: ARGP2(reg)  "# arg\n"  1
 stmt: ARGB(INDIRB(reg))       "# argb %0\n"      1
@@ -352,7 +362,7 @@ stmt: ASGNB(reg,INDIRB(reg))  "# asgnb %0 %1\n"  1
 # Floating point support
 fac: reg "LDW(%0);STW(FAC);LDW(%0+2);STW(FAC+2);LDW(%0+4);STW(FAC+4);" 60
 farg: reg "LDW(%0);STW(FARG);LDW(%0+2);STW(FARG+2);LDW(%0+4);STW(FARG+4);" 60
-reg: fac "\t%0LDW(FAC);STW(%c);LDW(FAC+2);STW(%c+2);LDW(FAC+4);STW(%c+4)\n" 60
+reg: fac "\t%0%{nottofac?LDW(FAC);STW(%c);LDW(FAC+2);STW(%c+2);LDW(FAC+4);STW(%c+4)}\n" 60
 fac: INDIRF5(ac) "%0CALLI('@.load_fac');" 256
 farg: INDIRF5(ac) "%0CALLI('@.load_farg');" 256
 fac: ADDF5(fac,farg) "%0%1CALLI('@.fadd');" 256
@@ -500,7 +510,6 @@ static Symbol argreg(int argno, int ty, int sz, int *roffset)
 
 static void target(Node p)
 {
-  static int roffset;
   assert(p);
   switch (specific(p->op))
     {
@@ -513,9 +522,10 @@ static void target(Node p)
       rtarget(p, 0, freg[2]);
       break;
     case ARG+F: case ARG+I: case ARG+P: case ARG+U: {
+      static int roffset;
       Symbol q = argreg(p->x.argno, optype(p->op), opsize(p->op), &roffset);
       if (q) rtarget(p, 0, q);
-      break;
+      break; }
     }
 }
 
@@ -523,25 +533,26 @@ static void clobber(Node p)
 {
 }
 
+static void emit3(const char *fmt, Node p, Node *kids, short *nts)
+{
+  if (strncmp(fmt,"nottofac:", 9))
+    {
+      if (strcmp(p->syms[2]->x.name,"FAC"))
+        emitfmt(fmt+9, p, kids, nts);
+    }
+}
+
 static void emit2(Node p)
 {
-  /*** THIS DOES NOT WORK ****/
-  int sz, ty, src, dst;
-  static int roffset;
-  Symbol q;
-  
-  switch(specific(p->op))
-    {
-    case ARG+F: case ARG+I: case ARG+U: case ARG+P:
-      ty = optype(p->op);
-      sz = opsize(p->op);
-      q = argreg(p->x.argno, ty, sz, &roffset);
-      break;
-    }
 }
 
 static void doarg(Node p)
 {
+  static int argno;
+  if (argoffset == 0)
+    argno = 0;
+  p->x.argno = argno++;
+  p->syms[2] = intconst(mkactual(1, p->syms[0]->u.c.v.i));
 }
 
 static void local(Symbol p)
@@ -883,6 +894,7 @@ Interface gigatronIR = {
           _isinstruction,
           _ntname,
           emit2,
+          emit3,
           doarg,
           target,
           clobber,

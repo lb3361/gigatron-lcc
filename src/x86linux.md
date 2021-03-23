@@ -1076,6 +1076,7 @@ Interface x86linuxIR = {
             _isinstruction,
             _ntname,
             emit2,
+            0, /* emit3 */
             0, /* doarg */
             target,
             clobber,

@@ -33,7 +33,7 @@ static void space(int);
 static void target(Node);
 
 static int  if_cv_from_size(Node,int,int);
-static int  if_cpu(Node,int,int);
+static int  if_cpu(int,int);
  
 static Symbol ireg[32], lreg[32], freg[32];
 static Symbol iregw, lregw, fregw;
@@ -53,14 +53,7 @@ static Symbol iregw, lregw, fregw;
 #define REGMASK_SAVED           0x00ff0000
  
 static int cseg;
-
-#define CPU_V4 1
-#define CPU_V5 2
-#define CPU_V6 4
-static int cpumask = CPU_V4|CPU_V5|CPU_V6;
-#define has_POKEA (!(cpumask&(CPU_V4|CPU_V5)))
-#define has_CALLI  (!(cpumask&(CPU_V4)))
-#define has_CMPHI  (!(cpumask&(CPU_V4|CPU_V6)))
+static int cpu = 5;
 
  
 /*---- END HEADER --*/
@@ -266,6 +259,25 @@ ac: SUBU2(ac,con8) "%0SUBI(%1);" 28
 ac: SUBP2(ac,zpv)  "%0SUBW(%1);" 28 
 ac: SUBP2(ac,con8) "%0SUBI(%1);" 28
 
+ac: NEGI2(ac) "%0ST(SR);LDI(0);SUBW(SR);" 68
+ac: BCOMI2(ac) "%0ST(SR);LDWI(-0);XORW(SR);" 68
+ac: BCOMU2(ac) "%0ST(SR);LDWI(-0);XORW(SR);" 68
+
+ac: BANDI2(ac,zpv)  "%0ANDW(%1);" 28
+ac: BANDI2(ac,con8)  "%0ANDI(%1);" 16 
+ac: BANDU2(ac,zpv)  "%0ANDW(%1);" 28
+ac: BANDU2(ac,con8)  "%0ANDI(%1);" 16 
+
+ac: BORI2(ac,zpv)  "%0ORW(%1);" 28
+ac: BORI2(ac,con8)  "%0ORI(%1);" 16 
+ac: BORU2(ac,zpv)  "%0ORW(%1);" 28
+ac: BORU2(ac,con8)  "%0ORI(%1);" 16 
+
+ac: BXORI2(ac,zpv)  "%0XORW(%1);" 28
+ac: BXORI2(ac,con8)  "%0XORI(%1);" 16 
+ac: BXORU2(ac,zpv)  "%0XORW(%1);" 28
+ac: BXORU2(ac,con8)  "%0XORI(%1);" 16
+
 ac: INDIRP2(con8) "LDW(%0)" 20
 ac: INDIRP2(ac) "%0DEEK();" 28
 ac: INDIRU2(con8) "LDW(%0)" 20
@@ -281,8 +293,12 @@ stmt: ASGNP2(con8,ac) "\t%1STW(%0)\n" 20
 stmt: ASGNP2(zpv,ac) "\t%1DOKE(%0)\n" 28
 stmt: ASGNI2(con8,ac) "\t%1STW(%0)\n" 20
 stmt: ASGNI2(zpv,ac) "\t%1DOKE(%0)\n" 28
+stmt: ASGNU2(con8,ac) "\t%1STW(%0)\n" 20
+stmt: ASGNU2(zpv,ac) "\t%1DOKE(%0)\n" 28
 stmt: ASGNI1(con8,ac) "\t%1ST(%0)\n" 20
 stmt: ASGNI1(zpv,ac) "\t%1POKE(%0)\n" 28
+stmt: ASGNU1(con8,ac) "\t%1ST(%0)\n" 20
+stmt: ASGNU1(zpv,ac) "\t%1POKE(%0)\n" 28
 
 reg: LOADI1(ac)  "\t%0ST(%c)\n" move(a)
 reg: LOADU1(ac)  "\t%0ST(%c)\n" move(a)
@@ -290,46 +306,84 @@ reg: LOADI2(ac)  "\t%0STW(%c)\n" move(a)
 reg: LOADU2(ac)  "\t%0STW(%c)\n" move(a)
 reg: LOADP2(ac)  "\t%0STW(%c)\n" move(a)
 
+
+# More opcodes for cpu=5
+
+
+# More opcodes for cpu=6
+stmt: ASGNP2(ac,con8) "\t%0DOKEI(%1)\n" if_cpu(6,28)
+stmt: ASGNP2(ac,reg) "\t%0DOKEA(%1)\n" if_cpu(6,30)
+stmt: ASGNI2(ac,con8) "\t%0DOKEI(%1)\n" if_cpu(6,28)
+stmt: ASGNI2(ac,reg) "\t%0DOKEA(%1)\n" if_cpu(6,30)
+stmt: ASGNU2(ac,con8) "\t%0DOKEI(%1)\n" if_cpu(6,28)
+stmt: ASGNU2(ac,reg) "\t%0DOKEA(%1)\n" if_cpu(6,30)
+stmt: ASGNI1(ac,con8) "\t%0POKEI(%1)\n" if_cpu(6,28)
+stmt: ASGNI1(ac,reg) "\t%0POKEA(%1)\n" if_cpu(6,30)
+stmt: ASGNU1(ac,con8) "\t%0POKEI(%1)\n" if_cpu(6,20)
+stmt: ASGNU1(ac,reg) "\t%0POKEA(%1)\n" if_cpu(6,28)
+
 # Long int support
 lac: reg "LDW(%0);STW(LAC);LDW(%0+2);STW(LAC+2);" 40
 larg: reg "LDW(%0);STW(LARG);LDW(%0+2);STW(LARG+2);" 40
 reg: lac "%0LDW(LAC);STW(%c);LDW(LAC+2);STW(%c+2);" 40
-lac: INDIRI4(ac) "%0CALLI('__load_lac');" 100
-larg: INDIRI4(ac) "%0CALLI('__load_larg');" 100
-lac: INDIRU4(ac) "%0CALLI('__load_lac');" 100
-larg: INDIRU4(ac) "%0CALLI('__load_larg');" 100
-lac: ADDI4(lac,larg) "%0%1CALLI('__ladd');" 100
-lac: ADDU4(lac,larg) "%0%1CALLI('__ladd');" 100
-lac: SUBI4(lac,larg) "%0%1CALLI('__lsub');" 100
-lac: SUBU4(lac,larg) "%0%1CALLI('__lsub');" 100
-lac: MULI4(lac,larg) "%0%1CALLI('__lmuls');" 100
-lac: MULU4(lac,larg) "%0%1CALLI('__lmulu');" 100
-lac: DIVI4(lac,larg) "%0%1CALLI('__ldivs');" 100
-lac: DIVU4(lac,larg) "%0%1CALLI('__ldivu');" 100
+lac: INDIRI4(ac) "%0CALLI('@.load_lac');" 256
+larg: INDIRI4(ac) "%0CALLI('@.load_larg');" 256
+lac: INDIRU4(ac) "%0CALLI('@.load_lac');" 256
+larg: INDIRU4(ac) "%0CALLI('@.load_larg');" 256
+lac: ADDI4(lac,larg) "%0%1CALLI('@.ladd');" 256
+lac: ADDU4(lac,larg) "%0%1CALLI('@.ladd');" 256
+lac: SUBI4(lac,larg) "%0%1CALLI('@.lsub');" 256
+lac: SUBU4(lac,larg) "%0%1CALLI('@.lsub');" 256
+lac: MULI4(lac,larg) "%0%1CALLI('@.lmul');" 256
+lac: MULU4(lac,larg) "%0%1CALLI('@.lmul');" 256
+lac: DIVI4(lac,larg) "%0%1CALLI('@.ldivs');" 256
+lac: DIVU4(lac,larg) "%0%1CALLI('@.ldivu');" 256
+lac: NEGI4(lac) "%0CALLI('@.lneg');" 50
+lac: BCOMU4(lac) "%0CALLI('@.lcom');" 50
+lac: BANDU4(lac,larg) "%0%1CALLI('@.land');"  50
+lac: BORU4(lac,larg) "%0%1CALLI('@.lor');"  50
+lac: BXORU4(lac,larg) "%0%1CALLI('@.lxor');"  50
+lac: BCOMI4(lac) "%0CALLI('@.lcom');" 50
+lac: BANDI4(lac,larg) "%0%1CALLI('@.land');"  50
+lac: BORI4(lac,larg) "%0%1CALLI('@.lor');"  50
+lac: BXORI4(lac,larg) "%0%1CALLI('@.lxor');"  50
+
 reg: LOADI4(reg) "\tLDW(%0);STW(%c);LDW(%0+2);STW(%c+2)\n" move(a)
 reg: LOADU4(reg) "\tLDW(%0);STW(%c);LDW(%0+2);STW(%c+2)\n" move(a)
-stmt: ASGNI4(ac,lac) "\t%1%0CALLI('__store_lac')\n" 100
-stmt: ASGNU4(ac,lac) "\t%1%0CALLI('__store_lac')\n" 100
+stmt: ASGNI4(ac,lac) "\t%1%0CALLI('@.store_lac')\n" 256
+stmt: ASGNU4(ac,lac) "\t%1%0CALLI('@.store_lac')\n" 256
 
 # Floating point support
 fac: reg "LDW(%0);STW(FAC);LDW(%0+2);STW(FAC+2);LDW(%0+4);STW(FAC+4);" 60
 farg: reg "LDW(%0);STW(FARG);LDW(%0+2);STW(FARG+2);LDW(%0+4);STW(FARG+4);" 60
 reg: fac "%0LDW(FAC);STW(%c);LDW(FAC+2);STW(%c+2);LDW(FAC+4);STW(%c+4);" 60
-fac: INDIRF5(ac) "%0CALLI('__load_fac');" 100
-farg: INDIRF5(ac) "%0CALLI('__load_farg');" 100
-fac: ADDF5(fac,farg) "%0%1CALLI('__fadd');" 100
-fac: SUBF5(fac,farg) "%0%1CALLI('__fsub');" 100
-fac: MULF5(fac,farg) "%0%1CALLI('__fmul');" 100
-fac: DIVF5(fac,farg) "%0%1CALLI('__fdiv');" 100
+fac: INDIRF5(ac) "%0CALLI('@.load_fac');" 256
+farg: INDIRF5(ac) "%0CALLI('@.load_farg');" 256
+fac: ADDF5(fac,farg) "%0%1CALLI('@.fadd');" 256
+fac: SUBF5(fac,farg) "%0%1CALLI('@.fsub');" 256
+fac: MULF5(fac,farg) "%0%1CALLI('@.fmul');" 256
+fac: DIVF5(fac,farg) "%0%1CALLI('@.fdiv');" 256
+fac: NEGF5(fac) "%0CALLI('@.fneg');" 50
 reg: LOADF5(reg) "LDW(%0);STW(%c);LDW(%0+2);STW(%c+2);LDW(%0+4);STW(%c+4)\n" move(a)
-stmt: ASGNF5(ac,fac) "\t%1%0CALLI('__store_fac')\n" 100
+stmt: ASGNF5(ac,fac) "\t%1%0CALLI('@.store_fac')\n" 256
 
 # Conversions
-lac: CVFI4(fac) "%0CALLI('__cv_fac_to_lac');" 100
-ac: CVFI2(fac) "%0CALLI('__cv_fac_to_lac');LDW(LAC);" 120
-fac: CVIF5(ac) "%0STW(LAC);LDI(0);STW(LAC+2);CALLI('__cv_lac_to_fac');" if_cv_from_size(a,2,120)
-fac: CVIF5(lac) "%0CALLI('__cv_lac_to_fac');" if_cv_from_size(a,4,120)
-## TODO: int/unsigned/char conversions
+ac: CVFI2(fac) "%0CALLI('@.cv_fac_to_lac');LDW(LAC);" 256
+lac: CVFI4(fac) "%0CALLI('@.cv_fac_to_lac');" 256
+fac: CVIF5(ac) "%0STW(LAC);LDI(0);STW(LAC+2);CALLI('@.cv_lac_to_fac');" if_cv_from_size(a,2,120)
+fac: CVIF5(lac) "%0CALLI('@.cv_lac_to_fac');" if_cv_from_size(a,4,256)
+ac: CVII2(ac) "%0XORI(128);SUBI(128);" if_cv_from_size(a,1,48)
+ac: CVIU2(ac) "%0" if_cv_from_size(a,1,48)
+ac: CVUI2(ac) "%0" if_cv_from_size(a,1,48)
+ac: CVUU2(ac) "%0" if_cv_from_size(a,1,48)
+ac: CVII2(lac) "%0LDW(LAC);" if_cv_from_size(a,4,20)
+ac: CVIU2(lac) "%0LDW(LAC);" if_cv_from_size(a,4,20)
+ac: CVUI2(lac) "%0LDW(LAC);" if_cv_from_size(a,4,20)
+ac: CVUU2(lac) "%0LDW(LAC);" if_cv_from_size(a,4,20)
+lac: CVIU4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);" if_cv_from_size(a,2,50)
+lac: CVII4(ac) "%0STW(LAC);LD(LAC+1);XORI(128);SUBI(128);LD('vAH');ST(LAC+2);ST(LAC+3);" if_cv_from_size(a,2,120)
+lac: CVUU4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);" if_cv_from_size(a,2,50)
+lac: CVUI4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);" if_cv_from_size(a,2,50)
 
 # Labels and jumps
 stmt: LABELV "label(%a)\n"
@@ -339,6 +393,14 @@ stmt: LABELV "label(%a)\n"
 %%
 /*---- BEGIN CODE --*/
 
+
+static void comment(const char *fmt, ...) {
+  va_list ap;
+  print("-- ");
+  va_start(ap, fmt);
+  vfprint(stdout, NULL, fmt, ap);
+  va_end(ap);
+}
 
 static int if_cv_from_size(Node p, int sz, int cost)
 {
@@ -350,23 +412,15 @@ static int if_cv_from_size(Node p, int sz, int cost)
   return LBURG_MAX;
 }
 
-static int  if_cpu(Node p, int m, int cost)
+static int  if_cpu(int mincpu, int cost)
 {
-  return ((cpumask & m) ? LBURG_MAX : cost);
-}
-
-static void comment(const char *fmt, ...) {
-  va_list ap;
-  print("-- ");
-  va_start(ap, fmt);
-  vfprint(stdout, NULL, fmt, ap);
-  va_end(ap);
+  return (cpu >= mincpu) ? cost : LBURG_MAX;
 }
 
 static void progend(void)
 {
+  print("endmodule();\n");
 }
-
 
 static void progbeg(int argc, char *argv[])
 {
@@ -374,15 +428,14 @@ static void progbeg(int argc, char *argv[])
   /* Parse flags */
   parseflags(argc, argv);
   for (i=0; i<argc; i++)
-    if (!strncmp(argv[i],"-cpu=", 5))
-      {
-        char *eptr = 0;
-        cpumask = (int)strtol(argv[i]+5, &eptr, 0);
-        if (*eptr || cpumask<=0 || cpumask>7)
-          error("invalid cpu mask 0x%x\n", cpumask);
-      }
+    if (!strcmp(argv[i],"-cpu=5"))
+      cpu = 5;
+    else if (!strcmp(argv[i],"-cpu=6"))
+      cpu = 6;
+    else if (!strncmp(argv[i],"-cpu=",5))
+      error("invalid cpu %s\n", argv[i]+5);
   /* Print header */
-  print("module('@@MODULENAME@@',%d)\n", cpumask); /* more here */
+  print("module('@@modulename@@',%d)\n", cpu); /* more here */
   /* Prepare registers */
   ireg[0] = mkreg("AC", 0, 1, IREG);
   ireg[1] = mkreg("SR", 0, 1, IREG);
@@ -563,11 +616,11 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
       print("\t");
       if (first) {
         ld_sp_plus_offset(maxargoffset);
-        print(has_POKEA ? "" : "STW(SR);");
+        print((cpu >= 6) ? "" : "STW(SR);");
       } else {
-        print(has_POKEA ? "ADDI(2);" : "LDW(SR);ADDI(2);STW(SR);");
+        print((cpu >= 6) ? "ADDI(2);" : "LDW(SR);ADDI(2);STW(SR);");
       }
-      print(has_POKEA ? "DOKEA(R%d)\n" : "LDW(R%d);DOKE(SR)\n", i);
+      print((cpu >= 6) ? "DOKEA(R%d)\n" : "LDW(R%d);DOKE(SR)\n", i);
       first = 0;
     }
   /* save args into new registers */
@@ -596,19 +649,19 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
         else if (sz == 4)
           print("LDW(R%d);STW(R3);LDW(R%d);STW(R4);", rn, rn+1);
         if (off >= 256)
-          print("LDIW(%d);ADDW(SP);",off);
+          print("LDWI(%d);ADDW(SP);",off);
         else if (off > 0)
           print("LDW(SP);ADDI(%d);",off);
         else
           print("LDW(SP);");
         if (isfloat(in->type))
-          print("CALLI('__store_fac')\n");
+          print("CALLI('@.store_fac')\n");
         else if (sz == 4)
-          print("CALLI('__store_lac')\n");
+          print("CALLI('@.store_lac')\n");
         else if (sz == 2)
-          print(has_POKEA ? "DOKEA(R%d)\n" : "STW(SR);LDW(R%d);DOKE(SR)\n", rn);
+          print((cpu >= 6) ? "DOKEA(R%d)\n" : "STW(SR);LDW(R%d);DOKE(SR)\n", rn);
         else if (sz == 1)
-          print(has_POKEA ? "POKEA(R%d)\n" : "STW(SR);LD(R%d);POKE(SR)\n", rn);
+          print((cpu >= 6) ? "POKEA(R%d)\n" : "STW(SR);LD(R%d);POKE(SR)\n", rn);
         else
           assert(0);
       }
@@ -627,11 +680,11 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
       print("\t");
       if (first) {
         ld_sp_plus_offset(maxargoffset);
-        print(has_POKEA ? "" : "STW(SR);");
+        print((cpu >= 6) ? "" : "STW(SR);");
       } else {
-        print(has_POKEA ? "ADDI(2);" : "LDW(SR);ADDI(2);STW(SR);");
+        print((cpu >= 6) ? "ADDI(2);" : "LDW(SR);ADDI(2);STW(SR);");
       }
-      print(has_POKEA ? "DEEKA(R%d)\n" : "DEEK(SR);STW(R%d)\n", i);
+      print((cpu >= 6) ? "DEEKA(R%d)\n" : "DEEK(SR);STW(R%d)\n", i);
       first = 0;
     }
   print("\t");
@@ -650,15 +703,16 @@ static void defconst(int suffix, int size, Value v)
     assert(size == 5);
     assert(isnormal(d));
     mantissa = (unsigned long)(frexp(d,&exp) * pow(2.0, 32));
-    if (mantissa == 0 || exp < -128) 
-      print("\tbytes(0,0,0,0,0)\n");
+    if (mantissa == 0 || exp < -128)
+      print("\tbytes(0,0,0,0,0) ");
     else
-      print("\tbytes(%d,%d,%d,%d,%d)\n",
+      print("\tbytes(%d,%d,%d,%d,%d) ",
             exp+128, ((mantissa>>24)&0x7f)|((d<0.0)?0x80:0x00),
             (mantissa>>16)&0xff, (mantissa>>8)&0xff, (mantissa&0xff) );
+    comment("%f\n", d);
   } else {
     long x = (suffix == P) ? (unsigned)(size_t)v.p : (suffix == I) ? v.i : v.u;
-    if (size == 1)
+      if (size == 1)
       print("\tbytes(%d)\n", x&0xff);
     else if (size == 2)
       print("\twords(%d)\n", x&0xffff);
@@ -771,7 +825,7 @@ Interface gigatronIR = {
         0,        /* little_endian */
         0,        /* mulops_calls */
         0,        /* wants_callb */
-        1,        /* wants_argb */
+        0,        /* wants_argb */
         1,        /* left_to_right */
         0,        /* wants_dag */
         0,        /* unsigned_char */

@@ -238,12 +238,12 @@ con8: CNSTP2  "%a"  range(a,0,255)
 stmt: ac ""
 stmt: reg  ""
 
-ac: reg "LDW(%0);" 20
+ac: reg "%{src!=AC:LDW(%0);}" 20
 ac: ADDRGP2 "LDWI(%a);" 20
 ac: ADDRLP2 "LDWI(%a+%F);ADDW(SP);" 48
 ac: ADDRFP2 "LDWI(%a+%F);ADDW(SP);" 48
 
-reg: ac "\t%0STW(%c)\n" 20
+reg: ac "\t%0%{dst!=AC:STW(%c);}\n" 20
 
 ac: ADDI2(ac,reg)  "%0ADDW(%1);" 28 
 ac: ADDI2(reg,ac)  "%1ADDW(%0);" 28 
@@ -289,39 +289,29 @@ ac: INDIRI1(ac) "%0PEEK();" 26
 ac: INDIRU1(con8) "LD(%0)" 18
 ac: INDIRU1(ac) "%0PEEK();" 26
 
-stmt: ASGNP2(con8,ac) "\t%1STW(%0)\n" 20
-stmt: ASGNP2(reg,ac) "\t%1DOKE(%0)\n" 28
-stmt: ASGNI2(con8,ac) "\t%1STW(%0)\n" 20
-stmt: ASGNI2(reg,ac) "\t%1DOKE(%0)\n" 28
-stmt: ASGNU2(con8,ac) "\t%1STW(%0)\n" 20
-stmt: ASGNU2(reg,ac) "\t%1DOKE(%0)\n" 28
-stmt: ASGNI1(con8,ac) "\t%1ST(%0)\n" 20
-stmt: ASGNI1(reg,ac) "\t%1POKE(%0)\n" 28
-stmt: ASGNU1(con8,ac) "\t%1ST(%0)\n" 20
-stmt: ASGNU1(reg,ac) "\t%1POKE(%0)\n" 28
+stmt: ASGNP2(con8,ac) "\t%1STW(%0);\n" 20
+stmt: ASGNP2(reg,ac) "\t%1DOKE(%0);\n" 28
+stmt: ASGNI2(con8,ac) "\t%1STW(%0);\n" 20
+stmt: ASGNI2(reg,ac) "\t%1DOKE(%0);\n" 28
+stmt: ASGNU2(con8,ac) "\t%1STW(%0);\n" 20
+stmt: ASGNU2(reg,ac) "\t%1DOKE(%0);\n" 28
+stmt: ASGNI1(con8,ac) "\t%1ST(%0);\n" 20
+stmt: ASGNI1(reg,ac) "\t%1POKE(%0);\n" 28
+stmt: ASGNU1(con8,ac) "\t%1ST(%0);\n" 20
+stmt: ASGNU1(reg,ac) "\t%1POKE(%0);\n" 28
 
-reg: LOADI1(ac)  "\t%0ST(%c)\n" move(a)
-reg: LOADU1(ac)  "\t%0ST(%c)\n" move(a)
-reg: LOADI2(ac)  "\t%0STW(%c)\n" move(a)
-reg: LOADU2(ac)  "\t%0STW(%c)\n" move(a)
-reg: LOADP2(ac)  "\t%0STW(%c)\n" move(a)
+reg: LOADI1(ac)  "\t%0%{dst!=AC:ST(%c);}\n" move(a)
+reg: LOADU1(ac)  "\t%0%{dst!=AC:ST(%c);}\n" move(a)
+reg: LOADI2(ac)  "\t%0%{dst!=AC:STW(%c);}\n" move(a)
+reg: LOADU2(ac)  "\t%0%{dst!=AC:STW(%c);}\n" move(a)
+reg: LOADP2(ac)  "\t%0%{dst!=AC:STW(%c);}\n" move(a)
 
-# More opcodes for cpu=6
-stmt: ASGNP2(ac,con8) "\t%0DOKEI(%1)\n" if_cpu(6,28)
-stmt: ASGNP2(ac,reg) "\t%0DOKEA(%1)\n" if_cpu(6,30)
-stmt: ASGNI2(ac,con8) "\t%0DOKEI(%1)\n" if_cpu(6,28)
-stmt: ASGNI2(ac,reg) "\t%0DOKEA(%1)\n" if_cpu(6,30)
-stmt: ASGNU2(ac,con8) "\t%0DOKEI(%1)\n" if_cpu(6,28)
-stmt: ASGNU2(ac,reg) "\t%0DOKEA(%1)\n" if_cpu(6,30)
-stmt: ASGNI1(ac,con8) "\t%0POKEI(%1)\n" if_cpu(6,28)
-stmt: ASGNI1(ac,reg) "\t%0POKEA(%1)\n" if_cpu(6,30)
-stmt: ASGNU1(ac,con8) "\t%0POKEI(%1)\n" if_cpu(6,20)
-stmt: ASGNU1(ac,reg) "\t%0POKEA(%1)\n" if_cpu(6,28)
-
-# Long int support
-lac: reg "LDW(%0);STW(LAC);LDW(%0+2);STW(LAC+2);" 40
-larg: reg "LDW(%0);STW(LARG);LDW(%0+2);STW(LARG+2);" 40
-reg: lac "\t%0LDW(LAC);STW(%c);LDW(LAC+2);STW(%c+2)\n" 40
+# Longs
+lac: reg "%{src!=LAC:LDW(%0);STW(LAC);LDW(%0+2);STW(LAC+2);}" 40
+larg: reg "%{src!=LARG:LDW(%0);STW(LARG);LDW(%0+2);STW(LARG+2);}" 40
+reg: lac "\t%0%{dst!=LAC:LDW(LAC);STW(%c);LDW(LAC+2);STW(%c+2);}\n" 40
+reg: LOADI4(lac) "\t%0%{dst!=LAC:LDW(LAC);STW(%c);LDW(LAC+2);STW(%c+2);}\n" 40
+reg: LOADU4(lac) "\t%0%{dst!=LAC:LDW(LAC);STW(%c);LDW(LAC+2);STW(%c+2);}\n" 40
 lac: INDIRI4(ac) "%0CALLI('@.load_lac');" 256
 larg: INDIRI4(ac) "%0CALLI('@.load_larg');" 256
 lac: INDIRU4(ac) "%0CALLI('@.load_lac');" 256
@@ -343,12 +333,27 @@ lac: BCOMI4(lac) "%0CALLI('@.lcom');" 256
 lac: BANDI4(lac,larg) "%0%1CALLI('@.land');" 256
 lac: BORI4(lac,larg) "%0%1CALLI('@.lor');" 256
 lac: BXORI4(lac,larg) "%0%1CALLI('@.lxor');" 256
-reg: LOADI4(reg) "\tLDW(%0);STW(%c);LDW(%0+2);STW(%c+2)\n" move(a)
-reg: LOADU4(reg) "\tLDW(%0);STW(%c);LDW(%0+2);STW(%c+2)\n" move(a)
-stmt: ASGNI4(reg,lac) "\t%1LDW(%0);CALLI('@.store_lac')\n" 256
-stmt: ASGNU4(reg,lac) "\t%1LDW(%0);CALLI('@.store_lac')\n" 256
+reg: LOADI4(reg) "\tLDW(%0);STW(%c);LDW(%0+2);STW(%c+2);\n" move(a)
+reg: LOADU4(reg) "\tLDW(%0);STW(%c);LDW(%0+2);STW(%c+2);\n" move(a)
+stmt: ASGNI4(reg,lac) "\t%1LDW(%0);CALLI('@.store_lac');\n" 256
+stmt: ASGNU4(reg,lac) "\t%1LDW(%0);CALLI('@.store_lac');\n" 256
 
-# Calls  /** DOESNT WORK **/
+# Floats
+fac: reg "%{src!=FAC:LDW(%0);STW(FAC);LDW(%0+2);STW(FAC+2);LDW(%0+4);STW(FAC+4);}" 60
+farg: reg "%{src!=FARG:LDW(%0);STW(FARG);LDW(%0+2);STW(FARG+2);LDW(%0+4);STW(FARG+4);}" 60
+reg: fac "\t%0%{dst!=FAC:LDW(FAC);STW(%c);LDW(FAC+2);STW(%c+2);LDW(FAC+4);STW(%c+4);}\n" 60
+reg: LOADF5(fac) "\t%0%{dst!=FAC:LDW(FAC);STW(%c);LDW(FAC+2);STW(%c+2);LDW(FAC+4);STW(%c+4);}\n" 60
+fac: INDIRF5(ac) "%0CALLI('@.load_fac');" 256
+farg: INDIRF5(ac) "%0CALLI('@.load_farg');" 256
+fac: ADDF5(fac,farg) "%0%1CALLI('@.fadd');" 256
+fac: SUBF5(fac,farg) "%0%1CALLI('@.fsub');" 256
+fac: MULF5(fac,farg) "%0%1CALLI('@.fmul');" 256
+fac: DIVF5(fac,farg) "%0%1CALLI('@.fdiv');" 256
+fac: NEGF5(fac) "%0CALLI('@.fneg');" 50
+reg: LOADF5(reg) "\tLDW(%0);STW(%c);LDW(%0+2);STW(%c+2);LDW(%0+4);STW(%c+4);\n" move(a)
+stmt: ASGNF5(reg,fac) "\t%1LDW(%0);CALLI('@.store_fac');\n" 256
+
+# Calls
 stmt: ARGF5(reg)  "# arg\n"  1
 stmt: ARGI4(reg)  "# arg\n"  1
 stmt: ARGU4(reg)  "# arg\n"  1
@@ -358,41 +363,52 @@ stmt: ARGP2(reg)  "# arg\n"  1
 stmt: ARGB(INDIRB(reg))       "# argb %0\n"      1
 stmt: ASGNB(reg,INDIRB(reg))  "# asgnb %0 %1\n"  1
 
-
-# Floating point support
-fac: reg "LDW(%0);STW(FAC);LDW(%0+2);STW(FAC+2);LDW(%0+4);STW(FAC+4);" 60
-farg: reg "LDW(%0);STW(FARG);LDW(%0+2);STW(FARG+2);LDW(%0+4);STW(FARG+4);" 60
-reg: fac "\t%0%{nottofac?LDW(FAC);STW(%c);LDW(FAC+2);STW(%c+2);LDW(FAC+4);STW(%c+4)}\n" 60
-fac: INDIRF5(ac) "%0CALLI('@.load_fac');" 256
-farg: INDIRF5(ac) "%0CALLI('@.load_farg');" 256
-fac: ADDF5(fac,farg) "%0%1CALLI('@.fadd');" 256
-fac: SUBF5(fac,farg) "%0%1CALLI('@.fsub');" 256
-fac: MULF5(fac,farg) "%0%1CALLI('@.fmul');" 256
-fac: DIVF5(fac,farg) "%0%1CALLI('@.fdiv');" 256
-fac: NEGF5(fac) "%0CALLI('@.fneg');" 50
-reg: LOADF5(reg) "\tLDW(%0);STW(%c);LDW(%0+2);STW(%c+2);LDW(%0+4);STW(%c+4)\n" move(a)
-stmt: ASGNF5(reg,fac) "\t%1LDW(%0);CALLI('@.store_fac')\n" 256
-
 # Conversions
+#            I1   U1
+#              \ /
+#              I2 - U2 - P
+#            /  | X |
+#         F5 - I4 - U4
+# 1) prelabel changes all truncations into LOADs
+ac: LOADI1(ac) "%0"
+ac: LOADU1(ac) "%0"
+ac: LOADI2(ac) "%0"
+ac: LOADU2(ac) "%0"
+ac: LOADP2(ac) "%0"
+ac: LOADI2(lac) "%0LDW(LAC);" 28
+ac: LOADU2(lac) "%0LDW(LAC);" 28
+lac: LOADI4(lac) "%0"
+lac: LOADU4(lac) "%0"
+# 2) extensions
+ac: CVII2(ac) "%0XORI(128);SUBI(128);" if_cv_from_size(a,1,48)
+ac: CVUI2(ac) "%0"
+lac: CVIU4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);" 50
+lac: CVII4(ac) "%0STW(LAC);LD(LAC+1);XORI(128);SUBI(128);LD(vAH);ST(LAC+2);ST(LAC+3);" 120
+lac: CVUU4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);"
+lac: CVUI4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);"
+# 3) floating point conversions
 ac: CVFI2(fac) "%0CALLI('@.cv_fac_to_lac');LDW(LAC);" 256
 lac: CVFI4(fac) "%0CALLI('@.cv_fac_to_lac');" 256
 fac: CVIF5(ac) "%0STW(LAC);LDI(0);STW(LAC+2);CALLI('@.cv_lac_to_fac');" if_cv_from_size(a,2,120)
 fac: CVIF5(lac) "%0CALLI('@.cv_lac_to_fac');" if_cv_from_size(a,4,256)
-ac: CVII2(ac) "%0XORI(128);SUBI(128);" if_cv_from_size(a,1,48)
-ac: CVIU2(ac) "%0" if_cv_from_size(a,1,48)
-ac: CVUI2(ac) "%0" if_cv_from_size(a,1,48)
-ac: CVUU2(ac) "%0" if_cv_from_size(a,1,48)
-ac: CVII2(lac) "%0LDW(LAC);" if_cv_from_size(a,4,20)
-ac: CVIU2(lac) "%0LDW(LAC);" if_cv_from_size(a,4,20)
-ac: CVUI2(lac) "%0LDW(LAC);" if_cv_from_size(a,4,20)
-ac: CVUU2(lac) "%0LDW(LAC);" if_cv_from_size(a,4,20)
-lac: CVIU4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);" if_cv_from_size(a,2,50)
-lac: CVII4(ac) "%0STW(LAC);LD(LAC+1);XORI(128);SUBI(128);LD(vAH);ST(LAC+2);ST(LAC+3);" if_cv_from_size(a,2,120)
-lac: CVUU4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);" if_cv_from_size(a,2,50)
-lac: CVUI4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);" if_cv_from_size(a,2,50)
 
 # Labels and jumps
-stmt: LABELV "label(%a)\n"
+stmt: LABELV "label(%a);\n"
+
+
+# More opcodes for cpu=5
+
+# More opcodes for cpu=6
+stmt: ASGNP2(ac,con8) "\t%0DOKEI(%1);\n" if_cpu(6,28)
+stmt: ASGNP2(ac,reg) "\t%0DOKEA(%1);\n" if_cpu(6,30)
+stmt: ASGNI2(ac,con8) "\t%0DOKEI(%1);\n" if_cpu(6,28)
+stmt: ASGNI2(ac,reg) "\t%0DOKEA(%1);\n" if_cpu(6,30)
+stmt: ASGNU2(ac,con8) "\t%0DOKEI(%1);\n" if_cpu(6,28)
+stmt: ASGNU2(ac,reg) "\t%0DOKEA(%1);\n" if_cpu(6,30)
+stmt: ASGNI1(ac,con8) "\t%0POKEI(%1);\n" if_cpu(6,28)
+stmt: ASGNI1(ac,reg) "\t%0POKEA(%1);\n" if_cpu(6,30)
+stmt: ASGNU1(ac,con8) "\t%0POKEI(%1);\n" if_cpu(6,20)
+stmt: ASGNU1(ac,reg) "\t%0POKEA(%1);\n" if_cpu(6,28)
 
 
 # /*-- END RULES --/
@@ -443,7 +459,7 @@ static void progbeg(int argc, char *argv[])
     else if (!strncmp(argv[i],"-cpu=",5))
       warning("invalid cpu %s\n", argv[i]+5);
   /* Print header */
-  print("module('@@modulename@@',%d)\n", cpu); /* more here */
+  print("module('@@modulename@@',%d);\n", cpu); /* more here */
   /* Prepare registers */
   ireg[0] = mkreg("AC", 0, 1, IREG);
   ireg[1] = mkreg("SR", 1, 1, IREG);
@@ -535,10 +551,21 @@ static void clobber(Node p)
 
 static void emit3(const char *fmt, Node p, Node *kids, short *nts)
 {
-  if (strncmp(fmt,"nottofac:", 9))
+  int i=0;
+  while (fmt[i] && fmt[i++] != ':') { }
+  if (!strncmp(fmt,"dst!=",5))
     {
-      if (strcmp(p->syms[2]->x.name,"FAC"))
-        emitfmt(fmt+9, p, kids, nts);
+      if (p->syms[2]->x.name != stringn(fmt+5,i-6))
+        emitfmt(fmt+i, p, kids, nts);
+    }
+  else if (!strncmp(fmt,"src!=", 5))
+    {
+      if (!kids[0] || !kids[0]->syms[0] || kids[0]->syms[0]->x.name != stringn(fmt+5,i-6))
+        emitfmt(fmt+i, p, kids, nts);
+    }
+  else
+    {
+      emitfmt(fmt, p, kids, nts);
     }
 }
 
@@ -632,7 +659,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   comment("begin function %s\n", f->x.name);
   segment(CODE);
   global(f);
-  print("\tLDW(vLR);STW(LR)\n");
+  print("\tLDW(vLR);STW(LR);\n");
   if (ncalls)
     usedmask[IREG] |= REGMASK_LR;
   usedmask[IREG] &= REGMASK_SAVED;
@@ -640,7 +667,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   framesize = maxargoffset + sizesave + maxoffset;
   print("\t");
   ld_sp_plus_offset(-framesize);
-  print("STW(SP)\n");
+  print("STW(SP);\n");
   /* save callee saved registers */
   first = 1;
   for (i=0; i<=31; i++)
@@ -652,7 +679,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
       } else {
         print((cpu >= 6) ? "ADDI(2);" : "LDW(SR);ADDI(2);STW(SR);");
       }
-      print((cpu >= 6) ? "DOKEA(R%d)\n" : "LDW(R%d);DOKE(SR)\n", i);
+      print((cpu >= 6) ? "DOKEA(R%d);\n" : "LDW(R%d);DOKE(SR);\n", i);
       first = 0;
     }
   /* save args into new registers */
@@ -687,13 +714,13 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
         else
           print("LDW(SP);");
         if (isfloat(in->type))
-          print("CALLI('@.store_fac')\n");
+          print("CALLI('@.store_fac');\n");
         else if (sz == 4)
-          print("CALLI('@.store_lac')\n");
+          print("CALLI('@.store_lac');\n");
         else if (sz == 2)
-          print((cpu >= 6) ? "DOKEA(R%d)\n" : "STW(SR);LDW(R%d);DOKE(SR)\n", rn);
+          print((cpu >= 6) ? "DOKEA(R%d);\n" : "STW(SR);LDW(R%d);DOKE(SR);\n", rn);
         else if (sz == 1)
-          print((cpu >= 6) ? "POKEA(R%d)\n" : "STW(SR);LD(R%d);POKE(SR)\n", rn);
+          print((cpu >= 6) ? "POKEA(R%d);\n" : "STW(SR);LD(R%d);POKE(SR);\n", rn);
         else
           assert(0);
       }
@@ -716,13 +743,13 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
       } else {
         print((cpu >= 6) ? "ADDI(2);" : "LDW(SR);ADDI(2);STW(SR);");
       }
-      print((cpu >= 6) ? "DEEKA(R%d)\n" : "DEEK(SR);STW(R%d)\n", i);
+      print((cpu >= 6) ? "DEEKA(R%d);\n" : "DEEK(SR);STW(R%d);\n", i);
       first = 0;
     }
   print("\t");
   ld_sp_plus_offset(framesize);
-  print("STW(SP)\n");
-  print("\tLDW(LR);STW(vLR);RET()\n");
+  print("STW(SP);\n");
+  print("\tLDW(LR);STW(vLR);RET();\n");
   comment("end function %s\n", f->x.name);
 }
 
@@ -745,42 +772,42 @@ static void defconst(int suffix, int size, Value v)
   } else {
     long x = (suffix == P) ? (unsigned)(size_t)v.p : (suffix == I) ? v.i : v.u;
       if (size == 1)
-      print("\tbytes(%d)\n", x&0xff);
+      print("\tbytes(%d);\n", x&0xff);
     else if (size == 2)
-      print("\twords(%d)\n", x&0xffff);
+      print("\twords(%d);\n", x&0xffff);
     else if (size == 4)
-      print("\twords(%d,%d)\n", x&0xffff, (x>>16)&0xffff);
+      print("\twords(%d,%d);\n", x&0xffff, (x>>16)&0xffff);
   }
 }
 
 static void defaddress(Symbol p)
 {
-  print("\twords(%s)\n", p->x.name);
+  print("\twords(%s);\n", p->x.name);
 }
 
 static void defstring(int n, char *str)
 {
   int i;
   for (i=0; i<n; i++)
-    print( (i&7==0) ? "\tbytes(%d" : (i&7==7) ? ",%d)\n" : ",%d", (int)str[i]&0xff );
+    print( (i&7==0) ? "\tbytes(%d" : (i&7==7) ? ",%d);\n" : ",%d", (int)str[i]&0xff );
   if (i&7)
-    print(")\n");
+    print(");\n");
 }
 
 static void export(Symbol p)
 {
   if (isfunc(p->type))
-    print("\texport(%s)\n", p->x.name);
+    print("\texport(%s);\n", p->x.name);
   else
-    print("\texport(%s,%d)\n", p->x.name, p->type->size);
+    print("\texport(%s,%d);\n", p->x.name, p->type->size);
 }
 
 static void import(Symbol p)
 {
   if (isfunc(p->type))
-    print("\timport(%s)\n", p->x.name);
+    print("\timport(%s);\n", p->x.name);
   else
-    print("\timport(%s,%d)\n", p->x.name, p->type->size);
+    print("\timport(%s,%d);\n", p->x.name, p->type->size);
 }
 
 static void defsymbol(Symbol p)
@@ -808,7 +835,7 @@ static void address(Symbol q, Symbol p, long n)
 
 static void global(Symbol p)
 {
-  print("label(%s)\n", p->x.name);
+  print("label(%s);\n", p->x.name);
 }
 
 static void segment(int n)
@@ -816,17 +843,17 @@ static void segment(int n)
   if (n == cseg)
     return;
   switch (n) {
-  case CODE: print("\tsegment('CODE')\n"); break;
-  case BSS:  print("\tsegment('BSS')\n");  break;
-  case DATA: print("\tsegment('DATA')\n"); break;
-  case LIT:  print("\tsegment('LIT')\n"); break;
+  case CODE: print("\tsegment('CODE');\n"); break;
+  case BSS:  print("\tsegment('BSS');\n");  break;
+  case DATA: print("\tsegment('DATA');\n"); break;
+  case LIT:  print("\tsegment('LIT');\n"); break;
   }
   cseg = n;
 }
 
 static void space(int n)
 {
-  print("\tspace(%d)\n", n);
+  print("\tspace(%d);\n", n);
 }
 
 static void blkloop(int dreg, int doff, int sreg,

@@ -891,7 +891,12 @@ static void address(Symbol q, Symbol p, long n)
 
 static void global(Symbol p)
 {
-  print("label(%s);\n", p->x.name);
+  if (p->u.seg == BSS && p->sclass == STATIC)
+    print(".lcomm %s,%d\n", p->x.name, p->type->size);
+  else if (p->u.seg == BSS)
+    print( ".comm %s,%d\n", p->x.name, p->type->size);
+  else
+    print("label(%s);\n", p->x.name);
 }
 
 static void segment(int n)
@@ -909,7 +914,8 @@ static void segment(int n)
 
 static void space(int n)
 {
-  print("\tspace(%d);\n", n);
+  if (cseg != BSS)
+    print("\tspace(%d);\n", n);
 }
 
 static void blkloop(int dreg, int doff, int sreg,

@@ -344,10 +344,14 @@ unsigned emitfmt(const char *fmt, Node p, Node *kids, short *nts)
       (void)putchar(*fmt);
     else
       {
-        const char *s = ++fmt;
-        while (*s && *s != '}')
-          s++;
-        assert(*s == '}');
+        int level = 0;
+        const char *s;
+        for (s=fmt++; *s; s++)
+          if (*s=='{')
+            level += 1;
+          else if (*s=='}' && !--level)
+            break;
+        assert(!level);
         IR->x.emit3(stringn(fmt, s-fmt), p, kids, nts);
         fmt = s;
       }

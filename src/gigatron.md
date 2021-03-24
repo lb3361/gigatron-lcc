@@ -227,29 +227,29 @@ stmt: RETU4(reg)  "# ret\n"  1
 stmt: RETI2(reg)  "# ret\n"  1
 stmt: RETU2(reg)  "# ret\n"  1
 stmt: RETP2(reg)  "# ret\n"  1
-stmt: RETV(reg)   "# ret\n"  1
 
 con8: CNSTI1  "%a"
 con8: CNSTU1  "%a"  range(a,0,255)
 con8: CNSTI2  "%a"  range(a,0,255)
 con8: CNSTU2  "%a"  range(a,0,255)
 con8: CNSTP2  "%a"  range(a,0,255)
+con8: ADDRGP2 "%a"  range(a,0,255)
 
 con: CNSTI1  "%a"
 con: CNSTU1  "%a"
 con: CNSTI2  "%a"
 con: CNSTU2  "%a"
 con: CNSTP2  "%a"
+con: ADDRGP2 "%a" 
 
 stmt: ac ""
 stmt: reg  ""
 
 ac: reg "%{src!=AC:LDW(%0);}" 20
-ac: ADDRGP2 "LDWI(%a);" 20
 ac: ADDRLP2 "LDWI(%a+%F);ADDW(SP);" 48
 ac: ADDRFP2 "LDWI(%a+%F);ADDW(SP);" 48
-ac: con8 "LDI(%0)" 16
-ac: con "LDWI(%0)" 20
+ac: con8 "LDI(%0);" 16
+ac: con "LDWI(%0);" 20
 
 reg: ac "\t%0%{dst!=AC:STW(%c);}\n" 20
 
@@ -314,6 +314,8 @@ reg: LOADI2(ac)  "\t%0%{dst!=AC:STW(%c);}\n" move(a)
 reg: LOADU2(ac)  "\t%0%{dst!=AC:STW(%c);}\n" move(a)
 reg: LOADP2(ac)  "\t%0%{dst!=AC:STW(%c);}\n" move(a)
 
+stmt: ASGNB(reg,INDIRB(ac))  "\t%1%{asgnb}\n" 1
+
 # Longs
 lac: reg "%{src!=LAC:LDW(%0);STW(LAC);LDW(%0+2);STW(LAC+2);}" 40
 larg: reg "%{src!=LARG:LDW(%0);STW(LARG);LDW(%0+2);STW(LARG+2);}" 40
@@ -362,14 +364,30 @@ reg: LOADF5(reg) "\tLDW(%0);STW(%c);LDW(%0+2);STW(%c+2);LDW(%0+4);STW(%c+4);\n" 
 stmt: ASGNF5(reg,fac) "\t%1LDW(%0);CALLI('@.store_fac');\n" 256
 
 # Calls
-stmt: ARGF5(reg)  "# arg\n"  1
-stmt: ARGI4(reg)  "# arg\n"  1
-stmt: ARGU4(reg)  "# arg\n"  1
-stmt: ARGI2(reg)  "# arg\n"  1
-stmt: ARGU2(reg)  "# arg\n"  1
-stmt: ARGP2(reg)  "# arg\n"  1
-stmt: ARGB(INDIRB(reg))       "# argb %0\n"      1
-stmt: ASGNB(reg,INDIRB(reg))  "# asgnb %0 %1\n"  1
+stmt: ARGF5(fac)         "\t%0%{arg}\n" 1
+stmt: ARGI4(lac)         "\t%0%{arg}\n" 1
+stmt: ARGU4(lac)         "\t%0%{arg}\n" 1
+stmt: ARGI2(ac)          "\t%0%{arg}\n" 1
+stmt: ARGU2(ac)          "\t%0%{arg}\n" 1
+stmt: ARGP2(ac)          "\t%0%{arg}\n" 1
+stmt: ARGB(INDIRB(reg)) "\t%0%{argb}\n" 1
+fac: CALLF5(con)  "CALLI(%0);" 1
+lac: CALLI4(con)  "CALLI(%0);" 1
+lac: CALLU4(con)  "CALLI(%0);" 1
+ac: CALLI2(con)  "CALLI(%0);" 1
+ac: CALLU2(con)  "CALLI(%0);" 1
+ac: CALLP2(con)  "CALLI(%0);" 1
+stmt: CALLV(con) "\tCALLI(%0);\n" 1
+fac: CALLF5(reg)  "CALL(%0);" 1
+lac: CALLI4(reg)  "CALL(%0);" 1
+lac: CALLU4(reg)  "CALL(%0);" 1
+ac: CALLI2(reg)  "CALL(%0);" 1
+ac: CALLU2(reg)  "CALL(%0);" 1
+ac: CALLP2(reg)  "CALL(%0);" 1
+stmt: CALLV(reg) "\tCALL(%0);\n" 1
+
+
+
 
 # Conversions
 #            I1   U1
@@ -545,12 +563,8 @@ static void target(Node p)
       /* Returns in FAC */
       rtarget(p, 0, freg[2]);
       break;
-    case ARG+F: case ARG+I: case ARG+P: case ARG+U: {
-      static int roffset;
-      Symbol q = argreg(p->x.argno, optype(p->op), opsize(p->op), &roffset);
-      if (q) rtarget(p, 0, q);
-      break; }
     }
+  
 }
 
 static void clobber(Node p)
@@ -563,13 +577,46 @@ static void emit3(const char *fmt, Node p, Node *kids, short *nts)
   while (fmt[i] && fmt[i++] != ':') { }
   if (!strncmp(fmt,"dst!=",5) && fmt[i])
     {
-      if (p->syms[2]->x.name != stringn(fmt+5,i-6))
+      if (p->syms[RX]->x.name != stringn(fmt+5,i-6))
         emitfmt(fmt+i, p, kids, nts);
     }
   else if (!strncmp(fmt,"src!=", 5) && fmt[i])
     {
-      if (!kids[0] || !kids[0]->syms[0] || kids[0]->syms[0]->x.name != stringn(fmt+5,i-6))
+      if (!kids[0] || !kids[0]->syms[RX] || kids[0]->syms[RX]->x.name != stringn(fmt+5,i-6))
         emitfmt(fmt+i, p, kids, nts);
+    }
+  else if (!strncmp(fmt,"src==", 5) && fmt[i])
+    {
+      if (kids[0] && kids[0]->syms[RX] && kids[0]->syms[RX]->x.name == stringn(fmt+5,i-6))
+        emitfmt(fmt+i, p, kids, nts);
+    }
+  else if (!strcmp(fmt, "arg"))
+    {
+      static int roffset;
+      int ty, sz;
+      Symbol r;
+      ty = optype(p->op);
+      sz = opsize(p->op);
+      if (p->x.argno == 0)
+        roffset = 0;
+      r = argreg(p->x.argno, ty, sz, &roffset);
+      if (r) {
+        const char *rn = r->x.name;
+        if (ty == F)
+          print("LDW(FAC);STW(%s);LDW(FAC+2);STW(%s+2);LDW(FAC+3);STW(%s+4);", rn, rn, rn);
+        else if (sz == 4)
+          print("LDW(LAC);STW(%s);LDW(LAC+2);STW(%s+2);", rn, rn);
+        else
+          print("STW(%s);", rn);
+      } else {
+        int rd = p->syms[RX]->u.c.v.i;
+        if (ty == F)
+          print("LDWI(%d);ADDW(SP);CALLI(@.store_fac);", rd);
+        else if (sz == 4)
+          print("LDWI(%d);ADDW(SP);CALLI(@.store_lac);", rd);
+        else if (cpu >= 6)
+          print("STW(SR);LDWI(%d);ADDW(SP);DOKEA(SR);", rd);
+      }
     }
   else
     {
@@ -618,14 +665,13 @@ static void ld_sp_plus_offset(int offset)
 
 static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
 {
-  int i, roffset, sizesave, varargs, noret, first;
+  int i, roffset, sizesave, varargs, first, ty;
   Symbol r, argregs[8];
   usedmask[0] = usedmask[1] = 0;
   freemask[0] = freemask[1] = ~(unsigned)0;
   offset = maxoffset = maxargoffset = 0;
-  /* does it return */
   assert(f->type && f->type->type);
-  noret = (optype(ttob(f->type->type)) == VOID);
+  ty = ttob(f->type->type);
   /* is it variadic? */
   for (i = 0; callee[i]; i++) {}
   varargs = variadic(f->type) || i > 0 && strcmp(callee[i-1]->name, "va_alist") == 0;
@@ -673,9 +719,11 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   usedmask[IREG] &= REGMASK_SAVED;
   sizesave = 2 * bitcount(usedmask[IREG]);
   framesize = maxargoffset + sizesave + maxoffset;
-  print("\t");
-  ld_sp_plus_offset(-framesize);
-  print("STW(SP);\n");
+  if (framesize > 0) {
+    print("\t");
+    ld_sp_plus_offset(-framesize);
+    print("STW(SP);\n");
+  }
   /* save callee saved registers */
   first = 1;
   for (i=0; i<=31; i++)
@@ -702,11 +750,11 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
       assert(out->sclass != REGISTER || out->x.regnode);
       if (out->sclass == REGISTER && (isint(out->type) || out->type == in->type)) {
         int outn = out->x.regnode->number;
-        print("\tLDW(R%d);STW(R%d)", outn, rn);
+        print("\tLDW(R%d);STW(R%d)", rn, outn);
         if (sz > 2)
-          print(";LDW(R%d);STW(R%d)", outn+1, rn+1);
+          print(";LDW(R%d);STW(R%d)", rn+1, outn+1);
         if (sz > 4)
-          print(";LDW(R%d);STW(R%d)", outn+2, rn+2);
+          print(";LDW(R%d);STW(R%d)", rn+2, outn+2);
         print("\n");
       } else {
         int off = in->x.offset + framesize;
@@ -715,12 +763,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
           print("LDW(R%d);STW(R2);LDW(R%d);STW(R3);LDW(R%d);STW(R4);", rn, rn+1, rn+2);
         else if (sz == 4)
           print("LDW(R%d);STW(R3);LDW(R%d);STW(R4);", rn, rn+1);
-        if (off >= 256)
-          print("LDWI(%d);ADDW(SP);",off);
-        else if (off > 0)
-          print("LDW(SP);ADDI(%d);",off);
-        else
-          print("LDW(SP);");
+        ld_sp_plus_offset(off);
         if (isfloat(in->type))
           print("CALLI('@.store_fac');\n");
         else if (sz == 4)
@@ -754,10 +797,15 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
       print((cpu >= 6) ? "DEEKA(R%d);\n" : "DEEK(SR);STW(R%d);\n", i);
       first = 0;
     }
-  print("\t");
-  ld_sp_plus_offset(framesize);
-  print("STW(SP);\n");
-  print("\tLDW(LR);STW(vLR);RET();\n");
+  if (framesize > 0) {
+    print("\t");
+    ld_sp_plus_offset(framesize);
+    print("STW(SP);\n");
+  }
+  if (opsize(ty) == 2 && (optype(ty)==I || optype(ty)==U || optype(ty)==P))
+    print("\tLDW(LR);STW(vLR);LDW(IAC);RET();\n");
+  else
+    print("\tLDW(LR);STW(vLR);RET();\n");
   comment("end function %s\n", f->x.name);
 }
 
@@ -833,7 +881,7 @@ static void defsymbol(Symbol p)
 static void address(Symbol q, Symbol p, long n)
 {
   if (p->scope == GLOBAL || p->sclass == STATIC || p->sclass == EXTERN)
-    q->x.name = stringf("val(%s)%s%D", p->x.name, n >= 0 ? "+" : "", n);
+    q->x.name = stringf("sym(%s)%s%D", p->x.name, n >= 0 ? "+" : "", n);
   else {
     assert(n <= INT_MAX && n >= INT_MIN);
     q->x.offset = p->x.offset + n;

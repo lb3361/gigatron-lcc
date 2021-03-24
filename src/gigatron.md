@@ -34,7 +34,7 @@ static void space(int);
 static void target(Node);
 
 /* emitasm_ext() replace the standard emitter.
-   IThe emit2() mechanism is insufficient for us.
+   The emit2() mechanism is insufficient for us.
 */   
 extern unsigned (*emitter)(Node, int);
 static unsigned emitasm_ext(Node, int);
@@ -49,7 +49,7 @@ static Symbol iregw, lregw, fregw;
 
 #define REGMASK_VARS            0x00fff000
 #define REGMASK_ARGS            0x0000ff00
-#define REGMASK_TEMPS           0x3f000f00
+#define REGMASK_TEMPS           0x3f00ff00
 #define REGMASK_SAVED           0x00ff0000
 #define REGMASK_LR              0x40000000
 
@@ -245,11 +245,13 @@ con: ADDRGP2 "%a"
 stmt: ac ""
 stmt: reg  ""
 
+stkaddr: ADDRLP2 "LDWI(%a+%F);ADDW(SP);" 48
+stkaddr: ADDRFP2 "LDWI(%a+%F);ADDW(SP);" 48
+
 ac: reg "%{src!=AC:LDW(%0);}" 20
-ac: ADDRLP2 "LDWI(%a+%F);ADDW(SP);" 48
-ac: ADDRFP2 "LDWI(%a+%F);ADDW(SP);" 48
 ac: con8 "LDI(%0);" 16
 ac: con "LDWI(%0);" 20
+ac: stkaddr "%0"
 
 reg: ac "\t%0%{dst!=AC:STW(%c);}\n" 20
 
@@ -317,11 +319,11 @@ reg: LOADP2(ac)  "\t%0%{dst!=AC:STW(%c);}\n" move(a)
 stmt: ASGNB(reg,INDIRB(ac))  "\t%1%{asgnb}\n" 1
 
 # Longs
-lac: reg "%{src!=LAC:LDW(%0);STW(LAC);LDW(%0+2);STW(LAC+2);}" 40
-larg: reg "%{src!=LARG:LDW(%0);STW(LARG);LDW(%0+2);STW(LARG+2);}" 40
-reg: lac "\t%0%{dst!=LAC:LDW(LAC);STW(%c);LDW(LAC+2);STW(%c+2);}\n" 40
-reg: LOADI4(lac) "\t%0%{dst!=LAC:LDW(LAC);STW(%c);LDW(LAC+2);STW(%c+2);}\n" 40
-reg: LOADU4(lac) "\t%0%{dst!=LAC:LDW(LAC);STW(%c);LDW(LAC+2);STW(%c+2);}\n" 40
+lac: reg "%{lmov:%0:LAC}" 40
+larg: reg "%{lmov:%0:LARG}" 40
+reg: lac "\t%0%{lmov:LAC:%c}\n" 40
+reg: LOADI4(lac) "\t%0%{lmov:LAC:%c}\n" 40
+reg: LOADU4(lac) "\t%0%{lmov:LAC:%c}\n" 40
 lac: INDIRI4(ac) "%0CALLI('@.load_lac');" 256
 larg: INDIRI4(ac) "%0CALLI('@.load_larg');" 256
 lac: INDIRU4(ac) "%0CALLI('@.load_lac');" 256
@@ -343,16 +345,16 @@ lac: BCOMI4(lac) "%0CALLI('@.lcom');" 256
 lac: BANDI4(lac,larg) "%0%1CALLI('@.land');" 256
 lac: BORI4(lac,larg) "%0%1CALLI('@.lor');" 256
 lac: BXORI4(lac,larg) "%0%1CALLI('@.lxor');" 256
-reg: LOADI4(reg) "\tLDW(%0);STW(%c);LDW(%0+2);STW(%c+2);\n" move(a)
-reg: LOADU4(reg) "\tLDW(%0);STW(%c);LDW(%0+2);STW(%c+2);\n" move(a)
+reg: LOADI4(reg) "\t%{lmov:%0:%c}\n" move(a)
+reg: LOADU4(reg) "\t%{lmov:%0:%c}\n" move(a)
 stmt: ASGNI4(reg,lac) "\t%1LDW(%0);CALLI('@.store_lac');\n" 256
 stmt: ASGNU4(reg,lac) "\t%1LDW(%0);CALLI('@.store_lac');\n" 256
 
 # Floats
-fac: reg "%{src!=FAC:LDW(%0);STW(FAC);LDW(%0+2);STW(FAC+2);LDW(%0+4);STW(FAC+4);}" 60
-farg: reg "%{src!=FARG:LDW(%0);STW(FARG);LDW(%0+2);STW(FARG+2);LDW(%0+4);STW(FARG+4);}" 60
-reg: fac "\t%0%{dst!=FAC:LDW(FAC);STW(%c);LDW(FAC+2);STW(%c+2);LDW(FAC+4);STW(%c+4);}\n" 60
-reg: LOADF5(fac) "\t%0%{dst!=FAC:LDW(FAC);STW(%c);LDW(FAC+2);STW(%c+2);LDW(FAC+4);STW(%c+4);}\n" 60
+fac: reg "%{fmov:%0:FAC}" 60
+farg: reg "%{fmov:%0:FARG}" 60
+reg: fac "\t%{fmov:FAC:%c};\n" 60
+reg: LOADF5(fac) "\t%0%{fmov:FAC:%c}\n" 60
 fac: INDIRF5(ac) "%0CALLI('@.load_fac');" 256
 farg: INDIRF5(ac) "%0CALLI('@.load_farg');" 256
 fac: ADDF5(fac,farg) "%0%1CALLI('@.fadd');" 256
@@ -360,8 +362,8 @@ fac: SUBF5(fac,farg) "%0%1CALLI('@.fsub');" 256
 fac: MULF5(fac,farg) "%0%1CALLI('@.fmul');" 256
 fac: DIVF5(fac,farg) "%0%1CALLI('@.fdiv');" 256
 fac: NEGF5(fac) "%0CALLI('@.fneg');" 50
-reg: LOADF5(reg) "\tLDW(%0);STW(%c);LDW(%0+2);STW(%c+2);LDW(%0+4);STW(%c+4);\n" move(a)
-stmt: ASGNF5(reg,fac) "\t%1LDW(%0);CALLI('@.store_fac');\n" 256
+reg: LOADF5(reg) "\t%{fmov:%0:%c}\n" move(a)
+stmt: ASGNF5(reg,fac) "\t%1LDW(%0);CALLI('@.store_fac')\n" 256
 
 # Calls
 stmt: ARGF5(fac)         "\t%0%{arg}\n" 1
@@ -385,9 +387,6 @@ ac: CALLI2(reg)  "CALL(%0);" 1
 ac: CALLU2(reg)  "CALL(%0);" 1
 ac: CALLP2(reg)  "CALL(%0);" 1
 stmt: CALLV(reg) "\tCALL(%0);\n" 1
-
-
-
 
 # Conversions
 #            I1   U1
@@ -417,6 +416,16 @@ ac: CVFI2(fac) "%0CALLI('@.cv_fac_to_lac');LDW(LAC);" 256
 lac: CVFI4(fac) "%0CALLI('@.cv_fac_to_lac');" 256
 fac: CVIF5(ac) "%0STW(LAC);LDI(0);STW(LAC+2);CALLI('@.cv_lac_to_fac');" if_cv_from_size(a,2,120)
 fac: CVIF5(lac) "%0CALLI('@.cv_lac_to_fac');" if_cv_from_size(a,4,256)
+
+# Spilling without allocating a variable
+vregp: VREGP "$a"
+stmt: ASGNI2(stkaddr,INDIRI2(vregp)) "\t%0STW(SR);LDW(%1);DOKE(SR)\n" 1
+stmt: ASGNU2(stkaddr,INDIRU2(vregp)) "\t%0STW(SR);LDW(%1);DOKE(SR)\n" 1
+stmt: ASGNP2(stkaddr,INDIRP2(vregp)) "\t%0STW(SR);LDW(%1);DOKE(SR)\n" 1
+stmt: ASGNI4(stkaddr,INDIRI4(vregp)) "\t%0STW(SR);LDW(%1);DOKE(SR);LDW(SR);ADDI(2);STW(SR);LDW(%1+2);DOKE(SR)\n" 1
+stmt: ASGNU4(stkaddr,INDIRU4(vregp)) "\t%0STW(SR);LDW(%1);DOKE(SR);LDW(SR);ADDI(2);STW(SR);LDW(%1+2);DOKE(SR)\n" 1
+stmt: ASGNF5(stkaddr,INDIRF5(vregp)) "\t%0STW(SR);%{fmov:%1:FAC}LDW(SR);CALLI('@.store_fac')\n" 1
+
 
 # Labels and jumps
 stmt: LABELV "label(%a);\n"
@@ -571,11 +580,59 @@ static void clobber(Node p)
 {
 }
 
+static int split(const char *fmt, char **args, int n)
+{
+  int i = 0;
+  while (*fmt)
+    {
+      const char *s = fmt;
+      while(*s && *s!=':') { s++; }
+      assert(i < n);
+      args[i++] = stringn(fmt,s-fmt);
+      fmt = (*s) ? s+1 : s;
+      
+    }
+  assert(i == n);
+}
+static char *aprintf(const char *fmt, ...)
+{
+  int n;
+  va_list ap;
+  char *buf;
+  va_start(ap, fmt);
+  n = vsnprintf(0,0,fmt,ap);
+  buf = allocate(n+1, FUNC);
+  va_end(ap);
+  va_start(ap, fmt);
+  vsnprintf(buf,n+1,fmt,ap);
+  va_end(ap);
+  return buf;
+}
 static void emit3(const char *fmt, Node p, Node *kids, short *nts)
 {
   int i=0;
   while (fmt[i] && fmt[i++] != ':') { }
-  if (!strncmp(fmt,"dst!=",5) && fmt[i])
+  if (!strncmp(fmt,"fmov:",5) && fmt[i])
+    {
+      char *args[2], *buf;
+      split(fmt+5, args, 2);
+      if (strcmp(args[0], args[1])) {
+        buf=aprintf("LDW(%s);STW(%s);LDW(%s+2);STW(%s+2);LDW(%s+4);STW(%s+4);",
+                    args[0],args[1],args[0],args[1],args[0],args[1] );
+        emitfmt(buf, p, kids, nts);
+      }
+    }
+  else if (!strncmp(fmt,"lmov:",5) && fmt[i])
+    {
+      char *args[2], *buf;
+      split(fmt+5, args, 2);
+      if (strcmp(args[0], args[1])) {
+        buf=aprintf("LDW(%s);STW(%s);LDW(%s+2);STW(%s+2);",
+                    args[0],args[1],args[0],args[1] );
+        emitfmt(buf, p, kids, nts);
+      }
+    }
+  else if (!strncmp(fmt,"dst!=",5) && fmt[i])
     {
       if (p->syms[RX]->x.name != stringn(fmt+5,i-6))
         emitfmt(fmt+i, p, kids, nts);

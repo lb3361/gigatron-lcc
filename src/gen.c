@@ -335,59 +335,59 @@ static void dumprule(int rulenum) {
 
 unsigned emitfmt(const char *fmt, Node p, Node *kids, short *nts)
 {
-  for (; *fmt; fmt++)
-    if (*fmt != '%')
-      (void)putchar(*fmt);
-    else if (*++fmt == 'F')
-      print("%d", framesize);
-    else if (*fmt >= '0' && *fmt <= '9')
-      emitasm(kids[*fmt - '0'], nts[*fmt - '0']);
-    else if (*fmt >= 'a' && *fmt < 'a' + NELEMS(p->syms))
-      fputs(p->syms[*fmt - 'a']->x.name, stdout);
-    else if (*fmt != '{')
-      (void)putchar(*fmt);
-    else
-      {
-        int level = 0;
-        const char *s;
-        for (s=fmt++; *s; s++)
-          if (*s=='{')
-            level += 1;
-          else if (*s=='}' && !--level)
-            break;
-        assert(!level);
-        IR->x.emit3(stringn(fmt, s-fmt), p, kids, nts);
-        fmt = s;
-      }
-  return 0;
+	for (; *fmt; fmt++)
+		if (*fmt != '%')
+			(void)putchar(*fmt);
+		else if (*++fmt == 'F')
+			print("%d", framesize);
+		else if (*fmt >= '0' && *fmt <= '9')
+			emitasm(kids[*fmt - '0'], nts[*fmt - '0']);
+		else if (*fmt >= 'a' && *fmt < 'a' + NELEMS(p->syms))
+			fputs(p->syms[*fmt - 'a']->x.name, stdout);
+		else if (*fmt != '{')
+			(void)putchar(*fmt);
+		else
+			{
+				int level = 0;
+				const char *s;
+				for (s=fmt++; *s; s++)
+					if (*s=='{')
+						level += 1;
+					else if (*s=='}' && !--level)
+						break;
+				assert(!level);
+				IR->x.emit3(stringn(fmt, s-fmt), p, kids, nts);
+				fmt = s;
+			}
+	return 0;
 }
 unsigned emitasm(Node p, int nt)
 {
-  int rulenum;
-  short *nts;
-  char *fmt;
-  Node kids[10];
-
-  p = reuse(p, nt);
-  rulenum = getrule(p, nt);
-  nts = IR->x._nts[rulenum];
-  fmt = IR->x._templates[rulenum];
-  assert(fmt);
-  if (IR->x._isinstruction[rulenum] && p->x.emitted)
-    print("%s", p->syms[RX]->x.name);
-  else if (*fmt == '#')
-    (*IR->x.emit2)(p);
-  else {
-    if (*fmt == '?') {
-      fmt++;
-      assert(p->kids[0]);
-      if (p->syms[RX] == p->x.kids[0]->syms[RX])
-        while (*fmt++ != '\n') { }
-    }
-    (*IR->x._kids)(p, rulenum, kids);
-    return emitfmt(fmt, p, kids, nts);
-  }
-  return 0;
+	int rulenum;
+	short *nts;
+	char *fmt;
+	Node kids[10];
+	
+	p = reuse(p, nt);
+	rulenum = getrule(p, nt);
+	nts = IR->x._nts[rulenum];
+	fmt = IR->x._templates[rulenum];
+	assert(fmt);
+	if (IR->x._isinstruction[rulenum] && p->x.emitted)
+		print("%s", p->syms[RX]->x.name);
+	else if (*fmt == '#')
+		(*IR->x.emit2)(p);
+	else {
+		if (*fmt == '?') {
+			fmt++;
+			assert(p->kids[0]);
+			if (p->syms[RX] == p->x.kids[0]->syms[RX])
+				while (*fmt++ != '\n') { }
+		}
+		(*IR->x._kids)(p, rulenum, kids);
+		return emitfmt(fmt, p, kids, nts);
+	}
+	return 0;
 }
 void emit(Node p) {
 	for (; p; p = p->x.next) {
@@ -854,3 +854,8 @@ unsigned regloc(Symbol p) {
 	return p->x.regnode->set<<8 | p->x.regnode->number;
 }
 
+
+/* Local Variables: */
+/* c-basic-offset: 8 */
+/* indent-tabs-mode: t */
+/* End: */

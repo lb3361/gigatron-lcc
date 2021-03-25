@@ -815,3 +815,8 @@ char *tempname(char *suffix) {
 	rmlist = append(name, rmlist);
 	return name;
 }
+
+/* Local Variables: */
+/* c-basic-offset: 8 */
+/* indent-tabs-mode: t */
+/* End: */

@@ -205,3 +205,8 @@ void yywarn(char *fmt, ...) {
 	fprintf(stderr, "warning: ");
 	vfprintf(stderr, fmt, ap);
 }
+
+/* Local Variables: */
+/* c-basic-offset: 8 */
+/* indent-tabs-mode: t */
+/* End: */

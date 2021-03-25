@@ -247,27 +247,45 @@ stmt: reg  ""
 
 addr: ADDRLP2 "LDWI(%a+%F);ADDW(SP);" 48
 addr: ADDRFP2 "LDWI(%a+%F);ADDW(SP);" 48
+addr: con8 "LDI(%0);" 16
 addr: con "LDWI(%0);" 20
-zddr: con8 "LDI(%0);" 16
-addr: zddr "%0"
+
+loada: INDIRI2(addr) "%0DEEK();" 20 
+loada: INDIRU2(addr) "%0DEEK();" 20 
+loada: INDIRP2(addr) "%0DEEK();" 20 
+loada: INDIRI1(addr) "%0PEEK();" 16 
+loada: INDIRU1(addr) "%0PEEK();" 16 
+loada: INDIRI2(con8) "LDW(%0);"  20 
+loada: INDIRU2(con8) "LDW(%0);" 20 
+loada: INDIRP2(con8) "LDW(%0);" 20 
+loada: INDIRI1(con8) "LD(%0);" 16 
+loada: INDIRU1(con8) "LD(%0);" 16 
+
+loadx: INDIRI2(ac) "%0DEEK();" 20
+loadx: INDIRU2(ac) "%0DEEK();" 20
+loadx: INDIRP2(ac) "%0DEEK();" 20
+loadx: INDIRI1(ac) "%0PEEK();" 20
+loadx: INDIRU1(ac) "%0PEEK();" 20
 
 ac: reg "%{src!=AC:LDW(%0);}" 20
 ac: con8 "LDI(%0);" 16
 ac: con "LDWI(%0);" 20
 ac: addr "%0"
+ac: loada "%0"
+ac: loadx "%0"
 
 reg: ac "\t%0%{dst!=AC:STW(%c);}\n" 20
+reg: LOADI2(ac) "\t%0%{dst!=AC:STW(%c);}\n" move(a)+20
+reg: LOADU2(ac) "\t%0%{dst!=AC:STW(%c);}\n" move(a)+20
+reg: LOADP2(ac) "\t%0%{dst!=AC:STW(%c);}\n" move(a)+20
+reg: LOADI1(ac) "\t%0%{dst!=AC:ST(%c);}\n" move(a)+16
+reg: LOADU1(ac) "\t%0%{dst!=AC:ST(%c);}\n" move(a)+16
 
-ac: INDIRI2(zddr) "LDW(%0)" 20
-ac: INDIRI2(ac) "%0DEEK();" 28
-ac: INDIRU2(zddr) "LDW(%0)" 20
-ac: INDIRU2(ac) "%0DEEK();" 28
-ac: INDIRP2(zddr) "LDW(%0)" 20
-ac: INDIRP2(ac) "%0DEEK();" 28
-ac: INDIRI1(zddr) "LD(%0)" 18
-ac: INDIRI1(ac) "%0PEEK();" 26
-ac: INDIRU1(zddr) "LD(%0)" 18
-ac: INDIRU1(ac) "%0PEEK();" 26
+# This helps the spiller with registerless genreloads
+# It depends on emit3 construct %{iarg:<ralt>:<calt>:<loadalt>
+#iarg: reg "%0"
+#iarg: con8 "%0"
+#iarg: loada "STW(SR)%0"
 
 ac: ADDI2(ac,reg)  "%0ADDW(%1);" 28 
 ac: ADDI2(reg,ac)  "%1ADDW(%0);" 28 
@@ -306,22 +324,17 @@ ac: BXORI2(ac,con8)  "%0XORI(%1);" 16
 ac: BXORU2(ac,reg)  "%0XORW(%1);" 28
 ac: BXORU2(ac,con8)  "%0XORI(%1);" 16
 
-stmt: ASGNP2(zddr,ac) "\t%1STW(%0);\n" 20
+stmt: ASGNP2(con8,ac) "\t%1STW(%0);\n" 20
 stmt: ASGNP2(reg,ac) "\t%1DOKE(%0);\n" 28
-stmt: ASGNI2(zddr,ac) "\t%1STW(%0);\n" 20
+stmt: ASGNI2(con8,ac) "\t%1STW(%0);\n" 20
 stmt: ASGNI2(reg,ac) "\t%1DOKE(%0);\n" 28
-stmt: ASGNU2(zddr,ac) "\t%1STW(%0);\n" 20
+stmt: ASGNU2(con8,ac) "\t%1STW(%0);\n" 20
 stmt: ASGNU2(reg,ac) "\t%1DOKE(%0);\n" 28
-stmt: ASGNI1(zddr,ac) "\t%1ST(%0);\n" 20
+stmt: ASGNI1(con8,ac) "\t%1ST(%0);\n" 20
 stmt: ASGNI1(reg,ac) "\t%1POKE(%0);\n" 28
-stmt: ASGNU1(zddr,ac) "\t%1ST(%0);\n" 20
+stmt: ASGNU1(con8,ac) "\t%1ST(%0);\n" 20
 stmt: ASGNU1(reg,ac) "\t%1POKE(%0);\n" 28
 
-reg: LOADI1(ac)  "\t%0%{dst!=AC:ST(%c);}\n" move(a)+16
-reg: LOADU1(ac)  "\t%0%{dst!=AC:ST(%c);}\n" move(a)+16
-reg: LOADI2(ac)  "\t%0%{dst!=AC:STW(%c);}\n" move(a)+20
-reg: LOADU2(ac)  "\t%0%{dst!=AC:STW(%c);}\n" move(a)+20
-reg: LOADP2(ac)  "\t%0%{dst!=AC:STW(%c);}\n" move(a)+20
 
 # Structs
 stmt: ASGNB(reg,INDIRB(ac))  "\t%1%{asgnb}\n" 1

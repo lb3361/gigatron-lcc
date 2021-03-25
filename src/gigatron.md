@@ -47,7 +47,7 @@ static int  if_cpu(int,int);
 static Symbol ireg[32], lreg[32], freg[32];
 static Symbol iregw, lregw, fregw;
 
-#define REGMASK_VARS            0x00fff000
+#define REGMASK_VARS            0x00ff0000
 #define REGMASK_ARGS            0x0000ff00
 #define REGMASK_TEMPS           0x3f00ff00
 #define REGMASK_SAVED           0x00ff0000
@@ -245,20 +245,37 @@ con: ADDRGP2 "%a"
 stmt: ac ""
 stmt: reg  ""
 
-stkaddr: ADDRLP2 "LDWI(%a+%F);ADDW(SP);" 48
-stkaddr: ADDRFP2 "LDWI(%a+%F);ADDW(SP);" 48
+addr: ADDRLP2 "LDWI(%a+%F);ADDW(SP);" 48
+addr: ADDRFP2 "LDWI(%a+%F);ADDW(SP);" 48
+addr: con "LDWI(%0);" 20
+zddr: con8 "LDI(%0);" 16
+addr: zddr "%0"
 
 ac: reg "%{src!=AC:LDW(%0);}" 20
 ac: con8 "LDI(%0);" 16
 ac: con "LDWI(%0);" 20
-ac: stkaddr "%0"
+ac: addr "%0"
 
 reg: ac "\t%0%{dst!=AC:STW(%c);}\n" 20
+
+ac: INDIRI2(zddr) "LDW(%0)" 20
+ac: INDIRI2(ac) "%0DEEK();" 28
+ac: INDIRU2(zddr) "LDW(%0)" 20
+ac: INDIRU2(ac) "%0DEEK();" 28
+ac: INDIRP2(zddr) "LDW(%0)" 20
+ac: INDIRP2(ac) "%0DEEK();" 28
+ac: INDIRI1(zddr) "LD(%0)" 18
+ac: INDIRI1(ac) "%0PEEK();" 26
+ac: INDIRU1(zddr) "LD(%0)" 18
+ac: INDIRU1(ac) "%0PEEK();" 26
 
 ac: ADDI2(ac,reg)  "%0ADDW(%1);" 28 
 ac: ADDI2(reg,ac)  "%1ADDW(%0);" 28 
 ac: ADDI2(ac,con8) "%0ADDI(%1);" 28
 ac: ADDU2(ac,reg)  "%0ADDW(%1);" 28 
+ac: ADDU2(reg,ac)  "%1ADDW(%0);" 28 
+ac: ADDU2(ac,con8) "%0ADDI(%1);" 28
+ac: ADDP2(ac,reg)  "%0ADDW(%1);" 28 
 ac: ADDP2(reg,ac)  "%1ADDW(%0);" 28 
 ac: ADDP2(ac,con8) "%0ADDI(%1);" 28
 
@@ -270,6 +287,7 @@ ac: SUBP2(ac,reg)  "%0SUBW(%1);" 28
 ac: SUBP2(ac,con8) "%0SUBI(%1);" 28
 
 ac: NEGI2(ac) "%0ST(SR);LDI(0);SUBW(SR);" 68
+
 ac: BCOMI2(ac) "%0ST(SR);LDWI(-0);XORW(SR);" 68
 ac: BCOMU2(ac) "%0ST(SR);LDWI(-0);XORW(SR);" 68
 
@@ -288,26 +306,15 @@ ac: BXORI2(ac,con8)  "%0XORI(%1);" 16
 ac: BXORU2(ac,reg)  "%0XORW(%1);" 28
 ac: BXORU2(ac,con8)  "%0XORI(%1);" 16
 
-ac: INDIRP2(con8) "LDW(%0)" 20
-ac: INDIRP2(ac) "%0DEEK();" 28
-ac: INDIRU2(con8) "LDW(%0)" 20
-ac: INDIRU2(ac) "%0DEEK();" 28
-ac: INDIRI2(con8) "LDW(%0)" 20
-ac: INDIRI2(ac) "%0DEEK();" 28
-ac: INDIRI1(con8) "LD(%0)" 18
-ac: INDIRI1(ac) "%0PEEK();" 26
-ac: INDIRU1(con8) "LD(%0)" 18
-ac: INDIRU1(ac) "%0PEEK();" 26
-
-stmt: ASGNP2(con8,ac) "\t%1STW(%0);\n" 20
+stmt: ASGNP2(zddr,ac) "\t%1STW(%0);\n" 20
 stmt: ASGNP2(reg,ac) "\t%1DOKE(%0);\n" 28
-stmt: ASGNI2(con8,ac) "\t%1STW(%0);\n" 20
+stmt: ASGNI2(zddr,ac) "\t%1STW(%0);\n" 20
 stmt: ASGNI2(reg,ac) "\t%1DOKE(%0);\n" 28
-stmt: ASGNU2(con8,ac) "\t%1STW(%0);\n" 20
+stmt: ASGNU2(zddr,ac) "\t%1STW(%0);\n" 20
 stmt: ASGNU2(reg,ac) "\t%1DOKE(%0);\n" 28
-stmt: ASGNI1(con8,ac) "\t%1ST(%0);\n" 20
+stmt: ASGNI1(zddr,ac) "\t%1ST(%0);\n" 20
 stmt: ASGNI1(reg,ac) "\t%1POKE(%0);\n" 28
-stmt: ASGNU1(con8,ac) "\t%1ST(%0);\n" 20
+stmt: ASGNU1(zddr,ac) "\t%1ST(%0);\n" 20
 stmt: ASGNU1(reg,ac) "\t%1POKE(%0);\n" 28
 
 reg: LOADI1(ac)  "\t%0%{dst!=AC:ST(%c);}\n" move(a)
@@ -316,77 +323,73 @@ reg: LOADI2(ac)  "\t%0%{dst!=AC:STW(%c);}\n" move(a)
 reg: LOADU2(ac)  "\t%0%{dst!=AC:STW(%c);}\n" move(a)
 reg: LOADP2(ac)  "\t%0%{dst!=AC:STW(%c);}\n" move(a)
 
+# Structs
 stmt: ASGNB(reg,INDIRB(ac))  "\t%1%{asgnb}\n" 1
 
 # Longs
-lac: reg "%{lmov:%0:LAC}" 40
-larg: reg "%{lmov:%0:LARG}" 40
 reg: lac "\t%0%{lmov:LAC:%c}\n" 40
 reg: LOADI4(lac) "\t%0%{lmov:LAC:%c}\n" 40
 reg: LOADU4(lac) "\t%0%{lmov:LAC:%c}\n" 40
+lac: reg "%{lmov:%0:LAC}" 40
 lac: INDIRI4(ac) "%0CALLI('@.load_lac');" 256
-larg: INDIRI4(ac) "%0CALLI('@.load_larg');" 256
-lac: INDIRU4(ac) "%0CALLI('@.load_lac');" 256
-larg: INDIRU4(ac) "%0CALLI('@.load_larg');" 256
+lac: INDIRU4(ac) "%0CALLI('@.load_lac');" 256l
+larg: reg "%{lmov:%0:LARG}" 40
+larg: INDIRI4(addr) "%0CALLI('@.load_larg');" 256
+larg: INDIRU4(addr) "%0CALLI('@.load_larg');" 256
 lac: ADDI4(lac,larg) "%0%1CALLI('@.ladd');" 256
 lac: ADDU4(lac,larg) "%0%1CALLI('@.ladd');" 256
+lac: ADDI4(larg,lac) "%1%0CALLI('@.ladd');" 256
+lac: ADDU4(larg,lac) "%1%0CALLI('@.ladd');" 256
 lac: SUBI4(lac,larg) "%0%1CALLI('@.lsub');" 256
 lac: SUBU4(lac,larg) "%0%1CALLI('@.lsub');" 256
 lac: MULI4(lac,larg) "%0%1CALLI('@.lmul');" 256
 lac: MULU4(lac,larg) "%0%1CALLI('@.lmul');" 256
+lac: MULI4(larg,lac) "%1%0CALLI('@.lmul');" 256
+lac: MULU4(larg,lac) "%1%0CALLI('@.lmul');" 256
 lac: DIVI4(lac,larg) "%0%1CALLI('@.ldivs');" 256
 lac: DIVU4(lac,larg) "%0%1CALLI('@.ldivu');" 256
 lac: NEGI4(lac) "%0CALLI('@.lneg');" 256
 lac: BCOMU4(lac) "%0CALLI('@.lcom');" 256
 lac: BANDU4(lac,larg) "%0%1CALLI('@.land');" 256
+lac: BANDU4(larg,lac) "%1%0CALLI('@.land');" 256
 lac: BORU4(lac,larg) "%0%1CALLI('@.lor');" 256
+lac: BORU4(larg,lac) "%1%0CALLI('@.lor');" 256
 lac: BXORU4(lac,larg) "%0%1CALLI('@.lxor');" 256
+lac: BXORU4(larg,lac) "%1%0CALLI('@.lxor');" 256
 lac: BCOMI4(lac) "%0CALLI('@.lcom');" 256
 lac: BANDI4(lac,larg) "%0%1CALLI('@.land');" 256
+lac: BANDI4(larg,lac) "%1%0CALLI('@.land');" 256
 lac: BORI4(lac,larg) "%0%1CALLI('@.lor');" 256
+lac: BORI4(larg,lac) "%1%0CALLI('@.lor');" 256
 lac: BXORI4(lac,larg) "%0%1CALLI('@.lxor');" 256
+lac: BXORI4(larg,lac) "%1%0CALLI('@.lxor');" 256
 reg: LOADI4(reg) "\t%{lmov:%0:%c}\n" move(a)
 reg: LOADU4(reg) "\t%{lmov:%0:%c}\n" move(a)
+stmt: ASGNI4(addr,lac) "\t%1%0CALLI('@.store_lac');\n" 256
+stmt: ASGNU4(addr,lac) "\t%1%0CALLI('@.store_lac');\n" 256
 stmt: ASGNI4(reg,lac) "\t%1LDW(%0);CALLI('@.store_lac');\n" 256
 stmt: ASGNU4(reg,lac) "\t%1LDW(%0);CALLI('@.store_lac');\n" 256
 
 # Floats
 fac: reg "%{fmov:%0:FAC}" 60
 farg: reg "%{fmov:%0:FARG}" 60
-reg: fac "\t%{fmov:FAC:%c};\n" 60
+reg: fac "\t%0%{fmov:FAC:%c};\n" 60
 reg: LOADF5(fac) "\t%0%{fmov:FAC:%c}\n" 60
 fac: INDIRF5(ac) "%0CALLI('@.load_fac');" 256
-farg: INDIRF5(ac) "%0CALLI('@.load_farg');" 256
+farg: INDIRF5(addr) "%0CALLI('@.load_farg');" 256
+farg: INDIRF5(con) "%0CALLI('@.load_farg');" 256
 fac: ADDF5(fac,farg) "%0%1CALLI('@.fadd');" 256
+fac: ADDF5(farg,fac) "%1%0CALLI('@.fadd');" 256
 fac: SUBF5(fac,farg) "%0%1CALLI('@.fsub');" 256
+fac: SUBF5(farg,fac) "%1CALLI('@.fneg')%0CALLI('@.fadd');" 256+50
 fac: MULF5(fac,farg) "%0%1CALLI('@.fmul');" 256
+fac: MULF5(farg,fac) "%1%0CALLI('@.fmul');" 256
 fac: DIVF5(fac,farg) "%0%1CALLI('@.fdiv');" 256
 fac: NEGF5(fac) "%0CALLI('@.fneg');" 50
 reg: LOADF5(reg) "\t%{fmov:%0:%c}\n" move(a)
 stmt: ASGNF5(reg,fac) "\t%1LDW(%0);CALLI('@.store_fac')\n" 256
 
 # Calls
-stmt: ARGF5(fac)         "\t%0%{arg}\n" 1
-stmt: ARGI4(lac)         "\t%0%{arg}\n" 1
-stmt: ARGU4(lac)         "\t%0%{arg}\n" 1
-stmt: ARGI2(ac)          "\t%0%{arg}\n" 1
-stmt: ARGU2(ac)          "\t%0%{arg}\n" 1
-stmt: ARGP2(ac)          "\t%0%{arg}\n" 1
-stmt: ARGB(INDIRB(reg)) "\t%0%{argb}\n" 1
-fac: CALLF5(con)  "CALLI(%0);" 1
-lac: CALLI4(con)  "CALLI(%0);" 1
-lac: CALLU4(con)  "CALLI(%0);" 1
-ac: CALLI2(con)  "CALLI(%0);" 1
-ac: CALLU2(con)  "CALLI(%0);" 1
-ac: CALLP2(con)  "CALLI(%0);" 1
-stmt: CALLV(con) "\tCALLI(%0);\n" 1
-fac: CALLF5(reg)  "CALL(%0);" 1
-lac: CALLI4(reg)  "CALL(%0);" 1
-lac: CALLU4(reg)  "CALL(%0);" 1
-ac: CALLI2(reg)  "CALL(%0);" 1
-ac: CALLU2(reg)  "CALL(%0);" 1
-ac: CALLP2(reg)  "CALL(%0);" 1
-stmt: CALLV(reg) "\tCALL(%0);\n" 1
 
 # Conversions
 #            I1   U1
@@ -419,12 +422,12 @@ fac: CVIF5(lac) "%0CALLI('@.cv_lac_to_fac');" if_cv_from_size(a,4,256)
 
 # Spilling without allocating a variable
 vregp: VREGP "$a"
-stmt: ASGNI2(stkaddr,INDIRI2(vregp)) "\t%0STW(SR);LDW(%1);DOKE(SR)\n" 1
-stmt: ASGNU2(stkaddr,INDIRU2(vregp)) "\t%0STW(SR);LDW(%1);DOKE(SR)\n" 1
-stmt: ASGNP2(stkaddr,INDIRP2(vregp)) "\t%0STW(SR);LDW(%1);DOKE(SR)\n" 1
-stmt: ASGNI4(stkaddr,INDIRI4(vregp)) "\t%0STW(SR);LDW(%1);DOKE(SR);LDW(SR);ADDI(2);STW(SR);LDW(%1+2);DOKE(SR)\n" 1
-stmt: ASGNU4(stkaddr,INDIRU4(vregp)) "\t%0STW(SR);LDW(%1);DOKE(SR);LDW(SR);ADDI(2);STW(SR);LDW(%1+2);DOKE(SR)\n" 1
-stmt: ASGNF5(stkaddr,INDIRF5(vregp)) "\t%0STW(SR);%{fmov:%1:FAC}LDW(SR);CALLI('@.store_fac')\n" 1
+stmt: ASGNI2(addr,INDIRI2(vregp)) "\t%0STW(SR);LDW(%1);DOKE(SR)\n" 1
+stmt: ASGNU2(addr,INDIRU2(vregp)) "\t%0STW(SR);LDW(%1);DOKE(SR)\n" 1
+stmt: ASGNP2(addr,INDIRP2(vregp)) "\t%0STW(SR);LDW(%1);DOKE(SR)\n" 1
+stmt: ASGNI4(addr,INDIRI4(vregp)) "\t%0STW(SR);LDW(%1);DOKE(SR);LDW(SR);ADDI(2);STW(SR);LDW(%1+2);DOKE(SR)\n" 1
+stmt: ASGNU4(addr,INDIRU4(vregp)) "\t%0STW(SR);LDW(%1);DOKE(SR);LDW(SR);ADDI(2);STW(SR);LDW(%1+2);DOKE(SR)\n" 1
+stmt: ASGNF5(addr,INDIRF5(vregp)) "\t%0STW(SR);%{fmov:%1:FAC}LDW(SR);CALLI('@.store_fac')\n" 1
 
 
 # Labels and jumps

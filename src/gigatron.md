@@ -245,8 +245,8 @@ con: ADDRGP2 "%a"
 stmt: ac ""
 stmt: reg  ""
 
-addr: ADDRLP2 "LDWI(%a+%F);ADDW(SP);" 48
-addr: ADDRFP2 "LDWI(%a+%F);ADDW(SP);" 48
+addr: ADDRLP2 "_SP(%a+%F);" 48
+addr: ADDRFP2 "_SP(%a+%F);" 48
 addr: con8 "LDI(%0);" 16
 addr: con "LDWI(%0);" 20
 
@@ -335,74 +335,73 @@ stmt: ASGNI1(reg,ac) "\t%1POKE(%0);\n" 28
 stmt: ASGNU1(con8,ac) "\t%1ST(%0);\n" 20
 stmt: ASGNU1(reg,ac) "\t%1POKE(%0);\n" 28
 
-
 # Structs
 stmt: ASGNB(reg,INDIRB(ac))  "\t%1%{asgnb}\n" 1
 
 # Longs
-reg: lac "\t%0%{lmov:LAC:%c}\n" 80
-reg: LOADI4(lac) "\t%0%{lmov:LAC:%c}\n" 80
-reg: LOADU4(lac) "\t%0%{lmov:LAC:%c}\n" 80
-reg: LOADI4(reg) "\t%{lmov:%0:%c}\n" move(a)+80
-reg: LOADU4(reg) "\t%{lmov:%0:%c}\n" move(a)+80
-reg: INDIRI4(ac) "\t%0STW(SR);DEEK();STW(%c);LDW(SR);ADDI(2);DEEK();STW(%c+2);\n" 150
-reg: INDIRU4(ac) "\t%0STW(SR);DEEK();STW(%c);LDW(SR);ADDI(2);DEEK();STW(%c+2);\n" 150
-lac: reg "%{lmov:%0:LAC}" 80
-lac: INDIRI4(ac) "%0STW(SR);DEEK();STW(LAC);LDW(SR);ADDI(2);DEEK();STW(LAC+2);" 150
-lac: INDIRU4(ac) "%0STW(SR);DEEK();STW(LAC);LDW(SR);ADDI(2);DEEK();STW(LAC+2);" 150
-larg: reg "%{lmov:%0:LARG}" 80
-larg: INDIRI4(addr) "%0STW(SR);DEEK();STW(LARG);LDW(SR);ADDI(2);DEEK();STW(LARG+2);" 150
-larg: INDIRU4(addr) "%0STW(SR);DEEK();STW(LARG);LDW(SR);ADDI(2);DEEK();STW(LARG+2);" 150
-lac: ADDI4(lac,larg) "%0%1CALLI('@.ladd');" 256
-lac: ADDU4(lac,larg) "%0%1CALLI('@.ladd');" 256
-lac: ADDI4(larg,lac) "%1%0CALLI('@.ladd');" 256
-lac: ADDU4(larg,lac) "%1%0CALLI('@.ladd');" 256
-lac: SUBI4(lac,larg) "%0%1CALLI('@.lsub');" 256
-lac: SUBU4(lac,larg) "%0%1CALLI('@.lsub');" 256
-lac: MULI4(lac,larg) "%0%1CALLI('@.lmul');" 256
-lac: MULU4(lac,larg) "%0%1CALLI('@.lmul');" 256
-lac: MULI4(larg,lac) "%1%0CALLI('@.lmul');" 256
-lac: MULU4(larg,lac) "%1%0CALLI('@.lmul');" 256
-lac: DIVI4(lac,larg) "%0%1CALLI('@.ldivs');" 256
-lac: DIVU4(lac,larg) "%0%1CALLI('@.ldivu');" 256
-lac: NEGI4(lac) "%0CALLI('@.lneg');" 256
-lac: BCOMU4(lac) "%0CALLI('@.lcom');" 256
-lac: BANDU4(lac,larg) "%0%1CALLI('@.land');" 256
-lac: BANDU4(larg,lac) "%1%0CALLI('@.land');" 256
-lac: BORU4(lac,larg) "%0%1CALLI('@.lor');" 256
-lac: BORU4(larg,lac) "%1%0CALLI('@.lor');" 256
-lac: BXORU4(lac,larg) "%0%1CALLI('@.lxor');" 256
-lac: BXORU4(larg,lac) "%1%0CALLI('@.lxor');" 256
-lac: BCOMI4(lac) "%0CALLI('@.lcom');" 256
-lac: BANDI4(lac,larg) "%0%1CALLI('@.land');" 256
-lac: BANDI4(larg,lac) "%1%0CALLI('@.land');" 256
-lac: BORI4(lac,larg) "%0%1CALLI('@.lor');" 256
-lac: BORI4(larg,lac) "%1%0CALLI('@.lor');" 256
-lac: BXORI4(lac,larg) "%0%1CALLI('@.lxor');" 256
-lac: BXORI4(larg,lac) "%1%0CALLI('@.lxor');" 256
-stmt: ASGNI4(addr,lac) "\t%1%0STW(SR);LDW(LAC);DOKE(SR);LDW(SR);ADDI(2);STW(SR);LDW(LAC+2);DOKE(SR);\n" 200
-stmt: ASGNU4(addr,lac) "\t%1%0STW(SR);LDW(LAC);DOKE(SR);LDW(SR);ADDI(2);STW(SR);LDW(LAC+2);DOKE(SR);\n" 200
-stmt: ASGNI4(reg,lac) "\t%1LDW(LAC);DOKE(%0);LDW(%0);ADDI(2);STW(SR);LDW(LAC+2);DOKE(SR);\n" 180
-stmt: ASGNU4(reg,lac) "\t%1LDW(LAC);DOKE(%0);LDW(%0);ADDI(2);STW(SR);LDW(LAC+2);DOKE(SR);\n" 180
+reg: lac "\t%0%{dst!=LAC:_LMOV(LAC,%c);}\n" 80
+reg: LOADI4(lac) "\t%0%{dst!=LAC:_LMOV(LAC,%c);}\n" 80
+reg: LOADU4(lac) "\t%0%{dst!=LAC:_LMOV(LAC,%c);}\n" 80
+reg: LOADI4(reg) "\t_LMOV(%0,%c)\n" move(a)+80
+reg: LOADU4(reg) "\t_LMOV(%0,%c)\n" move(a)+80
+reg: INDIRI4(ac) "\t%0_LPEEKA(%c);\n" 150
+reg: INDIRU4(ac) "\t%0_LPEEKA(%c);\n" 150
+lac: reg "%{src!=LAC:_LMOV(%0,LAC);}" 80
+lac: INDIRI4(ac) "%0_LPEEKA(LAC);" 150
+lac: INDIRU4(ac) "%0_LPEEKA(LAC);" 150
+larg: reg "%{src!=LARG:_LMOV(%0,LARG);}" 80
+larg: INDIRI4(addr) "%0_LPEEKA(LARG);" 150
+larg: INDIRU4(addr) "%0_LPEEKA(LARG);" 150
+lac: ADDI4(lac,larg) "%0%1_LADD();" 256
+lac: ADDU4(lac,larg) "%0%1_LADD();" 256
+lac: ADDI4(larg,lac) "%1%0_LADD();" 256
+lac: ADDU4(larg,lac) "%1%0_LADD();" 256
+lac: SUBI4(lac,larg) "%0%1_LSUB();" 256
+lac: SUBU4(lac,larg) "%0%1_LSUB();" 256
+lac: MULI4(lac,larg) "%0%1_LMUL();" 256
+lac: MULU4(lac,larg) "%0%1_LMUL();" 256
+lac: MULI4(larg,lac) "%1%0_LMUL();" 256
+lac: MULU4(larg,lac) "%1%0_LMUL();" 256
+lac: DIVI4(lac,larg) "%0%1_LDIVS();" 256
+lac: DIVU4(lac,larg) "%0%1_LDIVU();" 256
+lac: NEGI4(lac) "%0_LNEG();" 256
+lac: BCOMU4(lac) "%0_LCOM();" 256
+lac: BANDU4(lac,larg) "%0%1_LAND();" 256
+lac: BANDU4(larg,lac) "%1%0_LAND();" 256
+lac: BORU4(lac,larg) "%0%1_LOR();" 256
+lac: BORU4(larg,lac) "%1%0_LOR();" 256
+lac: BXORU4(lac,larg) "%0%1_LXOR();" 256
+lac: BXORU4(larg,lac) "%1%0_LXOR();" 256
+lac: BCOMI4(lac) "%0_LCOM();" 256
+lac: BANDI4(lac,larg) "%0%1_LAND();" 256
+lac: BANDI4(larg,lac) "%1%0_LAND();" 256
+lac: BORI4(lac,larg) "%0%1_LOR();" 256
+lac: BORI4(larg,lac) "%1%0_LOR();" 256
+lac: BXORI4(lac,larg) "%0%1_LXOR();" 256
+lac: BXORI4(larg,lac) "%1%0_LXOR();" 256
+stmt: ASGNI4(addr,lac) "\t%1%0_LPOKEA(LAC);\n" 200
+stmt: ASGNU4(addr,lac) "\t%1%0_LPOKEA(LAC);\n" 200
+stmt: ASGNI4(reg,lac) "\t%1LDW(%0);_LPOKEA(LAC);n" 180
+stmt: ASGNU4(reg,lac) "\t%1LDW(%0);_LPOKEA(LAC);\n" 180
 
 # Floats
-reg: fac "\t%0%{fmov:FAC:%c}\n" 100
-reg: LOADF5(fac) "\t%0%{fmov:FAC:%c}\n" 100
-reg: LOADF5(reg) "\t%{fmov:%0:%c}\n" move(a)+100
-fac: reg "%{fmov:%0:FAC}" 100
-fac: INDIRF5(ac) "%0CALLI('@.load_fac');" 256
-farg: INDIRF5(addr) "%0CALLI('@.load_farg');" 256
-farg: reg "%{fmov:%0:FARG}" 60
-fac: ADDF5(fac,farg) "%0%1CALLI('@.fadd');" 256
-fac: ADDF5(farg,fac) "%1%0CALLI('@.fadd');" 256
-fac: SUBF5(fac,farg) "%0%1CALLI('@.fsub');" 256
-fac: SUBF5(farg,fac) "%1CALLI('@.fneg')%0CALLI('@.fadd');" 256+50
-fac: MULF5(fac,farg) "%0%1CALLI('@.fmul');" 256
-fac: MULF5(farg,fac) "%1%0CALLI('@.fmul');" 256
-fac: DIVF5(fac,farg) "%0%1CALLI('@.fdiv');" 256
-fac: NEGF5(fac) "%0CALLI('@.fneg');" 50
-stmt: ASGNF5(addr,fac) "\t%1%0CALLI('@.store_fac')\n" 256
-stmt: ASGNF5(reg,fac) "\t%1LDW(%0);CALLI('@.store_fac')\n" 256
+reg: fac "\t%0%{dst!=FAC:_FMOV(FAC,%c);}\n" 100
+reg: LOADF5(fac) "\t%0%{dst!=FAC:_FMOV(FAC,%c);}\n" 100
+reg: LOADF5(reg) "\t_FMOV(%0,%c)\n" move(a)+100
+fac: reg "%{src!=FAC:_FMOV(%0,FAC);}" 100
+fac: INDIRF5(ac) "%0_FPEEKA(FAC);" 256
+farg: INDIRF5(addr) "%0_FPEEKA(FARG);" 256
+farg: reg "%{src!=FARG:_FMOV(%0,FARG);}" 60
+fac: ADDF5(fac,farg) "%0%1_FADD();" 256
+fac: ADDF5(farg,fac) "%1%0_FADD();" 256
+fac: SUBF5(fac,farg) "%0%1_FSUB();" 256
+fac: SUBF5(farg,fac) "%1_FNEG();%0_FADD();" 256+50
+fac: MULF5(fac,farg) "%0%1_FMUL();" 256
+fac: MULF5(farg,fac) "%1%0_FMUL();" 256
+fac: DIVF5(fac,farg) "%0%1_FDIV();" 256
+fac: NEGF5(fac) "%0_FNEG();" 50
+stmt: ASGNF5(addr,fac) "\t%1%0_FPOKEA(FAC);\n" 256
+stmt: ASGNF5(reg,fac) "\t%1LDW(%0);_FPOKEA(FAC);\n" 256
 
 # Calls
 
@@ -426,23 +425,23 @@ lac: LOADU4(lac) "%0"
 ac: CVII2(ac) "%0XORI(128);SUBI(128);" if_cv_from_size(a,1,48)
 ac: CVUI2(ac) "%0"
 lac: CVIU4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);" 50
-lac: CVII4(ac) "%0STW(LAC);LD(LAC+1);XORI(128);SUBI(128);LD(vAH);ST(LAC+2);ST(LAC+3);" 120
+lac: CVII4(ac) "%0_SEXT(AC,LAC);" 120
 lac: CVUU4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);"
 lac: CVUI4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);"
 # 3) floating point conversions
-ac: CVFI2(fac) "%0CALLI('@.cv_fac_to_lac');LDW(LAC);" 256
-lac: CVFI4(fac) "%0CALLI('@.cv_fac_to_lac');" 256
-fac: CVIF5(ac) "%0STW(LAC);LDI(0);STW(LAC+2);CALLI('@.cv_lac_to_fac');" if_cv_from_size(a,2,120)
-fac: CVIF5(lac) "%0CALLI('@.cv_lac_to_fac');" if_cv_from_size(a,4,256)
+ac: CVFI2(fac) "%0_FCVT(FAC,LAC);LDW(LAC);" 256
+lac: CVFI4(fac) "%0_FCVT(FAC,LAC);" 256
+fac: CVIF5(ac) "%0_SEXT(AC,LAC);_FCVT(LAC,FAC);" if_cv_from_size(a,2,120)
+fac: CVIF5(lac) "%0_FCVT(LAC,FAC);" if_cv_from_size(a,4,256)
 
 # Spilling without allocating a variable
 vregp: VREGP "%a"
-stmt: ASGNI2(addr,INDIRI2(vregp)) "\t%0STW(SR);LDW(%1);DOKE(SR);\n" 1
-stmt: ASGNU2(addr,INDIRU2(vregp)) "\t%0STW(SR);LDW(%1);DOKE(SR);\n" 1
-stmt: ASGNP2(addr,INDIRP2(vregp)) "\t%0STW(SR);LDW(%1);DOKE(SR);\n" 1
-stmt: ASGNI4(addr,INDIRI4(vregp)) "\t%0STW(SR);LDW(%1);DOKE(SR);LDW(SR);ADDI(2);STW(SR);LDW(%1+2);DOKE(SR);\n" 1
-stmt: ASGNU4(addr,INDIRU4(vregp)) "\t%0STW(SR);LDW(%1);DOKE(SR);LDW(SR);ADDI(2);STW(SR);LDW(%1+2);DOKE(SR);\n" 1
-stmt: ASGNF5(addr,INDIRF5(vregp)) "\t%0STW(SR);%{fmov:%1:FAC}LDW(SR);CALLI('@.store_fac');\n" 1
+stmt: ASGNI2(addr,INDIRI2(vregp)) "\t%0_IPOKEA(%1);\n" 1
+stmt: ASGNU2(addr,INDIRU2(vregp)) "\t%0_IPOKEA(%1);\n" 1
+stmt: ASGNP2(addr,INDIRP2(vregp)) "\t%0_IPOKEA(%1);\n" 1
+stmt: ASGNI4(addr,INDIRI4(vregp)) "\t%0_LPOKEA(%1);\n" 1
+stmt: ASGNU4(addr,INDIRU4(vregp)) "\t%0_LPOKEA(%1);\n" 1
+stmt: ASGNF5(addr,INDIRF5(vregp)) "\t%{src1!=FAC:_FMOV(%1,FAC);}%0_FPOKEA(FAC);\n" 1
 
 
 # Labels and jumps
@@ -452,16 +451,6 @@ stmt: LABELV "label(%a);\n"
 # More opcodes for cpu=5
 
 # More opcodes for cpu=6
-stmt: ASGNP2(ac,con8) "\t%0DOKEI(%1);\n" if_cpu(6,28)
-stmt: ASGNP2(ac,reg) "\t%0DOKEA(%1);\n" if_cpu(6,30)
-stmt: ASGNI2(ac,con8) "\t%0DOKEI(%1);\n" if_cpu(6,28)
-stmt: ASGNI2(ac,reg) "\t%0DOKEA(%1);\n" if_cpu(6,30)
-stmt: ASGNU2(ac,con8) "\t%0DOKEI(%1);\n" if_cpu(6,28)
-stmt: ASGNU2(ac,reg) "\t%0DOKEA(%1);\n" if_cpu(6,30)
-stmt: ASGNI1(ac,con8) "\t%0POKEI(%1);\n" if_cpu(6,28)
-stmt: ASGNI1(ac,reg) "\t%0POKEA(%1);\n" if_cpu(6,30)
-stmt: ASGNU1(ac,con8) "\t%0POKEI(%1);\n" if_cpu(6,20)
-stmt: ASGNU1(ac,reg) "\t%0POKEA(%1);\n" if_cpu(6,28)
 
 
 # /*-- END RULES --/
@@ -629,28 +618,9 @@ static char *aprintf(const char *fmt, ...)
 static void emit3(const char *fmt, Node p, Node *kids, short *nts)
 {
   int i=0;
-  while (fmt[i] && fmt[i++] != ':') { }
-  if (!strncmp(fmt,"fmov:",5) && fmt[i])
-    {
-      char *args[2], *buf;
-      split(fmt+5, args, 2);
-      if (strcmp(args[0], args[1])) {
-        buf=aprintf("LDW(%s);STW(%s);LDW(%s+2);STW(%s+2);LDW(%s+4);STW(%s+4);",
-                    args[0],args[1],args[0],args[1],args[0],args[1] );
-        emitfmt(buf, p, kids, nts);
-      }
-    }
-  else if (!strncmp(fmt,"lmov:",5) && fmt[i])
-    {
-      char *args[2], *buf;
-      split(fmt+5, args, 2);
-      if (strcmp(args[0], args[1])) {
-        buf=aprintf("LDW(%s);STW(%s);LDW(%s+2);STW(%s+2);",
-                    args[0],args[1],args[0],args[1] );
-        emitfmt(buf, p, kids, nts);
-      }
-    }
-  else if (!strncmp(fmt,"dst!=",5) && fmt[i])
+  while (fmt[i] && fmt[i++] != ':')
+    { }
+  if (!strncmp(fmt,"dst!=",5) && fmt[i])
     {
       if (p->syms[RX]->x.name != stringn(fmt+5,i-6))
         emitfmt(fmt+i, p, kids, nts);
@@ -660,13 +630,14 @@ static void emit3(const char *fmt, Node p, Node *kids, short *nts)
       if (!kids[0] || !kids[0]->syms[RX] || kids[0]->syms[RX]->x.name != stringn(fmt+5,i-6))
         emitfmt(fmt+i, p, kids, nts);
     }
-  else if (!strncmp(fmt,"src==", 5) && fmt[i])
+  else if (!strncmp(fmt,"src1!=", 5) && fmt[i])
     {
-      if (kids[0] && kids[0]->syms[RX] && kids[0]->syms[RX]->x.name == stringn(fmt+5,i-6))
+      if (!kids[1] || !kids[1]->syms[RX] || kids[1]->syms[RX]->x.name != stringn(fmt+5,i-6))
         emitfmt(fmt+i, p, kids, nts);
     }
   else if (!strcmp(fmt, "arg"))
     {
+      //// TODO
       static int roffset;
       int ty, sz;
       Symbol r;
@@ -726,18 +697,6 @@ static int bitcount(unsigned mask) {
   return n;
 }
 
-static void ld_sp_plus_offset(int offset)
-{
-  if (offset >= 256 || offset <= -256)
-    print("LDWI(%s);ADDW(SP);",offset);
-  else if (offset > 0)
-    print("LDW(SP);ADDI(%d);",offset);
-  else if (offset < 0)
-    print("LDW(SP);SUBI(%d);",-offset);
-  else
-    print("LDW(SP);");
-}
-
 static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
 {
   int i, roffset, sizesave, varargs, first, ty;
@@ -794,23 +753,18 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   usedmask[IREG] &= REGMASK_SAVED;
   sizesave = 2 * bitcount(usedmask[IREG]);
   framesize = maxargoffset + sizesave + maxoffset;
-  if (framesize > 0) {
-    print("\t");
-    ld_sp_plus_offset(-framesize);
-    print("STW(SP);\n");
-  }
+  if (framesize > 0)
+    print("\t_SP(%d);STW(SP);\n",framesize);
   /* save callee saved registers */
   first = 1;
   for (i=0; i<=31; i++)
     if (usedmask[IREG]&(1<<i)) {
-      print("\t");
-      if (first) {
-        ld_sp_plus_offset(maxargoffset);
-        print((cpu >= 6) ? "" : "STW(SR);");
-      } else {
-        print((cpu >= 6) ? "ADDI(2);" : "LDW(SR);ADDI(2);STW(SR);");
-      }
-      print((cpu >= 6) ? "DOKEA(R%d);\n" : "LDW(R%d);DOKE(SR);\n", i);
+      if (first && maxargoffset>0 && maxargoffset < 256)
+        print("\tADDI(%d);_IPOKEA(R%d);\n", maxargoffset, i);
+      else if (first)
+        print("\t_SP(%d);_IPOKEA(R%d);\n", maxargoffset, i);
+      else
+        print("\tADDI(2);_IPOKEA(R%d);\n", i);
       first = 0;
     }
   /* save args into new registers */
@@ -819,36 +773,16 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
     if (r && r->x.regnode != callee[i]->x.regnode) {
       Symbol out = callee[i];
       Symbol in  = caller[i];
-      int rn = r->x.regnode->number;
+      const char *rn = r->x.name;
       int sz = in->type->size;
+      int c = (isfloat(in->type)) ? 'F' : (sz>=1 && sz<=5) ? ".BI.LF"[sz] : '?';
       assert(out && in && r && r->x.regnode);
       assert(out->sclass != REGISTER || out->x.regnode);
       if (out->sclass == REGISTER && (isint(out->type) || out->type == in->type)) {
-        int outn = out->x.regnode->number;
-        print("\tLDW(R%d);STW(R%d)", rn, outn);
         if (sz > 2)
-          print(";LDW(R%d);STW(R%d)", rn+1, outn+1);
-        if (sz > 4)
-          print(";LDW(R%d);STW(R%d)", rn+2, outn+2);
-        print("\n");
-      } else {
-        int off = in->x.offset + framesize;
-        print("\t");
-        if (isfloat(in->type))
-          print("LDW(R%d);STW(R2);LDW(R%d);STW(R3);LDW(R%d);STW(R4);", rn, rn+1, rn+2);
-        else if (sz == 4)
-          print("LDW(R%d);STW(R3);LDW(R%d);STW(R4);", rn, rn+1);
-        ld_sp_plus_offset(off);
-        if (isfloat(in->type))
-          print("CALLI('@.store_fac');\n");
-        else if (sz == 4)
-          print("CALLI('@.store_lac');\n");
-        else if (sz == 2)
-          print((cpu >= 6) ? "DOKEA(R%d);\n" : "STW(SR);LDW(R%d);DOKE(SR);\n", rn);
-        else if (sz == 1)
-          print((cpu >= 6) ? "POKEA(R%d);\n" : "STW(SR);LD(R%d);POKE(SR);\n", rn);
-        else
-          assert(0);
+          print("\t_%cMOV(%s,%s);\n", c, rn, out->x.name);
+        else 
+          print("\tLDW(%s);STW(%s);\n", rn, out->x.name);
       }
     }
   }
@@ -862,21 +796,14 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   first = 1;
   for (i=0; i<=31; i++)
     if (usedmask[IREG]&(1<<i)) {
-      print("\t");
-      if (first) {
-        ld_sp_plus_offset(maxargoffset);
-        print((cpu >= 6) ? "" : "STW(SR);");
-      } else {
-        print((cpu >= 6) ? "ADDI(2);" : "LDW(SR);ADDI(2);STW(SR);");
-      }
-      print((cpu >= 6) ? "DEEKA(R%d);\n" : "DEEK(SR);STW(R%d);\n", i);
+      if (first)
+        print("\t_SP(%d);_IPEEKA(R%d);\n", maxargoffset, i);
+      else
+        print("\tADDI(2);_IPEEKA(R%d);\n", i);
       first = 0;
     }
-  if (framesize > 0) {
-    print("\t");
-    ld_sp_plus_offset(framesize);
-    print("STW(SP);\n");
-  }
+  if (framesize > 0)
+    print("\t_SP(%d);STW(SP);\n", -framesize);
   if (opsize(ty) == 2 && (optype(ty)==I || optype(ty)==U || optype(ty)==P))
     print("\tLDW(LR);STW(vLR);LDW(IAC);RET();\n");
   else

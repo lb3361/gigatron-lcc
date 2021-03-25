@@ -61,7 +61,7 @@ typedef struct {
 	void *state;
 	short inst;
 	short nt;
-	Node kids[16];
+	Node kids[12];
 	Node prev, next;
 	Node prevuse;
 	short argno;
@@ -105,3 +105,8 @@ extern unsigned         emitbin(Node, int);
 #else
 #define debug(x) (void)(dflag&&((x),0))
 #endif
+
+/* Local Variables: */
+/* c-basic-offset: 8 */
+/* indent-tabs-mode: t */
+/* End: */

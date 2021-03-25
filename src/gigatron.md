@@ -282,20 +282,18 @@ reg: LOADI1(ac) "\t%0%{dst!=AC:ST(%c);}\n" move(a)+16
 reg: LOADU1(ac) "\t%0%{dst!=AC:ST(%c);}\n" move(a)+16
 
 # This helps the spiller with registerless genreloads
-# It depends on emit3 construct %{iarg:<ralt>:<calt>:<loadalt>
-#iarg: reg "%0"
-#iarg: con8 "%0"
-#iarg: loada "STW(SR)%0"
+# It depends on emit3 construct %{iarg:<ralt>:<calt>:<lalt>
 
-ac: ADDI2(ac,reg)  "%0ADDW(%1);" 28 
-ac: ADDI2(reg,ac)  "%1ADDW(%0);" 28 
-ac: ADDI2(ac,con8) "%0ADDI(%1);" 28
-ac: ADDU2(ac,reg)  "%0ADDW(%1);" 28 
-ac: ADDU2(reg,ac)  "%1ADDW(%0);" 28 
-ac: ADDU2(ac,con8) "%0ADDI(%1);" 28
-ac: ADDP2(ac,reg)  "%0ADDW(%1);" 28 
-ac: ADDP2(reg,ac)  "%1ADDW(%0);" 28 
-ac: ADDP2(ac,con8) "%0ADDI(%1);" 28
+iarg: reg "%0"
+iarg: con8 "%0"
+iarg: loada "STW(SR)%0"
+
+ac: ADDI2(ac,iarg)  "%0%{iarg1:ADDW(%1):ADDI(%1):STW(SR);%1ADDW(SR)};" 28 
+ac: ADDI2(iarg,ac)  "%1%{iarg0:ADDW(%0):ADDI(%0):STW(SR);%0ADDW(SR)};" 28 
+ac: ADDU2(ac,iarg)  "%0%{iarg1:ADDW(%1):ADDI(%1):STW(SR);%1ADDW(SR)};" 28 
+ac: ADDU2(iarg,ac)  "%1%{iarg0:ADDW(%0):ADDI(%0):STW(SR);%0ADDW(SR)};" 28 
+ac: ADDP2(ac,iarg)  "%0%{iarg1:ADDW(%1):ADDI(%1):STW(SR);%1ADDW(SR)};" 28 
+ac: ADDP2(iarg,ac)  "%1%{iarg0:ADDW(%0):ADDI(%0):STW(SR);%0ADDW(SR)};" 28 
 
 ac: SUBI2(ac,reg)  "%0SUBW(%1);" 28 
 ac: SUBI2(ac,con8) "%0SUBI(%1);" 28
@@ -620,7 +618,25 @@ static void emit3(const char *fmt, Node p, Node *kids, short *nts)
   int i=0;
   while (fmt[i] && fmt[i++] != ':')
     { }
-  if (!strncmp(fmt,"dst!=",5) && fmt[i])
+  if (!strncmp(fmt,"iarg", 4) && (fmt[4]&254)=='0' && fmt[5]==':')
+    {
+      int i_rul;
+      short *i_nts;
+      Node i_p;
+      char *args[3];
+      
+      split(fmt+6, args, 3);
+      i_p = kids[fmt[4]&1]; assert(i_p);
+      i_rul = (*IR->x._rule)(i_p->x.state, nts[fmt[4]&1]); assert(i_rul);
+      i_nts = IR->x._nts[i_rul]; assert(i_nts);
+      switch(_ntname[i_nts[0]][0]) {
+      case 'r': emitfmt(args[0], p, kids, nts); break;
+      case 'c': emitfmt(args[1], p, kids, nts); break;
+      case 'l': emitfmt(args[2], p, kids, nts); break;
+      default: assert(0);
+      }
+    }
+  else if (!strncmp(fmt,"dst!=",5) && fmt[i])
     {
       if (p->syms[RX]->x.name != stringn(fmt+5,i-6))
         emitfmt(fmt+i, p, kids, nts);

@@ -1,9 +1,11 @@
+# comment
 %{
 /*---- BEGIN HEADER --*/
-  
+
 #include "c.h"
-#include "math.h"
-  
+#include <ctype.h>
+#include <math.h>
+
 #define NODEPTR_TYPE Node
 #define OP_LABEL(p) ((p)->op)
 #define LEFT_CHILD(p) ((p)->kids[0])
@@ -224,9 +226,9 @@ stmt: ASGNF5(VREGP,reg)  "# write register\n"
 stmt: RETF5(reg)  "# ret\n"  1
 stmt: RETI4(reg)  "# ret\n"  1
 stmt: RETU4(reg)  "# ret\n"  1
-stmt: RETI2(reg)  "# ret\n"  1
-stmt: RETU2(reg)  "# ret\n"  1
-stmt: RETP2(reg)  "# ret\n"  1
+stmt: RETI2(ac)   "%0\n" 1
+stmt: RETU2(ac)   "%0\n" 1
+stmt: RETP2(ac)   "%0\n" 1
 
 con8: CNSTI1  "%a"
 con8: CNSTU1  "%a"  range(a,0,255)
@@ -267,39 +269,43 @@ loadx: INDIRP2(ac) "%0DEEK();" 20
 loadx: INDIRI1(ac) "%0PEEK();" 20
 loadx: INDIRU1(ac) "%0PEEK();" 20
 
-ac: reg "%{src!=AC:LDW(%0);}" 20
+ac: reg "%{%0!=AC:LDW(%0);}" 20
 ac: con8 "LDI(%0);" 16
 ac: con "LDWI(%0);" 20
 ac: addr "%0"
 ac: loada "%0"
 ac: loadx "%0"
 
-reg: ac "\t%0%{dst!=AC:STW(%c);}\n" 20
-reg: LOADI2(ac) "\t%0%{dst!=AC:STW(%c);}\n" move(a)+20
-reg: LOADU2(ac) "\t%0%{dst!=AC:STW(%c);}\n" move(a)+20
-reg: LOADP2(ac) "\t%0%{dst!=AC:STW(%c);}\n" move(a)+20
-reg: LOADI1(ac) "\t%0%{dst!=AC:ST(%c);}\n" move(a)+16
-reg: LOADU1(ac) "\t%0%{dst!=AC:ST(%c);}\n" move(a)+16
+reg: ac "%0%{%c!=AC:STW(%c);}\n" 20
+reg: LOADI2(ac) "%0%{%c!=AC:STW(%c);}\n" move(a)+20
+reg: LOADU2(ac) "%0%{%c!=AC:STW(%c);}\n" move(a)+20
+reg: LOADP2(ac) "%0%{%c!=AC:STW(%c);}\n" move(a)+20
+reg: LOADI1(ac) "%0%{%c!=AC:ST(%c);}\n" move(a)+16
+reg: LOADU1(ac) "%0%{%c!=AC:ST(%c);}\n" move(a)+16
 
-# This helps the spiller with registerless genreloads
-# It depends on emit3 construct %{iarg:<ralt>:<calt>:<lalt>
+# genreload() can use the iarg:loada rule to reload with allocating a register. 
+# This depends on code using the %{iargX} macro to insert the reloading code when needed.
+# Note that we can use vLR as another scratch register because it is always saved by the
+# function prologue/epilogue.
 
 iarg: reg "%0"
-iarg: con8 "%0"
-iarg: loada "STW(SR)%0"
+iarg: loada "%{alt:SR:STW(vLR);%0STW(SR);LDW(vLR);}" 80
 
-ac: ADDI2(ac,iarg)  "%0%{iarg1:ADDW(%1):ADDI(%1):STW(SR);%1ADDW(SR)};" 28 
-ac: ADDI2(iarg,ac)  "%1%{iarg0:ADDW(%0):ADDI(%0):STW(SR);%0ADDW(SR)};" 28 
-ac: ADDU2(ac,iarg)  "%0%{iarg1:ADDW(%1):ADDI(%1):STW(SR);%1ADDW(SR)};" 28 
-ac: ADDU2(iarg,ac)  "%1%{iarg0:ADDW(%0):ADDI(%0):STW(SR);%0ADDW(SR)};" 28 
-ac: ADDP2(ac,iarg)  "%0%{iarg1:ADDW(%1):ADDI(%1):STW(SR);%1ADDW(SR)};" 28 
-ac: ADDP2(iarg,ac)  "%1%{iarg0:ADDW(%0):ADDI(%0):STW(SR);%0ADDW(SR)};" 28 
+ac: ADDI2(ac,iarg)  "%0%{iarg1}ADDW(%1);" 28 
+ac: ADDI2(iarg,ac)  "%1%{iarg0}ADDW(%0);" 28 
+ac: ADDU2(ac,iarg)  "%0%{iarg1}ADDW(%1);" 28 
+ac: ADDU2(iarg,ac)  "%1%{iarg0}ADDW(%0);" 28 
+ac: ADDP2(ac,iarg)  "%0%{iarg1}ADDW(%1);" 28 
+ac: ADDP2(iarg,ac)  "%1%{iarg0}ADDW(%0);" 28 
+ac: ADDI2(ac,con8) "%0ADDI(%1);" 28
+ac: ADDU2(ac,con8) "%0ADDI(%1);" 28
+ac: ADDP2(ac,con8) "%0ADDI(%1);" 28
 
-ac: SUBI2(ac,reg)  "%0SUBW(%1);" 28 
+ac: SUBI2(ac,iarg)  "%0%{iarg1}SUBW(%1);" 28 
+ac: SUBU2(ac,iarg)  "%0%{iarg1}SUBW(%1);" 28 
+ac: SUBP2(ac,iarg)  "%0%{iarg1}SUBW(%1);" 28 
 ac: SUBI2(ac,con8) "%0SUBI(%1);" 28
-ac: SUBU2(ac,reg)  "%0SUBW(%1);" 28 
 ac: SUBU2(ac,con8) "%0SUBI(%1);" 28
-ac: SUBP2(ac,reg)  "%0SUBW(%1);" 28 
 ac: SUBP2(ac,con8) "%0SUBI(%1);" 28
 
 ac: NEGI2(ac) "%0ST(SR);LDI(0);SUBW(SR);" 68
@@ -307,47 +313,48 @@ ac: NEGI2(ac) "%0ST(SR);LDI(0);SUBW(SR);" 68
 ac: BCOMI2(ac) "%0ST(SR);LDWI(-0);XORW(SR);" 68
 ac: BCOMU2(ac) "%0ST(SR);LDWI(-0);XORW(SR);" 68
 
-ac: BANDI2(ac,reg)  "%0ANDW(%1);" 28
+ac: BANDI2(ac,iarg)  "%0%{iarg1}ANDW(%1);" 28
+ac: BANDU2(ac,iarg)  "%0%{iarg1}ANDW(%1);" 28
 ac: BANDI2(ac,con8)  "%0ANDI(%1);" 16 
-ac: BANDU2(ac,reg)  "%0ANDW(%1);" 28
 ac: BANDU2(ac,con8)  "%0ANDI(%1);" 16 
 
-ac: BORI2(ac,reg)  "%0ORW(%1);" 28
+ac: BORI2(ac,iarg)  "%0%{iarg1}ORW(%1);" 28
+ac: BORU2(ac,iarg)  "%0%{iarg1}ORW(%1);" 28
 ac: BORI2(ac,con8)  "%0ORI(%1);" 16 
-ac: BORU2(ac,reg)  "%0ORW(%1);" 28
 ac: BORU2(ac,con8)  "%0ORI(%1);" 16 
 
-ac: BXORI2(ac,reg)  "%0XORW(%1);" 28
+ac: BXORI2(ac,iarg)  "%0%{iarg1}XORW(%1);" 28
+ac: BXORU2(ac,iarg)  "%0%{iarg1}XORW(%1);" 28
 ac: BXORI2(ac,con8)  "%0XORI(%1);" 16 
-ac: BXORU2(ac,reg)  "%0XORW(%1);" 28
 ac: BXORU2(ac,con8)  "%0XORI(%1);" 16
 
-stmt: ASGNP2(con8,ac) "\t%1STW(%0);\n" 20
-stmt: ASGNP2(reg,ac) "\t%1DOKE(%0);\n" 28
-stmt: ASGNI2(con8,ac) "\t%1STW(%0);\n" 20
-stmt: ASGNI2(reg,ac) "\t%1DOKE(%0);\n" 28
-stmt: ASGNU2(con8,ac) "\t%1STW(%0);\n" 20
-stmt: ASGNU2(reg,ac) "\t%1DOKE(%0);\n" 28
-stmt: ASGNI1(con8,ac) "\t%1ST(%0);\n" 20
-stmt: ASGNI1(reg,ac) "\t%1POKE(%0);\n" 28
-stmt: ASGNU1(con8,ac) "\t%1ST(%0);\n" 20
-stmt: ASGNU1(reg,ac) "\t%1POKE(%0);\n" 28
+# Standard assignnments
+stmt: ASGNP2(con8,ac) "%1STW(%0);\n" 20
+stmt: ASGNP2(reg,ac) "%1DOKE(%0);\n" 28
+stmt: ASGNI2(con8,ac) "%1STW(%0);\n" 20
+stmt: ASGNI2(reg,ac) "%1DOKE(%0);\n" 28
+stmt: ASGNU2(con8,ac) "%1STW(%0);\n" 20
+stmt: ASGNU2(reg,ac) "%1DOKE(%0);\n" 28
+stmt: ASGNI1(con8,ac) "%1ST(%0);\n" 20
+stmt: ASGNI1(reg,ac) "%1POKE(%0);\n" 28
+stmt: ASGNU1(con8,ac) "%1ST(%0);\n" 20
+stmt: ASGNU1(reg,ac) "%1POKE(%0);\n" 28
 
 # Structs
-stmt: ASGNB(reg,INDIRB(ac))  "\t%1%{asgnb}\n" 1
+stmt: ASGNB(reg,INDIRB(ac))  "%1%{asgnb}\n" 1
 
 # Longs
-reg: lac "\t%0%{dst!=LAC:_LMOV(LAC,%c);}\n" 80
-reg: LOADI4(lac) "\t%0%{dst!=LAC:_LMOV(LAC,%c);}\n" 80
-reg: LOADU4(lac) "\t%0%{dst!=LAC:_LMOV(LAC,%c);}\n" 80
-reg: LOADI4(reg) "\t_LMOV(%0,%c)\n" move(a)+80
-reg: LOADU4(reg) "\t_LMOV(%0,%c)\n" move(a)+80
-reg: INDIRI4(ac) "\t%0_LPEEKA(%c);\n" 150
-reg: INDIRU4(ac) "\t%0_LPEEKA(%c);\n" 150
-lac: reg "%{src!=LAC:_LMOV(%0,LAC);}" 80
+reg: lac "%0%{%c!=LAC:_LMOV(LAC,%c);}\n" 80
+reg: LOADI4(lac) "%0%{%c!=LAC:_LMOV(LAC,%c);}\n" 80
+reg: LOADU4(lac) "%0%{%c!=LAC:_LMOV(LAC,%c);}\n" 80
+reg: LOADI4(reg) "_LMOV(%0,%c)\n" move(a)+80
+reg: LOADU4(reg) "_LMOV(%0,%c)\n" move(a)+80
+reg: INDIRI4(ac) "%0_LPEEKA(%c);\n" 150
+reg: INDIRU4(ac) "%0_LPEEKA(%c);\n" 150
+lac: reg "%{%0!=LAC:_LMOV(%0,LAC);}" 80
 lac: INDIRI4(ac) "%0_LPEEKA(LAC);" 150
 lac: INDIRU4(ac) "%0_LPEEKA(LAC);" 150
-larg: reg "%{src!=LARG:_LMOV(%0,LARG);}" 80
+larg: reg "%{%0!=LARG:_LMOV(%0,LARG);}" 80
 larg: INDIRI4(addr) "%0_LPEEKA(LARG);" 150
 larg: INDIRU4(addr) "%0_LPEEKA(LARG);" 150
 lac: ADDI4(lac,larg) "%0%1_LADD();" 256
@@ -377,19 +384,19 @@ lac: BORI4(lac,larg) "%0%1_LOR();" 256
 lac: BORI4(larg,lac) "%1%0_LOR();" 256
 lac: BXORI4(lac,larg) "%0%1_LXOR();" 256
 lac: BXORI4(larg,lac) "%1%0_LXOR();" 256
-stmt: ASGNI4(addr,lac) "\t%1%0_LPOKEA(LAC);\n" 200
-stmt: ASGNU4(addr,lac) "\t%1%0_LPOKEA(LAC);\n" 200
-stmt: ASGNI4(reg,lac) "\t%1LDW(%0);_LPOKEA(LAC);n" 180
-stmt: ASGNU4(reg,lac) "\t%1LDW(%0);_LPOKEA(LAC);\n" 180
+stmt: ASGNI4(addr,lac) "%1%0_LPOKEA(LAC);\n" 200
+stmt: ASGNU4(addr,lac) "%1%0_LPOKEA(LAC);\n" 200
+stmt: ASGNI4(reg,lac) "%1LDW(%0);_LPOKEA(LAC);n" 180
+stmt: ASGNU4(reg,lac) "%1LDW(%0);_LPOKEA(LAC);\n" 180
 
 # Floats
-reg: fac "\t%0%{dst!=FAC:_FMOV(FAC,%c);}\n" 100
-reg: LOADF5(fac) "\t%0%{dst!=FAC:_FMOV(FAC,%c);}\n" 100
-reg: LOADF5(reg) "\t_FMOV(%0,%c)\n" move(a)+100
-fac: reg "%{src!=FAC:_FMOV(%0,FAC);}" 100
+reg: fac "%0%{%c!=FAC:_FMOV(FAC,%c);}\n" 100
+reg: LOADF5(fac) "%0%{%c!=FAC:_FMOV(FAC,%c);}\n" 100
+reg: LOADF5(reg) "_FMOV(%0,%c)\n" move(a)+100
+fac: reg "%{%0!=FAC:_FMOV(%0,FAC);}" 100
 fac: INDIRF5(ac) "%0_FPEEKA(FAC);" 256
 farg: INDIRF5(addr) "%0_FPEEKA(FARG);" 256
-farg: reg "%{src!=FARG:_FMOV(%0,FARG);}" 60
+farg: reg "%{%0!=FARG:_FMOV(%0,FARG);}" 60
 fac: ADDF5(fac,farg) "%0%1_FADD();" 256
 fac: ADDF5(farg,fac) "%1%0_FADD();" 256
 fac: SUBF5(fac,farg) "%0%1_FSUB();" 256
@@ -398,8 +405,8 @@ fac: MULF5(fac,farg) "%0%1_FMUL();" 256
 fac: MULF5(farg,fac) "%1%0_FMUL();" 256
 fac: DIVF5(fac,farg) "%0%1_FDIV();" 256
 fac: NEGF5(fac) "%0_FNEG();" 50
-stmt: ASGNF5(addr,fac) "\t%1%0_FPOKEA(FAC);\n" 256
-stmt: ASGNF5(reg,fac) "\t%1LDW(%0);_FPOKEA(FAC);\n" 256
+stmt: ASGNF5(addr,fac) "%1%0_FPOKEA(FAC);\n" 256
+stmt: ASGNF5(reg,fac) "%1LDW(%0);_FPOKEA(FAC);\n" 256
 
 # Calls
 
@@ -432,14 +439,6 @@ lac: CVFI4(fac) "%0_FCVT(FAC,LAC);" 256
 fac: CVIF5(ac) "%0_SEXT(AC,LAC);_FCVT(LAC,FAC);" if_cv_from_size(a,2,120)
 fac: CVIF5(lac) "%0_FCVT(LAC,FAC);" if_cv_from_size(a,4,256)
 
-# Spilling without allocating a variable
-vregp: VREGP "%a"
-stmt: ASGNI2(addr,INDIRI2(vregp)) "\t%0_IPOKEA(%1);\n" 1
-stmt: ASGNU2(addr,INDIRU2(vregp)) "\t%0_IPOKEA(%1);\n" 1
-stmt: ASGNP2(addr,INDIRP2(vregp)) "\t%0_IPOKEA(%1);\n" 1
-stmt: ASGNI4(addr,INDIRI4(vregp)) "\t%0_LPOKEA(%1);\n" 1
-stmt: ASGNU4(addr,INDIRU4(vregp)) "\t%0_LPOKEA(%1);\n" 1
-stmt: ASGNF5(addr,INDIRF5(vregp)) "\t%{src1!=FAC:_FMOV(%1,FAC);}%0_FPOKEA(FAC);\n" 1
 
 
 # Labels and jumps
@@ -458,7 +457,7 @@ stmt: LABELV "label(%a);\n"
 
 static void comment(const char *fmt, ...) {
   va_list ap;
-  print("-- ");
+  print("# ");
   va_start(ap, fmt);
   vfprint(stdout, NULL, fmt, ap);
   va_end(ap);
@@ -503,11 +502,9 @@ static void progbeg(int argc, char *argv[])
   /* Prepare registers */
   ireg[0] = mkreg("AC", 0, 1, IREG);
   ireg[1] = mkreg("SR", 1, 1, IREG);
-  ireg[3] = mkreg("IAC", 3, 1, IREG);
-  ireg[6] = mkreg("IARG", 6, 1, IREG);
   ireg[30] = mkreg("LR", 30, 1, IREG);
   ireg[31] = mkreg("SP", 31, 1, IREG);
-  for (i=8; i<30; i++)
+  for (i=2; i<30; i++)
     ireg[i] = mkreg("R%d", i, 1, IREG);
   /* Register pairs for longs */
   lreg[3] = mkreg("LAC", 3, 3, IREG);
@@ -570,120 +567,99 @@ static void target(Node p)
   switch (specific(p->op))
     {
     case RET+I: case RET+U: case RET+P:
-      /* Returns in IAC or LAC */
-      rtarget(p, 0, (opsize(p->op)==4) ? lreg[3]: ireg[3]);
+      if (opsize(p->op) == 2)
+        rtarget(p, 0, lreg[3]); /* LAC */
       break;
     case RET+F:
-      /* Returns in FAC */
-      rtarget(p, 0, freg[2]);
+      rtarget(p, 0, freg[2]); /* FAC */
       break;
     }
-  
 }
 
 static void clobber(Node p)
 {
 }
 
-static int split(const char *fmt, char **args, int n)
-{
-  int i = 0;
-  while (*fmt)
-    {
-      const char *s = fmt;
-      while(*s && *s!=':') { s++; }
-      assert(i < n);
-      args[i++] = stringn(fmt,s-fmt);
-      fmt = (*s) ? s+1 : s;
-      
-    }
-  assert(i == n);
-}
-static char *aprintf(const char *fmt, ...)
-{
-  int n;
-  va_list ap;
-  char *buf;
-  va_start(ap, fmt);
-  n = vsnprintf(0,0,fmt,ap);
-  buf = allocate(n+1, FUNC);
-  va_end(ap);
-  va_start(ap, fmt);
-  vsnprintf(buf,n+1,fmt,ap);
-  va_end(ap);
-  return buf;
-}
+static Node alt_p = 0;
+static int alt_s;
+
 static void emit3(const char *fmt, Node p, Node *kids, short *nts)
 {
-  int i=0;
-  while (fmt[i] && fmt[i++] != ':')
-    { }
-  if (!strncmp(fmt,"iarg", 4) && (fmt[4]&254)=='0' && fmt[5]==':')
+  /* %{iargX} -- see iarg rule for an explanation */
+  if (!strncmp(fmt,"iarg",4) && (fmt[4]&~1)=='0' && !fmt[5])
     {
-      int i_rul;
-      short *i_nts;
-      Node i_p;
-      char *args[3];
-      
-      split(fmt+6, args, 3);
-      i_p = kids[fmt[4]&1]; assert(i_p);
-      i_rul = (*IR->x._rule)(i_p->x.state, nts[fmt[4]&1]); assert(i_rul);
-      i_nts = IR->x._nts[i_rul]; assert(i_nts);
-      switch(_ntname[i_nts[0]][0]) {
-      case 'r': emitfmt(args[0], p, kids, nts); break;
-      case 'c': emitfmt(args[1], p, kids, nts); break;
-      case 'l': emitfmt(args[2], p, kids, nts); break;
-      default: assert(0);
+      static short iarg_nt, loada_nt;
+      int i, rn1;
+      short *nts1;
+
+      if (!loada_nt || !iarg_nt)
+        for(i=1; _ntname[i]; i++)
+          if (!strcmp("loada", _ntname[i]))
+            loada_nt = i;
+          else if (!strcmp("iarg", _ntname[i]))
+            iarg_nt = i;
+      i = fmt[4] - '0';
+      assert(kids[i]);
+      assert(iarg_nt == nts[i]);
+      rn1 = (*IR->x._rule)(kids[i]->x.state, nts[i]);
+      nts1 = IR->x._nts[rn1];
+      if (loada_nt == nts1[0]) {
+        alt_p = kids[i];
+        alt_s = 1;
+        emitasm(kids[i], nts[i]);
       }
+      alt_p = kids[i];
+      alt_s = 0;
+      return;
     }
-  else if (!strncmp(fmt,"dst!=",5) && fmt[i])
+  /* %{alt:A1:A2} -- alternate expansions selectable from the parent rule
+     %{XY} -- selects alternate expansion Y in child rule X */
+  if (!strncmp(fmt,"alt:", 4))
     {
-      if (p->syms[RX]->x.name != stringn(fmt+5,i-6))
-        emitfmt(fmt+i, p, kids, nts);
+      const char *s;
+      assert(alt_p == p);
+      alt_p = 0;
+      for (s = fmt = fmt + 4; *s; s++)
+        if (*s == ':') {
+          if (alt_s == 0)
+            break;
+          alt_s -= 1;
+          fmt = s + 1;
+        }
+      if (alt_s == 0)
+        emitfmt(stringn(fmt,s-fmt), p, kids, nts);
+      return;
     }
-  else if (!strncmp(fmt,"src!=", 5) && fmt[i])
+  if (isdigit(fmt[0]) && isdigit(fmt[1]) && !fmt[2])
     {
-      if (!kids[0] || !kids[0]->syms[RX] || kids[0]->syms[RX]->x.name != stringn(fmt+5,i-6))
-        emitfmt(fmt+i, p, kids, nts);
+      int i = fmt[0] - '0';
+      alt_s = fmt[1] - '1';
+      alt_p = kids[i];
+      emitasm(kids[i], nts[i]);
+      return;
     }
-  else if (!strncmp(fmt,"src1!=", 5) && fmt[i])
+  /* %{%X==S:fmt} %{%X!=S:fmt} -- conditional expansion of S
+     Argument X can be %0..%9 for a register input, %a..%c for a symbol name */
+  if (fmt[0]=='%' && fmt[1] && (fmt[2]=='=' || fmt[2]=='!') && fmt[3]=='=')
     {
-      if (!kids[1] || !kids[1]->syms[RX] || kids[1]->syms[RX]->x.name != stringn(fmt+5,i-6))
-        emitfmt(fmt+i, p, kids, nts);
+      const char *x, *v, *s = fmt+4;
+      assert(isdigit(fmt[1]) || fmt[1] >= 'a' && fmt[1] < 'a' + NELEMS(p->syms));
+      for (v = s = fmt+4; *v && *v != ':'; v++) { }
+      assert(*v == ':');
+      s = stringn(s, v-s);
+      x = 0;
+      if (isdigit(fmt[1]) && kids[fmt[1]-'0'] && kids[fmt[1]-'0']->syms[RX])
+        x = kids[fmt[1]-'0']->syms[RX]->x.name;
+      else if (isalpha(fmt[1]) && p->syms[fmt[1]-'a'])
+        x = p->syms[fmt[1]-'a']->x.name;
+      if ((fmt[2] == '=' && v && v == s) || (fmt[2] == '!' && v && v != s))
+        emitfmt(v + 1, p, kids, nts);
+      return;
     }
-  else if (!strcmp(fmt, "arg"))
-    {
-      //// TODO
-      static int roffset;
-      int ty, sz;
-      Symbol r;
-      ty = optype(p->op);
-      sz = opsize(p->op);
-      if (p->x.argno == 0)
-        roffset = 0;
-      r = argreg(p->x.argno, ty, sz, &roffset);
-      if (r) {
-        const char *rn = r->x.name;
-        if (ty == F)
-          print("LDW(FAC);STW(%s);LDW(FAC+2);STW(%s+2);LDW(FAC+3);STW(%s+4);", rn, rn, rn);
-        else if (sz == 4)
-          print("LDW(LAC);STW(%s);LDW(LAC+2);STW(%s+2);", rn, rn);
-        else
-          print("STW(%s);", rn);
-      } else {
-        int rd = p->syms[RX]->u.c.v.i;
-        if (ty == F)
-          print("LDWI(%d);ADDW(SP);CALLI(@.store_fac);", rd);
-        else if (sz == 4)
-          print("LDWI(%d);ADDW(SP);CALLI(@.store_lac);", rd);
-        else if (cpu >= 6)
-          print("STW(SR);LDWI(%d);ADDW(SP);DOKEA(SR);", rd);
-      }
-    }
-  else
-    {
-      emitfmt(fmt, p, kids, nts);
-    }
+  /* otherwise print */
+  print("%{");
+  emitfmt(fmt, p, kids, nts);
+  print("}");
 }
 
 static void emit2(Node p)
@@ -763,24 +739,24 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   comment("begin function %s\n", f->x.name);
   segment(CODE);
   global(f);
-  print("\tLDW(vLR);STW(LR);\n");
+  print("LDW(vLR);STW(LR);\n");
   if (ncalls)
     usedmask[IREG] |= REGMASK_LR;
   usedmask[IREG] &= REGMASK_SAVED;
   sizesave = 2 * bitcount(usedmask[IREG]);
   framesize = maxargoffset + sizesave + maxoffset;
   if (framesize > 0)
-    print("\t_SP(%d);STW(SP);\n",framesize);
+    print("_SP(%d);STW(SP);\n",framesize);
   /* save callee saved registers */
   first = 1;
   for (i=0; i<=31; i++)
     if (usedmask[IREG]&(1<<i)) {
       if (first && maxargoffset>0 && maxargoffset < 256)
-        print("\tADDI(%d);_IPOKEA(R%d);\n", maxargoffset, i);
+        print("ADDI(%d);_IPOKEA(R%d);\n", maxargoffset, i);
       else if (first)
-        print("\t_SP(%d);_IPOKEA(R%d);\n", maxargoffset, i);
+        print("_SP(%d);_IPOKEA(R%d);\n", maxargoffset, i);
       else
-        print("\tADDI(2);_IPOKEA(R%d);\n", i);
+        print("ADDI(2);_IPOKEA(R%d);\n", i);
       first = 0;
     }
   /* save args into new registers */
@@ -796,34 +772,35 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
       assert(out->sclass != REGISTER || out->x.regnode);
       if (out->sclass == REGISTER && (isint(out->type) || out->type == in->type)) {
         if (sz > 2)
-          print("\t_%cMOV(%s,%s);\n", c, rn, out->x.name);
+          print("_%cMOV(%s,%s);\n", c, rn, out->x.name);
         else 
-          print("\tLDW(%s);STW(%s);\n", rn, out->x.name);
+          print("LDW(%s);STW(%s);\n", rn, out->x.name);
       }
     }
   }
   /* Emit actual code */
-  print("\t");
   comment("code\n");
   emitcode();
-  print("\t");
   comment("epilogue\n");
+  /* Save return value. Any of R3-29 would do here. */ 
+  if (opsize(ty) == 2)
+    print("STW(R3);\n");
   /* Restore callee saved registers */
   first = 1;
   for (i=0; i<=31; i++)
     if (usedmask[IREG]&(1<<i)) {
       if (first)
-        print("\t_SP(%d);_IPEEKA(R%d);\n", maxargoffset, i);
+        print("_SP(%d);_IPEEKA(R%d);\n", maxargoffset, i);
       else
-        print("\tADDI(2);_IPEEKA(R%d);\n", i);
+        print("ADDI(2);_IPEEKA(R%d);\n", i);
       first = 0;
     }
   if (framesize > 0)
-    print("\t_SP(%d);STW(SP);\n", -framesize);
-  if (opsize(ty) == 2 && (optype(ty)==I || optype(ty)==U || optype(ty)==P))
-    print("\tLDW(LR);STW(vLR);LDW(IAC);RET();\n");
-  else
-    print("\tLDW(LR);STW(vLR);RET();\n");
+    print("_SP(%d);STW(SP);", -framesize);
+  print("LDW(LR);STW(vLR);");
+  if (opsize(ty) == 2)
+    print("LDW(R3);");
+  print("RET();\n");
   comment("end function %s\n", f->x.name);
 }
 
@@ -837,33 +814,33 @@ static void defconst(int suffix, int size, Value v)
     assert(isnormal(d));
     mantissa = (unsigned long)(frexp(d,&exp) * pow(2.0, 32));
     if (mantissa == 0 || exp < -128)
-      print("\tbytes(0,0,0,0,0) ");
+      print("bytes(0,0,0,0,0) ");
     else
-      print("\tbytes(%d,%d,%d,%d,%d) ",
+      print("bytes(%d,%d,%d,%d,%d) ",
             exp+128, ((mantissa>>24)&0x7f)|((d<0.0)?0x80:0x00),
             (mantissa>>16)&0xff, (mantissa>>8)&0xff, (mantissa&0xff) );
     comment("%f\n", d);
   } else {
     long x = (suffix == P) ? (unsigned)(size_t)v.p : (suffix == I) ? v.i : v.u;
       if (size == 1)
-      print("\tbytes(%d);\n", x&0xff);
+      print("bytes(%d);\n", x&0xff);
     else if (size == 2)
-      print("\twords(%d);\n", x&0xffff);
+      print("words(%d);\n", x&0xffff);
     else if (size == 4)
-      print("\twords(%d,%d);\n", x&0xffff, (x>>16)&0xffff);
+      print("words(%d,%d);\n", x&0xffff, (x>>16)&0xffff);
   }
 }
 
 static void defaddress(Symbol p)
 {
-  print("\twords(%s);\n", p->x.name);
+  print("words(%s);\n", p->x.name);
 }
 
 static void defstring(int n, char *str)
 {
   int i;
   for (i=0; i<n; i++)
-    print( (i&7==0) ? "\tbytes(%d" : (i&7==7) ? ",%d);\n" : ",%d", (int)str[i]&0xff );
+    print( (i&7==0) ? "bytes(%d" : (i&7==7) ? ",%d);\n" : ",%d", (int)str[i]&0xff );
   if (i&7)
     print(");\n");
 }
@@ -871,17 +848,17 @@ static void defstring(int n, char *str)
 static void export(Symbol p)
 {
   if (isfunc(p->type))
-    print("\texport(%s);\n", p->x.name);
+    print("export(%s);\n", p->x.name);
   else
-    print("\texport(%s,%d);\n", p->x.name, p->type->size);
+    print("export(%s,%d);\n", p->x.name, p->type->size);
 }
 
 static void import(Symbol p)
 {
   if (isfunc(p->type))
-    print("\timport(%s);\n", p->x.name);
+    print("import(%s);\n", p->x.name);
   else
-    print("\timport(%s,%d);\n", p->x.name, p->type->size);
+    print("import(%s,%d);\n", p->x.name, p->type->size);
 }
 
 static void defsymbol(Symbol p)
@@ -922,10 +899,10 @@ static void segment(int n)
   if (n == cseg)
     return;
   switch (n) {
-  case CODE: print("\tsegment('CODE');\n"); break;
-  case BSS:  print("\tsegment('BSS');\n");  break;
-  case DATA: print("\tsegment('DATA');\n"); break;
-  case LIT:  print("\tsegment('LIT');\n"); break;
+  case CODE: print("segment('CODE');\n"); break;
+  case BSS:  print("segment('BSS');\n");  break;
+  case DATA: print("segment('DATA');\n"); break;
+  case LIT:  print("segment('LIT');\n"); break;
   }
   cseg = n;
 }
@@ -933,7 +910,7 @@ static void segment(int n)
 static void space(int n)
 {
   if (cseg != BSS)
-    print("\tspace(%d);\n", n);
+    print("space(%d);\n", n);
 }
 
 static void blkloop(int dreg, int doff, int sreg,

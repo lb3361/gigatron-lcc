@@ -106,7 +106,3 @@ extern unsigned         emitbin(Node, int);
 #define debug(x) (void)(dflag&&((x),0))
 #endif
 
-/* Local Variables: */
-/* c-basic-offset: 8 */
-/* indent-tabs-mode: t */
-/* End: */

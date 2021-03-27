@@ -121,6 +121,8 @@ typedef struct interface {
 	unsigned left_to_right:1;
 	unsigned wants_dag:1;
 	unsigned unsigned_char:1;
+	unsigned wants_unpromoted_args: 1;
+	unsigned wants_cvfu_cvuf: 1;
 void (*address)(Symbol p, Symbol q, long n);
 void (*blockbeg)(Env *);
 void (*blockend)(Env *);
@@ -598,3 +600,7 @@ extern void rmtypes(int);
 extern int ttob(Type);
 extern int variadic(Type);
 
+/* Local Variables: */
+/* c-basic-offset: 8 */
+/* indent-tabs-mode: t */
+/* End: */

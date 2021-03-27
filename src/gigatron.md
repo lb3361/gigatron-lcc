@@ -93,6 +93,7 @@ static int cpu = 5;
 
 %term CVFF5=5233
 %term CVFI2=2165 CVFI4=4213
+%term CVFU2=2166 CVFU4=4214
 
 %term CVIF5=5249
 %term CVII1=1157 CVII2=2181 CVII4=4229
@@ -100,6 +101,7 @@ static int cpu = 5;
 
 %term CVPU2=2198
 
+%term CVUF5=5297
 %term CVUI1=1205 CVUI2=2229 CVUI4=4277
 %term CVUP2=2231
 %term CVUU1=1206 CVUU2=2230 CVUU4=4278
@@ -451,12 +453,14 @@ lac: CVII4(ac) "%0_SEXT(AC,LAC);" 120
 lac: CVUU4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);"
 lac: CVUI4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);"
 # 3) floating point conversions
-ac: CVFI2(fac) "%0_FCVT(FAC,LAC);LDW(LAC);" 256
-lac: CVFI4(fac) "%0_FCVT(FAC,LAC);" 256
-fac: CVIF5(ac) "%0_SEXT(AC,LAC);_FCVT(LAC,FAC);" if_cv_from_size(a,2,120)
-fac: CVIF5(lac) "%0_FCVT(LAC,FAC);" if_cv_from_size(a,4,256)
-
-
+ac: CVFU2(fac)  "%0_FTOU();LDW(LAC);" 256
+lac: CVFU4(fac) "%0_FTOU();" 256
+fac: CVUF5(ac)  "%0_FCVU(AC);" if_cv_from_size(a,2,120)
+fac: CVUF5(lac) "%0_FCVU(LAC);" if_cv_from_size(a,4,256)
+ac: CVFI2(fac)  "%0_FTOI();LDW(LAC);" 256
+lac: CVFI4(fac) "%0_FTOI();" 256
+fac: CVIF5(ac)  "%0_FCVI(AC);" if_cv_from_size(a,2,120)
+fac: CVIF5(lac) "%0_FCVI(LAC);" if_cv_from_size(a,4,256)
 
 # Labels and jumps
 stmt: LABELV "label(%a);\n"
@@ -984,6 +988,8 @@ Interface gigatronIR = {
         1,        /* left_to_right */
         0,        /* wants_dag */
         0,        /* unsigned_char */
+        1,        /* wants_unpromoted_args */
+        1,        /* wants_cvfu_cvuf */
         address,
         blockbeg,
         blockend,

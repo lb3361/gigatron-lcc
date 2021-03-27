@@ -947,7 +947,3 @@ static int backslash(int q) {
 	return cp[-1];
 }
 
-/* Local Variables: */
-/* c-basic-offset: 8 */
-/* indent-tabs-mode: t */
-/* End: */

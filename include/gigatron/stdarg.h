@@ -6,5 +6,13 @@
 #define _VA_LIST_DEFINED
 typedef char *__va_list;
 #endif
-/* Must define va_start/va_arg/va_end */
+typedef __va_list va_list;
+
+#define va_start(list, start) \
+  ((void)((list)=(__va_list)&((&start)[1])))
+#define va_arg(list, mode)    \
+  ((list=(__va_list)&(((mode*)list)[1])),((mode*)list)[-1])
+#define va_end(list)          \
+  ((void) 0)
+
 #endif

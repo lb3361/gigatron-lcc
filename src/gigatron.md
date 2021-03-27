@@ -52,8 +52,9 @@ static Symbol iregw, lregw, fregw;
 #define REGMASK_VARS            0x00ff0000
 #define REGMASK_ARGS            0x0000ff00
 #define REGMASK_TEMPS           0x3f00ff00
-#define REGMASK_SAVED           0x00ff0000
 #define REGMASK_LR              0x40000000
+#define REGMASK_LAC_LARG        0x000000d8
+#define REGMASK_FAC_FARG        0x000000fc
 
 /* Misc */ 
 static int cseg;
@@ -226,9 +227,10 @@ stmt: ASGNF5(VREGP,reg)  "# write register\n"
 stmt: RETF5(reg)  "# ret\n"  1
 stmt: RETI4(reg)  "# ret\n"  1
 stmt: RETU4(reg)  "# ret\n"  1
-stmt: RETI2(ac)   "%0\n" 1
-stmt: RETU2(ac)   "%0\n" 1
-stmt: RETP2(ac)   "%0\n" 1
+stmt: RETI2(reg)  "# ret\n"  1
+stmt: RETU2(reg)  "# ret\n"  1
+stmt: RETP2(reg)  "# ret\n"  1
+stmt: RETV(reg)   "# ret\n"  1
 
 con8: CNSTI1  "%a"
 con8: CNSTU1  "%a"  range(a,0,255)
@@ -409,6 +411,21 @@ stmt: ASGNF5(addr,fac) "%1%0_FPOKEA(FAC);\n" 256
 stmt: ASGNF5(reg,fac) "%1LDW(%0);_FPOKEA(FAC);\n" 256
 
 # Calls
+fac: CALLF5(con) "CALLI(%0);" 28
+fac: CALLF5(reg) "CALL(%0);" 26
+lac: CALLI4(con) "CALLI(%0);" 28
+lac: CALLI4(reg) "CALL(%0);" 26
+lac: CALLU4(con) "CALLI(%0);" 28
+lac: CALLU4(reg) "CALL(%0);" 26
+ac: CALLI2(con) "CALLI(%0);" 28
+ac: CALLI2(reg) "CALL(%0);" 26
+ac: CALLU2(con) "CALLI(%0);" 28
+ac: CALLU2(reg) "CALL(%0);" 26
+ac: CALLP2(con) "CALLI(%0);" 28
+ac: CALLP2(reg) "CALL(%0);" 26
+stmt: CALLV(con) "CALLI(%0)" 28
+stmt: CALLV(reg) "CALL(%0)" 26
+
 
 # Conversions
 #            I1   U1
@@ -567,8 +584,10 @@ static void target(Node p)
   switch (specific(p->op))
     {
     case RET+I: case RET+U: case RET+P:
-      if (opsize(p->op) == 2)
+      if (opsize(p->op) > 2)
         rtarget(p, 0, lreg[3]); /* LAC */
+      else 
+        rtarget(p, 0, ireg[3]); /* LAC[0] */
       break;
     case RET+F:
       rtarget(p, 0, freg[2]); /* FAC */
@@ -576,8 +595,32 @@ static void target(Node p)
     }
 }
 
+static void clobber_helper(Node p, unsigned *pmask)
+{
+  int ty = optype(p->op);
+  int sz = opsize(p->op);
+  if (ty == F)
+    *pmask |= REGMASK_FAC_FARG;
+  else if (sz > 2 && (ty == I || ty == P))
+    *pmask |= REGMASK_LAC_LARG;
+  else if (opkind(p->op) == CALL)
+    *pmask |= REGMASK_TEMPS;
+  if (p->kids[0] && ! p->kids[0]->x.inst)
+    clobber_helper(p->kids[0], pmask);
+  if (p->kids[1] && ! p->kids[1]->x.inst)
+    clobber_helper(p->kids[1], pmask);
+}
+
 static void clobber(Node p)
 {
+  int mask = 0;
+  assert(p);
+  clobber_helper(p, &mask);
+  if (p->x.registered && p->syms[2])
+    if (p->syms[2]->x.regnode && p->syms[2]->x.regnode->set == IREG)
+      mask &= ~p->syms[2]->x.regnode->mask;
+  if (mask)
+    spill(mask, IREG, p);
 }
 
 static Node alt_p = 0;
@@ -652,7 +695,7 @@ static void emit3(const char *fmt, Node p, Node *kids, short *nts)
         x = kids[fmt[1]-'0']->syms[RX]->x.name;
       else if (isalpha(fmt[1]) && p->syms[fmt[1]-'a'])
         x = p->syms[fmt[1]-'a']->x.name;
-      if ((fmt[2] == '=' && v && v == s) || (fmt[2] == '!' && v && v != s))
+      if ((fmt[2] == '=' && x && x == s) || (fmt[2] == '!' && x && x != s))
         emitfmt(v + 1, p, kids, nts);
       return;
     }
@@ -739,24 +782,24 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   comment("begin function %s\n", f->x.name);
   segment(CODE);
   global(f);
-  print("LDW(vLR);STW(LR);\n");
+  print("LDW(vLR);STW(LR);");
   if (ncalls)
     usedmask[IREG] |= REGMASK_LR;
-  usedmask[IREG] &= REGMASK_SAVED;
+  usedmask[IREG] &= REGMASK_VARS;
   sizesave = 2 * bitcount(usedmask[IREG]);
   framesize = maxargoffset + sizesave + maxoffset;
   if (framesize > 0)
-    print("_SP(%d);STW(SP);\n",framesize);
+    print("_SP(%d);STW(SP);",framesize);
   /* save callee saved registers */
   first = 1;
   for (i=0; i<=31; i++)
     if (usedmask[IREG]&(1<<i)) {
       if (first && maxargoffset>0 && maxargoffset < 256)
-        print("ADDI(%d);_IPOKEA(R%d);\n", maxargoffset, i);
+        print("ADDI(%d);_IPOKEA(R%d);", maxargoffset, i);
       else if (first)
-        print("_SP(%d);_IPOKEA(R%d);\n", maxargoffset, i);
+        print("_SP(%d);_IPOKEA(R%d);", maxargoffset, i);
       else
-        print("ADDI(2);_IPOKEA(R%d);\n", i);
+        print("ADDI(2);_IPOKEA(R%d);", i);
       first = 0;
     }
   /* save args into new registers */
@@ -767,38 +810,34 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
       Symbol in  = caller[i];
       const char *rn = r->x.name;
       int sz = in->type->size;
-      int c = (isfloat(in->type)) ? 'F' : (sz>=1 && sz<=5) ? ".BI.LF"[sz] : '?';
+      int c = (isfloat(in->type)) ? 'F' : (sz>2) ? 'L' : 0;
       assert(out && in && r && r->x.regnode);
       assert(out->sclass != REGISTER || out->x.regnode);
       if (out->sclass == REGISTER && (isint(out->type) || out->type == in->type)) {
-        if (sz > 2)
-          print("_%cMOV(%s,%s);\n", c, rn, out->x.name);
+        if (c)
+          print("_%cMOV(%s,%s);", c, rn, out->x.name);
         else 
-          print("LDW(%s);STW(%s);\n", rn, out->x.name);
+          print("LDW(%s);STW(%s);", rn, out->x.name);
       }
     }
   }
+  print("\n");
   /* Emit actual code */
-  comment("code\n");
   emitcode();
-  comment("epilogue\n");
-  /* Save return value. Any of R3-29 would do here. */ 
-  if (opsize(ty) == 2)
-    print("STW(R3);\n");
   /* Restore callee saved registers */
   first = 1;
   for (i=0; i<=31; i++)
     if (usedmask[IREG]&(1<<i)) {
       if (first)
-        print("_SP(%d);_IPEEKA(R%d);\n", maxargoffset, i);
+        print("_SP(%d);_IPEEKA(R%d);", maxargoffset, i);
       else
-        print("ADDI(2);_IPEEKA(R%d);\n", i);
+        print("ADDI(2);_IPEEKA(R%d);", i);
       first = 0;
     }
   if (framesize > 0)
     print("_SP(%d);STW(SP);", -framesize);
   print("LDW(LR);STW(vLR);");
-  if (opsize(ty) == 2)
+  if (ty == I+sizeop(2) || ty == U+sizeop(2) || ty == P+sizeop(2))
     print("LDW(R3);");
   print("RET();\n");
   comment("end function %s\n", f->x.name);

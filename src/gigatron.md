@@ -361,14 +361,19 @@ ac: BXORU2(ac,con8)  "%0XORI(%1);" 16
 # Standard assignnments
 stmt: ASGNP2(con8,ac) "%1STW(%0);\n" 20
 stmt: ASGNP2(reg,ac) "%1DOKE(%0);\n" 28
+stmt: ASGNP2(ac,reg) "%0_DOKEA(%1);\n" 28+20
 stmt: ASGNI2(con8,ac) "%1STW(%0);\n" 20
 stmt: ASGNI2(reg,ac) "%1DOKE(%0);\n" 28
+stmt: ASGNI2(ac,reg) "%0_DOKEA(%1);\n" 28+20
 stmt: ASGNU2(con8,ac) "%1STW(%0);\n" 20
 stmt: ASGNU2(reg,ac) "%1DOKE(%0);\n" 28
+stmt: ASGNU2(ac,reg) "%0_DOKEA(%1);\n" 28+20
 stmt: ASGNI1(con8,ac) "%1ST(%0);\n" 20
 stmt: ASGNI1(reg,ac) "%1POKE(%0);\n" 28
+stmt: ASGNI1(ac,reg) "%0_POKEA(%1);\n" 28+20
 stmt: ASGNU1(con8,ac) "%1ST(%0);\n" 20
 stmt: ASGNU1(reg,ac) "%1POKE(%0);\n" 28
+stmt: ASGNI1(ac,reg) "%0_POKEA(%1);\n" 28+20
 
 # Structs
 stmt: ASGNB(reg,INDIRB(ac))  "%1%{asgnb}\n" 1
@@ -423,8 +428,10 @@ lac: BXORI4(lac,larg) "%0%1_LXOR();" 256
 lac: BXORI4(larg,lac) "%1%0_LXOR();" 256
 stmt: ASGNI4(addr,lac) "%1%0_LPOKEA(LAC);\n" 200
 stmt: ASGNU4(addr,lac) "%1%0_LPOKEA(LAC);\n" 200
-stmt: ASGNI4(reg,lac) "%1LDW(%0);_LPOKEA(LAC);n" 180
+stmt: ASGNI4(reg,lac) "%1LDW(%0);_LPOKEA(LAC);\n" 180
 stmt: ASGNU4(reg,lac) "%1LDW(%0);_LPOKEA(LAC);\n" 180
+stmt: ASGNI4(ac,reg) "%0_LPOKEA($1);\n" 160
+stmt: ASGNU4(ac,reg) "%0_LPOKEA($1);\n" 160
 
 # Floats
 stmt: fac "%0\n"
@@ -445,6 +452,7 @@ fac: DIVF5(fac,farg) "%0%1_FDIV();" 256
 fac: NEGF5(fac) "%0_FNEG();" 50
 stmt: ASGNF5(addr,fac) "%1%0_FPOKEA(FAC);\n" 256
 stmt: ASGNF5(reg,fac) "%1LDW(%0);_FPOKEA(FAC);\n" 256
+stmt: ASGNF5(ac,reg) "%0_FPOKEA(%1);\n" 256
 
 # Calls
 fac: CALLF5(con) "CALLI(%0);" 28

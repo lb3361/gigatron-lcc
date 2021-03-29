@@ -50,9 +50,9 @@ static int  if_arg_stk(Node);
 static Symbol ireg[32], lreg[32], freg[32];
 static Symbol iregw, lregw, fregw;
 
-#define REGMASK_VARS            0x00ff0000
-#define REGMASK_ARGS            0x0000ff00
-#define REGMASK_TEMPS           0x3f00ff00
+#define REGMASK_VARS            0x00ffc000
+#define REGMASK_ARGS            0x00003f00
+#define REGMASK_TEMPS           0x3f003f00
 #define REGMASK_LR              0x40000000
 #define REGMASK_LAC_LARG        0x000000d8
 #define REGMASK_FAC_FARG        0x000000fc
@@ -511,7 +511,7 @@ ac: LOADU2(lac) "%0LDW(LAC);" 28
 lac: LOADI4(lac) "%0"
 lac: LOADU4(lac) "%0"
 # 2) extensions
-ac: CVII2(ac) "%0XORI(128);SUBI(128);" if_cv_from_size(a,1,48)
+ac: CVII2(ac) "%0LD(vAC);XORI(128);SUBI(128);" if_cv_from_size(a,1,48)
 ac: CVUI2(ac) "%0"
 lac: CVIU4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);" 50
 lac: CVII4(ac) "%0STW(LAC);LD(vAH);XORI(128);SUBI(128);LD(vAH);ST(LAC+2);ST(LAC+3);" 120

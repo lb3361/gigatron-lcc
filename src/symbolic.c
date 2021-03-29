@@ -452,7 +452,6 @@ Interface symbolicIR = {
 	1,		/* left_to_right */
 	1,		/* wants_dag */
 	0,		/* unsigned_char */
-	0,		/* wants_unpromoted_args */
 	0,		/* wants_cvfu_cvuf */
 	I(address),
 	I(blockbeg),
@@ -499,7 +498,6 @@ Interface symbolic64IR = {
 	1,		/* left_to_right */
 	1,		/* wants_dag */
 	0,		/* unsigned_char */
-	0,		/* wants_unpromoted_args */
 	0,		/* wants_cvfu_cvuf */
 	I(address),
 	I(blockbeg),

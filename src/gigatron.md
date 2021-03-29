@@ -1127,8 +1127,7 @@ Interface gigatronIR = {
         1,        /* wants_argb */
         1,        /* left_to_right */
         0,        /* wants_dag */
-        0,        /* unsigned_char */
-        1,        /* wants_unpromoted_args */
+        1,        /* unsigned_char !!!! */
         1,        /* wants_cvfu_cvuf */
         address,
         blockbeg,

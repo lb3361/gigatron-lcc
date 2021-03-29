@@ -221,7 +221,3 @@ void yywarn(char *fmt, ...) {
 	vfprintf(stderr, fmt, ap);
 }
 
-/* Local Variables: */
-/* c-basic-offset: 8 */
-/* indent-tabs-mode: t */
-/* End: */

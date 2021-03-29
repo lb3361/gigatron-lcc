@@ -718,7 +718,7 @@ static void funcdefn(int sclass, char *id, Type ty, Symbol params[], Coordinate 
 		for (i = 0; (p = callee[i]) != NULL && p->name; i++) {
 			NEW(caller[i], FUNC);
 			*caller[i] = *p;
-			if (isint(p->type))
+			if (isint(p->type) && !IR->wants_unpromoted_args)
 				caller[i]->type = promote(p->type);
 			caller[i]->sclass = AUTO;
 			if ('1' <= *p->name && *p->name <= '9')

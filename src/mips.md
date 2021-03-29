@@ -1024,6 +1024,8 @@ Interface mipsebIR = {
         1,  /* left_to_right */
         0,  /* wants_dag */
         0,  /* unsigned_char */
+	    0,  /* wants_unpromoted_args */
+	    0,  /* wants_cvfu_cvuf */
         address,
         blockbeg,
         blockend,
@@ -1080,6 +1082,8 @@ Interface mipsebIR = {
         1,  /* left_to_right */
         0,  /* wants_dag */
         0,  /* unsigned_char */
+        0,  /* wants_unpromoted_args */
+        0,  /* wants_cvfu_cvuf */
         address,
         blockbeg,
         blockend,

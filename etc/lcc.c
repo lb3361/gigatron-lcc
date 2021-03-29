@@ -816,7 +816,3 @@ char *tempname(char *suffix) {
 	return name;
 }
 
-/* Local Variables: */
-/* c-basic-offset: 8 */
-/* indent-tabs-mode: t */
-/* End: */

@@ -48,9 +48,10 @@ Tree call(Tree f, Type fty, Coordinate src) {
 					else
 						error("type error in argument %d to %s; found `%t' expected `%t'\n", n + 1, funcname(f),
 
-							q->type, *proto);
-					if ((isint(q->type) || isenum(q->type))
-					&& q->type->size != inttype->size)
+						      q->type, *proto);
+                                        if (!IR->wants_unpromoted_args &&
+					    (isint(q->type) || isenum(q->type)) &&
+					    q->type->size != inttype->size )
 						q = cast(q, promote(q->type));
 					++proto;
 				}
@@ -548,3 +549,4 @@ void typeerror(int op, Tree l, Tree r) {
 		error("operand of unary %s has illegal type `%t'\n", ops[i].name,
 			l->type);
 }
+

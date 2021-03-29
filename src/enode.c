@@ -49,7 +49,7 @@ Tree call(Tree f, Type fty, Coordinate src) {
 						error("type error in argument %d to %s; found `%t' expected `%t'\n", n + 1, funcname(f),
 
 						      q->type, *proto);
-                                        if (((isint(q->type) && !IR->wants_unpromoted_args) || isenum(q->type)) &&
+                                        if ((isint(q->type) || isenum(q->type)) &&
 					    q->type->size != inttype->size )
 						q = cast(q, promote(q->type));
 					++proto;
@@ -112,7 +112,7 @@ Tree calltree(Tree f, Type ty, Tree args, Symbol t3) {
 		Type rty = ty;
 		if (isenum(ty))
 			rty = unqual(ty)->type;
-		if (!isfloat(rty) && !(isint(rty) && IR->wants_unpromoted_args))
+		if (!isfloat(rty))
 			rty = promote(rty);
 		p = tree(mkop(CALL, rty), rty, f, NULL);
 		if (isptr(ty) || p->type->size > ty->size)

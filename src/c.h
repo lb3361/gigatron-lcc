@@ -121,7 +121,6 @@ typedef struct interface {
 	unsigned left_to_right:1;
 	unsigned wants_dag:1;
 	unsigned unsigned_char:1;
-	unsigned wants_unpromoted_args: 1;
 	unsigned wants_cvfu_cvuf: 1;
 void (*address)(Symbol p, Symbol q, long n);
 void (*blockbeg)(Env *);

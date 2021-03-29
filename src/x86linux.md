@@ -1046,7 +1046,6 @@ Interface x86linuxIR = {
         0,        /* left_to_right */
         0,        /* wants_dag */
         0,        /* unsigned_char */
-        0,        /* wants_unpromoted_args */
         0,        /* wants_cvfu_cvuf */
         0, /* address */
         blockbeg,

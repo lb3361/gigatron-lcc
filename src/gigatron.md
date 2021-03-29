@@ -1,4 +1,4 @@
-# comment
+# /* 
 %{
 /*---- BEGIN HEADER --*/
 
@@ -13,15 +13,15 @@
 #define STATE_LABEL(p) ((p)->x.state)
 
 static void address(Symbol, Symbol, long);
-static void blkfetch(int, int, int, int);
-static void blkloop(int, int, int, int, int, int[]);
-static void blkstore(int, int, int, int);
+static void blkfetch(/* int, int, int, int */) {}
+static void blkloop(/* int, int, int, int, int, int[] */) {}
+static void blkstore(/* int, int, int, int */) {}
 static void defaddress(Symbol);
 static void defconst(int, int, Value);
 static void defstring(int, char *);
 static void defsymbol(Symbol);
 static void doarg(Node);
-static void emit2(Node);
+static void emit2(/* Node */) {}
 static void emit3(const char*, Node, Node*, short*);
 static void export(Symbol);
 static void clobber(Node);
@@ -314,25 +314,25 @@ ac: SUBP2(ac,co8n) "%0ADDI(-v(%1));" 28
 ac: NEGI2(ac) "%0ST(SR);LDI(0);SUBW(SR);" 68
 
 ac: LSHI2(ac, con8) "%0%{shl1}" 100
-ac: LSHI2(ac, iarg) "%0%{iarg1}_SHL(%1);" 256
-ac: RSHI2(ac, iarg) "%0%{iarg1}_SHRS(%1);" 256
+ac: LSHI2(ac, iarg) "%0%{iarg1}_SHL(%1);" 200
+ac: RSHI2(ac, iarg) "%0%{iarg1}_SHRS(%1);" 200
 ac: LSHU2(ac, con8) "%0%{shl1}" 100
-ac: LSHU2(ac, iarg) "%0%{iarg1}_SHL(%1);" 256
-ac: RSHU2(ac, iarg) "%0%{iarg1}_SHRU(%1);" 256
+ac: LSHU2(ac, iarg) "%0%{iarg1}_SHL(%1);" 200
+ac: RSHU2(ac, iarg) "%0%{iarg1}_SHRU(%1);" 200
 
 ac: MULI2(con8, ac) "%1%{mul0}" 110
 ac: MULI2(co8n, ac) "%1%{mul0}" 110
 ac: MULI2(con8, reg) "%{mul0%1}" 100
 ac: MULI2(co8n, reg) "%{mul0%1}" 100
-ac: MULI2(ac, iarg) "%0%{iarg1}_MUL(%1);" 256
-ac: MULI2(iarg, ac) "%1%{iarg0}_MUL(%0);" 256
+ac: MULI2(ac, iarg) "%0%{iarg1}_MUL(%1);" 200
+ac: MULI2(iarg, ac) "%1%{iarg0}_MUL(%0);" 200
 ac: MULU2(con8, ac) "%1%{mul0}" 100
 ac: MULU2(con8, reg) "%1%{mul0%1}" 100
-ac: MULU2(ac, iarg) "%0%{iarg1}_MUL(%1);" 256
-ac: MULU2(iarg, ac) "%1%{iarg0}_MUL(%0);" 256
+ac: MULU2(ac, iarg) "%0%{iarg1}_MUL(%1);" 200
+ac: MULU2(iarg, ac) "%1%{iarg0}_MUL(%0);" 200
 
-ac: DIVI2(ac, iarg) "%0%{iarg1}_DIVS(%1);" 256
-ac: DIVU2(ac, iarg) "%0%{iarg1}_DIVU(%1);" 256
+ac: DIVI2(ac, iarg) "%0%{iarg1}_DIVS(%1);" 200
+ac: DIVU2(ac, iarg) "%0%{iarg1}_DIVU(%1);" 200
 
 ac: BCOMI2(ac) "%0ST(SR);LDWI(-0);XORW(SR);" 68
 ac: BCOMU2(ac) "%0ST(SR);LDWI(-0);XORW(SR);" 68
@@ -376,7 +376,10 @@ stmt: ASGNU1(reg,ac) "%1POKE(%0);\n" 28
 stmt: ASGNI1(ac,reg) "%0_POKEA(%1);\n" 28+20
 
 # Structs
-stmt: ASGNB(reg,INDIRB(ac))  "%1%{asgnb}\n" 1
+stmt: ARGB(INDIRB(reg))       "_SP(%c);_MEMCPY(AC,%0,%a);\n"   200
+stmt: ASGNB(reg,INDIRB(ac))   "%1_MEMCPY(%0,AC,%a);\n"   200
+stmt: ASGNB(ac,INDIRB(reg))   "%0_MEMCPY(AC,%1,%a);\n"   200
+stmt: ASGNB(reg,INDIRB(reg))  "_MEMCPY(%0,%1,%a);\n"   200
 
 # Longs
 stmt: lac "%0\n"
@@ -393,39 +396,39 @@ lac: INDIRU4(ac) "%0_LPEEKA(LAC);" 150
 larg: reg "%{%0!=LARG:_LMOV(%0,LARG);}" 80
 larg: INDIRI4(addr) "%0_LPEEKA(LARG);" 150
 larg: INDIRU4(addr) "%0_LPEEKA(LARG);" 150
-lac: ADDI4(lac,larg) "%0%1_LADD();" 256
-lac: ADDU4(lac,larg) "%0%1_LADD();" 256
-lac: ADDI4(larg,lac) "%1%0_LADD();" 256
-lac: ADDU4(larg,lac) "%1%0_LADD();" 256
-lac: SUBI4(lac,larg) "%0%1_LSUB();" 256
-lac: SUBU4(lac,larg) "%0%1_LSUB();" 256
-lac: MULI4(lac,larg) "%0%1_LMUL();" 256
-lac: MULU4(lac,larg) "%0%1_LMUL();" 256
-lac: MULI4(larg,lac) "%1%0_LMUL();" 256
-lac: MULU4(larg,lac) "%1%0_LMUL();" 256
-lac: DIVI4(lac,larg) "%0%1_LDIVS();" 256
-lac: DIVU4(lac,larg) "%0%1_LDIVU();" 256
-lac: LSHI4(lac,larg) "%0%1_LSHL();" 256
+lac: ADDI4(lac,larg) "%0%1_LADD();" 200
+lac: ADDU4(lac,larg) "%0%1_LADD();" 200
+lac: ADDI4(larg,lac) "%1%0_LADD();" 200
+lac: ADDU4(larg,lac) "%1%0_LADD();" 200
+lac: SUBI4(lac,larg) "%0%1_LSUB();" 200
+lac: SUBU4(lac,larg) "%0%1_LSUB();" 200
+lac: MULI4(lac,larg) "%0%1_LMUL();" 200
+lac: MULU4(lac,larg) "%0%1_LMUL();" 200
+lac: MULI4(larg,lac) "%1%0_LMUL();" 200
+lac: MULU4(larg,lac) "%1%0_LMUL();" 200
+lac: DIVI4(lac,larg) "%0%1_LDIVS();" 200
+lac: DIVU4(lac,larg) "%0%1_LDIVU();" 200
+lac: LSHI4(lac,larg) "%0%1_LSHL();" 200
 lac: LSHI4(lac,con8) "%0%{lshl1}" 1
-lac: LSHU4(lac,larg) "%0%1_LSHL();" 256
+lac: LSHU4(lac,larg) "%0%1_LSHL();" 200
 lac: LSHU4(lac,con8) "%0%{lshl1}" 1
-lac: RSHI4(lac,larg) "%0%1_LASR();" 256
-lac: RSHU4(lac,larg) "%0%1_LLSH();" 256
-lac: NEGI4(lac) "%0_LNEG();" 256
-lac: BCOMU4(lac) "%0_LCOM();" 256
-lac: BANDU4(lac,larg) "%0%1_LAND();" 256
-lac: BANDU4(larg,lac) "%1%0_LAND();" 256
-lac: BORU4(lac,larg) "%0%1_LOR();" 256
-lac: BORU4(larg,lac) "%1%0_LOR();" 256
-lac: BXORU4(lac,larg) "%0%1_LXOR();" 256
-lac: BXORU4(larg,lac) "%1%0_LXOR();" 256
-lac: BCOMI4(lac) "%0_LCOM();" 256
-lac: BANDI4(lac,larg) "%0%1_LAND();" 256
-lac: BANDI4(larg,lac) "%1%0_LAND();" 256
-lac: BORI4(lac,larg) "%0%1_LOR();" 256
-lac: BORI4(larg,lac) "%1%0_LOR();" 256
-lac: BXORI4(lac,larg) "%0%1_LXOR();" 256
-lac: BXORI4(larg,lac) "%1%0_LXOR();" 256
+lac: RSHI4(lac,larg) "%0%1_LASR();" 200
+lac: RSHU4(lac,larg) "%0%1_LLSH();" 200
+lac: NEGI4(lac) "%0_LNEG();" 200
+lac: BCOMU4(lac) "%0_LCOM();" 200
+lac: BANDU4(lac,larg) "%0%1_LAND();" 200
+lac: BANDU4(larg,lac) "%1%0_LAND();" 200
+lac: BORU4(lac,larg) "%0%1_LOR();" 200
+lac: BORU4(larg,lac) "%1%0_LOR();" 200
+lac: BXORU4(lac,larg) "%0%1_LXOR();" 200
+lac: BXORU4(larg,lac) "%1%0_LXOR();" 200
+lac: BCOMI4(lac) "%0_LCOM();" 200
+lac: BANDI4(lac,larg) "%0%1_LAND();" 200
+lac: BANDI4(larg,lac) "%1%0_LAND();" 200
+lac: BORI4(lac,larg) "%0%1_LOR();" 200
+lac: BORI4(larg,lac) "%1%0_LOR();" 200
+lac: BXORI4(lac,larg) "%0%1_LXOR();" 200
+lac: BXORI4(larg,lac) "%1%0_LXOR();" 200
 stmt: ASGNI4(addr,lac) "%1%0_LPOKEA(LAC);\n" 200
 stmt: ASGNU4(addr,lac) "%1%0_LPOKEA(LAC);\n" 200
 stmt: ASGNI4(reg,lac) "%1LDW(%0);_LPOKEA(LAC);\n" 180
@@ -439,20 +442,20 @@ reg: fac "%0%{%c!=FAC:_FMOV(FAC,%c);}\n" 100
 reg: LOADF5(fac) "%0%{%c!=FAC:_FMOV(FAC,%c);}\n" 100
 reg: LOADF5(reg) "_FMOV(%0,%c)\n" move(a)+100
 fac: reg "%{%0!=FAC:_FMOV(%0,FAC);}" 100
-fac: INDIRF5(ac) "%0_FPEEKA(FAC);" 256
-farg: INDIRF5(addr) "%0_FPEEKA(FARG);" 256
+fac: INDIRF5(ac) "%0_FPEEKA(FAC);" 200
+farg: INDIRF5(addr) "%0_FPEEKA(FARG);" 200
 farg: reg "%{%0!=FARG:_FMOV(%0,FARG);}" 60
-fac: ADDF5(fac,farg) "%0%1_FADD();" 256
-fac: ADDF5(farg,fac) "%1%0_FADD();" 256
-fac: SUBF5(fac,farg) "%0%1_FSUB();" 256
-fac: SUBF5(farg,fac) "%1_FNEG();%0_FADD();" 256+50
-fac: MULF5(fac,farg) "%0%1_FMUL();" 256
-fac: MULF5(farg,fac) "%1%0_FMUL();" 256
-fac: DIVF5(fac,farg) "%0%1_FDIV();" 256
+fac: ADDF5(fac,farg) "%0%1_FADD();" 200
+fac: ADDF5(farg,fac) "%1%0_FADD();" 200
+fac: SUBF5(fac,farg) "%0%1_FSUB();" 200
+fac: SUBF5(farg,fac) "%1_FNEG();%0_FADD();" 200+50
+fac: MULF5(fac,farg) "%0%1_FMUL();" 200
+fac: MULF5(farg,fac) "%1%0_FMUL();" 200
+fac: DIVF5(fac,farg) "%0%1_FDIV();" 200
 fac: NEGF5(fac) "%0_FNEG();" 50
-stmt: ASGNF5(addr,fac) "%1%0_FPOKEA(FAC);\n" 256
-stmt: ASGNF5(reg,fac) "%1LDW(%0);_FPOKEA(FAC);\n" 256
-stmt: ASGNF5(ac,reg) "%0_FPOKEA(%1);\n" 256
+stmt: ASGNF5(addr,fac) "%1%0_FPOKEA(FAC);\n" 200
+stmt: ASGNF5(reg,fac) "%1LDW(%0);_FPOKEA(FAC);\n" 200
+stmt: ASGNF5(ac,reg) "%0_FPOKEA(%1);\n" 200
 
 # Calls
 fac: CALLF5(con) "CALLI(%0);" 28
@@ -526,14 +529,14 @@ lac: CVII4(ac) "%0STW(LAC);LD(vAH);XORI(128);SUBI(128);LD(vAH);ST(LAC+2);ST(LAC+
 lac: CVUU4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);"
 lac: CVUI4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);"
 # 3) floating point conversions
-ac: CVFU2(fac)  "%0_FTOU();LDW(LAC);" 256
-lac: CVFU4(fac) "%0_FTOU();" 256
+ac: CVFU2(fac)  "%0_FTOU();LDW(LAC);" 200
+lac: CVFU4(fac) "%0_FTOU();" 200
 fac: CVUF5(ac)  "%0_FCVU(AC);" if_cv_from_size(a,2,120)
-fac: CVUF5(lac) "%0_FCVU(LAC);" if_cv_from_size(a,4,256)
-ac: CVFI2(fac)  "%0_FTOI();LDW(LAC);" 256
-lac: CVFI4(fac) "%0_FTOI();" 256
+fac: CVUF5(lac) "%0_FCVU(LAC);" if_cv_from_size(a,4,200)
+ac: CVFI2(fac)  "%0_FTOI();LDW(LAC);" 200
+lac: CVFI4(fac) "%0_FTOI();" 200
 fac: CVIF5(ac)  "%0_FCVI(AC);" if_cv_from_size(a,2,120)
-fac: CVIF5(lac) "%0_FCVI(LAC);" if_cv_from_size(a,4,256)
+fac: CVIF5(lac) "%0_FCVI(LAC);" if_cv_from_size(a,4,200)
 
 # Labels and jumps
 stmt: LABELV "label(%a);\n"
@@ -644,7 +647,7 @@ static Symbol rmap(int opk)
   
 static Symbol argreg(int argno, int ty, int sz, int *roffset)
 {
-  Symbol r;
+  Symbol r = 0;
   if (argno == 0)
     *roffset = 8; /* First register is R8 */
   if (*roffset >= 16)
@@ -842,10 +845,6 @@ static void emit3(const char *fmt, Node p, Node *kids, short *nts)
     }
   /* otherwise complain */
   assert(0);
-}
-
-static void emit2(Node p)
-{
 }
 
 static void doarg(Node p)
@@ -1110,20 +1109,6 @@ static void space(int n)
   if (cseg != BSS)
     print("space(%d);\n", n);
 }
-
-static void blkloop(int dreg, int doff, int sreg,
-                    int soff, int size, int tmps[])
-{
-}
-
-static void blkfetch(int size, int off, int reg, int tmp)
-{
-}
-
-static void blkstore(int size, int off, int reg, int tmp)
-{
-}
-
 
 Interface gigatronIR = {
         1, 1, 0,  /* char */

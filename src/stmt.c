@@ -525,7 +525,7 @@ void retcode(Tree p) {
 			apply(events.returns, cfunc, idtree(t1));
 			p = idtree(t1);
 		}
-	if (!isfloat(p->type))
+	if (!isfloat(p->type) && !(isint(p->type) && IR->wants_unpromoted_args))
 		p = cast(p, promote(p->type));
 	if (isptr(p->type))
 		{

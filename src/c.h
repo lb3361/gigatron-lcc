@@ -600,7 +600,3 @@ extern void rmtypes(int);
 extern int ttob(Type);
 extern int variadic(Type);
 
-/* Local Variables: */
-/* c-basic-offset: 8 */
-/* indent-tabs-mode: t */
-/* End: */

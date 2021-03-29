@@ -76,9 +76,9 @@ static int cpu = 5;
 
 %term ARGB=41
 %term ARGF5=5153
-%term ARGI1=1061 ARGI2=2085 ARGI4=4133
+%term ARGI2=2085 ARGI4=4133
 %term ARGP2=2087
-%term ARGU1=1062 ARGU2=2086 ARGU4=4134
+%term ARGU2=2086 ARGU4=4134
 
 %term ASGNB=57
 %term ASGNF5=5169
@@ -112,15 +112,15 @@ static int cpu = 5;
 
 %term CALLB=217
 %term CALLF5=5329
-%term CALLI1=1237 CALLI2=2261 CALLI4=4309
+%term CALLI2=2261 CALLI4=4309
 %term CALLP2=2263
-%term CALLU1=1238 CALLU2=2262 CALLU4=4310
+%term CALLU2=2262 CALLU4=4310
 %term CALLV=216
 
 %term RETF5=5361
-%term RETI1=1269 RETI2=2293 RETI4=4341
+%term RETI2=2293 RETI4=4341
 %term RETP2=2295
-%term RETU1=1270 RETU2=2294 RETU4=4342
+%term RETU2=2294 RETU4=4342
 %term RETV=248
 
 %term ADDRGP2=2311
@@ -227,12 +227,16 @@ stmt: ASGNI4(VREGP,reg)  "# write register\n"
 stmt: ASGNU4(VREGP,reg)  "# write register\n"
 stmt: ASGNF5(VREGP,reg)  "# write register\n"
 
-con8: CNSTI1  "%a"
+con0: CNSTI1  "%a"  range(a,0,0)
+con0: CNSTU1  "%a"  range(a,0,0)
+con0: CNSTI2  "%a"  range(a,0,0)
+con0: CNSTU2  "%a"  range(a,0,0)
+con8: CNSTI1  "%a"  range(a,0,255)
 con8: CNSTU1  "%a"  range(a,0,255)
 con8: CNSTI2  "%a"  range(a,0,255)
 con8: CNSTU2  "%a"  range(a,0,255)
-con8: CNSTP2  "%a"  range(a,0,255)
 co8n: CNSTI2  "%a"  range(a,-255,-1)
+con8: CNSTP2  "%a"  range(a,0,255)
 
 con: CNSTI1  "%a"
 con: CNSTU1  "%a"
@@ -312,6 +316,7 @@ ac: SUBU2(ac,co8n) "%0ADDI(-v(%1));" 28
 ac: SUBP2(ac,co8n) "%0ADDI(-v(%1));" 28
 
 ac: NEGI2(ac) "%0ST(SR);LDI(0);SUBW(SR);" 68
+ac: NEGI2(reg) "LDI(0);SUBW(%0);" 48
 
 ac: LSHI2(ac, con8) "%0%{shl1}" 100
 ac: LSHI2(ac, iarg) "%0%{iarg1}_SHL(%1);" 200
@@ -356,7 +361,38 @@ ac: BXORU2(ac,iarg)  "%0%{iarg1}XORW(%1);" 28
 ac: BXORI2(iarg,ac)  "%1%{iarg0}XORW(%0);" 28
 ac: BXORU2(iarg,ac)  "%1%{iarg0}XORW(%0);" 28
 ac: BXORI2(ac,con8)  "%0XORI(%1);" 16 
-ac: BXORU2(ac,con8)  "%0XORI(%1);" 16
+ac: BXORU2(ac,con8)  "%0XORI(%1);" 
+
+stmt: EQI2(ac,con0)  "%0_BEQ(%a);\n" 28
+stmt: EQI2(ac,con8)  "%0XORI(con8);_BEQ(%a);\n" 42
+stmt: EQI2(ac,reg)  "%0XORW(%1);_BEQ(%a);\n" 54
+stmt: EQI2(reg,ac)  "%1XORW(%0);_BEQ(%a);\n" 54
+stmt: NEI2(ac,con0)  "%0_BNE(%a);\n" 28
+stmt: NEI2(ac,con8)  "%0XORI(con8);_BNE(%a);\n" 42
+stmt: NEI2(ac,reg)  "%0XORW(%1);_BNE(%a);\n" 54
+stmt: NEI2(reg,ac)  "%1XORW(%0);_BNE(%a);\n" 54
+stmt: EQU2(ac,con0)  "%0_BEQ(%a);\n" 28
+stmt: EQU2(ac,con8)  "%0XORI(con8);_BEQ(%a);\n" 42
+stmt: EQU2(ac,reg)  "%0XORW(%1);_BEQ(%a);\n" 54
+stmt: EQU2(reg,ac)  "%1XORW(%0);_BEQ(%a);\n" 54
+stmt: NEU2(ac,con0)  "%0_BNE(%a);\n" 28
+stmt: NEU2(ac,con8)  "%0XORI(con8);_BNE(%a);\n" 42
+stmt: NEU2(ac,reg)  "%0XORW(%1);_BNE(%a);\n" 54
+stmt: NEU2(reg,ac)  "%1XORW(%0);_BNE(%a);\n" 54
+stmt: LTI2(ac,con0) "%0_BLT(%a);\n" 28
+stmt: LTI2(ac,con8) "%0SUBI(%1);_BLT(%a);\n" 54
+stmt: LTI2(ac,co8n) "%0ADDI(-v(%1));_BLT(%a);\n" 54
+stmt: LEI2(ac,con0) "%0_BLE(%a);\n" 28
+stmt: LEI2(ac,con8) "%0SUBI(%1);_BLE(%a);\n" 54
+stmt: LEI2(ac,co8n) "%0ADDI(-v(%1));_BLE(%a);\n" 54
+stmt: GTI2(ac,con0) "%0_BGT(%a);\n" 28
+stmt: GTI2(ac,con8) "%0SUBI(%1);_BGT(%a);\n" 54
+stmt: GTI2(ac,co8n) "%0ADDI(-v(%1));_BGT(%a);\n" 54
+stmt: GEI2(ac,con0) "%0_BGE(%a);\n" 28
+stmt: GEI2(ac,con8) "%0SUBI(%1);_BGE(%a);\n" 54
+stmt: GEI2(ac,co8n) "%0ADDI(-v(%1));_BGE(%a);\n" 54
+stmt: GTU2(ac,con0) "%0_BNE(%a);\n" 28
+stmt: LEU2(ac,con0) "%0_BEQ(%a);\n" 28
 
 # Standard assignnments
 stmt: ASGNP2(con8,ac) "%1STW(%0);\n" 20
@@ -470,10 +506,6 @@ ac: CALLU2(con) "CALLI(%0);" 28
 ac: CALLU2(reg) "CALL(%0);" 26
 ac: CALLP2(con) "CALLI(%0);" 28
 ac: CALLP2(reg) "CALL(%0);" 26
-ac: CALLI1(con) "CALLI(%0);" 28
-ac: CALLI1(reg) "CALL(%0);" 26
-ac: CALLU1(con) "CALLI(%0);" 28
-ac: CALLU1(reg) "CALL(%0);" 26
 stmt: CALLV(con) "CALLI(%0);\n" 28
 stmt: CALLV(reg) "CALL(%0);\n" 26
 stmt: ARGF5(fac)  "%0_SP(%c);_FPOKEA(FAC);\n"  if_arg_stk(a)
@@ -485,24 +517,18 @@ stmt: ARGU4(reg)  "_SP(%c);_LPOKEA(%0);\n"     if_arg_stk(a)
 stmt: ARGI2(reg)  "_SP(%c);_DOKEA(%0);\n"      if_arg_stk(a)
 stmt: ARGU2(reg)  "_SP(%c);_DOKEA(%0);\n"      if_arg_stk(a)
 stmt: ARGP2(reg)  "_SP(%c);_DOKEA(%0);\n"      if_arg_stk(a)
-stmt: ARGI1(reg)  "_SP(%c);_POKEA(%0);\n"      if_arg_stk(a)
-stmt: ARGU1(reg)  "_SP(%c);_DOKEA(%0);\n"      if_arg_stk(a)
 stmt: ARGF5(reg)  "# arg\n"  if_arg_reg(a)
 stmt: ARGI4(reg)  "# arg\n"  if_arg_reg(a)
 stmt: ARGU4(reg)  "# arg\n"  if_arg_reg(a)
 stmt: ARGI2(reg)  "# arg\n"  if_arg_reg(a)
 stmt: ARGU2(reg)  "# arg\n"  if_arg_reg(a)
 stmt: ARGP2(reg)  "# arg\n"  if_arg_reg(a)
-stmt: ARGI1(reg)  "# arg\n"  if_arg_reg(a)
-stmt: ARGU1(reg)  "# arg\n"  if_arg_reg(a)
 stmt: RETF5(fac)  "%0\n"  1
 stmt: RETI4(lac)  "%0\n"  1
 stmt: RETU4(lac)  "%0\n"  1
 stmt: RETI2(ac)   "%0STW(R3);\n"  1
 stmt: RETU2(ac)   "%0STW(R3);\n"  1
 stmt: RETP2(ac)   "%0STW(R3);\n"  1
-stmt: RETI1(ac)   "%0ST(R3);\n"  1
-stmt: RETU1(ac)   "%0ST(R3);\n"  1
 
 
 # Conversions

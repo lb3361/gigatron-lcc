@@ -43,7 +43,8 @@ static unsigned emitasm_ext(Node, int);
 
 /* Cost functions */
 static int  if_cv_from_size(Node,int,int);
-static int  if_cpu(int,int);
+static int  if_arg_reg(Node);
+static int  if_arg_stk(Node);
  
 /* Registers */
 static Symbol ireg[32], lreg[32], freg[32];
@@ -75,9 +76,9 @@ static int cpu = 5;
 
 %term ARGB=41
 %term ARGF5=5153
-%term ARGI2=2085 ARGI4=4133
+%term ARGI1=1061 ARGI2=2085 ARGI4=4133
 %term ARGP2=2087
-%term ARGU2=2086 ARGU4=4134
+%term ARGU1=1062 ARGU2=2086 ARGU4=4134
 
 %term ASGNB=57
 %term ASGNF5=5169
@@ -111,15 +112,15 @@ static int cpu = 5;
 
 %term CALLB=217
 %term CALLF5=5329
-%term CALLI2=2261 CALLI4=4309
+%term CALLI1=1237 CALLI2=2261 CALLI4=4309
 %term CALLP2=2263
-%term CALLU2=2262 CALLU4=4310
+%term CALLU1=1238 CALLU2=2262 CALLU4=4310
 %term CALLV=216
 
 %term RETF5=5361
-%term RETI2=2293 RETI4=4341
+%term RETI1=1269 RETI2=2293 RETI4=4341
 %term RETP2=2295
-%term RETU2=2294 RETU4=4342
+%term RETU1=1270 RETU2=2294 RETU4=4342
 %term RETV=248
 
 %term ADDRGP2=2311
@@ -226,20 +227,12 @@ stmt: ASGNI4(VREGP,reg)  "# write register\n"
 stmt: ASGNU4(VREGP,reg)  "# write register\n"
 stmt: ASGNF5(VREGP,reg)  "# write register\n"
 
-stmt: RETF5(reg)  "# ret\n"  1
-stmt: RETI4(reg)  "# ret\n"  1
-stmt: RETU4(reg)  "# ret\n"  1
-stmt: RETI2(reg)  "# ret\n"  1
-stmt: RETU2(reg)  "# ret\n"  1
-stmt: RETP2(reg)  "# ret\n"  1
-stmt: RETV(reg)   "# ret\n"  1
-
 con8: CNSTI1  "%a"
 con8: CNSTU1  "%a"  range(a,0,255)
 con8: CNSTI2  "%a"  range(a,0,255)
 con8: CNSTU2  "%a"  range(a,0,255)
 con8: CNSTP2  "%a"  range(a,0,255)
-con8: ADDRGP2 "%a"  range(a,0,255)
+co8n: CNSTI2  "%a"  range(a,-255,-1)
 
 con: CNSTI1  "%a"
 con: CNSTU1  "%a"
@@ -248,7 +241,7 @@ con: CNSTU2  "%a"
 con: CNSTP2  "%a"
 con: ADDRGP2 "%a" 
 
-stmt: ac ""
+stmt: ac "%0\n"
 stmt: reg  ""
 
 addr: ADDRLP2 "_SP(%a+%F);" 48
@@ -295,40 +288,73 @@ reg: LOADU1(ac) "%0%{%c!=AC:ST(%c);}\n" move(a)+16
 iarg: reg "%0"
 iarg: loada "%{alt:SR:STW(vLR);%0STW(SR);LDW(vLR);}" 80
 
-ac: ADDI2(ac,iarg)  "%0%{iarg1}ADDW(%1);" 28 
-ac: ADDI2(iarg,ac)  "%1%{iarg0}ADDW(%0);" 28 
-ac: ADDU2(ac,iarg)  "%0%{iarg1}ADDW(%1);" 28 
-ac: ADDU2(iarg,ac)  "%1%{iarg0}ADDW(%0);" 28 
-ac: ADDP2(ac,iarg)  "%0%{iarg1}ADDW(%1);" 28 
-ac: ADDP2(iarg,ac)  "%1%{iarg0}ADDW(%0);" 28 
+ac: ADDI2(ac,iarg)  "%0%{iarg1}ADDW(%1);" 28
+ac: ADDU2(ac,iarg)  "%0%{iarg1}ADDW(%1);" 28
+ac: ADDP2(ac,iarg)  "%0%{iarg1}ADDW(%1);" 28
+ac: ADDI2(iarg,ac)  "%1%{iarg0}ADDW(%0);" 28
+ac: ADDU2(iarg,ac)  "%1%{iarg0}ADDW(%0);" 28
+ac: ADDP2(iarg,ac)  "%1%{iarg0}ADDW(%0);" 28
 ac: ADDI2(ac,con8) "%0ADDI(%1);" 28
 ac: ADDU2(ac,con8) "%0ADDI(%1);" 28
 ac: ADDP2(ac,con8) "%0ADDI(%1);" 28
+ac: ADDI2(ac,co8n) "%0SUBI(-v(%1));" 28
+ac: ADDU2(ac,co8n) "%0SUBI(-v(%1));" 28
+ac: ADDP2(ac,co8n) "%0SUBI(-v(%1));" 28
 
-ac: SUBI2(ac,iarg)  "%0%{iarg1}SUBW(%1);" 28 
-ac: SUBU2(ac,iarg)  "%0%{iarg1}SUBW(%1);" 28 
-ac: SUBP2(ac,iarg)  "%0%{iarg1}SUBW(%1);" 28 
+ac: SUBI2(ac,iarg)  "%0%{iarg1}SUBW(%1);" 28
+ac: SUBU2(ac,iarg)  "%0%{iarg1}SUBW(%1);" 28
+ac: SUBP2(ac,iarg)  "%0%{iarg1}SUBW(%1);" 28
 ac: SUBI2(ac,con8) "%0SUBI(%1);" 28
 ac: SUBU2(ac,con8) "%0SUBI(%1);" 28
 ac: SUBP2(ac,con8) "%0SUBI(%1);" 28
+ac: SUBI2(ac,co8n) "%0ADDI(-v(%1));" 28
+ac: SUBU2(ac,co8n) "%0ADDI(-v(%1));" 28
+ac: SUBP2(ac,co8n) "%0ADDI(-v(%1));" 28
 
 ac: NEGI2(ac) "%0ST(SR);LDI(0);SUBW(SR);" 68
+
+ac: LSHI2(ac, con8) "%0%{shl1}" 100
+ac: LSHI2(ac, iarg) "%0%{iarg1}_SHL(%1);" 256
+ac: RSHI2(ac, iarg) "%0%{iarg1}_SHRS(%1);" 256
+ac: LSHU2(ac, con8) "%0%{shl1}" 100
+ac: LSHU2(ac, iarg) "%0%{iarg1}_SHL(%1);" 256
+ac: RSHU2(ac, iarg) "%0%{iarg1}_SHRU(%1);" 256
+
+ac: MULI2(con8, ac) "%1%{mul0}" 110
+ac: MULI2(co8n, ac) "%1%{mul0}" 110
+ac: MULI2(con8, reg) "%{mul0%1}" 100
+ac: MULI2(co8n, reg) "%{mul0%1}" 100
+ac: MULI2(ac, iarg) "%0%{iarg1}_MUL(%1);" 256
+ac: MULI2(iarg, ac) "%1%{iarg0}_MUL(%0);" 256
+ac: MULU2(con8, ac) "%1%{mul0}" 100
+ac: MULU2(con8, reg) "%1%{mul0%1}" 100
+ac: MULU2(ac, iarg) "%0%{iarg1}_MUL(%1);" 256
+ac: MULU2(iarg, ac) "%1%{iarg0}_MUL(%0);" 256
+
+ac: DIVI2(ac, iarg) "%0%{iarg1}_DIVS(%1);" 256
+ac: DIVU2(ac, iarg) "%0%{iarg1}_DIVU(%1);" 256
 
 ac: BCOMI2(ac) "%0ST(SR);LDWI(-0);XORW(SR);" 68
 ac: BCOMU2(ac) "%0ST(SR);LDWI(-0);XORW(SR);" 68
 
 ac: BANDI2(ac,iarg)  "%0%{iarg1}ANDW(%1);" 28
 ac: BANDU2(ac,iarg)  "%0%{iarg1}ANDW(%1);" 28
+ac: BANDI2(iarg,ac)  "%1%{iarg0}ANDW(%0);" 28
+ac: BANDU2(iarg,ac)  "%1%{iarg0}ANDW(%0);" 28
 ac: BANDI2(ac,con8)  "%0ANDI(%1);" 16 
 ac: BANDU2(ac,con8)  "%0ANDI(%1);" 16 
 
 ac: BORI2(ac,iarg)  "%0%{iarg1}ORW(%1);" 28
 ac: BORU2(ac,iarg)  "%0%{iarg1}ORW(%1);" 28
+ac: BORI2(iarg,ac)  "%1%{iarg0}ORW(%0);" 28
+ac: BORU2(iarg,ac)  "%1%{iarg0}ORW(%0);" 28
 ac: BORI2(ac,con8)  "%0ORI(%1);" 16 
 ac: BORU2(ac,con8)  "%0ORI(%1);" 16 
 
 ac: BXORI2(ac,iarg)  "%0%{iarg1}XORW(%1);" 28
 ac: BXORU2(ac,iarg)  "%0%{iarg1}XORW(%1);" 28
+ac: BXORI2(iarg,ac)  "%1%{iarg0}XORW(%0);" 28
+ac: BXORU2(iarg,ac)  "%1%{iarg0}XORW(%0);" 28
 ac: BXORI2(ac,con8)  "%0XORI(%1);" 16 
 ac: BXORU2(ac,con8)  "%0XORI(%1);" 16
 
@@ -348,6 +374,7 @@ stmt: ASGNU1(reg,ac) "%1POKE(%0);\n" 28
 stmt: ASGNB(reg,INDIRB(ac))  "%1%{asgnb}\n" 1
 
 # Longs
+stmt: lac "%0\n"
 reg: lac "%0%{%c!=LAC:_LMOV(LAC,%c);}\n" 80
 reg: LOADI4(lac) "%0%{%c!=LAC:_LMOV(LAC,%c);}\n" 80
 reg: LOADU4(lac) "%0%{%c!=LAC:_LMOV(LAC,%c);}\n" 80
@@ -373,6 +400,12 @@ lac: MULI4(larg,lac) "%1%0_LMUL();" 256
 lac: MULU4(larg,lac) "%1%0_LMUL();" 256
 lac: DIVI4(lac,larg) "%0%1_LDIVS();" 256
 lac: DIVU4(lac,larg) "%0%1_LDIVU();" 256
+lac: LSHI4(lac,larg) "%0%1_LSHL();" 256
+lac: LSHI4(lac,con8) "%0%{lshl1}" 1
+lac: LSHU4(lac,larg) "%0%1_LSHL();" 256
+lac: LSHU4(lac,con8) "%0%{lshl1}" 1
+lac: RSHI4(lac,larg) "%0%1_LASR();" 256
+lac: RSHU4(lac,larg) "%0%1_LLSH();" 256
 lac: NEGI4(lac) "%0_LNEG();" 256
 lac: BCOMU4(lac) "%0_LCOM();" 256
 lac: BANDU4(lac,larg) "%0%1_LAND();" 256
@@ -394,6 +427,7 @@ stmt: ASGNI4(reg,lac) "%1LDW(%0);_LPOKEA(LAC);n" 180
 stmt: ASGNU4(reg,lac) "%1LDW(%0);_LPOKEA(LAC);\n" 180
 
 # Floats
+stmt: fac "%0\n"
 reg: fac "%0%{%c!=FAC:_FMOV(FAC,%c);}\n" 100
 reg: LOADF5(fac) "%0%{%c!=FAC:_FMOV(FAC,%c);}\n" 100
 reg: LOADF5(reg) "_FMOV(%0,%c)\n" move(a)+100
@@ -425,8 +459,39 @@ ac: CALLU2(con) "CALLI(%0);" 28
 ac: CALLU2(reg) "CALL(%0);" 26
 ac: CALLP2(con) "CALLI(%0);" 28
 ac: CALLP2(reg) "CALL(%0);" 26
-stmt: CALLV(con) "CALLI(%0)" 28
-stmt: CALLV(reg) "CALL(%0)" 26
+ac: CALLI1(con) "CALLI(%0);" 28
+ac: CALLI1(reg) "CALL(%0);" 26
+ac: CALLU1(con) "CALLI(%0);" 28
+ac: CALLU1(reg) "CALL(%0);" 26
+stmt: CALLV(con) "CALLI(%0);\n" 28
+stmt: CALLV(reg) "CALL(%0);\n" 26
+stmt: ARGF5(fac)  "%0_SP(%c);_FPOKEA(FAC);\n"  if_arg_stk(a)
+stmt: ARGI4(lac)  "%0_SP(%c);_LPOKEA(FAC);\n"  if_arg_stk(a)
+stmt: ARGU4(lac)  "%0_SP(%c);_LPOKEA(FAC);\n"  if_arg_stk(a)
+stmt: ARGF5(reg)  "_SP(%c);_FPOKEA(%0);\n"     if_arg_stk(a)
+stmt: ARGI4(reg)  "_SP(%c);_LPOKEA(%0);\n"     if_arg_stk(a)
+stmt: ARGU4(reg)  "_SP(%c);_LPOKEA(%0);\n"     if_arg_stk(a)
+stmt: ARGI2(reg)  "_SP(%c);_DOKEA(%0);\n"      if_arg_stk(a)
+stmt: ARGU2(reg)  "_SP(%c);_DOKEA(%0);\n"      if_arg_stk(a)
+stmt: ARGP2(reg)  "_SP(%c);_DOKEA(%0);\n"      if_arg_stk(a)
+stmt: ARGI1(reg)  "_SP(%c);_POKEA(%0);\n"      if_arg_stk(a)
+stmt: ARGU1(reg)  "_SP(%c);_DOKEA(%0);\n"      if_arg_stk(a)
+stmt: ARGF5(reg)  "# arg\n"  if_arg_reg(a)
+stmt: ARGI4(reg)  "# arg\n"  if_arg_reg(a)
+stmt: ARGU4(reg)  "# arg\n"  if_arg_reg(a)
+stmt: ARGI2(reg)  "# arg\n"  if_arg_reg(a)
+stmt: ARGU2(reg)  "# arg\n"  if_arg_reg(a)
+stmt: ARGP2(reg)  "# arg\n"  if_arg_reg(a)
+stmt: ARGI1(reg)  "# arg\n"  if_arg_reg(a)
+stmt: ARGU1(reg)  "# arg\n"  if_arg_reg(a)
+stmt: RETF5(fac)  "%0\n"  1
+stmt: RETI4(lac)  "%0\n"  1
+stmt: RETU4(lac)  "%0\n"  1
+stmt: RETI2(ac)   "%0STW(R3);\n"  1
+stmt: RETU2(ac)   "%0STW(R3);\n"  1
+stmt: RETP2(ac)   "%0STW(R3);\n"  1
+stmt: RETI1(ac)   "%0ST(R3);\n"  1
+stmt: RETU1(ac)   "%0ST(R3);\n"  1
 
 
 # Conversions
@@ -449,7 +514,7 @@ lac: LOADU4(lac) "%0"
 ac: CVII2(ac) "%0XORI(128);SUBI(128);" if_cv_from_size(a,1,48)
 ac: CVUI2(ac) "%0"
 lac: CVIU4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);" 50
-lac: CVII4(ac) "%0_SEXT(AC,LAC);" 120
+lac: CVII4(ac) "%0STW(LAC);LD(vAH);XORI(128);SUBI(128);LD(vAH);ST(LAC+2);ST(LAC+3);" 120
 lac: CVUU4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);"
 lac: CVUI4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);"
 # 3) floating point conversions
@@ -464,6 +529,8 @@ fac: CVIF5(lac) "%0_FCVI(LAC);" if_cv_from_size(a,4,256)
 
 # Labels and jumps
 stmt: LABELV "label(%a);\n"
+stmt: JUMPV(con)  "_BRA(%0);\n"   14
+stmt: JUMPV(reg)   "CALL(%0);"  14
 
 
 # More opcodes for cpu=5
@@ -484,6 +551,16 @@ static void comment(const char *fmt, ...) {
   va_end(ap);
 }
 
+static int if_arg_reg(Node p)
+{
+  return p->syms[1] ? 1 : LBURG_MAX;
+}
+
+static int if_arg_stk(Node p)
+{
+  return p->syms[1] ? LBURG_MAX : 1;
+}
+
 static int if_cv_from_size(Node p, int sz, int cost)
 {
   assert(p->syms[0]);
@@ -492,11 +569,6 @@ static int if_cv_from_size(Node p, int sz, int cost)
   if (p->syms[0]->u.c.v.i == sz)
     return cost;
   return LBURG_MAX;
-}
-
-static int  if_cpu(int mincpu, int cost)
-{
-  return (cpu >= mincpu) ? cost : LBURG_MAX;
 }
 
 static void progend(void)
@@ -587,14 +659,9 @@ static void target(Node p)
   assert(p);
   switch (specific(p->op))
     {
-    case RET+I: case RET+U: case RET+P:
-      if (opsize(p->op) > 2)
-        rtarget(p, 0, lreg[3]); /* LAC */
-      else 
-        rtarget(p, 0, ireg[3]); /* LAC[0] */
-      break;
-    case RET+F:
-      rtarget(p, 0, freg[2]); /* FAC */
+    case ARG+F: case ARG+I: case ARG+P: case ARG+U:
+      if (p->syms[1])
+        rtarget(p, 0, p->syms[1]);
       break;
     }
 }
@@ -633,7 +700,7 @@ static int alt_s;
 static void emit3(const char *fmt, Node p, Node *kids, short *nts)
 {
   /* %{iargX} -- see iarg rule for an explanation */
-  if (!strncmp(fmt,"iarg",4) && (fmt[4]&~1)=='0' && !fmt[5])
+  if (!strncmp(fmt,"iarg",4) && fmt[4]>='0' && fmt[4]<='9' && !fmt[5])
     {
       static short iarg_nt, loada_nt;
       int i, rn1;
@@ -703,10 +770,70 @@ static void emit3(const char *fmt, Node p, Node *kids, short *nts)
         emitfmt(v + 1, p, kids, nts);
       return;
     }
-  /* otherwise print */
-  print("%{");
-  emitfmt(fmt, p, kids, nts);
-  print("}");
+  /* %{shlC} -- left shift by constant */
+  if (!strncmp(fmt,"shl", 3) && fmt[3] >= '0' && fmt[3] <= '9' && ! fmt[4])
+    {
+      int i,c,m;
+      i = fmt[3] - '0';
+      assert(p->kids[i]);
+      assert(p->kids[i]->syms[0]->scope == CONSTANTS);
+      c = p->kids[i]->syms[0]->u.c.v.i;
+      assert(c>=0 && c<256);
+      if (c >= 16) {
+        print("LDI(0);");
+        return;
+      }
+      if (c >= 8) {
+        print("ST(vAH);ORI(255);XORI(255);");
+        c -= 8;
+      }
+      while (c > 0) {
+        print("LSLW();");
+        c -= 1;
+      }
+      return;
+    }
+  /* ${mulC[:R]} -- multiplication by a small constant */
+  if (!strncmp(fmt,"mul", 3) && fmt[3] >= '0' && fmt[3] <= '9')
+    {
+      int c,m,x;
+      int i = fmt[3] - '0';
+      const char *r = "SR";
+      assert(p->kids[i]);
+      assert(p->kids[i]->syms[0]->scope == CONSTANTS);
+      c = p->kids[i]->syms[0]->u.c.v.i;
+      if (c == 0) {
+        print("LDI(0);");
+        return;
+      } else if (c == 1)
+        return;
+      if (fmt[4]) {
+        assert(fmt[4]=='%' && fmt[5]>='0' && fmt[5]<='9' && !fmt[6]);
+        assert(kids[fmt[5]-'0'] && kids[fmt[5]-'0']->syms[RX]);
+        r = kids[fmt[5]-'0']->syms[RX]->x.name;
+      }
+      x = (c >= 0) ? c : -c;
+      assert(x>=0 && x<256);
+      m = 0x80;
+      while (m && !(m & x))
+        m >>= 1;
+      if (fmt[4] && c < 0)
+        print("LDI(0);SUBW(%s);", r);
+      else if (fmt[4])
+        print("LDW(%s);", r);
+      else if (c < 0)
+        print("STW(SR);LDI(0);SUBW(SR);");
+      else if (x & (m-1))
+        print("STW(SR);");
+      for (m >>= 1; m; m >>= 1) {
+        print("LSLW();");
+        if (m & x)
+          print("%s(%s);", (c > 0) ? "ADDW" : "SUBW", r);
+      }
+      return;
+    }
+  /* otherwise complain */
+  assert(0);
 }
 
 static void emit2(Node p)
@@ -716,9 +843,13 @@ static void emit2(Node p)
 static void doarg(Node p)
 {
   static int argno;
+  static int roffset;
+  Symbol r;
   if (argoffset == 0)
     argno = 0;
+  r  = argreg(argno, optype(p->op), opsize(p->op), &roffset);
   p->x.argno = argno++;
+  p->syms[1] = r;
   p->syms[2] = intconst(mkactual(1, p->syms[0]->u.c.v.i));
 }
 
@@ -738,7 +869,7 @@ static int bitcount(unsigned mask) {
 
 static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
 {
-  int i, roffset, sizesave, varargs, first, ty;
+  int i, roffset, soffset, sizesave, varargs, first, ty;
   Symbol r, argregs[8];
   usedmask[0] = usedmask[1] = 0;
   freemask[0] = freemask[1] = ~(unsigned)0;
@@ -760,26 +891,23 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
     if (i < 8)
       argregs[i] = r;
     offset += q->type->size;
-    if (varargs)
+    if (varargs) {
       p->sclass = AUTO;
-    else if (r && ncalls == 0 && !isstruct(q->type) && !p->addressed)
-      {
-        p->sclass = q->sclass = REGISTER;
-        askregvar(p, r);
-        assert(p->x.regnode && p->x.regnode->vbl == p);
-        q->x = p->x;
-        q->type = p->type;
-      }
-    else if (askregvar(p, rmap(ttob(p->type))) && r != NULL
-             && (isint(p->type) || p->type == q->type))
-      {
-        assert(q->sclass != REGISTER);
-        p->sclass = q->sclass = REGISTER;
-        q->type = p->type;
-      }
+    } else if (r && ncalls == 0 && !p->addressed) {
+      p->sclass = q->sclass = REGISTER;
+      askregvar(p, r);
+      assert(p->x.regnode && p->x.regnode->vbl == p);
+      q->x = p->x;
+      q->type = p->type;
+    } else if (askregvar(p, rmap(ttob(p->type))) && r) {
+      assert(q->sclass != REGISTER);
+      p->sclass = q->sclass = REGISTER;
+      q->type = p->type;
+    }
   }
   /* gen code */
   assert(!caller[i]);
+  soffset = offset;
   offset = 0;
   gencode(caller, callee);
   /* prologue */
@@ -789,6 +917,9 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   print("LDW(vLR);STW(LR);");
   if (ncalls)
     usedmask[IREG] |= REGMASK_LR;
+  i = bitcount(REGMASK_ARGS);
+  if (ncalls & maxargoffset < i)
+    maxargoffset = i;
   usedmask[IREG] &= REGMASK_VARS;
   sizesave = 2 * bitcount(usedmask[IREG]);
   framesize = maxargoffset + sizesave + maxoffset;
@@ -799,32 +930,48 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   for (i=0; i<=31; i++)
     if (usedmask[IREG]&(1<<i)) {
       if (first && maxargoffset>0 && maxargoffset < 256)
-        print("ADDI(%d);_IPOKEA(R%d);", maxargoffset, i);
+        print("ADDI(%d);_DOKEA(R%d);", maxargoffset, i);
       else if (first)
-        print("_SP(%d);_IPOKEA(R%d);", maxargoffset, i);
+        print("_SP(%d);_DOKEA(R%d);", maxargoffset, i);
       else
-        print("ADDI(2);_IPOKEA(R%d);", i);
+        print("ADDI(2);_DOKEA(R%d);", i);
       first = 0;
     }
-  /* save args into new registers */
+  /* save args into new registers or vars */
   for (i = 0; i < 8 && callee[i]; i++) {
     r = argregs[i];
     if (r && r->x.regnode != callee[i]->x.regnode) {
       Symbol out = callee[i];
       Symbol in  = caller[i];
       const char *rn = r->x.name;
-      int sz = in->type->size;
-      int c = (isfloat(in->type)) ? 'F' : (sz>2) ? 'L' : 0;
       assert(out && in && r && r->x.regnode);
       assert(out->sclass != REGISTER || out->x.regnode);
-      if (out->sclass == REGISTER && (isint(out->type) || out->type == in->type)) {
-        if (c)
-          print("_%cMOV(%s,%s);", c, rn, out->x.name);
+      if (out->sclass == REGISTER) {
+        if (isfloat(in->type))
+          print("_FMOV(%s,%s);", rn, out->x.name);
+        else if (in->type->size > 2)
+          print("_LMOV(%s,%s);", rn, out->x.name);
         else 
           print("LDW(%s);STW(%s);", rn, out->x.name);
+      } else {
+        if (isfloat(in->type))
+          print("_FMOV(%s,FAC);_SP(%s+%d);_FPOKEA(FAC);", rn, out->x.name, framesize);
+        else if (in->type->size == 4)
+          print("_SP(%s+%d);_LPOKEA(%s);", out->x.name, framesize, rn);
+        else if (in->type->size == 2)
+          print("_SP(%s+%d);_DOKEA(%s);", out->x.name, framesize, rn); 
+        else if (in->type->size == 1)
+          print("_SP(%s+%d);_POKEA(%s);", out->x.name, framesize, rn); 
       }
     }
   }
+  /* for variadic functions, save remaining registers */
+  if (varargs)
+    while (! ((r=ireg[roffset])->x.regnode->mask & ~REGMASK_ARGS)) {
+      print("_SP(%d+%d);_DOKEA(%s);", soffset, framesize, r->x.name);
+      roffset += 1;
+      soffset += 2;
+    }
   print("\n");
   /* Emit actual code */
   emitcode();
@@ -833,9 +980,9 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   for (i=0; i<=31; i++)
     if (usedmask[IREG]&(1<<i)) {
       if (first)
-        print("_SP(%d);_IPEEKA(R%d);", maxargoffset, i);
+        print("_SP(%d);_DEEKA(R%d);", maxargoffset, i);
       else
-        print("ADDI(2);_IPEEKA(R%d);", i);
+        print("ADDI(2);_DEEKA(R%d);", i);
       first = 0;
     }
   if (framesize > 0)
@@ -854,7 +1001,7 @@ static void defconst(int suffix, int size, Value v)
     int exp;
     unsigned long mantissa;
     assert(size == 5);
-    assert(isnormal(d));
+    assert(isfinite(d));
     mantissa = (unsigned long)(frexp(d,&exp) * pow(2.0, 32));
     if (mantissa == 0 || exp < -128)
       print("bytes(0,0,0,0,0) ");
@@ -883,7 +1030,7 @@ static void defstring(int n, char *str)
 {
   int i;
   for (i=0; i<n; i++)
-    print( (i&7==0) ? "bytes(%d" : (i&7==7) ? ",%d);\n" : ",%d", (int)str[i]&0xff );
+    print( ((i&7)==0) ? "bytes(%d" : ((i&7)==7) ? ",%d);\n" : ",%d", (int)str[i]&0xff );
   if (i&7)
     print(");\n");
 }
@@ -919,7 +1066,7 @@ static void defsymbol(Symbol p)
 static void address(Symbol q, Symbol p, long n)
 {
   if (p->scope == GLOBAL || p->sclass == STATIC || p->sclass == EXTERN)
-    q->x.name = stringf("sym(%s)%s%D", p->x.name, n >= 0 ? "+" : "", n);
+    q->x.name = stringf("v(%s)%s%D", p->x.name, n >= 0 ? "+" : "", n);
   else {
     assert(n <= INT_MAX && n >= INT_MIN);
     q->x.offset = p->x.offset + n;
@@ -1032,6 +1179,8 @@ Interface gigatronIR = {
 
 /*---- END CODE --*/
 
-/* Local Variables:  */
-/* mode: c           */
-/* End:              */
+/* Local Variables: */
+/* mode: c */
+/* c-basic-offset: 2 */
+/* indent-tabs-mode: () */
+/* End: */

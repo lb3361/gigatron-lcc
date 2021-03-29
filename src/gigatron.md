@@ -35,11 +35,6 @@ static void segment(int);
 static void space(int);
 static void target(Node);
 
-/* emitasm_ext() replace the standard emitter.
-   The emit2() mechanism is insufficient for us.
-*/   
-extern unsigned (*emitter)(Node, int);
-static unsigned emitasm_ext(Node, int);
 
 /* Cost functions */
 static int  if_cv_from_size(Node,int,int);
@@ -278,11 +273,11 @@ ac: loada "%0"
 ac: loadx "%0"
 
 reg: ac "%0%{%c!=AC:STW(%c);}\n" 20
-reg: LOADI2(ac) "%0%{%c!=AC:STW(%c);}\n" move(a)+20
-reg: LOADU2(ac) "%0%{%c!=AC:STW(%c);}\n" move(a)+20
-reg: LOADP2(ac) "%0%{%c!=AC:STW(%c);}\n" move(a)+20
-reg: LOADI1(ac) "%0%{%c!=AC:ST(%c);}\n" move(a)+16
-reg: LOADU1(ac) "%0%{%c!=AC:ST(%c);}\n" move(a)+16
+reg: LOADI2(reg) "%{%0!=AC:LDW(%0);}%{%c!=AC:STW(%c);}\n" move(a)
+reg: LOADU2(reg) "%{%0!=AC:LDW(%0);}%{%c!=AC:STW(%c);}\n" move(a)
+reg: LOADP2(reg) "%{%0!=AC:LDW(%0);}%{%c!=AC:STW(%c);}\n" move(a)
+reg: LOADI1(reg) "%{%0!=AC:LD(%0);}%{%c!=AC:ST(%c);}\n" move(a)
+reg: LOADU1(reg) "%{%0!=AC:LD(%0);}%{%c!=AC:ST(%c);}\n" move(a)
 
 # genreload() can use the iarg:loada rule to reload with allocating a register. 
 # This depends on code using the %{iargX} macro to insert the reloading code when needed.
@@ -393,6 +388,15 @@ stmt: GEI2(ac,con8) "%0SUBI(%1);_BGE(%a);\n" 54
 stmt: GEI2(ac,co8n) "%0ADDI(-v(%1));_BGE(%a);\n" 54
 stmt: GTU2(ac,con0) "%0_BNE(%a);\n" 28
 stmt: LEU2(ac,con0) "%0_BEQ(%a);\n" 28
+stmt: LTI2(reg,reg) "_CMPS(%0,%1);_BLT(%a);\n" 100
+stmt: LEI2(reg,reg) "_CMPS(%0,%1);_BLE(%a);\n" 100
+stmt: GTI2(reg,reg) "_CMPS(%0,%1);_BGT(%a);\n" 100
+stmt: GEI2(reg,reg) "_CMPS(%0,%1);_BGE(%a);\n" 100
+stmt: LTU2(reg,reg) "_CMPU(%0,%1);_BLT(%a);\n" 100
+stmt: LEU2(reg,reg) "_CMPU(%0,%1);_BLE(%a);\n" 100
+stmt: GTU2(reg,reg) "_CMPU(%0,%1);_BGT(%a);\n" 100
+stmt: GEU2(reg,reg) "_CMPU(%0,%1);_BGE(%a);\n" 100
+
 
 # Standard assignnments
 stmt: ASGNP2(con8,ac) "%1STW(%0);\n" 20
@@ -420,10 +424,8 @@ stmt: ASGNB(reg,INDIRB(reg))  "_MEMCPY(%0,%1,%a);\n"   200
 # Longs
 stmt: lac "%0\n"
 reg: lac "%0%{%c!=LAC:_LMOV(LAC,%c);}\n" 80
-reg: LOADI4(lac) "%0%{%c!=LAC:_LMOV(LAC,%c);}\n" 80
-reg: LOADU4(lac) "%0%{%c!=LAC:_LMOV(LAC,%c);}\n" 80
-reg: LOADI4(reg) "_LMOV(%0,%c)\n" move(a)+80
-reg: LOADU4(reg) "_LMOV(%0,%c)\n" move(a)+80
+reg: LOADI4(reg) "_LMOV(%0,%c)\n" move(a)
+reg: LOADU4(reg) "_LMOV(%0,%c)\n" move(a)
 reg: INDIRI4(ac) "%0_LPEEKA(%c);\n" 150
 reg: INDIRU4(ac) "%0_LPEEKA(%c);\n" 150
 lac: reg "%{%0!=LAC:_LMOV(%0,LAC);}" 80
@@ -471,12 +473,27 @@ stmt: ASGNI4(reg,lac) "%1LDW(%0);_LPOKEA(LAC);\n" 180
 stmt: ASGNU4(reg,lac) "%1LDW(%0);_LPOKEA(LAC);\n" 180
 stmt: ASGNI4(ac,reg) "%0_LPOKEA($1);\n" 160
 stmt: ASGNU4(ac,reg) "%0_LPOKEA($1);\n" 160
+stmt: LTI4(lac,larg) "%0%1_LCMPS();_BLT(%a);\n" 200
+stmt: LEI4(lac,larg) "%0%1_LCMPS();_BLE(%a);\n" 200
+stmt: GTI4(lac,larg) "%0%1_LCMPS();_BGT(%a);\n" 200
+stmt: GEI4(lac,larg) "%0%1_LCMPS();_BGE(%a);\n" 200
+stmt: LTU4(lac,larg) "%0%1_LCMPU();_BLT(%a);\n" 200
+stmt: LEU4(lac,larg) "%0%1_LCMPU();_BLE(%a);\n" 200
+stmt: GTU4(lac,larg) "%0%1_LCMPU();_BGT(%a);\n" 200
+stmt: GEU4(lac,larg) "%0%1_LCMPU();_BGE(%a);\n" 200
+stmt: NEI4(lac,larg) "%0%1_LDW(LAC);XORW(LARG);STW(SR);LDW(LAC+2);XORW(LARG+2);ORW(SR);_BNE(%a);\n" 100
+stmt: EQI4(lac,larg) "%0%1_LDW(LAC);XORW(LARG);STW(SR);LDW(LAC+2);XORW(LARG+2);ORW(SR);_BEQ(%a);\n" 100
+stmt: NEI4(lac,reg) "%0_LDW(LAC);XORW(%1);STW(SR);LDW(LAC+2);XORW(%1+2);ORW(SR);_BNE(%a);\n" 100
+stmt: EQI4(lac,reg) "%0_LDW(LAC);XORW(%1);STW(SR);LDW(LAC+2);XORW(%1+2);ORW(SR);_BEQ(%a);\n" 100
+stmt: NEU4(lac,larg) "%0%1_LDW(LAC);XORW(LARG);STW(SR);LDW(LAC+2);XORW(LARG+2);ORW(SR);_BNE(%a);\n" 100
+stmt: EQU4(lac,larg) "%0%1_LDW(LAC);XORW(LARG);STW(SR);LDW(LAC+2);XORW(LARG+2);ORW(SR);_BEQ(%a);\n" 100
+stmt: NEU4(lac,reg) "%0_LDW(LAC);XORW(%1);STW(SR);LDW(LAC+2);XORW(%1+2);ORW(SR);_BNE(%a);\n" 100
+stmt: EQU4(lac,reg) "%0_LDW(LAC);XORW(%1);STW(SR);LDW(LAC+2);XORW(%1+2);ORW(SR);_BEQ(%a);\n" 100
 
 # Floats
 stmt: fac "%0\n"
 reg: fac "%0%{%c!=FAC:_FMOV(FAC,%c);}\n" 100
-reg: LOADF5(fac) "%0%{%c!=FAC:_FMOV(FAC,%c);}\n" 100
-reg: LOADF5(reg) "_FMOV(%0,%c)\n" move(a)+100
+reg: LOADF5(reg) "_FMOV(%0,%c)\n" move(a)
 fac: reg "%{%0!=FAC:_FMOV(%0,FAC);}" 100
 fac: INDIRF5(ac) "%0_FPEEKA(FAC);" 200
 farg: INDIRF5(addr) "%0_FPEEKA(FARG);" 200
@@ -492,6 +509,12 @@ fac: NEGF5(fac) "%0_FNEG();" 50
 stmt: ASGNF5(addr,fac) "%1%0_FPOKEA(FAC);\n" 200
 stmt: ASGNF5(reg,fac) "%1LDW(%0);_FPOKEA(FAC);\n" 200
 stmt: ASGNF5(ac,reg) "%0_FPOKEA(%1);\n" 200
+stmt: EQF5(fac,farg) "%0%1FSUB();_FTST();_BEQ(%a);\n" 200
+stmt: NEF5(fac,farg) "%0%1FSUB();_FTST();_BNE(%a);\n" 200
+stmt: LTF5(fac,farg) "%0%1FSUB();_FTST();_BLT(%a);\n" 200
+stmt: LEF5(fac,farg) "%0%1FSUB();_FTST();_BLE(%a);\n" 200
+stmt: GTF5(fac,farg) "%0%1FSUB();_FTST();_BGT(%a);\n" 200
+stmt: GEF5(fac,farg) "%0%1FSUB();_FTST();_BGE(%a);\n" 200
 
 # Calls
 fac: CALLF5(con) "CALLI(%0);" 28
@@ -567,7 +590,7 @@ fac: CVIF5(lac) "%0_FCVI(LAC);" if_cv_from_size(a,4,200)
 # Labels and jumps
 stmt: LABELV "label(%a);\n"
 stmt: JUMPV(con)  "_BRA(%0);\n"   14
-stmt: JUMPV(reg)   "CALL(%0);"  14
+stmt: JUMPV(reg)   "CALL(%0);\n"  14
 
 
 # More opcodes for cpu=5
@@ -731,6 +754,19 @@ static void clobber(Node p)
     spill(mask, IREG, p);
 }
 
+
+static Node reuse(Node p, int nt) /* magic copied from gen.c */
+{ 
+  struct _state { short cost[1];};
+  Symbol r = p->syms[RX];
+  if (generic(p->op) == INDIR && p->kids[0]->op == VREG+P
+      && r->u.t.cse && p->x.mayrecalc
+      && ((struct _state*)r->u.t.cse->x.state)->cost[nt] == 0)
+    return r->u.t.cse;
+  else
+    return p;
+}
+
 static Node alt_p = 0;
 static int alt_s;
 
@@ -811,10 +847,15 @@ static void emit3(const char *fmt, Node p, Node *kids, short *nts)
   if (!strncmp(fmt,"shl", 3) && fmt[3] >= '0' && fmt[3] <= '9' && ! fmt[4])
     {
       int i,c,m;
+      Node k;
       i = fmt[3] - '0';
-      assert(p->kids[i]);
-      assert(p->kids[i]->syms[0]->scope == CONSTANTS);
-      c = p->kids[i]->syms[0]->u.c.v.i;
+      k = kids[i];
+      assert(k);
+      if (k->syms[0] == 0 || k->syms[0]->scope != CONSTANTS)
+        if (generic(k->op) == INDIR && k->syms[2] && k->syms[2]->u.t.cse)
+          k = k->syms[2]->u.t.cse;
+      assert(k->syms[0] && k->syms[0]->scope == CONSTANTS);
+      c = k->syms[0]->u.c.v.i;
       assert(c>=0 && c<256);
       if (c >= 16) {
         print("LDI(0);");
@@ -833,12 +874,17 @@ static void emit3(const char *fmt, Node p, Node *kids, short *nts)
   /* ${mulC[:R]} -- multiplication by a small constant */
   if (!strncmp(fmt,"mul", 3) && fmt[3] >= '0' && fmt[3] <= '9')
     {
-      int c,m,x;
-      int i = fmt[3] - '0';
-      const char *r = "SR";
-      assert(p->kids[i]);
-      assert(p->kids[i]->syms[0]->scope == CONSTANTS);
-      c = p->kids[i]->syms[0]->u.c.v.i;
+      int i, c,m,x;
+      const char *r;
+      Node k;
+      r = "SR";
+      i = fmt[3] - '0';
+      assert(k);
+      if (k->syms[0] == 0 || k->syms[0]->scope != CONSTANTS)
+        if (generic(k->op) == INDIR && k->syms[2] && k->syms[2]->u.t.cse)
+          k = k->syms[2]->u.t.cse;
+      assert(k->syms[0] && k->syms[0]->scope == CONSTANTS);
+      c = k->syms[0]->u.c.v.i;
       if (c == 0) {
         print("LDI(0);");
         return;
@@ -902,7 +948,7 @@ static int bitcount(unsigned mask) {
 
 static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
 {
-  int i, roffset, soffset, sizesave, varargs, first, ty;
+  int i, roffset, soffset, sizesave, varargs, ty;
   Symbol r, argregs[8];
   usedmask[0] = usedmask[1] = 0;
   freemask[0] = freemask[1] = ~(unsigned)0;
@@ -959,16 +1005,11 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   if (framesize > 0)
     print("_SP(%d);STW(SP);",framesize);
   /* save callee saved registers */
-  first = 1;
+  offset = maxargoffset;
   for (i=0; i<=31; i++)
     if (usedmask[IREG]&(1<<i)) {
-      if (first && maxargoffset>0 && maxargoffset < 256)
-        print("ADDI(%d);_DOKEA(R%d);", maxargoffset, i);
-      else if (first)
-        print("_SP(%d);_DOKEA(R%d);", maxargoffset, i);
-      else
-        print("ADDI(2);_DOKEA(R%d);", i);
-      first = 0;
+      print("_SP(%d);_DOKEA(R%d);", offset, i);
+      offset += 2;
     }
   /* save args into new registers or vars */
   for (i = 0; i < 8 && callee[i]; i++) {
@@ -1009,14 +1050,11 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   /* Emit actual code */
   emitcode();
   /* Restore callee saved registers */
-  first = 1;
+  offset = maxargoffset;
   for (i=0; i<=31; i++)
     if (usedmask[IREG]&(1<<i)) {
-      if (first)
-        print("_SP(%d);_DEEKA(R%d);", maxargoffset, i);
-      else
-        print("ADDI(2);_DEEKA(R%d);", i);
-      first = 0;
+      print("_SP(%d);DEEK();STW(R%d);", offset, i);
+      offset += 2;
     }
   if (framesize > 0)
     print("_SP(%d);STW(SP);", -framesize);

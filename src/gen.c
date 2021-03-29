@@ -316,7 +316,7 @@ static void dumpcover(Node p, int nt, int in) {
 	p = reuse(p, nt);
 	rulenum = getrule(p, nt);
 	nts = IR->x._nts[rulenum];
-	fprint(stderr, "dumpcover(%x) = ", p);
+	fprint(stderr, "dumpcover(%X) = ", p);
 	for (i = 0; i < in; i++)
 		fprint(stderr, " ");
 	dumprule(rulenum);

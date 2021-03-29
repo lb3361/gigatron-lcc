@@ -14,7 +14,7 @@ static char rcsid[] = "$Id$";
 char *suffixes[] = { ".c", ".i", ".s", ".o", ".out", 0 };
 char inputs[256] = "";
 char *cpp[] = { LCCDIR "cpp", "$1", "$2", "$3", 0 };
-char *com[] =  { LCCDIR "rcc", "-target=gt1", "$1", "$2", "$3", "", 0 };
+char *com[] =  { LCCDIR "rcc", "-target=gigatron", "$1", "$2", "$3", "", 0 };
 char *include[] = { "-I" LCCDIR "include", 0 };
 char *as[] = { "/bin/cp", "$2", "$3", 0 };
 char *ld[] = { LCCDIR "gtlink.py", "-o", "$3", "$1", LCCDIR "rt.py", "$2", 0 };

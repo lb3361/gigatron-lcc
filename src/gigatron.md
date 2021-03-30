@@ -232,7 +232,6 @@ con8: CNSTI2  "%a"  range(a,0,255)
 con8: CNSTU2  "%a"  range(a,0,255)
 co8n: CNSTI2  "%a"  range(a,-255,-1)
 con8: CNSTP2  "%a"  range(a,0,255)
-
 con: CNSTI1  "%a"
 con: CNSTU1  "%a"
 con: CNSTI2  "%a"
@@ -243,11 +242,12 @@ con: ADDRGP2 "%a"
 stmt: ac "%0\n"
 stmt: reg  ""
 
+reg: ac "%0%{%c!=AC:STW(%c);}\n" 20
+
 addr: ADDRLP2 "_SP(%a+%F);" 48
 addr: ADDRFP2 "_SP(%a+%F);" 48
 addr: con8 "LDI(%0);" 16
 addr: con "LDWI(%0);" 20
-
 loada: INDIRI2(addr) "%0DEEK();" 20 
 loada: INDIRU2(addr) "%0DEEK();" 20 
 loada: INDIRP2(addr) "%0DEEK();" 20 
@@ -258,7 +258,6 @@ loada: INDIRU2(con8) "LDW(%0);" 20
 loada: INDIRP2(con8) "LDW(%0);" 20 
 loada: INDIRI1(con8) "LD(%0);" 16 
 loada: INDIRU1(con8) "LD(%0);" 16 
-
 loadx: INDIRI2(ac) "%0DEEK();" 20
 loadx: INDIRU2(ac) "%0DEEK();" 20
 loadx: INDIRP2(ac) "%0DEEK();" 20
@@ -272,18 +271,10 @@ ac: addr "%0"
 ac: loada "%0"
 ac: loadx "%0"
 
-reg: ac "%0%{%c!=AC:STW(%c);}\n" 20
-reg: LOADI2(reg) "%{%0!=AC:LDW(%0);}%{%c!=AC:STW(%c);}\n" move(a)
-reg: LOADU2(reg) "%{%0!=AC:LDW(%0);}%{%c!=AC:STW(%c);}\n" move(a)
-reg: LOADP2(reg) "%{%0!=AC:LDW(%0);}%{%c!=AC:STW(%c);}\n" move(a)
-reg: LOADI1(reg) "%{%0!=AC:LD(%0);}%{%c!=AC:ST(%c);}\n" move(a)
-reg: LOADU1(reg) "%{%0!=AC:LD(%0);}%{%c!=AC:ST(%c);}\n" move(a)
-
 # genreload() can use the iarg:loada rule to reload with allocating a register. 
 # This depends on code using the %{iargX} macro to insert the reloading code when needed.
 # Note that we can use vLR as another scratch register because it is always saved by the
 # function prologue/epilogue.
-
 iarg: reg "%0"
 iarg: loada "%{alt:SR:STW(vLR);%0STW(SR);LDW(vLR);}" 80
 
@@ -333,6 +324,8 @@ ac: MULU2(iarg, ac) "%1%{iarg0}_MUL(%0);" 200
 
 ac: DIVI2(ac, iarg) "%0%{iarg1}_DIVS(%1);" 200
 ac: DIVU2(ac, iarg) "%0%{iarg1}_DIVU(%1);" 200
+ac: MODI2(ac, iarg) "%0%{iarg1}_MODS(%1);" 200
+ac: MODU2(ac, iarg) "%0%{iarg1}_MODU(%1);" 200
 
 ac: BCOMI2(ac) "%0ST(SR);LDWI(-0);XORW(SR);" 68
 ac: BCOMU2(ac) "%0ST(SR);LDWI(-0);XORW(SR);" 68
@@ -357,6 +350,22 @@ ac: BXORI2(iarg,ac)  "%1%{iarg0}XORW(%0);" 28
 ac: BXORU2(iarg,ac)  "%1%{iarg0}XORW(%0);" 28
 ac: BXORI2(ac,con8)  "%0XORI(%1);" 16 
 ac: BXORU2(ac,con8)  "%0XORI(%1);" 
+
+stmt: ASGNP2(con8,ac) "%1STW(%0);\n" 20
+stmt: ASGNP2(reg,ac) "%1DOKE(%0);\n" 28
+stmt: ASGNP2(ac,reg) "%0_DOKEA(%1);\n" 28+20
+stmt: ASGNI2(con8,ac) "%1STW(%0);\n" 20
+stmt: ASGNI2(reg,ac) "%1DOKE(%0);\n" 28
+stmt: ASGNI2(ac,reg) "%0_DOKEA(%1);\n" 28+20
+stmt: ASGNU2(con8,ac) "%1STW(%0);\n" 20
+stmt: ASGNU2(reg,ac) "%1DOKE(%0);\n" 28
+stmt: ASGNU2(ac,reg) "%0_DOKEA(%1);\n" 28+20
+stmt: ASGNI1(con8,ac) "%1ST(%0);\n" 20
+stmt: ASGNI1(reg,ac) "%1POKE(%0);\n" 28
+stmt: ASGNI1(ac,reg) "%0_POKEA(%1);\n" 28+20
+stmt: ASGNU1(con8,ac) "%1ST(%0);\n" 20
+stmt: ASGNU1(reg,ac) "%1POKE(%0);\n" 28
+stmt: ASGNI1(ac,reg) "%0_POKEA(%1);\n" 28+20
 
 stmt: EQI2(ac,con0)  "%0_BEQ(%a);\n" 28
 stmt: EQI2(ac,con8)  "%0XORI(con8);_BEQ(%a);\n" 42
@@ -397,24 +406,6 @@ stmt: LEU2(reg,reg) "_CMPU(%0,%1);_BLE(%a);\n" 100
 stmt: GTU2(reg,reg) "_CMPU(%0,%1);_BGT(%a);\n" 100
 stmt: GEU2(reg,reg) "_CMPU(%0,%1);_BGE(%a);\n" 100
 
-
-# Standard assignnments
-stmt: ASGNP2(con8,ac) "%1STW(%0);\n" 20
-stmt: ASGNP2(reg,ac) "%1DOKE(%0);\n" 28
-stmt: ASGNP2(ac,reg) "%0_DOKEA(%1);\n" 28+20
-stmt: ASGNI2(con8,ac) "%1STW(%0);\n" 20
-stmt: ASGNI2(reg,ac) "%1DOKE(%0);\n" 28
-stmt: ASGNI2(ac,reg) "%0_DOKEA(%1);\n" 28+20
-stmt: ASGNU2(con8,ac) "%1STW(%0);\n" 20
-stmt: ASGNU2(reg,ac) "%1DOKE(%0);\n" 28
-stmt: ASGNU2(ac,reg) "%0_DOKEA(%1);\n" 28+20
-stmt: ASGNI1(con8,ac) "%1ST(%0);\n" 20
-stmt: ASGNI1(reg,ac) "%1POKE(%0);\n" 28
-stmt: ASGNI1(ac,reg) "%0_POKEA(%1);\n" 28+20
-stmt: ASGNU1(con8,ac) "%1ST(%0);\n" 20
-stmt: ASGNU1(reg,ac) "%1POKE(%0);\n" 28
-stmt: ASGNI1(ac,reg) "%0_POKEA(%1);\n" 28+20
-
 # Structs
 stmt: ARGB(INDIRB(reg))       "_SP(%c);_MEMCPY(AC,%0,%a);\n"   200
 stmt: ASGNB(reg,INDIRB(ac))   "%1_MEMCPY(%0,AC,%a);\n"   200
@@ -424,8 +415,6 @@ stmt: ASGNB(reg,INDIRB(reg))  "_MEMCPY(%0,%1,%a);\n"   200
 # Longs
 stmt: lac "%0\n"
 reg: lac "%0%{%c!=LAC:_LMOV(LAC,%c);}\n" 80
-reg: LOADI4(reg) "_LMOV(%0,%c)\n" move(a)
-reg: LOADU4(reg) "_LMOV(%0,%c)\n" move(a)
 reg: INDIRI4(ac) "%0_LPEEKA(%c);\n" 150
 reg: INDIRU4(ac) "%0_LPEEKA(%c);\n" 150
 lac: reg "%{%0!=LAC:_LMOV(%0,LAC);}" 80
@@ -446,12 +435,14 @@ lac: MULI4(larg,lac) "%1%0_LMUL();" 200
 lac: MULU4(larg,lac) "%1%0_LMUL();" 200
 lac: DIVI4(lac,larg) "%0%1_LDIVS();" 200
 lac: DIVU4(lac,larg) "%0%1_LDIVU();" 200
-lac: LSHI4(lac,larg) "%0%1_LSHL();" 200
-lac: LSHI4(lac,con8) "%0%{lshl1}" 1
-lac: LSHU4(lac,larg) "%0%1_LSHL();" 200
-lac: LSHU4(lac,con8) "%0%{lshl1}" 1
-lac: RSHI4(lac,larg) "%0%1_LASR();" 200
-lac: RSHU4(lac,larg) "%0%1_LLSH();" 200
+lac: MODI4(lac,larg) "%0%1_LMODS();" 200
+lac: MODU4(lac,larg) "%0%1_LMODU();" 200
+lac: LSHI4(lac,iarg) "%0%{iarg1}_LSHL(%1);" 200
+lac: LSHI4(lac,con8) "%0LDI(%1)_LSHL(AC);" 1
+lac: LSHU4(lac,iarg) "%0%{iarg1}_LSHL(%1);" 200
+lac: LSHU4(lac,con8) "%0LDI(%1)_LSHL(AC);" 1
+lac: RSHI4(lac,iarg) "%0%{iarg1}_LASR(%1);" 200
+lac: RSHU4(lac,iarg) "%0%{iarg1}_LLSR(%1);" 200
 lac: NEGI4(lac) "%0_LNEG();" 200
 lac: BCOMU4(lac) "%0_LCOM();" 200
 lac: BANDU4(lac,larg) "%0%1_LAND();" 200
@@ -493,7 +484,6 @@ stmt: EQU4(lac,reg) "%0_LDW(LAC);XORW(%1);STW(SR);LDW(LAC+2);XORW(%1+2);ORW(SR);
 # Floats
 stmt: fac "%0\n"
 reg: fac "%0%{%c!=FAC:_FMOV(FAC,%c);}\n" 100
-reg: LOADF5(reg) "_FMOV(%0,%c)\n" move(a)
 fac: reg "%{%0!=FAC:_FMOV(%0,FAC);}" 100
 fac: INDIRF5(ac) "%0_FPEEKA(FAC);" 200
 farg: INDIRF5(addr) "%0_FPEEKA(FARG);" 200
@@ -553,7 +543,6 @@ stmt: RETI2(ac)   "%0STW(R3);\n"  1
 stmt: RETU2(ac)   "%0STW(R3);\n"  1
 stmt: RETP2(ac)   "%0STW(R3);\n"  1
 
-
 # Conversions
 #            I1   U1
 #              \ /
@@ -570,9 +559,10 @@ ac: LOADI2(lac) "%0LDW(LAC);" 28
 ac: LOADU2(lac) "%0LDW(LAC);" 28
 lac: LOADI4(lac) "%0"
 lac: LOADU4(lac) "%0"
+fac: LOADF5(fac) "%0"
 # 2) extensions
-ac: CVII2(ac) "%0LD(vAC);XORI(128);SUBI(128);" if_cv_from_size(a,1,48)
-ac: CVUI2(ac) "%0"
+ac: CVII2(ac) "%0LD(vAC);XORI(128);SUBI(128);" if_cv_from_size(a,1,66)
+ac: CVUI2(ac) "%0LD(vAC);" if_cv_from_size(a,1,18)
 lac: CVIU4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);" 50
 lac: CVII4(ac) "%0STW(LAC);LD(vAH);XORI(128);SUBI(128);LD(vAH);ST(LAC+2);ST(LAC+3);" 120
 lac: CVUU4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);"
@@ -843,7 +833,7 @@ static void emit3(const char *fmt, Node p, Node *kids, short *nts)
         emitfmt(v + 1, p, kids, nts);
       return;
     }
-  /* %{shlC} -- left shift by constant */
+  /* %{shlC} -- left shift AC by a constant */
   if (!strncmp(fmt,"shl", 3) && fmt[3] >= '0' && fmt[3] <= '9' && ! fmt[4])
     {
       int i,c,m;
@@ -879,8 +869,9 @@ static void emit3(const char *fmt, Node p, Node *kids, short *nts)
       Node k;
       r = "SR";
       i = fmt[3] - '0';
+      k = kids[i];
       assert(k);
-      if (k->syms[0] == 0 || k->syms[0]->scope != CONSTANTS)
+      if (! (k->syms[0] && k->syms[0]->scope == CONSTANTS))
         if (generic(k->op) == INDIR && k->syms[2] && k->syms[2]->u.t.cse)
           k = k->syms[2]->u.t.cse;
       assert(k->syms[0] && k->syms[0]->scope == CONSTANTS);

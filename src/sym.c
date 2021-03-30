@@ -316,7 +316,7 @@ char *vtoa(Type ty, Value v) {
 	ty = unqual(ty);
 	switch (ty->op) {
 	case INT:      return stringd(v.i);
-	case UNSIGNED: return stringf((v.u&~0x7FFF) ? "0x%X" : "%U", v.u);
+	case UNSIGNED: return stringf((v.u&~0x7FFFL) ? "0x%X" : "%U", v.u);
 	case FLOAT:    return stringf("%g", (double)v.d);
 	case ARRAY:
 		if (ty->type == chartype || ty->type == signedchar

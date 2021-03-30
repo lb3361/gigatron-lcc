@@ -2,7 +2,11 @@
  * lcc [ option ]... [ file | -llib ]...
  * front end for the ANSI C compiler
  */
-static char rcsid[] = "$Id$";
+#ifdef __DATE__
+static char rcsid[] = __DATE__;
+#else
+static char rcsid[] = "<unknown>";
+#endif
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -413,13 +417,19 @@ static int filename(char *name, char *base) {
 			break;
 		if (Sflag)
 			status = compile(name, outfile ? outfile : concat(base, first(suffixes[2])));
-		else if ((status = compile(name, stemp?stemp:(stemp=tempname(first(suffixes[2]))))) == 0)
-			return filename(stemp, base);
+		else {
+			char *sfile = stemp = stemp ? stemp : tempname(first(suffixes[2]));
+			if (suffix(stemp, &suffixes[3],1) >= 0)
+				sfile = (!cflag) ? tempname(first(suffixes[3])) :
+					(outfile) ? outfile : concat(base, first(suffixes[3]));
+			if ((status = compile(name, sfile)) == 0)
+				return filename(sfile, base);
+		}
 		break;
 	case 2:	/* assembly language files */
-		if (Eflag)
+		if (Eflag || Sflag)
 			break;
-		if (!Sflag) {
+		if (cflag || suffix(name, &suffixes[3], 1) < 0) {
 			char *ofile;
 			if (cflag && outfile)
 				ofile = outfile;
@@ -576,9 +586,13 @@ static void opt(char *arg) {
 				if (strcmp(&arg[3], "-C") == 0 && !option("-b"))
 					break;	/* -C requires that -b is supported */
 				clist = append(&arg[3], clist);
-				if (strcmp(&arg[3], "-unsigned_char=1") == 0) {
-					plist = append("-D__CHAR_UNSIGNED__", plist);
+				if (strncmp(&arg[3], "-unsigned_char=", 15) == 0) {
+					plist = append("-U__CHAR_UNSIGNED__", plist);
 					plist = append("-U_CHAR_IS_SIGNED", plist);
+					if ((arg[3+15] - '0') & 1)
+						plist = append("-D__CHAR_UNSIGNED__", plist);
+					else
+						plist = append("-D_CHAR_IS_SIGNED", plist);
 				}
 #define xx(name,k) \
 				if (strcmp(&arg[3], "-wchar_t=" #name) == 0) \
@@ -705,13 +719,13 @@ xx(unsigned_int,4)
 				if (strcmp(basepath(cpp[0]), "gcc-cpp") == 0)
 					plist = append(arg, plist);
 				clist = append(arg, clist);
-				fprintf(stderr, "%s %s\n", progname, rcsid);
+				fprintf(stderr, "%s: (compiled on %s)\n", progname, rcsid);
 			}
 			return;
 		}
 	if (cflag || Sflag || Eflag)
 		fprintf(stderr, "%s: %s ignored\n", progname, arg);
-	else
+	else if (!option(arg))
 		llist[1] = append(arg, llist[1]);
 }
 

@@ -1,6 +1,10 @@
 #include "c.h"
 
-static char rcsid[] = "$Name$($Id$)";
+#ifdef __DATE__
+static char rcsid[] = __DATE__;
+#else
+static char rcsid[] = "<unknown>";
+#endif
 
 static void typestab(Symbol, void *);
 
@@ -137,7 +141,7 @@ void main_init(int argc, char *argv[]) {
 		else if (strcmp(argv[i], "-w") == 0)
 			wflag++;
 		else if (strcmp(argv[i], "-v") == 0)
-			fprint(stderr, "%s %s\n", argv[0], rcsid);
+			fprint(stderr, "%s (compiled on %s)\n", argv[0], rcsid);
 		else if (strncmp(argv[i], "-s", 2) == 0)
 			density = strtod(&argv[i][2], NULL);
 		else if (strncmp(argv[i], "-errout=", 8) == 0) {
@@ -165,6 +169,8 @@ void main_init(int argc, char *argv[]) {
 			IR->left_to_right = argv[i][15] - '0';
 		else if (strncmp(argv[i], "-wants_dag=", 11) == 0)
 			IR->wants_dag = argv[i][11] - '0';
+		else if (strncmp(argv[i], "-unsigned_char=", 15) == 0)
+			IR->unsigned_char = argv[i][15] - '0';
 		else if (*argv[i] != '-' || strcmp(argv[i], "-") == 0) {
 			if (infile == NULL)
 				infile = argv[i];

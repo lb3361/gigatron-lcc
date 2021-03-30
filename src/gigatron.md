@@ -623,6 +623,11 @@ static int if_cv_from_size(Node p, int sz, int cost)
 
 static void progend(void)
 {
+  extern char *firstfile; /* From input.c */
+  print("\nnewmodule(code=code, ");
+  if (firstfile)
+    print("name='%s', ", firstfile);
+  print("cpu=%d);\n", cpu);
 }
 
 static void progbeg(int argc, char *argv[])
@@ -641,7 +646,7 @@ static void progbeg(int argc, char *argv[])
       warning("invalid cpu %s\n", argv[i]+5);
   /* Print header */
   comment("VCPUv%d\n",cpu);
-  print("def module(x):\n");
+  print("def code(x):\n");
   /* Prepare registers */
   ireg[0] = mkreg("AC", 0, 1, IREG);
   ireg[1] = mkreg("SR", 1, 1, IREG);

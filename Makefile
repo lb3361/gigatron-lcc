@@ -1,5 +1,6 @@
 SHELL=/bin/sh
 TOP=$(shell pwd)
+PREFIX=/usr/local
 BUILDDIR=${TOP}/build
 HOSTFILE=${TOP}/etc/gigatron-lcc.c
 TARGET=gigatron
@@ -14,6 +15,7 @@ default: all
 ${TARGETS}: FORCE
 	mkdir -p ${BUILDDIR}
 	${MAKE} -f makefile.lcc \
+		"PREFIX=${PREFIX}" \
 		"BUILDDIR=${BUILDDIR}" \
 		"HOSTFILE=${HOSTFILE}" \
 		"CFLAGS=${CFLAGS}" \

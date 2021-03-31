@@ -210,3 +210,9 @@ void check(Node p) {
 	}
 	reduce(p, 1);
 }
+
+/* Local Variables: */
+/* mode: c */
+/* c-basic-offset: 8 */
+/* indent-tabs-mode: t */
+/* End: */

@@ -271,7 +271,7 @@ ac: addr "%0"
 ac: loada "%0"
 ac: loadx "%0"
 
-# genreload() can use the iarg:loada rule to reload with allocating a register. 
+# genreload() can use the iarg:loada rule to reload without allocating a register. 
 # This depends on code using the %{iargX} macro to insert the reloading code when needed.
 # Note that we can use vLR as another scratch register because it is always saved by the
 # function prologue/epilogue.

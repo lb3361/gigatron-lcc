@@ -1122,3 +1122,9 @@ Interface mipsebIR = {
         }
 };
 static char rcsid[] = "$Id$";
+
+/* Local Variables: */
+/* mode: c */
+/* c-basic-offset: 8 */
+/* indent-tabs-mode: t */
+/* End: */

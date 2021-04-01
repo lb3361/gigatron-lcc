@@ -7,12 +7,18 @@ TARGET=gigatron
 CFLAGS=-g -Wno-abi
 LDFLAGS=-g
 
-TARGETS= all rcc lburg cpp lcc bprint ops \
-         liblcc triple clean clobber 
+B=${BUILDDIR}/
+G=${TOP}/gigatron/
+FILES=${B}include ${B}glcc ${B}glink
 
 default: all
 
-${TARGETS}: FORCE
+all: lcc-all ${FILES}
+
+clean: lcc-clean
+	rm -rf ${FILES}
+
+lcc-%: FORCE
 	mkdir -p ${BUILDDIR}
 	${MAKE} -f makefile.lcc \
 		"PREFIX=${PREFIX}" \
@@ -20,8 +26,19 @@ ${TARGETS}: FORCE
 		"HOSTFILE=${HOSTFILE}" \
 		"CFLAGS=${CFLAGS}" \
 		"LDFLAGS=${LDFLAGS}" \
-		$@
+		`echo $@ | sed -e 's/^lcc-//'`
 
+${B}include:
+	-rm ${B}include
+	ln -s ${TOP}/include/gigatron ${B}include
+
+${B}glink: ${G}glink.py
+	cp ${G}glink.py ${B}glink
+	chmod a+x ${B}glink
+
+${B}glcc: ${G}glcc.sh
+	cp ${G}glcc.sh ${B}glcc
+	chmod a+x ${B}glcc
 
 FORCE: .PHONY
 

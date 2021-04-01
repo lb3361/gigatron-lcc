@@ -25,7 +25,7 @@ char *cpp[] = { LCCDIR "cpp", "-D__gigatron", "-D__gigatron__", "-D__CHAR_UNSIGN
 char *com[] =  { LCCDIR "rcc", "-target=gigatron", "-cpu=5", "$1", "$2", "$3", "", 0 };
 char *include[] = { "-I" LCCDIR "include", 0 };
 char *as[] = { "/bin/cp", "$2", "$3", 0 };
-char *ld[] = { LCCDIR "link.py", "-lccdir=" LCCDIR, "-cpu=6", "-rom=v5a", "-map=64k", "-o", "$3", "$1", "$2", 0 };
+char *ld[] = { LCCDIR "glink", "-lccdir=" LCCDIR, "-cpu=6", "-rom=v5a", "-map=64k", "-o", "$3", "$1", "$2", 0 };
 
 extern char *concat(char *, char *);
 extern int access(const char *, int);
@@ -35,7 +35,7 @@ int option(char *arg) {
 		cpp[0] = concat(&arg[8], "/cpp");
 		include[0] = concat("-I", concat(&arg[8], "/include"));
 		com[0] = concat(&arg[8], "/rcc");
-		ld[0] = concat(&arg[8], "/link.py");
+		ld[0] = concat(&arg[8], "/glink");
 		ld[1] = concat("-lccdir=", &arg[8]);
 	} else if (strncmp(arg, "-cpu=", 5) == 0) {
 		ld[2] = com[2] = concat("-cpu=", &arg[5]);

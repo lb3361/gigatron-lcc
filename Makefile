@@ -9,7 +9,7 @@ LDFLAGS=-g
 
 B=${BUILDDIR}/
 G=${TOP}/gigatron/
-FILES=${B}include ${B}glcc ${B}glink
+FILES=${B}include ${B}glcc ${B}glink ${B}interface.json
 
 default: all
 
@@ -39,6 +39,9 @@ ${B}glink: ${G}glink.py
 ${B}glcc: ${G}glcc.sh
 	cp ${G}glcc.sh ${B}glcc
 	chmod a+x ${B}glcc
+
+${B}%: ${G}%
+	cp $< $@
 
 FORCE: .PHONY
 

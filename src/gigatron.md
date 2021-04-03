@@ -37,6 +37,7 @@ static void target(Node);
 
 
 /* Cost functions */
+static int  if_zeropage(Node);
 static int  if_cv_from_size(Node,int,int);
 static int  if_arg_reg(Node);
 static int  if_arg_stk(Node);
@@ -204,6 +205,7 @@ static int cpu = 5;
 %%
 # /*-- BEGIN RULES --/
 
+# -- common rules
 reg:  INDIRI1(VREGP)     "# read register\n"
 reg:  INDIRU1(VREGP)     "# read register\n"
 reg:  INDIRI2(VREGP)     "# read register\n"
@@ -212,7 +214,6 @@ reg:  INDIRP2(VREGP)     "# read register\n"
 reg:  INDIRI4(VREGP)     "# read register\n"
 reg:  INDIRU4(VREGP)     "# read register\n"
 reg:  INDIRF5(VREGP)     "# read register\n"
-
 stmt: ASGNI1(VREGP,reg)  "# write register\n"
 stmt: ASGNU1(VREGP,reg)  "# write register\n"
 stmt: ASGNI2(VREGP,reg)  "# write register\n"
@@ -222,6 +223,7 @@ stmt: ASGNI4(VREGP,reg)  "# write register\n"
 stmt: ASGNU4(VREGP,reg)  "# write register\n"
 stmt: ASGNF5(VREGP,reg)  "# write register\n"
 
+# -- constants
 con0: CNSTI1  "%a"  range(a,0,0)
 con0: CNSTU1  "%a"  range(a,0,0)
 con0: CNSTI2  "%a"  range(a,0,0)
@@ -230,8 +232,9 @@ con8: CNSTI1  "%a"  range(a,0,255)
 con8: CNSTU1  "%a"  range(a,0,255)
 con8: CNSTI2  "%a"  range(a,0,255)
 con8: CNSTU2  "%a"  range(a,0,255)
+con8: CNSTP2  "%a"  if_zeropage(a)
+con8: VREGP   "%a"
 co8n: CNSTI2  "%a"  range(a,-255,-1)
-con8: CNSTP2  "%a"  range(a,0,255)
 con: CNSTI1  "%a"
 con: CNSTU1  "%a"
 con: CNSTI2  "%a"
@@ -239,11 +242,19 @@ con: CNSTU2  "%a"
 con: CNSTP2  "%a"
 con: ADDRGP2 "%a" 
 
+# -- stmt and reg
 stmt: ac "\t%0\n"
 stmt: reg  ""
-
 reg: ac "\t%0%{%c!=AC:x.STW(%c);}\n" 20
+reg: INDIRI2(con8) "%0"
+reg: INDIRU2(con8) "%0"
+reg: INDIRP2(con8) "%0"
+reg: INDIRI1(con8) "%0"
+reg: INDIRU1(con8) "%0"
 
+# -- addr represent simple addresses 
+# -- loada when using simple addresses (not trashing SR)
+# -- loadx when complex address calculation is needed
 addr: ADDRLP2 "x._SP(%a+%F);" 48
 addr: ADDRFP2 "x._SP(%a+%F);" 48
 addr: con8 "x.LDI(%0);" 16
@@ -253,23 +264,22 @@ loada: INDIRU2(addr) "%0x.DEEK();" 20
 loada: INDIRP2(addr) "%0x.DEEK();" 20 
 loada: INDIRI1(addr) "%0x.PEEK();" 16 
 loada: INDIRU1(addr) "%0x.PEEK();" 16 
-loada: INDIRI2(con8) "x.LDW(%0);"  20 
-loada: INDIRU2(con8) "x.LDW(%0);" 20 
-loada: INDIRP2(con8) "x.LDW(%0);" 20 
-loada: INDIRI1(con8) "x.LD(%0);" 16 
-loada: INDIRU1(con8) "x.LD(%0);" 16 
 loadx: INDIRI2(ac) "%0x.DEEK();" 20
 loadx: INDIRU2(ac) "%0x.DEEK();" 20
 loadx: INDIRP2(ac) "%0x.DEEK();" 20
-loadx: INDIRI1(ac) "%0x.PEEK();" 20
-loadx: INDIRU1(ac) "%0x.PEEK();" 20
+loadx: INDIRI1(ac) "%0x.PEEK();" 16
+loadx: INDIRU1(ac) "%0x.PEEK();" 16
 
+# -- ac when result left in AC
+# -- ac1 indicates unclean high byte for I1/U1
 ac: reg "%{%0!=AC:x.LDW(%0);}" 20
 ac: con8 "x.LDI(%0);" 16
 ac: con "x.LDWI(%0);" 20
 ac: addr "%0"
 ac: loada "%0"
-ac: loadx "%0"
+ac: loadx "%0" 1
+ac: ac1 "%0LD(vAC);" 16
+ac1: ac "%0"
 
 # genreload() can use the iarg:loada rule to reload without allocating a register. 
 # This depends on code using the %{iargX} macro to insert the reloading code when needed.
@@ -360,11 +370,11 @@ stmt: ASGNI2(ac,reg) "\t%0x._DOKEA(%1);\n" 28+20
 stmt: ASGNU2(con8,ac) "\t%1x.STW(%0);\n" 20
 stmt: ASGNU2(reg,ac) "\t%1x.DOKE(%0);\n" 28
 stmt: ASGNU2(ac,reg) "\t%0x._DOKEA(%1);\n" 28+20
-stmt: ASGNI1(con8,ac) "\t%1x.ST(%0);\n" 20
-stmt: ASGNI1(reg,ac) "\t%1x.POKE(%0);\n" 28
+stmt: ASGNI1(con8,ac1) "\t%1x.ST(%0);\n" 20
+stmt: ASGNI1(reg,ac1) "\t%1x.POKE(%0);\n" 28
 stmt: ASGNI1(ac,reg) "\t%0x._POKEA(%1);\n" 28+20
-stmt: ASGNU1(con8,ac) "\t%1x.ST(%0);\n" 20
-stmt: ASGNU1(reg,ac) "\t%1x.POKE(%0);\n" 28
+stmt: ASGNU1(con8,ac1) "\t%1x.ST(%0);\n" 20
+stmt: ASGNU1(reg,ac1) "\t%1x.POKE(%0);\n" 28
 stmt: ASGNI1(ac,reg) "\t%0x._POKEA(%1);\n" 28+20
 
 stmt: EQI2(ac,con0)  "\t%0x._BEQ(%a);\n" 28
@@ -550,8 +560,8 @@ stmt: RETP2(ac)   "\t%0x.STW(R3);\n"  1
 #            /  | X |
 #         F5 - I4 - U4
 # 1) prelabel changes all truncations into LOADs
-ac: LOADI1(ac) "%0"
-ac: LOADU1(ac) "%0"
+ac1: LOADI1(ac) "%0"
+ac1: LOADU1(ac) "%0"
 ac: LOADI2(ac) "%0"
 ac: LOADU2(ac) "%0"
 ac: LOADP2(ac) "%0"
@@ -560,11 +570,12 @@ ac: LOADU2(lac) "%0x.LDW(LAC);" 28
 lac: LOADI4(lac) "%0"
 lac: LOADU4(lac) "%0"
 fac: LOADF5(fac) "%0"
+
 # 2) extensions
-ac: CVII2(ac) "%0x.LD(vAC);x.XORI(128);x.SUBI(128);" if_cv_from_size(a,1,66)
-ac: CVUI2(ac) "%0x.LD(vAC);" if_cv_from_size(a,1,18)
+ac: CVII2(ac) "%0x.XORI(128);x.SUBI(128);" if_cv_from_size(a,1,48)
+ac: CVUI2(ac) "%0" if_cv_from_size(a,1,0)
 lac: CVIU4(ac) "%0x.STW(LAC);x.LDI(0);x.STW(LAC+2);" 50
-lac: CVII4(ac) "%0x.STW(LAC);x.LD(vAH);x.XORI(128);x.SUBI(128);x.LD(vAH);x.ST(LAC+2);x.ST(LAC+3);" 120
+lac: CVII4(ac) "%0x.STW(LAC);x.LD(vAH);x.XORI(128);x.SUBI(128);x.LD(vAH);x.ST(LAC+2);x.ST(LAC+3);" if_cv_from_size(a,2,120)
 lac: CVUU4(ac) "%0x.STW(LAC);x.LDI(0);x.STW(LAC+2);"
 lac: CVUI4(ac) "%0x.STW(LAC);x.LDI(0);x.STW(LAC+2);"
 # 3) floating point conversions
@@ -609,6 +620,15 @@ static int if_arg_reg(Node p)
 static int if_arg_stk(Node p)
 {
   return p->syms[1] ? LBURG_MAX : 1;
+}
+
+static int if_zeropage(Node p)
+{
+  Symbol s = p->syms[0];
+  assert(specific(p->op) == CNST+P);
+  if ((size_t)s->u.c.v.p == ((size_t)s->u.c.v.p & 0xff))
+    return 0;
+  return LBURG_MAX;
 }
 
 static int if_cv_from_size(Node p, int sz, int cost)

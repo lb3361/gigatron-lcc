@@ -38,7 +38,9 @@ static void target(Node);
 
 /* Cost functions */
 static int  if_zeropage(Node);
-static int  if_cv_from_size(Node,int,int);
+static int  if_rmw1(Node,int);
+static int  if_rmw2_cpu6(Node,int);
+static int  if_cv_from(Node,int,int);
 static int  if_arg_reg(Node);
 static int  if_arg_stk(Node);
  
@@ -228,6 +230,10 @@ con0: CNSTI1  "%a"  range(a,0,0)
 con0: CNSTU1  "%a"  range(a,0,0)
 con0: CNSTI2  "%a"  range(a,0,0)
 con0: CNSTU2  "%a"  range(a,0,0)
+con1: CNSTI1  "%a"  range(a,1,1)
+con1: CNSTU1  "%a"  range(a,1,1)
+con1: CNSTI2  "%a"  range(a,1,1)
+con1: CNSTU2  "%a"  range(a,1,1)
 con8: CNSTI1  "%a"  range(a,0,255)
 con8: CNSTU1  "%a"  range(a,0,255)
 con8: CNSTI2  "%a"  range(a,0,255)
@@ -572,21 +578,21 @@ lac: LOADU4(lac) "%0"
 fac: LOADF5(fac) "%0"
 
 # 2) extensions
-ac: CVII2(ac) "%0x.XORI(128);x.SUBI(128);" if_cv_from_size(a,1,48)
-ac: CVUI2(ac) "%0" if_cv_from_size(a,1,0)
+ac: CVII2(ac) "%0x.XORI(128);x.SUBI(128);" if_cv_from(a,1,48)
+ac: CVUI2(ac) "%0" if_cv_from(a,1,0)
 lac: CVIU4(ac) "%0x.STW(LAC);x.LDI(0);x.STW(LAC+2);" 50
-lac: CVII4(ac) "%0x.STW(LAC);x.LD(vAH);x.XORI(128);x.SUBI(128);x.LD(vAH);x.ST(LAC+2);x.ST(LAC+3);" if_cv_from_size(a,2,120)
+lac: CVII4(ac) "%0x.STW(LAC);x.LD(vAH);x.XORI(128);x.SUBI(128);x.LD(vAH);x.ST(LAC+2);x.ST(LAC+3);" if_cv_from(a,2,120)
 lac: CVUU4(ac) "%0x.STW(LAC);x.LDI(0);x.STW(LAC+2);"
 lac: CVUI4(ac) "%0x.STW(LAC);x.LDI(0);x.STW(LAC+2);"
 # 3) floating point conversions
 ac: CVFU2(fac)  "%0x._FTOU();x.LDW(LAC);" 200
 lac: CVFU4(fac) "%0x._FTOU();" 200
-fac: CVUF5(ac)  "%0x._FCVU(AC);" if_cv_from_size(a,2,120)
-fac: CVUF5(lac) "%0x._FCVU(LAC);" if_cv_from_size(a,4,200)
+fac: CVUF5(ac)  "%0x._FCVU(AC);" if_cv_from(a,2,120)
+fac: CVUF5(lac) "%0x._FCVU(LAC);" if_cv_from(a,4,200)
 ac: CVFI2(fac)  "%0x._FTOI();x.LDW(LAC);" 200
 lac: CVFI4(fac) "%0x._FTOI();" 200
-fac: CVIF5(ac)  "%0x._FCVI(AC);" if_cv_from_size(a,2,120)
-fac: CVIF5(lac) "%0x._FCVI(LAC);" if_cv_from_size(a,4,200)
+fac: CVIF5(ac)  "%0x._FCVI(AC);" if_cv_from(a,2,120)
+fac: CVIF5(lac) "%0x._FCVI(LAC);" if_cv_from(a,4,200)
 
 # Labels and jumps
 stmt: LABELV      "\tx.label(%a);\n"
@@ -595,9 +601,14 @@ stmt: JUMPV(reg)  "\tx.CALL(%0);\n"  14
 
 
 # More opcodes for cpu=5
+stmt: ASGNU1(con8, LOADU1(ADDI2(CVUI2(INDIRU1(con8)), con1))) "\tx.INC(%1);\n" if_rmw1(a,16)
+stmt: ASGNI1(con8, LOADI1(ADDI2(CVII2(INDIRI1(con8)), con1))) "\tx.INC(%1);\n" if_rmw1(a,16)
+
 
 # More opcodes for cpu=6
-
+stmt: ASGNP2(con8, ADDP2(INDIRP2(con8), con1)) "\tx.INCW(%1);\n" if_rmw2_cpu6(a,26)
+stmt: ASGNU2(con8, ADDU2(INDIRU2(con8), con1)) "\tx.INCW(%1);\n" if_rmw2_cpu6(a,26)
+stmt: ASGNI2(con8, ADDI2(INDIRI2(con8), con1)) "\tx.INCW(%1);\n" if_rmw2_cpu6(a,26)
 
 # /*-- END RULES --/
 %%
@@ -631,7 +642,41 @@ static int if_zeropage(Node p)
   return LBURG_MAX;
 }
 
-static int if_cv_from_size(Node p, int sz, int cost)
+static int if_rmw1(Node p, int cost)
+{
+  Node n0 = p->kids[0];
+  Node n1 = p->kids[1]->kids[0]->kids[0]->kids[0]->kids[0];
+  assert(n0 && n1);
+  if (generic(n0->op) == INDIR && n0->kids[0]->op == VREG+P
+      && n0->x.mayrecalc && n0->syms[RX]->u.t.cse)
+    n0 = n0->syms[RX]->u.t.cse;
+  if (generic(n1->op) == INDIR && n1->kids[0]->op == VREG+P
+      && n1->x.mayrecalc && n1->syms[RX]->u.t.cse)
+    n1 = n1->syms[RX]->u.t.cse;
+  if (n0->syms[RX] && n1->syms[RX] && n0->syms[RX] == n1->syms[RX])
+    return cost;
+  return LBURG_MAX;
+}
+
+static int if_rmw2_cpu6(Node p, int cost)
+{
+  Node n0 = p->kids[0];
+  Node n1 = p->kids[1]->kids[0]->kids[0];
+  assert(n0 && n1);
+  if (cpu < 6)
+    return LBURG_MAX;
+  if (generic(n0->op) == INDIR && n0->kids[0]->op == VREG+P
+      && n0->x.mayrecalc && n0->syms[RX]->u.t.cse)
+    n0 = n0->syms[RX]->u.t.cse;
+  if (generic(n1->op) == INDIR && n1->kids[0]->op == VREG+P
+      && n1->x.mayrecalc && n1->syms[RX]->u.t.cse)
+    n1 = n1->syms[RX]->u.t.cse;
+  if (n0->syms[RX] && n1->syms[RX] && n0->syms[RX] == n1->syms[RX])
+    return cost;
+  return LBURG_MAX;
+}
+
+static int if_cv_from(Node p, int sz, int cost)
 {
   assert(p->syms[0]);
   assert(p->syms[0]->scope == CONSTANTS);

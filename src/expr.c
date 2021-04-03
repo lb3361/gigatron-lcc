@@ -495,7 +495,8 @@ Type binary(Type xty, Type yty) {
 	/* Implementing rules from
 	   https://en.cppreference.com/w/c/language/conversion
 	   using sizes instead of rank (imperfect but better than before). */
-#define xx(t) if (xty == t || yty == t) return t
+#define xy(t,r) if (xty == t || yty == t) return r
+#define xx(t) xy(t,t)
 	xx(longdouble);
 	xx(doubletype);
 	xx(floattype);
@@ -507,14 +508,22 @@ Type binary(Type xty, Type yty) {
 		return xty;
 	if (yty->size > xty->size)
 		return yty;
-	/* same size */
-	xx(unsignedlonglong);
-	xx(longlong);
-	xx(unsignedlong);
-	xx(longtype);
-	xx(unsignedtype);
-	return inttype;
+	if (xty->op == yty->op) {
+		xx(unsignedlonglong);
+		xx(longlong);
+		xx(unsignedlong);
+		xx(longtype);
+		xx(unsignedtype);
+		return inttype;
+	} else {
+		xy(unsignedlonglong, unsignedlonglong);
+		xy(longlong, unsignedlonglong);
+		xy(unsignedlong, unsignedlong);
+		xy(longtype, unsignedlong);
+		return unsignedtype;
+	}
 #undef xx
+#undef xy
 }
 Tree pointer(Tree p) {
 	if (isarray(p->type))

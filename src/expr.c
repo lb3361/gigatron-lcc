@@ -492,19 +492,25 @@ int hascall(Tree p) {
 	return hascall(p->kids[0]) || hascall(p->kids[1]);
 }
 Type binary(Type xty, Type yty) {
+	/* Implementing rules from
+	   https://en.cppreference.com/w/c/language/conversion
+	   using sizes instead of rank (imperfect but better than before). */
 #define xx(t) if (xty == t || yty == t) return t
 	xx(longdouble);
 	xx(doubletype);
 	xx(floattype);
+	xty = promote(xty);
+	yty = promote(yty);
+	if (xty == yty)
+		return xty;
+	if (xty->size > yty->size)
+		return xty;
+	if (yty->size > xty->size)
+		return yty;
+	/* same size */
 	xx(unsignedlonglong);
 	xx(longlong);
 	xx(unsignedlong);
-	if (xty == longtype     && yty == unsignedtype
-	||  xty == unsignedtype && yty == longtype)
-		if (longtype->size > unsignedtype->size)
-			return longtype;
-		else
-			return unsignedlong;
 	xx(longtype);
 	xx(unsignedtype);
 	return inttype;

@@ -333,7 +333,7 @@ ac: SUBU2(ac,co8n) "%0x.ADDI(-(%1));" 28
 ac: SUBP2(ac,co8n) "%0x.ADDI(-(%1));" 28
 
 ac: NEGI2(ac) "%0x.ST(SR);x.LDI(0);x.SUBW(SR);" 68
-ac: NEGI2(reg) "x.LDI(0);x.SUBW(%0);" 48
+ac: NEGI2(iarg) "LDI(0);%{iarg0}x.SUBW(%0);" 48
 
 ac: LSHI2(ac, con8) "%0%{shl1}" 100
 ac: LSHI2(ac, iarg) "%0%{iarg1}x._SHL(%1);" 200

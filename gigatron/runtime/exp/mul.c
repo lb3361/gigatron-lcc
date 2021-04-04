@@ -1,49 +1,50 @@
-#include <assert.h>
-
-typedef unsigned short word;
-
-#define NELEMS(a) (sizeof(a)/sizeof(a[0]))
-
-#ifdef TEST
-word uVecs[] = { 0x0000, 0x0234, 0xa234, 0xffff };
-int  iVecs[] = { 0x0000, 0x0234, 0xa234, 0xffff };
-#endif
+#include "common.h"
 
 
 #ifdef TEST
-word Ra;
-word Rb;
-word Rc;
-word Rd;
-#else
-#define Ra  (*(word*)0xA0)
-#define Rb  (*(word*)0xB0)
-#define Rc  (*(word*)0xC0)
-#define Rd  (*(word*)0xD0)
 #endif
+
+
+
 
 void _mul16()
 {
-	Rc = 0;
-	Rd = 1;
+#define a A(0)
+#define b A(2)
+#define m A(4)
+#define r A(6)
+	a.u = R8.u;
+	b.u = AC.u;
+	m.u = 1;
+	r.u = 0;
 	do {
-		if (Rb & Rd)
-			Rc += Ra;
-		Ra <<= 1;
-		Rd <<= 1;
-	} while((-(short)Rd) & Rb);
+		if (b.u & m.u)
+			r.u += A(0).u;
+		a.u <<= 1;
+		m.u <<= 1;
+	} while(b.u & -m.i);
+	AC.u = r.u;
+#undef a
+#undef b
+#undef m
+#undef r
 }
+
+
+#ifdef TEST
+#define NELEMS(x) (sizeof(x)/sizeof((x)[0]))
+word uVecs[] = { 0x0000, 0x0234, 0xa234, 0xffff };
+int  iVecs[] = { 0x0000, 0x0234, 0xa234, 0xffff };
 
 word mul16(word a, word b)
 {
-	Ra = a;
-	Rb = b;
+	AC.u = a;
+	R8.u = b;
 	_mul16();
-	return Rc;
+	return AC.u;
 }
 
-#ifdef TEST
-void main()
+int main()
 {
 	int i, j;
 	for (i=0; i<NELEMS(uVecs); i++)
@@ -52,5 +53,6 @@ void main()
 	for (i=0; i<NELEMS(iVecs); i++)
 		for (j=0; j<NELEMS(iVecs); j++)
 			assert( (short)mul16(iVecs[i],iVecs[j]) == (short)(iVecs[i]*iVecs[j]) );
+	return 0;
 }
 #endif

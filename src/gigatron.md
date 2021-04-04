@@ -37,7 +37,8 @@ static void target(Node);
 
 
 /* Cost functions */
-static int  if_zeropage(Node);
+static int  if_zpconst(Node);
+static int  if_zpglobal(Node);
 static int  if_rmw1(Node,int);
 static int  if_rmw2_cpu6(Node,int);
 static int  if_cv_from(Node,int,int);
@@ -238,38 +239,49 @@ con8: CNSTI1  "%a"  range(a,0,255)
 con8: CNSTU1  "%a"  range(a,0,255)
 con8: CNSTI2  "%a"  range(a,0,255)
 con8: CNSTU2  "%a"  range(a,0,255)
-con8: CNSTP2  "%a"  if_zeropage(a)
-con8: VREGP   "%a"
+con8: CNSTP2  "%a"  if_zpconst(a)
 co8n: CNSTI2  "%a"  range(a,-255,-1)
 con: CNSTI1  "%a"
 con: CNSTU1  "%a"
 con: CNSTI2  "%a"
 con: CNSTU2  "%a"
 con: CNSTP2  "%a"
-con: ADDRGP2 "%a" 
+con: addr "%0"
 
-# -- stmt and reg
-stmt: ac "\t%0\n"
-stmt: reg  ""
+# -- lddr represent a frame offset
+# -- addr represent a simple address
+# -- zddr represent a zero page address
+lddr: ADDRLP2 "%a+%F"
+lddr: ADDRFP2 "%a+%F"
+addr: ADDRGP2 "%a" 
+addr: con "%0" 1
+addr: zddr "%0"
+zddr: ADDRGP2 "%a" if_zpglobal(a)
+zddr: con8 "%0"
+
+# -- eac when ac represents a simple address, that is,
+#        provably computed without trashing anything but AC.
+eac: zddr "x.LDI(%0);" 16
+eac: addr "x.LDWI(%0);" 20
+eac: lddr "x._SP(%0);" 40
+
+# -- stmt & reg
+stmt: reg ""
+stmt: ac1 "\t%0\n"
 reg: ac "\t%0%{%c!=AC:x.STW(%c);}\n" 20
-reg: INDIRI2(con8) "%0"
-reg: INDIRU2(con8) "%0"
-reg: INDIRP2(con8) "%0"
-reg: INDIRI1(con8) "%0"
-reg: INDIRU1(con8) "%0"
-
-# -- addr represent simple addresses 
+ 
 # -- loada when using simple addresses (not trashing SR)
 # -- loadx when complex address calculation is needed
-addr: ADDRLP2 "x._SP(%a+%F);" 48
-addr: ADDRFP2 "x._SP(%a+%F);" 48
-addr: con8 "x.LDI(%0);" 16
-addr: con "x.LDWI(%0);" 20
-loada: INDIRI2(addr) "%0x.DEEK();" 20 
-loada: INDIRU2(addr) "%0x.DEEK();" 20 
-loada: INDIRP2(addr) "%0x.DEEK();" 20 
-loada: INDIRI1(addr) "%0x.PEEK();" 16 
-loada: INDIRU1(addr) "%0x.PEEK();" 16 
+loada: INDIRI2(eac) "%0x.DEEK();" 20 
+loada: INDIRU2(eac) "%0x.DEEK();" 20 
+loada: INDIRP2(eac) "%0x.DEEK();" 20 
+loada: INDIRI1(eac) "%0x.PEEK();" 16 
+loada: INDIRU1(eac) "%0x.PEEK();" 16 
+loada: INDIRI2(zddr) "x.LDW(%0);" 20 
+loada: INDIRU2(zddr) "x.LDW(%0);" 20 
+loada: INDIRP2(zddr) "x.LDW(%0);" 20 
+loada: INDIRI1(zddr) "x.LD(%0);" 16 
+loada: INDIRU1(zddr) "x.LD(%0);" 16 
 loadx: INDIRI2(ac) "%0x.DEEK();" 20
 loadx: INDIRU2(ac) "%0x.DEEK();" 20
 loadx: INDIRP2(ac) "%0x.DEEK();" 20
@@ -281,10 +293,10 @@ loadx: INDIRU1(ac) "%0x.PEEK();" 16
 ac: reg "%{%0!=AC:x.LDW(%0);}" 20
 ac: con8 "x.LDI(%0);" 16
 ac: con "x.LDWI(%0);" 20
-ac: addr "%0"
+ac: eac "%0" 
 ac: loada "%0"
-ac: loadx "%0" 1
-ac: ac1 "%0LD(vAC);" 16
+ac: loadx "%0"
+ac: ac1 "%0x.LD('vAC');" 16
 ac1: ac "%0"
 
 # genreload() can use the iarg:loada rule to reload without allocating a register. 
@@ -292,7 +304,10 @@ ac1: ac "%0"
 # Note that we can use vLR as another scratch register because it is always saved by the
 # function prologue/epilogue.
 iarg: reg "%0"
-iarg: loada "%{alt:SR:x.STW(vLR);%0x.STW(SR);x.LDW(vLR);}" 80
+iarg: INDIRI2(zddr) "%0"
+iarg: INDIRU2(zddr) "%0"
+iarg: INDIRP2(zddr) "%0"
+iarg: loada "%{alt:SR:x.STW('vLR');%0x.STW(SR);x.LDW('vLR');}" 60
 
 ac: ADDI2(ac,iarg)  "%0%{iarg1}x.ADDW(%1);" 28
 ac: ADDU2(ac,iarg)  "%0%{iarg1}x.ADDW(%1);" 28
@@ -367,19 +382,19 @@ ac: BXORU2(iarg,ac)  "%1%{iarg0}x.XORW(%0);" 28
 ac: BXORI2(ac,con8)  "%0x.XORI(%1);" 16 
 ac: BXORU2(ac,con8)  "%0x.XORI(%1);" 
 
-stmt: ASGNP2(con8,ac) "\t%1x.STW(%0);\n" 20
+stmt: ASGNP2(zddr,ac) "\t%1x.STW(%0);\n" 20
 stmt: ASGNP2(reg,ac) "\t%1x.DOKE(%0);\n" 28
-stmt: ASGNP2(ac,reg) "\t%0_x.DOKEA(%1);\n" 28+20
-stmt: ASGNI2(con8,ac) "\t%1x.STW(%0);\n" 20
+stmt: ASGNP2(ac,reg) "\t%0x._DOKEA(%1);\n" 28+20
+stmt: ASGNI2(zddr,ac) "\t%1x.STW(%0);\n" 20
 stmt: ASGNI2(reg,ac) "\t%1x.DOKE(%0);\n" 28
 stmt: ASGNI2(ac,reg) "\t%0x._DOKEA(%1);\n" 28+20
-stmt: ASGNU2(con8,ac) "\t%1x.STW(%0);\n" 20
+stmt: ASGNU2(zddr,ac) "\t%1x.STW(%0);\n" 20
 stmt: ASGNU2(reg,ac) "\t%1x.DOKE(%0);\n" 28
 stmt: ASGNU2(ac,reg) "\t%0x._DOKEA(%1);\n" 28+20
-stmt: ASGNI1(con8,ac1) "\t%1x.ST(%0);\n" 20
+stmt: ASGNI1(zddr,ac1) "\t%1x.ST(%0);\n" 20
 stmt: ASGNI1(reg,ac1) "\t%1x.POKE(%0);\n" 28
 stmt: ASGNI1(ac,reg) "\t%0x._POKEA(%1);\n" 28+20
-stmt: ASGNU1(con8,ac1) "\t%1x.ST(%0);\n" 20
+stmt: ASGNU1(zddr,ac1) "\t%1x.ST(%0);\n" 20
 stmt: ASGNU1(reg,ac1) "\t%1x.POKE(%0);\n" 28
 stmt: ASGNI1(ac,reg) "\t%0x._POKEA(%1);\n" 28+20
 
@@ -436,9 +451,13 @@ reg: INDIRU4(ac) "\t%0x._LPEEKA(%c);\n" 150
 lac: reg "%{%0!=LAC:x._LMOV(%0,LAC);}" 80
 lac: INDIRI4(ac) "%0x._LPEEKA(LAC);" 150
 lac: INDIRU4(ac) "%0x._LPEEKA(LAC);" 150
+lac: INDIRI4(zddr) "x._LMOV(%0,LAC);" 150
+lac: INDIRU4(zddr) "x._LMOV(%0,LAC);" 150
 larg: reg "%{%0!=LARG:x._LMOV(%0,LARG);}" 80
-larg: INDIRI4(addr) "%0x._LPEEKA(LARG);" 150
-larg: INDIRU4(addr) "%0x._LPEEKA(LARG);" 150
+larg: INDIRI4(eac) "%0x._LPEEKA(LARG);" 150
+larg: INDIRU4(eac) "%0x._LPEEKA(LARG);" 150
+larg: INDIRI4(zddr) "x._LMOV(%0,LARG);" 150
+larg: INDIRU4(zddr) "x._LMOV(%0,LARG);" 150
 lac: ADDI4(lac,larg) "%0%1x._LADD();" 200
 lac: ADDU4(lac,larg) "%0%1x._LADD();" 200
 lac: ADDI4(larg,lac) "%1%0x._LADD();" 200
@@ -500,10 +519,11 @@ stmt: EQU4(lac,reg) "\t%0x._LDW(LAC);x.XORW(%1);x.STW(SR);x.LDW(LAC+2);x.XORW(%1
 # Floats
 stmt: fac "\t%0\n"
 reg: fac "\t%0%{%c!=FAC:x._FMOV(FAC,%c);}\n" 100
+reg: INDIRF5(ac) "\t%0x._FPEEKA(%c);\n" 200
 fac: reg "%{%0!=FAC:x._FMOV(%0,FAC);}" 100
 fac: INDIRF5(ac) "%0x._FPEEKA(FAC);" 200
-farg: INDIRF5(addr) "%0x._FPEEKA(FARG);" 200
 farg: reg "%{%0!=FARG:x._FMOV(%0,FARG);}" 60
+farg: INDIRF5(eac) "%0x._FPEEKA(FARG);" 200
 fac: ADDF5(fac,farg) "%0%1x._FADD();" 200
 fac: ADDF5(farg,fac) "%1%0x._FADD();" 200
 fac: SUBF5(fac,farg) "%0%1x._FSUB();" 200
@@ -512,30 +532,32 @@ fac: MULF5(fac,farg) "%0%1x._FMUL();" 200
 fac: MULF5(farg,fac) "%1%0x._FMUL();" 200
 fac: DIVF5(fac,farg) "%0%1x._FDIV();" 200
 fac: NEGF5(fac) "%0x._FNEG();" 50
-stmt: ASGNF5(addr,fac) "\t%1%0x._FPOKEA(FAC);\n" 200
+stmt: ASGNF5(eac,fac) "\t%1%0x._FPOKEA(FAC);\n" 200
 stmt: ASGNF5(reg,fac) "\t%1x.LDW(%0);x._FPOKEA(FAC);\n" 200
 stmt: ASGNF5(ac,reg) "\t%0x._FPOKEA(%1);\n" 200
-stmt: EQF5(fac,farg) "\t%0%1x._FSUB();x._FTST();x._BEQ(%a);\n" 200
-stmt: NEF5(fac,farg) "\t%0%1x._FSUB();x._FTST();x._BNE(%a);\n" 200
-stmt: LTF5(fac,farg) "\t%0%1x._FSUB();x._FTST();x._BLT(%a);\n" 200
-stmt: LEF5(fac,farg) "\t%0%1x._FSUB();x._FTST();x._BLE(%a);\n" 200
-stmt: GTF5(fac,farg) "\t%0%1x._FSUB();x._FTST();x._BGT(%a);\n" 200
-stmt: GEF5(fac,farg) "\t%0%1x._FSUB();x._FTST();x._BGE(%a);\n" 200
+stmt: EQF5(fac,farg) "\t%0%1x._FCMP();x._BEQ(%a);\n" 200
+stmt: NEF5(fac,farg) "\t%0%1x._FCMP();x._BNE(%a);\n" 200
+stmt: LTF5(fac,farg) "\t%0%1x._FCMP();x._BLT(%a);\n" 200
+stmt: LEF5(fac,farg) "\t%0%1x._FCMP();x._BLE(%a);\n" 200
+stmt: GTF5(fac,farg) "\t%0%1x._FCMP();x._BGT(%a);\n" 200
+stmt: GEF5(fac,farg) "\t%0%1x._FCMP();x._BGE(%a);\n" 200
+
+
 
 # Calls
-fac: CALLF5(con) "x.CALLI(%0);" 28
+fac: CALLF5(addr) "x.CALLI(%0);" 28
 fac: CALLF5(reg) "x.CALL(%0);" 26
-lac: CALLI4(con) "x.CALLI(%0);" 28
+lac: CALLI4(addr) "x.CALLI(%0);" 28
 lac: CALLI4(reg) "x.CALL(%0);" 26
-lac: CALLU4(con) "x.CALLI(%0);" 28
+lac: CALLU4(addr) "x.CALLI(%0);" 28
 lac: CALLU4(reg) "x.CALL(%0);" 26
-ac: CALLI2(con) "x.CALLI(%0);" 28
+ac: CALLI2(addr) "x.CALLI(%0);" 28
 ac: CALLI2(reg) "x.CALL(%0);" 26
-ac: CALLU2(con) "x.CALLI(%0);" 28
+ac: CALLU2(addr) "x.CALLI(%0);" 28
 ac: CALLU2(reg) "x.CALL(%0);" 26
-ac: CALLP2(con) "x.CALLI(%0);" 28
+ac: CALLP2(addr) "x.CALLI(%0);" 28
 ac: CALLP2(reg) "x.CALL(%0);" 26
-stmt: CALLV(con) "\tx.CALLI(%0);\n" 28
+stmt: CALLV(addr) "\tx.CALLI(%0);\n" 28
 stmt: CALLV(reg) "\tx.CALL(%0);\n" 26
 stmt: ARGF5(fac)  "\t%0x._SP(%c);x._FPOKEA(FAC);\n"  if_arg_stk(a)
 stmt: ARGI4(lac)  "\t%0x._SP(%c);x._LPOKEA(FAC);\n"  if_arg_stk(a)
@@ -595,20 +617,22 @@ fac: CVIF5(ac)  "%0x._FCVI(AC);" if_cv_from(a,2,120)
 fac: CVIF5(lac) "%0x._FCVI(LAC);" if_cv_from(a,4,200)
 
 # Labels and jumps
-stmt: LABELV      "\tx.label(%a);\n"
-stmt: JUMPV(con)  "\tx._BRA(%0);\n"   14
-stmt: JUMPV(reg)  "\tx.CALL(%0);\n"  14
+stmt: LABELV       "\tx.label(%a);\n"
+stmt: JUMPV(addr)  "\tx._BRA(%0);\n"   14
+stmt: JUMPV(reg)   "\tx.CALL(%0);\n"  14
 
 
 # More opcodes for cpu=5
-stmt: ASGNU1(con8, LOADU1(ADDI2(CVUI2(INDIRU1(con8)), con1))) "\tx.INC(%1);\n" if_rmw1(a,16)
-stmt: ASGNI1(con8, LOADI1(ADDI2(CVII2(INDIRI1(con8)), con1))) "\tx.INC(%1);\n" if_rmw1(a,16)
-
+vregp: VREGP "%a"
+stmt: ASGNU1(zddr, LOADU1(ADDI2(CVUI2(INDIRU1(zddr)), con1))) "\tx.INC(%1);\n" if_rmw1(a,16)
+stmt: ASGNU1(vregp, LOADU1(ADDI2(CVUI2(INDIRU1(vregp)), con1))) "\tx.INC(%1);\n" if_rmw1(a,16)
+stmt: ASGNI1(zddr, LOADI1(ADDI2(CVII2(INDIRI1(zddr)), con1))) "\tx.INC(%1);\n" if_rmw1(a,16)
+stmt: ASGNI1(vregp, LOADI1(ADDI2(CVII2(INDIRI1(vregp)), con1))) "\tx.INC(%1);\n" if_rmw1(a,16)
 
 # More opcodes for cpu=6
-stmt: ASGNP2(con8, ADDP2(INDIRP2(con8), con1)) "\tx.INCW(%1);\n" if_rmw2_cpu6(a,26)
-stmt: ASGNU2(con8, ADDU2(INDIRU2(con8), con1)) "\tx.INCW(%1);\n" if_rmw2_cpu6(a,26)
-stmt: ASGNI2(con8, ADDI2(INDIRI2(con8), con1)) "\tx.INCW(%1);\n" if_rmw2_cpu6(a,26)
+stmt: ASGNP2(zddr, ADDP2(INDIRP2(zddr), con1)) "\tx.INCW(%1);\n" if_rmw2_cpu6(a,26)
+stmt: ASGNU2(zddr, ADDU2(INDIRU2(zddr), con1)) "\tx.INCW(%1);\n" if_rmw2_cpu6(a,26)
+stmt: ASGNI2(zddr, ADDI2(INDIRI2(zddr), con1)) "\tx.INCW(%1);\n" if_rmw2_cpu6(a,26)
 
 # /*-- END RULES --/
 %%
@@ -633,12 +657,18 @@ static int if_arg_stk(Node p)
   return p->syms[1] ? LBURG_MAX : 1;
 }
 
-static int if_zeropage(Node p)
+static int if_zpconst(Node p)
 {
   Symbol s = p->syms[0];
   assert(specific(p->op) == CNST+P);
   if ((size_t)s->u.c.v.p == ((size_t)s->u.c.v.p & 0xff))
     return 0;
+  return LBURG_MAX;
+}
+
+static int if_zpglobal(Node p)
+{
+  /* TODO */
   return LBURG_MAX;
 }
 
@@ -910,7 +940,7 @@ static void emit3(const char *fmt, Node p, Node *kids, short *nts)
         return;
       }
       if (c >= 8) {
-        print("x.ST(vAH);x.ORI(255);x.XORI(255);");
+        print("x.ST(v('vAH'));x.ORI(255);x.XORI(255);");
         c -= 8;
       }
       while (c > 0) {
@@ -1042,7 +1072,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   comment("begin function %s\n", f->x.name);
   segment(CODE);
   global(f);
-  print("\tx.LDW(vLR);x.STW(LR);");
+  print("\tx.LDW('vLR');x.STW(LR);");
   if (ncalls)
     usedmask[IREG] |= REGMASK_LR;
   i = bitcount(REGMASK_ARGS);
@@ -1052,7 +1082,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   sizesave = 2 * bitcount(usedmask[IREG]);
   framesize = maxargoffset + sizesave + maxoffset;
   if (framesize > 0)
-    print("x._SP(%d);x.STW(SP);",framesize);
+    print("x._SP(%d);x.STW(SP);",-framesize);
   /* save callee saved registers */
   offset = maxargoffset;
   for (i=0; i<=31; i++)
@@ -1107,8 +1137,8 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
       offset += 2;
     }
   if (framesize > 0)
-    print("x._SP(%d);x.STW(SP);", -framesize);
-  print("x.LDW(LR);x.STW(vLR);");
+    print("x._SP(%d);x.STW(SP);", framesize);
+  print("x.LDW(LR);x.STW('vLR');");
   if (ty == I+sizeop(2) || ty == U+sizeop(2) || ty == P+sizeop(2))
     print("x.LDW(R3);");
   print("x.RET();\n");
@@ -1175,11 +1205,11 @@ static void import(Symbol p)
 static void defsymbol(Symbol p)
 {
   if (p->scope >= LOCAL && p->sclass == STATIC)
-    p->x.name = stringf("v('.%d')", genlabel(1));
+    p->x.name = stringf("'.%d'", genlabel(1));
   else if (p->generated)
-    p->x.name = stringf("v('.%s')", p->name);
+    p->x.name = stringf("'.%s'", p->name);
   else if (p->scope == GLOBAL || p->sclass == EXTERN)
-    p->x.name = stringf("v('%s')", p->name);
+    p->x.name = stringf("'%s'", p->name);
   else
     p->x.name = p->name;
 }
@@ -1187,7 +1217,7 @@ static void defsymbol(Symbol p)
 static void address(Symbol q, Symbol p, long n)
 {
   if (p->scope == GLOBAL || p->sclass == STATIC || p->sclass == EXTERN)
-    q->x.name = stringf("%s%s%D", p->x.name, n >= 0 ? "+" : "", n);
+    q->x.name = stringf("v(%s)%s%D", p->x.name, n >= 0 ? "+" : "", n);
   else {
     assert(n <= INT_MAX && n >= INT_MIN);
     q->x.offset = p->x.offset + n;

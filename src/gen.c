@@ -785,16 +785,17 @@ static void genspill(Symbol r, Node last, Symbol tmp) {
 
 static void genreload(Node p, Symbol tmp, int i) {
 	Node q;
-	int ty;
+	int ty, ntk;
 
 	debug(fprint(stderr, "(replacing %x with a reload from %s)\n", p->x.kids[i], tmp->x.name));
 	debug(fprint(stderr, "(genreload: "));
 	debug(dumptree(p->x.kids[i]));
 	debug(fprint(stderr, ")\n"));
 	ty = opkind(p->x.kids[i]->op);
+	ntk = p->x.kids[i]->x.nt;
 	q = newnode(ADDRL+P + sizeop(IR->ptrmetric.size), NULL, NULL, tmp);
 	p->x.kids[i] = newnode(INDIR + ty, q, NULL, NULL);
-	rewrite(p->x.kids[i], p->x.nt);
+	rewrite(p->x.kids[i], ntk);
 	prune(p->x.kids[i], &q);
 	reprune(&p->kids[1], reprune(&p->kids[0], 0, i, p), i, p);
 	linearize(p->x.kids[i], p);

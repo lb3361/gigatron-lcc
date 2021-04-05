@@ -1,8 +1,8 @@
 SHELL=/bin/sh
 GLCC=../../../build/glcc
 
-ALLS=mul.s
-ALLT=test-mul
+ALLS=mul.s div.s
+ALLT=test-mul test-div
 
 all: all-s all-t run-t
 
@@ -17,8 +17,7 @@ run-t:
 	${GLCC} -S -Wf-g,#### $<
 
 test-%: %.c common.h
-	${CC} -DTEST -o $@ $< -lm
-	./$@
+	${CC} -g -DTEST -o $@ $< -lm
 
 clean:
 	-rm ${ALLS}

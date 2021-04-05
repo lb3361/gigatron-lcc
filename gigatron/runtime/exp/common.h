@@ -1,6 +1,7 @@
 #if TEST
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #endif
 
 typedef unsigned short word;
@@ -51,3 +52,7 @@ byte sysargbase[8];
 #define LARG L(6)
 #define R8   R(8)
 #define R12  R(12)
+
+#ifdef TEST
+# define CHK(x) if (!(x)) exit(1);
+#endif

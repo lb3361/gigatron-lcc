@@ -1,11 +1,6 @@
 #include "common.h"
 
 
-#ifdef TEST
-#endif
-
-
-
 
 void _mul16()
 {
@@ -32,27 +27,21 @@ void _mul16()
 
 
 #ifdef TEST
-#define NELEMS(x) (sizeof(x)/sizeof((x)[0]))
-word uVecs[] = { 0x0000, 0x0234, 0xa234, 0xffff };
-int  iVecs[] = { 0x0000, 0x0234, 0xa234, 0xffff };
 
-word mul16(word a, word b)
+void chk_mul(word a, word b)
 {
 	AC.u = a;
 	R8.u = b;
 	_mul16();
-	return AC.u;
+	CHK(AC.u == (word)(a * b));
 }
 
 int main()
 {
-	int i, j;
-	for (i=0; i<NELEMS(uVecs); i++)
-		for (j=0; j<NELEMS(uVecs); j++)
-			assert( mul16(uVecs[i],uVecs[j]) == (word)(uVecs[i]*uVecs[j]) );
-	for (i=0; i<NELEMS(iVecs); i++)
-		for (j=0; j<NELEMS(iVecs); j++)
-			assert( (short)mul16(iVecs[i],iVecs[j]) == (short)(iVecs[i]*iVecs[j]) );
+	int i;
+	for (i=0; i<1000000; i++)
+		chk_mul((word)rand(), (word)rand());
 	return 0;
 }
+
 #endif

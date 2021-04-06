@@ -333,7 +333,7 @@ ac: SUBU2(ac,co8n) "%0x.ADDI(-(%1));" 28
 ac: SUBP2(ac,co8n) "%0x.ADDI(-(%1));" 28
 
 ac: NEGI2(ac) "%0x.ST(SR);x.LDI(0);x.SUBW(SR);" 68
-ac: NEGI2(iarg) "LDI(0);%{iarg0}x.SUBW(%0);" 48
+ac: NEGI2(iarg) "x.LDI(0);%{iarg0}x.SUBW(%0);" 48
 
 ac: LSHI2(ac, con8) "%0%{shl1}" 100
 ac: LSHI2(ac, iarg) "%0%{iarg1}x._SHL(%1);" 200
@@ -358,8 +358,8 @@ ac: DIVU2(ac, iarg) "%0%{iarg1}x._DIVU(%1);" 200
 ac: MODI2(ac, iarg) "%0%{iarg1}x._MODS(%1);" 200
 ac: MODU2(ac, iarg) "%0%{iarg1}x._MODU(%1);" 200
 
-ac: BCOMI2(ac) "%0x.ST(SR);x.LDWI(-0);x.XORW(SR);" 68
-ac: BCOMU2(ac) "%0x.ST(SR);x.LDWI(-0);x.XORW(SR);" 68
+ac: BCOMI2(ac) "%0x.ST(SR);x.LDWI(-1);x.XORW(SR);" 68
+ac: BCOMU2(ac) "%0x.ST(SR);x.LDWI(-1);x.XORW(SR);" 68
 
 ac: BANDI2(ac,iarg)  "%0%{iarg1}x.ANDW(%1);" 28
 ac: BANDU2(ac,iarg)  "%0%{iarg1}x.ANDW(%1);" 28
@@ -382,21 +382,21 @@ ac: BXORU2(iarg,ac)  "%1%{iarg0}x.XORW(%0);" 28
 ac: BXORI2(ac,con8)  "%0x.XORI(%1);" 16 
 ac: BXORU2(ac,con8)  "%0x.XORI(%1);" 
 
-stmt: ASGNP2(zddr,ac) "\t%1x.STW(%0);\n" 20
-stmt: ASGNP2(reg,ac) "\t%1x.DOKE(%0);\n" 28
-stmt: ASGNP2(ac,reg) "\t%0x._DOKEA(%1);\n" 28+20
-stmt: ASGNI2(zddr,ac) "\t%1x.STW(%0);\n" 20
-stmt: ASGNI2(reg,ac) "\t%1x.DOKE(%0);\n" 28
-stmt: ASGNI2(ac,reg) "\t%0x._DOKEA(%1);\n" 28+20
-stmt: ASGNU2(zddr,ac) "\t%1x.STW(%0);\n" 20
-stmt: ASGNU2(reg,ac) "\t%1x.DOKE(%0);\n" 28
-stmt: ASGNU2(ac,reg) "\t%0x._DOKEA(%1);\n" 28+20
+stmt: ASGNP2(zddr,ac)  "\t%1x.STW(%0);\n" 20
+stmt: ASGNP2(iarg,ac)  "\t%1%{iarg0}x.DOKE(%0);\n" 28
+stmt: ASGNP2(ac,iarg)  "\t%0%{iarg1}x._DOKEA(%1);\n" 28+20
+stmt: ASGNI2(zddr,ac)  "\t%1x.STW(%0);\n" 20
+stmt: ASGNI2(iarg,ac)  "\t%1%{iarg0}x.DOKE(%0);\n" 28
+stmt: ASGNI2(ac,iarg)  "\t%0%{iarg1}x._DOKEA(%1);\n" 28+20
+stmt: ASGNU2(zddr,ac)  "\t%1x.STW(%0);\n" 20
+stmt: ASGNU2(iarg,ac)  "\t%1%{iarg0}x.DOKE(%0);\n" 28
+stmt: ASGNU2(ac,iarg)  "\t%0%{iarg1}x._DOKEA(%1);\n" 28+20
 stmt: ASGNI1(zddr,ac1) "\t%1x.ST(%0);\n" 20
-stmt: ASGNI1(reg,ac1) "\t%1x.POKE(%0);\n" 28
-stmt: ASGNI1(ac,reg) "\t%0x._POKEA(%1);\n" 28+20
+stmt: ASGNI1(iarg,ac1) "\t%1%{iarg0}x.POKE(%0);\n" 28
+stmt: ASGNI1(ac,iarg)  "\t%0%{iarg1}x._POKEA(%1);\n" 28+20
 stmt: ASGNU1(zddr,ac1) "\t%1x.ST(%0);\n" 20
-stmt: ASGNU1(reg,ac1) "\t%1x.POKE(%0);\n" 28
-stmt: ASGNI1(ac,reg) "\t%0x._POKEA(%1);\n" 28+20
+stmt: ASGNU1(iarg,ac1) "\t%1%{iarg0}x.POKE(%0);\n" 28
+stmt: ASGNI1(ac,iarg)  "\t%0%{iarg1}x._POKEA(%1);\n" 28+20
 
 stmt: EQI2(ac,con0)  "\t%0x._BEQ(%a);\n" 28
 stmt: EQI2(ac,con8)  "\t%0x.XORI(con8);x._BEQ(%a);\n" 42
@@ -493,8 +493,8 @@ lac: BORI4(lac,larg) "%0%1x._LOR();" 200
 lac: BORI4(larg,lac) "%1%0x._LOR();" 200
 lac: BXORI4(lac,larg) "%0%1x._LXOR();" 200
 lac: BXORI4(larg,lac) "%1%0x._LXOR();" 200
-stmt: ASGNI4(addr,lac) "\t%1%0x._LPOKEA(LAC);\n" 200
-stmt: ASGNU4(addr,lac) "\t%1%0x._LPOKEA(LAC);\n" 200
+stmt: ASGNI4(eac,lac) "\t%1%0x._LPOKEA(LAC);\n" 200
+stmt: ASGNU4(eac,lac) "\t%1%0x._LPOKEA(LAC);\n" 200
 stmt: ASGNI4(reg,lac) "\t%1x.LDW(%0);x._LPOKEA(LAC);\n" 180
 stmt: ASGNU4(reg,lac) "\t%1x.LDW(%0);x._LPOKEA(LAC);\n" 180
 stmt: ASGNI4(ac,reg) "\t%0x._LPOKEA(%1);\n" 160
@@ -541,8 +541,6 @@ stmt: LTF5(fac,farg) "\t%0%1x._FCMP();x._BLT(%a);\n" 200
 stmt: LEF5(fac,farg) "\t%0%1x._FCMP();x._BLE(%a);\n" 200
 stmt: GTF5(fac,farg) "\t%0%1x._FCMP();x._BGT(%a);\n" 200
 stmt: GEF5(fac,farg) "\t%0%1x._FCMP();x._BGE(%a);\n" 200
-
-
 
 # Calls
 fac: CALLF5(addr) "x.CALLI(%0);" 28
@@ -964,15 +962,14 @@ static void emit3(const char *fmt, Node p, Node *kids, short *nts)
           k = k->syms[2]->u.t.cse;
       assert(k->syms[0] && k->syms[0]->scope == CONSTANTS);
       c = k->syms[0]->u.c.v.i;
-      if (c == 0) {
-        print("x.LDI(0);");
-        return;
-      } else if (c == 1)
-        return;
       if (fmt[4]) {
         assert(fmt[4]=='%' && fmt[5]>='0' && fmt[5]<='9' && !fmt[6]);
         assert(kids[fmt[5]-'0'] && kids[fmt[5]-'0']->syms[RX]);
         r = kids[fmt[5]-'0']->syms[RX]->x.name;
+      }
+      if(c == 0) {
+        print("x.LDI(0);");
+        return;
       }
       x = (c >= 0) ? c : -c;
       assert(x>=0 && x<256);
@@ -1155,9 +1152,9 @@ static void defconst(int suffix, int size, Value v)
     assert(isfinite(d));
     mantissa = (unsigned long)(frexp(d,&exp) * pow(2.0, 32));
     if (mantissa == 0 || exp < -128)
-      print("\tx.bytes(0,0,0,0,0) ");
+      print("\tx.bytes(0,0,0,0,0); ");
     else
-      print("\tx.bytes(%d,%d,%d,%d,%d) ",
+      print("\tx.bytes(%d,%d,%d,%d,%d); ",
             exp+128, ((mantissa>>24)&0x7f)|((d<0.0)?0x80:0x00),
             (mantissa>>16)&0xff, (mantissa>>8)&0xff, (mantissa&0xff) );
     comment("%f\n", d);

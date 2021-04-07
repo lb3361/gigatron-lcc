@@ -155,9 +155,11 @@ int main(int argc, char *argv[]) {
 		else {
 			char *name = exists(argv[i]);
 			if (name) {
+#if PRINTFILENAME
 				if (strcmp(name, argv[i]) != 0
 				|| nf > 1 && suffix(name, suffixes, 3) >= 0)
 					fprintf(stderr, "%s:\n", name);
+#endif
 				filename(name, 0);
 			} else
 				error("can't find `%s'", argv[i]);

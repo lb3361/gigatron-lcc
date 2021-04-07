@@ -9,8 +9,11 @@ args = None
 lccdir = '/usr/local/lib/gigatron-lcc'
 current_module = None
 current_proc = None
+interface_dict = {}
+map_dict = {}
+safe_dict = None
 module_list = []
-global_dict = {}
+
 
 ## locate errors in .s/.o/.a files
 
@@ -22,28 +25,7 @@ def where(tb=None):
             return "{0}:{1}".format(s[0],s[1])
     return None
 
-## vocabulary for execing .s/.o/.a files
-
-def v(x):
-    return x if isinstance(x,int) else current_module.v(x)
-def lo(x):
-    return v(x) & 0xff
-def hi(x):
-    return (v(x) >> 8) & 0xff
-def error(s):
-    w = where()
-    current_proc.error(f"{w}: glink error: {s}")
-def warning(s):
-    w = where()
-    current_proc.warning(f"{w}: glink warning: {s}")
-def fatal(s):
-    w = where()
-    s = f"{w}: {s}" if isinstance(w,str) else s
-    print(s, file=sys.stderr)
-    sys.exit(1)
-
-
-## safelty read .s/.o/.a files
+### module class
 
 class Module:
     def __init__(self, code=None, name=None, cpu=None):
@@ -53,33 +35,74 @@ class Module:
         self.cpu = cpu if cpu != None else args.cpu
         self.exports = {}
         self.externs = {}
-        module_list.append(self)
 
-def safe_globals(safe=True):
-    gg = globals()
-    sg = { '__builtins__' : None }
-    if safe:
-        for n in ['v','lo','hi','error','warning','fatal','args',
-                  'Module'] :
-            sg[n] = gg[n]
-        return sg
-    return gg
+### vocabulary for exec-ing .s/.o/.a files
+
+class Vocabulary:
+    ''' This is not a class but just a way to construct a dictionary
+        with the words that can be used by .s/.o/.a files. '''
+    def pc():
+        return current_proc.pc()
+    def v(x):
+        return x if isinstance(x,int) else current_module.v(x)
+    def lo(x):
+        return v(x) & 0xff
+    def hi(x):
+        return (v(x) >> 8) & 0xff
+    def error(s):
+        w = where()
+        current_proc.error(f"glink: {w}: error: {s}")
+    def warning(s):
+        w = where()
+        current_proc.warning(f"glink: {w}: warning: {s}")
+    def fatal(s):
+        w = where()
+        w = "" if w == None else w + ": "
+        print(f"glink: {w}fatal error: {s}", file=sys.stderr)
+        sys.exit(1)
+    def module(code=None,name=None,cpu=None):
+        global module_list
+        if current_module or current_proc:
+            warning("module() should not be called from the code fragment")
+        else:
+            module_list.append(Module(code,name,cpu))
+
+### copy vocabulary namespace into actual globals
+
+def copy_dict_into(d,g):
+    for n in d:
+        if not n.startswith('__') and not n.endswith('__'):
+            g[n] = d[n]
+
+copy_dict_into(vars(Vocabulary), globals())
+
+### safely read .s/.o/.a files
               
+def new_globals():
+    global safe_dict
+    if safe_dict == None:
+        safe_dict = { '__builtins__' : None }
+        copy_dict_into(interface_dict, safe_dict)
+        copy_dict_into(vars(Vocabulary), safe_dict)
+    return safe_dict.copy()
+
 def read_file(f):
-    global code, module_list
+    global code, current_module, current_proc
     with open(f,'r') as fd: 
         c = compile(fd.read(),f,'exec')
     n = len(module_list)
-    exec(c, safe_globals())
+    current_module = None
+    current_proc = None
+    exec(c, new_globals())
     if len(module_list) <= n:
-        fatal(f"{f}: glink fatal error: no module found")
+        fatal(f"no module found")
 
 def read_lib(l, safe=True):
     for d in (args.L or []) + [lccdir]:
         f = os.path.join(d, f"lib{l}.a")
         if os.access(f, os.R_OK):
             return read_file(f)
-    fatal(f"glink fatal error: library -l{l} not found!")
+    fatal(f"library -l{l} not found!")
         
 ### main function
 
@@ -142,14 +165,13 @@ def main(argv):
             args.rom = 'v5a'
 
         ### Read interface.json
-        with open(lccdir + '/interface.json') as file:  
+        with open(lccdir + '/interface.json') as file:
             for (name, value) in json.load(file).items():
-                global_dict[name] = value if isinstance(value, int) else int(value, base=0)
+                interface_dict[name] = value if isinstance(value, int) else int(value, base=0)
 
         ### Read map
 
         ### Load .s/.o/.a files
-        print(args)
         for f in args.files or []:
             read_file(f)
         for f in args.l or []:
@@ -157,7 +179,7 @@ def main(argv):
 
         return 0
     except FileNotFoundError as err:
-        fatal(f"glink fatal error: {err}")
+        fatal(str(err))
     
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))

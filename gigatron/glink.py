@@ -1,13 +1,87 @@
 #!/usr/bin/env python
+
 from __future__ import print_function
-import argparse, json, os, sys
 
-
+import argparse, json, string
+import os, sys, traceback
 
 args = None
 lccdir = '/usr/local/lib/gigatron-lcc'
-interface_syms = {}
+current_module = None
+current_proc = None
+module_list = []
+global_dict = {}
 
+## locate errors in .s/.o/.a files
+
+def where(tb=None):
+    stb = traceback.extract_tb(tb, limit=8) if tb else \
+          traceback.extract_stack(limit=8)
+    for s in stb:
+        if (s[2] == 'code'):
+            return "{0}:{1}".format(s[0],s[1])
+    return None
+
+## vocabulary for execing .s/.o/.a files
+
+def v(x):
+    return x if isinstance(x,int) else current_module.v(x)
+def lo(x):
+    return v(x) & 0xff
+def hi(x):
+    return (v(x) >> 8) & 0xff
+def error(s):
+    w = where()
+    current_proc.error(f"{w}: glink error: {s}")
+def warning(s):
+    w = where()
+    current_proc.warning(f"{w}: glink warning: {s}")
+def fatal(s):
+    w = where()
+    s = f"{w}: {s}" if isinstance(w,str) else s
+    print(s, file=sys.stderr)
+    sys.exit(1)
+
+
+## safelty read .s/.o/.a files
+
+class Module:
+    def __init__(self, code=None, name=None, cpu=None):
+        global args, current_module
+        self.code = code
+        self.name = name
+        self.cpu = cpu if cpu != None else args.cpu
+        self.exports = {}
+        self.externs = {}
+        module_list.append(self)
+
+def safe_globals(safe=True):
+    gg = globals()
+    sg = { '__builtins__' : None }
+    if safe:
+        for n in ['v','lo','hi','error','warning','fatal','args',
+                  'Module'] :
+            sg[n] = gg[n]
+        return sg
+    return gg
+              
+def read_file(f):
+    global code, module_list
+    with open(f,'r') as fd: 
+        c = compile(fd.read(),f,'exec')
+    n = len(module_list)
+    exec(c, safe_globals())
+    if len(module_list) <= n:
+        fatal(f"{f}: glink fatal error: no module found")
+
+def read_lib(l, safe=True):
+    for d in (args.L or []) + [lccdir]:
+        f = os.path.join(d, f"lib{l}.a")
+        if os.access(f, os.R_OK):
+            return read_file(f)
+    fatal(f"glink fatal error: library -l{l} not found!")
+        
+### main function
 
 def main(argv):
     global lccdir, args
@@ -57,6 +131,8 @@ def main(argv):
                             help='input files')
         parser.add_argument('-l', type=str, action='append',
                             help='library files. -lxxx searches for libxxx.a')
+        parser.add_argument('-L', type=str, action='append',
+                            help='additional library directories')
         args = parser.parse_args(argv)
         if args.map == None:
             args.map = '64k'
@@ -68,20 +144,24 @@ def main(argv):
         ### Read interface.json
         with open(lccdir + '/interface.json') as file:  
             for (name, value) in json.load(file).items():
-                interface_syms[name] = value if isinstance(value, int) else int(value, base=0)
+                global_dict[name] = value if isinstance(value, int) else int(value, base=0)
 
-        ### Read map.json
+        ### Read map
 
-        ## Execute
-        assemble_and_link(args)
+        ### Load .s/.o/.a files
+        print(args)
+        for f in args.files or []:
+            read_file(f)
+        for f in args.l or []:
+            read_lib(f)
+
         return 0
-    except Exception as err:
-        print("glink: ", err, file=sys.stderr)
-        return 1
+    except FileNotFoundError as err:
+        fatal(f"glink fatal error: {err}")
     
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))
-    
+
 # Local Variables:
 # mode: python
 # indent-tabs-mode: ()

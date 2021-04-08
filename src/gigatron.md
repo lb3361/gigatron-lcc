@@ -271,8 +271,8 @@ eac: lddr "_SP(%0);" 40
 
 # -- stmt & reg
 stmt: reg ""
-stmt: ac1 "\t%0\n"
-reg: ac "\t%0%{%c!=AC:STW(%c);}\n" 20
+stmt: ac1 "\t%0hop()\n"
+reg: ac "\t%0%{%c!=AC:STW(%c);hop();}\n" 20
  
 # -- loada when using simple addresses (not trashing SR)
 # -- loadx when complex address calculation is needed
@@ -385,72 +385,72 @@ ac: BXORU2(iarg,ac)  "%1%{iarg0}XORW(%0);" 28
 ac: BXORI2(ac,con8)  "%0XORI(%1);" 16 
 ac: BXORU2(ac,con8)  "%0XORI(%1);" 
 
-stmt: ASGNP2(zddr,ac)  "\t%1STW(%0);\n" 20
-stmt: ASGNP2(iarg,ac)  "\t%1%{iarg0}DOKE(%0);\n" 28
-stmt: ASGNP2(ac,iarg)  "\t%0%{iarg1}_DOKEA(%1);\n" 28+20
-stmt: ASGNI2(zddr,ac)  "\t%1STW(%0);\n" 20
-stmt: ASGNI2(iarg,ac)  "\t%1%{iarg0}DOKE(%0);\n" 28
-stmt: ASGNI2(ac,iarg)  "\t%0%{iarg1}_DOKEA(%1);\n" 28+20
-stmt: ASGNU2(zddr,ac)  "\t%1STW(%0);\n" 20
-stmt: ASGNU2(iarg,ac)  "\t%1%{iarg0}DOKE(%0);\n" 28
-stmt: ASGNU2(ac,iarg)  "\t%0%{iarg1}_DOKEA(%1);\n" 28+20
-stmt: ASGNI1(zddr,ac1) "\t%1ST(%0);\n" 20
-stmt: ASGNI1(iarg,ac1) "\t%1%{iarg0}POKE(%0);\n" 28
-stmt: ASGNI1(ac,iarg)  "\t%0%{iarg1}_POKEA(%1);\n" 28+20
-stmt: ASGNU1(zddr,ac1) "\t%1ST(%0);\n" 20
-stmt: ASGNU1(iarg,ac1) "\t%1%{iarg0}POKE(%0);\n" 28
-stmt: ASGNI1(ac,iarg)  "\t%0%{iarg1}_POKEA(%1);\n" 28+20
+stmt: ASGNP2(zddr,ac)  "\t%1STW(%0);hop();\n" 20
+stmt: ASGNP2(iarg,ac)  "\t%1%{iarg0}DOKE(%0);hop();\n" 28
+stmt: ASGNP2(ac,iarg)  "\t%0%{iarg1}_DOKEA(%1);hop();\n" 28+20
+stmt: ASGNI2(zddr,ac)  "\t%1STW(%0);hop();\n" 20
+stmt: ASGNI2(iarg,ac)  "\t%1%{iarg0}DOKE(%0);hop();\n" 28
+stmt: ASGNI2(ac,iarg)  "\t%0%{iarg1}_DOKEA(%1);hop();\n" 28+20
+stmt: ASGNU2(zddr,ac)  "\t%1STW(%0);hop();\n" 20
+stmt: ASGNU2(iarg,ac)  "\t%1%{iarg0}DOKE(%0);hop();\n" 28
+stmt: ASGNU2(ac,iarg)  "\t%0%{iarg1}_DOKEA(%1);hop();\n" 28+20
+stmt: ASGNI1(zddr,ac1) "\t%1ST(%0);hop();\n" 20
+stmt: ASGNI1(iarg,ac1) "\t%1%{iarg0}POKE(%0);hop();\n" 28
+stmt: ASGNI1(ac,iarg)  "\t%0%{iarg1}_POKEA(%1);hop();\n" 28+20
+stmt: ASGNU1(zddr,ac1) "\t%1ST(%0);hop();\n" 20
+stmt: ASGNU1(iarg,ac1) "\t%1%{iarg0}POKE(%0);hop();\n" 28
+stmt: ASGNI1(ac,iarg)  "\t%0%{iarg1}_POKEA(%1);hop();\n" 28+20
 
-stmt: EQI2(ac,con0)  "\t%0_BEQ(%a);\n" 28
-stmt: EQI2(ac,con8)  "\t%0XORI(con8);_BEQ(%a);\n" 42
-stmt: EQI2(ac,iarg)  "\t%0%{iarg1}XORW(%1);_BEQ(%a);\n" 54
-stmt: EQI2(iarg,ac)  "\t%1%{iarg0}XORW(%0);_BEQ(%a);\n" 54
-stmt: NEI2(ac,con0)  "\t%0_BNE(%a);\n" 28
-stmt: NEI2(ac,con8)  "\t%0XORI(con8);_BNE(%a);\n" 42
-stmt: NEI2(ac,iarg)  "\t%0%{iarg1}XORW(%1);_BNE(%a);\n" 54
-stmt: NEI2(iarg,ac)  "\t%1%{iarg0}XORW(%0);_BNE(%a);\n" 54
-stmt: EQU2(ac,con0)  "\t%0_BEQ(%a);\n" 28
-stmt: EQU2(ac,con8)  "\t%0XORI(con8);_BEQ(%a);\n" 42
-stmt: EQU2(ac,iarg)  "\t%0%{iarg1}XORW(%1);_BEQ(%a);\n" 54
-stmt: EQU2(iarg,ac)  "\t%1%{iarg0}XORW(%0);_BEQ(%a);\n" 54
-stmt: NEU2(ac,con0)  "\t%0_BNE(%a);\n" 28
-stmt: NEU2(ac,con8)  "\t%0XORI(con8);_BNE(%a);\n" 42
-stmt: NEU2(ac,iarg)  "\t%0%{iarg1}XORW(%1);_BNE(%a);\n" 54
-stmt: NEU2(iarg,ac)  "\t%1%{iarg0}XORW(%0);_BNE(%a);\n" 54
-stmt: LTI2(ac,con0) "\t%0_BLT(%a);\n" 28
-stmt: LEI2(ac,con0) "\t%0_BLE(%a);\n" 28
-stmt: GTI2(ac,con0) "\t%0_BGT(%a);\n" 28
-stmt: GEI2(ac,con0) "\t%0_BGE(%a);\n" 28
-stmt: GTU2(ac,con0) "\t%0_BNE(%a);\n" 28
-stmt: LEU2(ac,con0) "\t%0_BEQ(%a);\n" 28
-stmt: LTI2(ac,con8) "\t%0_CMPIS(%1);_BLT(%a);\n" 80
-stmt: LEI2(ac,con8) "\t%0_CMPIS(%1);_BLE(%a);\n" 80
-stmt: GTI2(ac,con8) "\t%0_CMPIS(%1);_BGT(%a);\n" 80
-stmt: GEI2(ac,con8) "\t%0_CMPIS(%1);_BGE(%a);\n" 80
-stmt: LTU2(ac,con8) "\t%0_CMPIU(%1);_BLT(%a);\n" 80
-stmt: LEU2(ac,con8) "\t%0_CMPIU(%1);_BLE(%a);\n" 80
-stmt: GTU2(ac,con8) "\t%0_CMPIU(%1);_BGT(%a);\n" 80
-stmt: GEU2(ac,con8) "\t%0_CMPIU(%1);_BGE(%a);\n" 80
-stmt: LTI2(ac,iarg) "\t%0%{iarg1}_CMPWS(%1);_BLT(%a);\n" 100
-stmt: LEI2(ac,iarg) "\t%0%{iarg1}_CMPWS(%1);_BLE(%a);\n" 100
-stmt: GTI2(ac,iarg) "\t%0%{iarg1}_CMPWS(%1);_BGT(%a);\n" 100
-stmt: GEI2(ac,iarg) "\t%0%{iarg1}_CMPWS(%1);_BGE(%a);\n" 100
-stmt: LTU2(ac,iarg) "\t%0%{iarg1}_CMPWU(%1);_BLT(%a);\n" 100
-stmt: LEU2(ac,iarg) "\t%0%{iarg1}_CMPWU(%1);_BLE(%a);\n" 100
-stmt: GTU2(ac,iarg) "\t%0%{iarg1}_CMPWU(%1);_BGT(%a);\n" 100
-stmt: GEU2(ac,iarg) "\t%0%{iarg1}_CMPWU(%1);_BGE(%a);\n" 100
+stmt: EQI2(ac,con0)  "\t%0_BEQ(%a);hop();\n" 28
+stmt: EQI2(ac,con8)  "\t%0XORI(con8);_BEQ(%a);hop();\n" 42
+stmt: EQI2(ac,iarg)  "\t%0%{iarg1}XORW(%1);_BEQ(%a);hop();\n" 54
+stmt: EQI2(iarg,ac)  "\t%1%{iarg0}XORW(%0);_BEQ(%a);hop();\n" 54
+stmt: NEI2(ac,con0)  "\t%0_BNE(%a);hop();\n" 28
+stmt: NEI2(ac,con8)  "\t%0XORI(con8);_BNE(%a);hop();\n" 42
+stmt: NEI2(ac,iarg)  "\t%0%{iarg1}XORW(%1);_BNE(%a);hop();\n" 54
+stmt: NEI2(iarg,ac)  "\t%1%{iarg0}XORW(%0);_BNE(%a);hop();\n" 54
+stmt: EQU2(ac,con0)  "\t%0_BEQ(%a);hop();\n" 28
+stmt: EQU2(ac,con8)  "\t%0XORI(con8);_BEQ(%a);hop();\n" 42
+stmt: EQU2(ac,iarg)  "\t%0%{iarg1}XORW(%1);_BEQ(%a);hop();\n" 54
+stmt: EQU2(iarg,ac)  "\t%1%{iarg0}XORW(%0);_BEQ(%a);hop();\n" 54
+stmt: NEU2(ac,con0)  "\t%0_BNE(%a);hop();\n" 28
+stmt: NEU2(ac,con8)  "\t%0XORI(con8);_BNE(%a);hop();\n" 42
+stmt: NEU2(ac,iarg)  "\t%0%{iarg1}XORW(%1);_BNE(%a);hop();\n" 54
+stmt: NEU2(iarg,ac)  "\t%1%{iarg0}XORW(%0);_BNE(%a);hop();\n" 54
+stmt: LTI2(ac,con0) "\t%0_BLT(%a);hop();\n" 28
+stmt: LEI2(ac,con0) "\t%0_BLE(%a);hop();\n" 28
+stmt: GTI2(ac,con0) "\t%0_BGT(%a);hop();\n" 28
+stmt: GEI2(ac,con0) "\t%0_BGE(%a);hop();\n" 28
+stmt: GTU2(ac,con0) "\t%0_BNE(%a);hop();\n" 28
+stmt: LEU2(ac,con0) "\t%0_BEQ(%a);hop();\n" 28
+stmt: LTI2(ac,con8) "\t%0_CMPIS(%1);_BLT(%a);hop();\n" 80
+stmt: LEI2(ac,con8) "\t%0_CMPIS(%1);_BLE(%a);hop();\n" 80
+stmt: GTI2(ac,con8) "\t%0_CMPIS(%1);_BGT(%a);hop();\n" 80
+stmt: GEI2(ac,con8) "\t%0_CMPIS(%1);_BGE(%a);hop();\n" 80
+stmt: LTU2(ac,con8) "\t%0_CMPIU(%1);_BLT(%a);hop();\n" 80
+stmt: LEU2(ac,con8) "\t%0_CMPIU(%1);_BLE(%a);hop();\n" 80
+stmt: GTU2(ac,con8) "\t%0_CMPIU(%1);_BGT(%a);hop();\n" 80
+stmt: GEU2(ac,con8) "\t%0_CMPIU(%1);_BGE(%a);hop();\n" 80
+stmt: LTI2(ac,iarg) "\t%0%{iarg1}_CMPWS(%1);_BLT(%a);hop();\n" 100
+stmt: LEI2(ac,iarg) "\t%0%{iarg1}_CMPWS(%1);_BLE(%a);hop();\n" 100
+stmt: GTI2(ac,iarg) "\t%0%{iarg1}_CMPWS(%1);_BGT(%a);hop();\n" 100
+stmt: GEI2(ac,iarg) "\t%0%{iarg1}_CMPWS(%1);_BGE(%a);hop();\n" 100
+stmt: LTU2(ac,iarg) "\t%0%{iarg1}_CMPWU(%1);_BLT(%a);hop();\n" 100
+stmt: LEU2(ac,iarg) "\t%0%{iarg1}_CMPWU(%1);_BLE(%a);hop();\n" 100
+stmt: GTU2(ac,iarg) "\t%0%{iarg1}_CMPWU(%1);_BGT(%a);hop();\n" 100
+stmt: GEU2(ac,iarg) "\t%0%{iarg1}_CMPWU(%1);_BGE(%a);hop();\n" 100
 
 # Structs
-stmt: ARGB(INDIRB(reg))       "\t_SP(%c);_MEMCPY(AC,%0,%a);\n"   200
-stmt: ASGNB(reg,INDIRB(ac))   "\t%1_MEMCPY(%0,AC,%a);\n"   200
-stmt: ASGNB(ac,INDIRB(reg))   "\t%0_MEMCPY(AC,%1,%a);\n"   200
-stmt: ASGNB(reg,INDIRB(reg))  "\t_MEMCPY(%0,%1,%a);\n"   200
+stmt: ARGB(INDIRB(reg))       "\t_SP(%c);_MEMCPY(AC,%0,%a);hop();\n"   200
+stmt: ASGNB(reg,INDIRB(ac))   "\t%1_MEMCPY(%0,AC,%a);hop();\n"   200
+stmt: ASGNB(ac,INDIRB(reg))   "\t%0_MEMCPY(AC,%1,%a);hop();\n"   200
+stmt: ASGNB(reg,INDIRB(reg))  "\t_MEMCPY(%0,%1,%a);hop();\n"   200
 
 # Longs
 stmt: lac "\t%0\n"
-reg: lac "\t%0%{%c!=LAC:_LMOV(LAC,%c);}\n" 80
-reg: INDIRI4(ac) "\t%0_LPEEKA(%c);\n" 150
-reg: INDIRU4(ac) "\t%0_LPEEKA(%c);\n" 150
+reg: lac "\t%0%{%c!=LAC:_LMOV(LAC,%c);}hop();\n" 80
+reg: INDIRI4(ac) "\t%0_LPEEKA(%c);hop();\n" 150
+reg: INDIRU4(ac) "\t%0_LPEEKA(%c);hop();\n" 150
 lac: reg "%{%0!=LAC:_LMOV(%0,LAC);}" 80
 lac: INDIRI4(ac) "%0_LPEEKA(LAC);" 150
 lac: INDIRU4(ac) "%0_LPEEKA(LAC);" 150
@@ -496,33 +496,33 @@ lac: BORI4(lac,larg) "%0%1_LOR();" 200
 lac: BORI4(larg,lac) "%1%0_LOR();" 200
 lac: BXORI4(lac,larg) "%0%1_LXOR();" 200
 lac: BXORI4(larg,lac) "%1%0_LXOR();" 200
-stmt: ASGNI4(eac,lac) "\t%1%0_LPOKEA(LAC);\n" 200
-stmt: ASGNU4(eac,lac) "\t%1%0_LPOKEA(LAC);\n" 200
-stmt: ASGNI4(reg,lac) "\t%1LDW(%0);_LPOKEA(LAC);\n" 180
-stmt: ASGNU4(reg,lac) "\t%1LDW(%0);_LPOKEA(LAC);\n" 180
-stmt: ASGNI4(ac,reg) "\t%0_LPOKEA(%1);\n" 160
-stmt: ASGNU4(ac,reg) "\t%0_LPOKEA(%1);\n" 160
-stmt: LTI4(lac,larg) "\t%0%1_LCMPS();_BLT(%a);\n" 200
-stmt: LEI4(lac,larg) "\t%0%1_LCMPS();_BLE(%a);\n" 200
-stmt: GTI4(lac,larg) "\t%0%1_LCMPS();_BGT(%a);\n" 200
-stmt: GEI4(lac,larg) "\t%0%1_LCMPS();_BGE(%a);\n" 200
-stmt: LTU4(lac,larg) "\t%0%1_LCMPU();_BLT(%a);\n" 200
-stmt: LEU4(lac,larg) "\t%0%1_LCMPU();_BLE(%a);\n" 200
-stmt: GTU4(lac,larg) "\t%0%1_LCMPU();_BGT(%a);\n" 200
-stmt: GEU4(lac,larg) "\t%0%1_LCMPU();_BGE(%a);\n" 200
-stmt: NEI4(lac,larg) "\t%0%1_LDW(LAC);XORW(LARG);STW(SR);LDW(LAC+2);XORW(LARG+2);ORW(SR);_BNE(%a);\n" 100
-stmt: EQI4(lac,larg) "\t%0%1_LDW(LAC);XORW(LARG);STW(SR);LDW(LAC+2);XORW(LARG+2);ORW(SR);_BEQ(%a);\n" 100
-stmt: NEI4(lac,reg) "\t%0_LDW(LAC);XORW(%1);STW(SR);LDW(LAC+2);XORW(%1+2);ORW(SR);_BNE(%a);\n" 100
-stmt: EQI4(lac,reg) "\t%0_LDW(LAC);XORW(%1);STW(SR);LDW(LAC+2);XORW(%1+2);ORW(SR);_BEQ(%a);\n" 100
-stmt: NEU4(lac,larg) "\t%0%1_LDW(LAC);XORW(LARG);STW(SR);LDW(LAC+2);XORW(LARG+2);ORW(SR);_BNE(%a);\n" 100
-stmt: EQU4(lac,larg) "\t%0%1_LDW(LAC);XORW(LARG);STW(SR);LDW(LAC+2);XORW(LARG+2);ORW(SR);_BEQ(%a);\n" 100
-stmt: NEU4(lac,reg) "\t%0_LDW(LAC);XORW(%1);STW(SR);LDW(LAC+2);XORW(%1+2);ORW(SR);_BNE(%a);\n" 100
-stmt: EQU4(lac,reg) "\t%0_LDW(LAC);XORW(%1);STW(SR);LDW(LAC+2);XORW(%1+2);ORW(SR);_BEQ(%a);\n" 100
+stmt: ASGNI4(eac,lac) "\t%1%0_LPOKEA(LAC);hop();\n" 200
+stmt: ASGNU4(eac,lac) "\t%1%0_LPOKEA(LAC);hop();\n" 200
+stmt: ASGNI4(reg,lac) "\t%1LDW(%0);_LPOKEA(LAC);hop();\n" 180
+stmt: ASGNU4(reg,lac) "\t%1LDW(%0);_LPOKEA(LAC);hop();\n" 180
+stmt: ASGNI4(ac,reg) "\t%0_LPOKEA(%1);hop();\n" 160
+stmt: ASGNU4(ac,reg) "\t%0_LPOKEA(%1);hop();\n" 160
+stmt: LTI4(lac,larg) "\t%0%1_LCMPS();_BLT(%a);hop();\n" 200
+stmt: LEI4(lac,larg) "\t%0%1_LCMPS();_BLE(%a);hop();\n" 200
+stmt: GTI4(lac,larg) "\t%0%1_LCMPS();_BGT(%a);hop();\n" 200
+stmt: GEI4(lac,larg) "\t%0%1_LCMPS();_BGE(%a);hop();\n" 200
+stmt: LTU4(lac,larg) "\t%0%1_LCMPU();_BLT(%a);hop();\n" 200
+stmt: LEU4(lac,larg) "\t%0%1_LCMPU();_BLE(%a);hop();\n" 200
+stmt: GTU4(lac,larg) "\t%0%1_LCMPU();_BGT(%a);hop();\n" 200
+stmt: GEU4(lac,larg) "\t%0%1_LCMPU();_BGE(%a);hop();\n" 200
+stmt: NEI4(lac,larg) "\t%0%1_LDW(LAC);XORW(LARG);STW(SR);LDW(LAC+2);XORW(LARG+2);ORW(SR);_BNE(%a);hop();\n" 100
+stmt: EQI4(lac,larg) "\t%0%1_LDW(LAC);XORW(LARG);STW(SR);LDW(LAC+2);XORW(LARG+2);ORW(SR);_BEQ(%a);hop();\n" 100
+stmt: NEI4(lac,reg) "\t%0_LDW(LAC);XORW(%1);STW(SR);LDW(LAC+2);XORW(%1+2);ORW(SR);_BNE(%a);hop();\n" 100
+stmt: EQI4(lac,reg) "\t%0_LDW(LAC);XORW(%1);STW(SR);LDW(LAC+2);XORW(%1+2);ORW(SR);_BEQ(%a);hop();\n" 100
+stmt: NEU4(lac,larg) "\t%0%1_LDW(LAC);XORW(LARG);STW(SR);LDW(LAC+2);XORW(LARG+2);ORW(SR);_BNE(%a);hop();\n" 100
+stmt: EQU4(lac,larg) "\t%0%1_LDW(LAC);XORW(LARG);STW(SR);LDW(LAC+2);XORW(LARG+2);ORW(SR);_BEQ(%a);hop();\n" 100
+stmt: NEU4(lac,reg) "\t%0_LDW(LAC);XORW(%1);STW(SR);LDW(LAC+2);XORW(%1+2);ORW(SR);_BNE(%a);hop();\n" 100
+stmt: EQU4(lac,reg) "\t%0_LDW(LAC);XORW(%1);STW(SR);LDW(LAC+2);XORW(%1+2);ORW(SR);_BEQ(%a);hop();\n" 100
 
 # Floats
 stmt: fac "\t%0\n"
-reg: fac "\t%0%{%c!=FAC:_FMOV(FAC,%c);}\n" 100
-reg: INDIRF5(ac) "\t%0_FPEEKA(%c);\n" 200
+reg: fac "\t%0%{%c!=FAC:_FMOV(FAC,%c);}hop();\n" 100
+reg: INDIRF5(ac) "\t%0_FPEEKA(%c);hop();\n" 200
 fac: reg "%{%0!=FAC:_FMOV(%0,FAC);}" 100
 fac: INDIRF5(ac) "%0_FPEEKA(FAC);" 200
 farg: reg "%{%0!=FARG:_FMOV(%0,FARG);}" 60
@@ -535,15 +535,15 @@ fac: MULF5(fac,farg) "%0%1_FMUL();" 200
 fac: MULF5(farg,fac) "%1%0_FMUL();" 200
 fac: DIVF5(fac,farg) "%0%1_FDIV();" 200
 fac: NEGF5(fac) "%0_FNEG();" 50
-stmt: ASGNF5(eac,fac) "\t%1%0_FPOKEA(FAC);\n" 200
-stmt: ASGNF5(reg,fac) "\t%1LDW(%0);_FPOKEA(FAC);\n" 200
-stmt: ASGNF5(ac,reg) "\t%0_FPOKEA(%1);\n" 200
-stmt: EQF5(fac,farg) "\t%0%1_FCMP();_BEQ(%a);\n" 200
-stmt: NEF5(fac,farg) "\t%0%1_FCMP();_BNE(%a);\n" 200
-stmt: LTF5(fac,farg) "\t%0%1_FCMP();_BLT(%a);\n" 200
-stmt: LEF5(fac,farg) "\t%0%1_FCMP();_BLE(%a);\n" 200
-stmt: GTF5(fac,farg) "\t%0%1_FCMP();_BGT(%a);\n" 200
-stmt: GEF5(fac,farg) "\t%0%1_FCMP();_BGE(%a);\n" 200
+stmt: ASGNF5(eac,fac) "\t%1%0_FPOKEA(FAC);hop();\n" 200
+stmt: ASGNF5(reg,fac) "\t%1LDW(%0);_FPOKEA(FAC);hop();\n" 200
+stmt: ASGNF5(ac,reg) "\t%0_FPOKEA(%1);hop();\n" 200
+stmt: EQF5(fac,farg) "\t%0%1_FCMP();_BEQ(%a);hop();\n" 200
+stmt: NEF5(fac,farg) "\t%0%1_FCMP();_BNE(%a);hop();\n" 200
+stmt: LTF5(fac,farg) "\t%0%1_FCMP();_BLT(%a);hop();\n" 200
+stmt: LEF5(fac,farg) "\t%0%1_FCMP();_BLE(%a);hop();\n" 200
+stmt: GTF5(fac,farg) "\t%0%1_FCMP();_BGT(%a);hop();\n" 200
+stmt: GEF5(fac,farg) "\t%0%1_FCMP();_BGE(%a);hop();\n" 200
 
 # Calls
 fac: CALLF5(addr) "CALLI(%0);" MINCPU5(28)
@@ -558,29 +558,29 @@ ac: CALLU2(addr) "CALLI(%0);" MINCPU5(28)
 ac: CALLU2(reg) "CALL(%0);" 26
 ac: CALLP2(addr) "CALLI(%0);" MINCPU5(28)
 ac: CALLP2(reg) "CALL(%0);" 26
-stmt: CALLV(addr) "\tCALLI(%0);\n" MINCPU5(28)
-stmt: CALLV(reg) "\tCALL(%0);\n" 26
-stmt: ARGF5(fac)  "\t%0_SP(%c);_FPOKEA(FAC);\n"  if_arg_stk(a)
-stmt: ARGI4(lac)  "\t%0_SP(%c);_LPOKEA(FAC);\n"  if_arg_stk(a)
-stmt: ARGU4(lac)  "\t%0_SP(%c);_LPOKEA(FAC);\n"  if_arg_stk(a)
-stmt: ARGF5(reg)  "\t_SP(%c);_FPOKEA(%0);\n"     if_arg_stk(a)
-stmt: ARGI4(reg)  "\t_SP(%c);_LPOKEA(%0);\n"     if_arg_stk(a)
-stmt: ARGU4(reg)  "\t_SP(%c);_LPOKEA(%0);\n"     if_arg_stk(a)
-stmt: ARGI2(reg)  "\t_SP(%c);_DOKEA(%0);\n"      if_arg_stk(a)
-stmt: ARGU2(reg)  "\t_SP(%c);_DOKEA(%0);\n"      if_arg_stk(a)
-stmt: ARGP2(reg)  "\t_SP(%c);_DOKEA(%0);\n"      if_arg_stk(a)
+stmt: CALLV(addr) "\tCALLI(%0);hop();\n" MINCPU5(28)
+stmt: CALLV(reg) "\tCALL(%0);hop();\n" 26
+stmt: ARGF5(fac)  "\t%0_SP(%c);_FPOKEA(FAC);hop();\n"  if_arg_stk(a)
+stmt: ARGI4(lac)  "\t%0_SP(%c);_LPOKEA(FAC);hop();\n"  if_arg_stk(a)
+stmt: ARGU4(lac)  "\t%0_SP(%c);_LPOKEA(FAC);hop();\n"  if_arg_stk(a)
+stmt: ARGF5(reg)  "\t_SP(%c);_FPOKEA(%0);hop();\n"     if_arg_stk(a)
+stmt: ARGI4(reg)  "\t_SP(%c);_LPOKEA(%0);hop();\n"     if_arg_stk(a)
+stmt: ARGU4(reg)  "\t_SP(%c);_LPOKEA(%0);hop();\n"     if_arg_stk(a)
+stmt: ARGI2(reg)  "\t_SP(%c);_DOKEA(%0);hop();\n"      if_arg_stk(a)
+stmt: ARGU2(reg)  "\t_SP(%c);_DOKEA(%0);hop();\n"      if_arg_stk(a)
+stmt: ARGP2(reg)  "\t_SP(%c);_DOKEA(%0);hop();\n"      if_arg_stk(a)
 stmt: ARGF5(reg)  "# arg\n"  if_arg_reg(a)
 stmt: ARGI4(reg)  "# arg\n"  if_arg_reg(a)
 stmt: ARGU4(reg)  "# arg\n"  if_arg_reg(a)
 stmt: ARGI2(reg)  "# arg\n"  if_arg_reg(a)
 stmt: ARGU2(reg)  "# arg\n"  if_arg_reg(a)
 stmt: ARGP2(reg)  "# arg\n"  if_arg_reg(a)
-stmt: RETF5(fac)  "\t%0\n"  1
-stmt: RETI4(lac)  "\t%0\n"  1
-stmt: RETU4(lac)  "\t%0\n"  1
-stmt: RETI2(ac)   "\t%0STW(R3);\n"  1
-stmt: RETU2(ac)   "\t%0STW(R3);\n"  1
-stmt: RETP2(ac)   "\t%0STW(R3);\n"  1
+stmt: RETF5(fac)  "\t%0hop();\n"  1
+stmt: RETI4(lac)  "\t%0hop();\n"  1
+stmt: RETU4(lac)  "\t%0hop();\n"  1
+stmt: RETI2(ac)   "\t%0STW(R3);hop();\n"  1
+stmt: RETU2(ac)   "\t%0STW(R3);hop();\n"  1
+stmt: RETP2(ac)   "\t%0STW(R3);hop();\n"  1
 
 # Conversions
 #            I1   U1
@@ -619,21 +619,21 @@ fac: CVIF5(lac) "%0_FCVI(LAC);" if_cv_from(a,4,200)
 
 # Labels and jumps
 stmt: LABELV       "\tlabel(%a);\n"
-stmt: JUMPV(addr)  "\t_BRA(%0);\n"  14
-stmt: JUMPV(reg)   "\tCALL(%0);\n"  14
+stmt: JUMPV(addr)  "\t_BRA(%0);hop(0);\n"  14
+stmt: JUMPV(reg)   "\tCALL(%0);hop(0);\n"  14
 
 
 # More opcodes for cpu=5
-stmt: ASGNU1(zddr, LOADU1(ADDI2(CVUI2(INDIRU1(zddr)), con1)))  "\tINC(%1);\n" if_rmw1(a,16)
-stmt: ASGNI1(zddr, LOADI1(ADDI2(CVII2(INDIRI1(zddr)), con1)))  "\tINC(%1);\n" if_rmw1(a,16)
+stmt: ASGNU1(zddr, LOADU1(ADDI2(CVUI2(INDIRU1(zddr)), con1)))  "\tINC(%1);hop();\n" if_rmw1(a,16)
+stmt: ASGNI1(zddr, LOADI1(ADDI2(CVII2(INDIRI1(zddr)), con1)))  "\tINC(%1);hop();\n" if_rmw1(a,16)
 
 # More opcodes for cpu=6
-stmt: ASGNP2(zddr, ADDP2(INDIRP2(zddr), con1)) "\tINCW(%1);\n" MINCPU6(if_rmw2(a, 26))
-stmt: ASGNU2(zddr, ADDU2(INDIRU2(zddr), con1)) "\tINCW(%1);\n" MINCPU6(if_rmw2(a, 26))
-stmt: ASGNI2(zddr, ADDI2(INDIRI2(zddr), con1)) "\tINCW(%1);\n" MINCPU6(if_rmw2(a, 26))
-stmt: ASGNP2(zddr, ADDP2(INDIRP2(zddr), con1)) "\tINCW(%1);\n" MINCPU6(if_rmw2(a, 26))
-stmt: ASGNU2(zddr, ADDU2(INDIRU2(zddr), con1)) "\tINCW(%1);\n" MINCPU6(if_rmw2(a, 26))
-stmt: ASGNI2(zddr, ADDI2(INDIRI2(zddr), con1)) "\tINCW(%1);\n" MINCPU6(if_rmw2(a, 26))
+stmt: ASGNP2(zddr, ADDP2(INDIRP2(zddr), con1)) "\tINCW(%1);hop();\n" MINCPU6(if_rmw2(a, 26))
+stmt: ASGNU2(zddr, ADDU2(INDIRU2(zddr), con1)) "\tINCW(%1);hop();\n" MINCPU6(if_rmw2(a, 26))
+stmt: ASGNI2(zddr, ADDI2(INDIRI2(zddr), con1)) "\tINCW(%1);hop();\n" MINCPU6(if_rmw2(a, 26))
+stmt: ASGNP2(zddr, ADDP2(INDIRP2(zddr), con1)) "\tINCW(%1);hop();\n" MINCPU6(if_rmw2(a, 26))
+stmt: ASGNU2(zddr, ADDU2(INDIRU2(zddr), con1)) "\tINCW(%1);hop()\n" MINCPU6(if_rmw2(a, 26))
+stmt: ASGNI2(zddr, ADDI2(INDIRI2(zddr), con1)) "\tINCW(%1);hop();\n" MINCPU6(if_rmw2(a, 26))
 
 # /*-- END RULES --/
 %%
@@ -1127,7 +1127,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
       roffset += 1;
       soffset += 2;
     }
-  print("\n");
+  print("hop();\n");
   /* Emit actual code */
   emitcode();
   /* Restore callee saved registers */
@@ -1143,7 +1143,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   print("LDW(LR);STW('vLR');");
   if (ty == I+sizeop(2) || ty == U+sizeop(2) || ty == P+sizeop(2))
     print("LDW(R3);");
-  print("RET();\n");
+  print("RET();hop(0);\n");
 }
 
 static void defconst(int suffix, int size, Value v)

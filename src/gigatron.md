@@ -40,7 +40,7 @@ static void target(Node);
 static int  if_zpconst(Node);
 static int  if_zpglobal(Node);
 static int  if_rmw1(Node,int);
-static int  if_rmw2_cpu6(Node,int);
+static int  if_rmw2(Node,int);
 static int  if_cv_from(Node,int,int);
 static int  if_arg_reg(Node);
 static int  if_arg_stk(Node);
@@ -59,6 +59,9 @@ static Symbol iregw, lregw, fregw;
 /* Misc */ 
 static int cseg;
 static int cpu = 5;
+
+#define MINCPU5(cost) ((cpu<5)?LBURG_MAX:(cost))
+#define MINCPU6(cost) ((cpu<6)?LBURG_MAX:(cost))
  
 /*---- END HEADER --*/
 %}
@@ -256,6 +259,7 @@ lddr: ADDRFP2 "%a+%F"
 addr: ADDRGP2 "%a" 
 addr: con "%0" 1
 addr: zddr "%0"
+zddr: VREGP "%a"
 zddr: ADDRGP2 "%a" if_zpglobal(a)
 zddr: con8 "%0"
 
@@ -301,13 +305,12 @@ ac1: ac "%0"
 
 # genreload() can use the iarg:loada rule to reload without allocating a register. 
 # This depends on code using the %{iargX} macro to insert the reloading code when needed.
-# Note that we can use vLR as another scratch register because it is always saved by the
-# function prologue/epilogue.
+# Note that the loada clause is only useful when reloading a spilled register.
 iarg: reg "%0"
 iarg: INDIRI2(zddr) "%0"
 iarg: INDIRU2(zddr) "%0"
 iarg: INDIRP2(zddr) "%0"
-iarg: loada "%{alt:SR:STW('vLR');%0STW(SR);LDW('vLR');}" 60
+iarg: loada "%{alt:SR:STLW(-2);%0STW(SR);LDLW(-2);}" 60
 
 ac: ADDI2(ac,iarg)  "%0%{iarg1}ADDW(%1);" 28
 ac: ADDU2(ac,iarg)  "%0%{iarg1}ADDW(%1);" 28
@@ -543,19 +546,19 @@ stmt: GTF5(fac,farg) "\t%0%1_FCMP();_BGT(%a);\n" 200
 stmt: GEF5(fac,farg) "\t%0%1_FCMP();_BGE(%a);\n" 200
 
 # Calls
-fac: CALLF5(addr) "CALLI(%0);" 28
+fac: CALLF5(addr) "CALLI(%0);" MINCPU5(28)
 fac: CALLF5(reg) "CALL(%0);" 26
-lac: CALLI4(addr) "CALLI(%0);" 28
+lac: CALLI4(addr) "CALLI(%0);" MINCPU5(28)
 lac: CALLI4(reg) "CALL(%0);" 26
-lac: CALLU4(addr) "CALLI(%0);" 28
+lac: CALLU4(addr) "CALLI(%0);" MINCPU5(28)
 lac: CALLU4(reg) "CALL(%0);" 26
-ac: CALLI2(addr) "CALLI(%0);" 28
+ac: CALLI2(addr) "CALLI(%0);" MINCPU5(28)
 ac: CALLI2(reg) "CALL(%0);" 26
-ac: CALLU2(addr) "CALLI(%0);" 28
+ac: CALLU2(addr) "CALLI(%0);" MINCPU5(28)
 ac: CALLU2(reg) "CALL(%0);" 26
-ac: CALLP2(addr) "CALLI(%0);" 28
+ac: CALLP2(addr) "CALLI(%0);" MINCPU5(28)
 ac: CALLP2(reg) "CALL(%0);" 26
-stmt: CALLV(addr) "\tCALLI(%0);\n" 28
+stmt: CALLV(addr) "\tCALLI(%0);\n" MINCPU5(28)
 stmt: CALLV(reg) "\tCALL(%0);\n" 26
 stmt: ARGF5(fac)  "\t%0_SP(%c);_FPOKEA(FAC);\n"  if_arg_stk(a)
 stmt: ARGI4(lac)  "\t%0_SP(%c);_LPOKEA(FAC);\n"  if_arg_stk(a)
@@ -615,22 +618,22 @@ fac: CVIF5(ac)  "%0_FCVI(AC);" if_cv_from(a,2,120)
 fac: CVIF5(lac) "%0_FCVI(LAC);" if_cv_from(a,4,200)
 
 # Labels and jumps
-stmt: LABELV       "\tx.label(%a);\n"
-stmt: JUMPV(addr)  "\t_BRA(%0);\n"   14
+stmt: LABELV       "\tlabel(%a);\n"
+stmt: JUMPV(addr)  "\t_BRA(%0);\n"  14
 stmt: JUMPV(reg)   "\tCALL(%0);\n"  14
 
 
 # More opcodes for cpu=5
-vregp: VREGP "%a"
-stmt: ASGNU1(zddr, LOADU1(ADDI2(CVUI2(INDIRU1(zddr)), con1))) "\tINC(%1);\n" if_rmw1(a,16)
-stmt: ASGNU1(vregp, LOADU1(ADDI2(CVUI2(INDIRU1(vregp)), con1))) "\tINC(%1);\n" if_rmw1(a,16)
-stmt: ASGNI1(zddr, LOADI1(ADDI2(CVII2(INDIRI1(zddr)), con1))) "\tINC(%1);\n" if_rmw1(a,16)
-stmt: ASGNI1(vregp, LOADI1(ADDI2(CVII2(INDIRI1(vregp)), con1))) "\tINC(%1);\n" if_rmw1(a,16)
+stmt: ASGNU1(zddr, LOADU1(ADDI2(CVUI2(INDIRU1(zddr)), con1)))  "\tINC(%1);\n" if_rmw1(a,16)
+stmt: ASGNI1(zddr, LOADI1(ADDI2(CVII2(INDIRI1(zddr)), con1)))  "\tINC(%1);\n" if_rmw1(a,16)
 
 # More opcodes for cpu=6
-stmt: ASGNP2(zddr, ADDP2(INDIRP2(zddr), con1)) "\tINCW(%1);\n" if_rmw2_cpu6(a,26)
-stmt: ASGNU2(zddr, ADDU2(INDIRU2(zddr), con1)) "\tINCW(%1);\n" if_rmw2_cpu6(a,26)
-stmt: ASGNI2(zddr, ADDI2(INDIRI2(zddr), con1)) "\tINCW(%1);\n" if_rmw2_cpu6(a,26)
+stmt: ASGNP2(zddr, ADDP2(INDIRP2(zddr), con1)) "\tINCW(%1);\n" MINCPU6(if_rmw2(a, 26))
+stmt: ASGNU2(zddr, ADDU2(INDIRU2(zddr), con1)) "\tINCW(%1);\n" MINCPU6(if_rmw2(a, 26))
+stmt: ASGNI2(zddr, ADDI2(INDIRI2(zddr), con1)) "\tINCW(%1);\n" MINCPU6(if_rmw2(a, 26))
+stmt: ASGNP2(zddr, ADDP2(INDIRP2(zddr), con1)) "\tINCW(%1);\n" MINCPU6(if_rmw2(a, 26))
+stmt: ASGNU2(zddr, ADDU2(INDIRU2(zddr), con1)) "\tINCW(%1);\n" MINCPU6(if_rmw2(a, 26))
+stmt: ASGNI2(zddr, ADDI2(INDIRI2(zddr), con1)) "\tINCW(%1);\n" MINCPU6(if_rmw2(a, 26))
 
 # /*-- END RULES --/
 %%
@@ -643,6 +646,11 @@ static void comment(const char *fmt, ...) {
   va_start(ap, fmt);
   vfprint(stdout, NULL, fmt, ap);
   va_end(ap);
+}
+
+static int if_cpu(int mincpu, int cost)
+{
+  return (cpu < mincpu) ? LBURG_MAX : cost;
 }
 
 static int if_arg_reg(Node p)
@@ -686,13 +694,11 @@ static int if_rmw1(Node p, int cost)
   return LBURG_MAX;
 }
 
-static int if_rmw2_cpu6(Node p, int cost)
+static int if_rmw2(Node p, int cost)
 {
   Node n0 = p->kids[0];
   Node n1 = p->kids[1]->kids[0]->kids[0];
   assert(n0 && n1);
-  if (cpu < 6)
-    return LBURG_MAX;
   if (generic(n0->op) == INDIR && n0->kids[0]->op == VREG+P
       && n0->x.mayrecalc && n0->syms[RX]->u.t.cse)
     n0 = n0->syms[RX]->u.t.cse;
@@ -1066,9 +1072,8 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   offset = 0;
   gencode(caller, callee);
   /* prologue */
-  comment("begin function %s\n", f->x.name);
   segment(CODE);
-  global(f);
+  print("\tfunction(%s);\n", f->x.name);
   print("\tLDW('vLR');STW(LR);");
   if (ncalls)
     usedmask[IREG] |= REGMASK_LR;
@@ -1139,7 +1144,6 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   if (ty == I+sizeop(2) || ty == U+sizeop(2) || ty == P+sizeop(2))
     print("LDW(R3);");
   print("RET();\n");
-  comment("end function %s\n", f->x.name);
 }
 
 static void defconst(int suffix, int size, Value v)
@@ -1152,33 +1156,38 @@ static void defconst(int suffix, int size, Value v)
     assert(isfinite(d));
     mantissa = (unsigned long)(frexp(d,&exp) * pow(2.0, 32));
     if (mantissa == 0 || exp < -128)
-      print("\tx.bytes(0,0,0,0,0); ");
+      print("\tbytes(0,0,0,0,0); ");
     else
-      print("\tx.bytes(%d,%d,%d,%d,%d); ",
+      print("\tbytes(%d,%d,%d,%d,%d); ",
             exp+128, ((mantissa>>24)&0x7f)|((d<0.0)?0x80:0x00),
             (mantissa>>16)&0xff, (mantissa>>8)&0xff, (mantissa&0xff) );
     comment("%f\n", d);
   } else {
-    long x = (suffix == P) ? (unsigned)(size_t)v.p : (suffix == I) ? v.i : v.u;
-      if (size == 1)
-      print("\tx.bytes(%d);\n", x&0xff);
+    unsigned long x = (suffix == P) ? (unsigned)(size_t)v.p : (suffix == I) ? v.i : v.u;
+    if (size == 1) 
+      print("\tbytes(%d); ", x&0xff);
     else if (size == 2)
-      print("\tx.words(%d);\n", x&0xffff);
+      print("\twords(%d); ", x&0xffff);
     else if (size == 4)
-      print("\tx.words(%d,%d);\n", x&0xffff, (x>>16)&0xffff);
+      print("\twords(%d,%d); ", x&0xffff, (x>>16)&0xffff);
+    if (suffix == I)
+      comment("%D", (long)x);
+    else if (suffix == U)
+      comment("%U", x);
+  print("\n");
   }
 }
 
 static void defaddress(Symbol p)
 {
-  print("\tx,words(%s);\n", p->x.name);
+  print("\twords(%s);\n", p->x.name);
 }
 
 static void defstring(int n, char *str)
 {
   int i;
   for (i=0; i<n; i++)
-    print( ((i&7)==0) ? "\tx.bytes(%d" : ((i&7)==7) ? ",%d);\n" : ",%d", (int)str[i]&0xff );
+    print( ((i&7)==0) ? "\tbytes(%d" : ((i&7)==7) ? ",%d);\n" : ",%d", (int)str[i]&0xff );
   if (i&7)
     print(");\n");
 }
@@ -1186,17 +1195,19 @@ static void defstring(int n, char *str)
 static void export(Symbol p)
 {
   if (isfunc(p->type))
-    print("\tx.export(%s);\n", p->x.name);
+    print("\texport(%s);\n", p->x.name);
+  else if (p->u.seg != BSS)
+    print("\texport(%s,%d);\n", p->x.name, p->type->size);
   else
-    print("\tx.export(%s,%d);\n", p->x.name, p->type->size);
+    print("\tcommon(%s,%d);\n", p->x.name, p->type->size);
 }
 
 static void import(Symbol p)
 {
   if (isfunc(p->type))
-    print("\tx.extern(%s);\n", p->x.name);
+    print("\textern(%s);\n", p->x.name);
   else
-    print("\tx.extern(%s,%d);\n", p->x.name, p->type->size);
+    print("\textern(%s,%d);\n", p->x.name, p->type->size);
 }
 
 static void defsymbol(Symbol p)
@@ -1224,12 +1235,12 @@ static void address(Symbol q, Symbol p, long n)
 
 static void global(Symbol p)
 {
-  if (p->u.seg == BSS && p->sclass == STATIC)
-    print("\tx.lcomm(%s,%d);\n", p->x.name, p->type->size);
-  else if (p->u.seg == BSS)
-    print( "\tx.comm(%s,%d);\n", p->x.name, p->type->size);
-  else
-    print("\tx.label(%s);\n", p->x.name);
+  if (p->u.seg == BSS && p->sclass == STATIC) {
+    print("\tglobl(%s,%d);\n", p->x.name, p->type->size);
+    print("\tspace(%d);\n", p->type->size);
+  } else if (p->u.seg != BSS) {
+    print("\tgloblv(%s,%d);\n", p->x.name, p->type->size);
+  }
 }
 
 static void segment(int n)
@@ -1237,10 +1248,10 @@ static void segment(int n)
   if (n == cseg)
     return;
   switch (n) {
-  case CODE: print("\tx.segment('CODE');\n"); break;
-  case BSS:  print("\tx.segment('BSS');\n");  break;
-  case DATA: print("\tx.segment('DATA');\n"); break;
-  case LIT:  print("\tx.segment('LIT');\n"); break;
+  case CODE: print("\tsegment('CODE');\n"); break;
+  case BSS:  print("\tsegment('BSS');\n");  break;
+  case DATA: print("\tsegment('DATA');\n"); break;
+  case LIT:  print("\tsegment('LIT');\n"); break;
   }
   cseg = n;
 }
@@ -1248,7 +1259,7 @@ static void segment(int n)
 static void space(int n)
 {
   if (cseg != BSS)
-    print("\tx.space(%d);\n", n);
+    print("\tspace(%d);\n", n);
 }
 
 Interface gigatronIR = {

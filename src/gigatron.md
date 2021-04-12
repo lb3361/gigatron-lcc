@@ -1005,13 +1005,15 @@ static void doarg(Node p)
 {
   static int argno;
   static int roffset;
+  int offset;
   Symbol r;
   if (argoffset == 0)
     argno = 0;
   r  = argreg(argno, optype(p->op), opsize(p->op), &roffset);
+  offset = mkactual(p->syms[1]->u.c.v.i, p->syms[0]->u.c.v.i);
   p->x.argno = argno++;
+  p->syms[2] = intconst(offset);
   p->syms[1] = r;
-  p->syms[2] = intconst(mkactual(1, p->syms[0]->u.c.v.i));
 }
 
 static void local(Symbol p)
@@ -1046,6 +1048,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
     Symbol p = callee[i];
     Symbol q = caller[i];
     assert(q);
+    offset = roundup(offset, q->type->align);
     p->x.offset = q->x.offset = offset;
     p->x.name = q->x.name = stringd(offset);
     r = argreg(i, optype(ttob(q->type)), q->type->size, &roffset);
@@ -1077,7 +1080,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   print("\tLDW('vLR');STW(LR);");
   if (ncalls)
     usedmask[IREG] |= REGMASK_LR;
-  i = bitcount(REGMASK_ARGS);
+  i = bitcount(REGMASK_ARGS) * 2;
   if (ncalls & maxargoffset < i)
     maxargoffset = i;
   usedmask[IREG] &= REGMASK_VARS;
@@ -1265,13 +1268,13 @@ static void space(int n)
 Interface gigatronIR = {
         1, 1, 0,  /* char */
         2, 1, 0,  /* short */
-        2, 1, 0,  /* int */
-        4, 1, 1,  /* long */
-        4, 1, 1,  /* long long */
+        2, 2, 0,  /* int */
+        4, 2, 1,  /* long */
+        4, 2, 1,  /* long long */
         5, 1, 1,  /* float */
         5, 1, 1,  /* double */
         5, 1, 1,  /* long double */
-        2, 2, 0,  /* T * */
+        2, 2, 0,  /* pointer */
         0, 1, 0,  /* struct */
         0,        /* little_endian */
         0,        /* mulops_calls */

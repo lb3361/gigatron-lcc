@@ -9,6 +9,9 @@
 #ifndef offsetof
 #define offsetof(ty,mem) ((size_t)((char*)&((ty*)0)->mem - (char*)0))
 #endif
+#ifndef alignof
+#define alignof(ty) ((size_t)&(((struct{char c; ty m;}*)(0))->m))
+#endif
 
 typedef int ptrdiff_t;
 
@@ -23,14 +26,7 @@ typedef unsigned int size_t;
 #define _WCHAR_T
 #define _WCHAR_T_
 #define _WCHAR_T_DEFINED
-#if   (_WCHAR_T_SIZE + 0) == 1
-typedef unsigned char wchar_t;
-#elif (_WCHAR_T_SIZE + 0) == 2
-typedef unsigned short wchar_t;
-#elif (_WCHAR_T_SIZE + 0) == 4
-typedef unsigned long wchar_t;
-#else
-typedef unsigned short wchar_t;
+typedef unsigned int wchar_t;
 #endif
 #endif
 

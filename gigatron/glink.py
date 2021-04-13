@@ -11,13 +11,12 @@ current_module = None
 current_proc = None
 interface_dict = {}
 map_dict = {}
-safe_dict = None
+safe_dict = {}
 module_list = []
 
 
-## locate errors in .s/.o/.a files
-
 def where(tb=None):
+    '''Locate error in a .s/.o/.a file'''
     stb = traceback.extract_tb(tb, limit=8) if tb else \
           traceback.extract_stack(limit=8)
     for s in stb:
@@ -25,68 +24,103 @@ def where(tb=None):
             return "{0}:{1}".format(s[0],s[1])
     return None
 
-### module class
 
 class Module:
-    def __init__(self, code=None, name=None, cpu=None):
+    '''Class for assembly modules read from .s/.o/.a files.'''
+    def __init__(self, name=None, cpu=None, code=None):
         global args, current_module
         self.code = code
         self.name = name
         self.cpu = cpu if cpu != None else args.cpu
         self.exports = {}
         self.externs = {}
+    def __repr__(self):
+        return f"Module('{self.name}',...)"
+    def run(self,proc):
+        '''Execute the module code with the specified delegate''' 
+        global current_proc, current_module
+        current_proc = proc
+        current_module = self
+        self.code()
+        current_proc = None
+        current_module = None
 
-### vocabulary for exec-ing .s/.o/.a files
 
-class Vocabulary:
-    ''' This is not a class but just a way to construct a dictionary
-        with the words that can be used by .s/.o/.a files. '''
-    def pc():
-        return current_proc.pc()
-    def v(x):
-        return x if isinstance(x,int) else current_module.v(x)
-    def lo(x):
-        return v(x) & 0xff
-    def hi(x):
-        return (v(x) >> 8) & 0xff
-    def error(s):
-        w = where()
-        current_proc.error(f"glink: {w}: error: {s}")
-    def warning(s):
-        w = where()
-        current_proc.warning(f"glink: {w}: warning: {s}")
-    def fatal(s):
-        w = where()
-        w = "" if w == None else w + ": "
-        print(f"glink: {w}fatal error: {s}", file=sys.stderr)
-        sys.exit(1)
-    def module(code=None,name=None,cpu=None):
-        global module_list
-        if current_module or current_proc:
-            warning("module() should not be called from the code fragment")
-        else:
-            module_list.append(Module(code,name,cpu))
+# ------------- usable vocabulary for .s/.o/.a files
 
-### copy vocabulary namespace into actual globals
+def register_names():
+    d = {}
+    d['R0'] = 0x18
+    d['AC'] = 0x18
+    d['FACEXT'] = 0x81
+    d['FACEXP'] = 0x82
+    d['FACSGN'] = 0x83
+    d['FACM'] = 0x84
+    d['LAC'] = 0x84
+    for i in range(4,32): d[f'R{i}'] = 0x80+i+i
+    for i in range(4,29): d[f'L{i}'] = d[f'R{i}']
+    for i in range(4,28): d[f'F{i}'] = d[f'R{i}']
+    d['SP'] = d['R31']
+    d['LR'] = d['R30']
+    return d
 
-def copy_dict_into(d,g):
-    for n in d:
-        if not n.startswith('__') and not n.endswith('__'):
-            g[n] = d[n]
+for (k,v) in register_names().items():
+    safe_dict[k] = v
+    globals()[k] = v
 
-copy_dict_into(vars(Vocabulary), globals())
+def vasm(func):
+    '''Decorator to mark functions usable in .s/.o/.a files'''
+    safe_dict[func.__name__] = func
+    return func
 
-### safely read .s/.o/.a files
+@vasm
+def pc():
+    return current_proc.pc()
+@vasm
+def v(x):
+    return x if isinstance(x,int) else current_proc.v(x)
+@vasm
+def lo(x):
+    return v(x) & 0xff
+@vasm
+def hi(x):
+    return (v(x) >> 8) & 0xff
+@vasm
+def error(s):
+    w = where()
+    current_proc.error(f"glink: {w}: error: {s}")
+@vasm
+def warning(s):
+    w = where()
+    current_proc.warning(f"glink: {w}: warning: {s}")
+@vasm
+def fatal(s):
+    w = where()
+    w = "" if w == None else w + ": "
+    print(f"glink: {w}fatal error: {s}", file=sys.stderr)
+    sys.exit(1)
+@vasm
+def module(code=None,name=None,cpu=None):
+    global module_list
+    if current_module or current_proc:
+        warning("module() should not be called from the code fragment")
+    else:
+        module_list.append(Module(name,cpu,code))
+
+
+# ------------- reading .s/.o/.a files
+        
               
 def new_globals():
+    '''Return a pristine global symbol table to read .s/.o/.a files.'''
     global safe_dict
-    if safe_dict == None:
-        safe_dict = { '__builtins__' : None }
-        copy_dict_into(interface_dict, safe_dict)
-        copy_dict_into(vars(Vocabulary), safe_dict)
-    return safe_dict.copy()
+    g = safe_dict.copy()
+    g['args'] = { k:vars(args)[k] for k in ('cpu','rom','map') }
+    g['__builtins__'] = None
+    return g
 
 def read_file(f):
+    '''Safely read a .s/.o/.a file.'''
     global code, current_module, current_proc
     with open(f,'r') as fd: 
         c = compile(fd.read(),f,'exec')
@@ -97,47 +131,54 @@ def read_file(f):
     if len(module_list) <= n:
         fatal(f"no module found")
 
-def read_lib(l, safe=True):
+def read_lib(l):
+    '''Search a library file along the library path and read it.'''
     for d in (args.L or []) + [lccdir]:
         f = os.path.join(d, f"lib{l}.a")
         if os.access(f, os.R_OK):
             return read_file(f)
     fatal(f"library -l{l} not found!")
         
-### main function
+
+
+# ------------- main function
+
 
 def main(argv):
+    '''Main entry point'''
     global lccdir, args
     global interface_syms
-    
     try:
-        ## Find LCCDIR
+        ## Obtain LCCDIR
         lccdir = os.getenv("LCCDIR", default=lccdir)
-        
-        ## Parsing arguments
+
+        ## Parse arguments
         parser = argparse.ArgumentParser(
             conflict_handler='resolve',allow_abbrev=False,
             usage='glink [options] {<files.o>} -l<lib> -o <outfile.gt1>',
             description='Collects gigatron .{s,o,a} files into a .gt1 file.',
-            epilog='''This program accepts the modules generated by gigatron-lcc/rcc
-            (suffix .s or .o). These files are text files with a python
-            syntax. They contain a single function that defines all the
-            VCPU instructions, labels and data for this module.  Glink
-            also accepts concatenation of such files forming a library
-            (suffix .a).  The cpu, rom, and map options provide values
-            than handcrafted code inside a module can test to select
-            different implementations. The cpu option enables instructions
-            that were added in successive implementations of the Gigatron
-            VCPU.  The rom option informs the libraries about the
-            availability of natively implemented SYS functions. The map
-            option tells at which addresses the program, the data, and the
-            stack should be located. It also tells which zero page
-            location are used as registers by the compiled code and which
-            runtime libraries should be loaded by default. The final
-            output file includes the module that exports the entry point
-            symbol, then the modules that exports all the symbols that it
-            imports, then recursively all the modules that are needed to
-            resolve imported symbols.''')
+            epilog=''' 
+            	This program accepts the modules generated by
+                gigatron-lcc/rcc (suffix .s or .o). These files are
+                text files with a python syntax. They contain a single
+                function that defines all the VCPU instructions,
+                labels and data for this module.  Glink also accepts
+                concatenation of such files forming a library (suffix
+                .a).  The -cpu, -rom, and -map options provide values
+                than handcrafted code inside a module can test to
+                select different implementations. The -cpu option
+                enables instructions that were added in successive
+                implementations of the Gigatron VCPU.  The -rom option
+                informs the libraries about the availability of
+                natively implemented SYS functions. The -map option
+                tells at which addresses the program, the data, and
+                the stack should be located. It also tells which
+                runtime libraries should be loaded by default. The
+                final output file includes the module that exports the
+                entry point symbol, then the modules that exports all
+                the symbols that it imports, then recursively all the
+                modules that are needed to resolve imported
+                symbols.''')
         parser.add_argument('-o', type=str, default='a.gt1', metavar='file.gt1',
                             help='select the output filename (default: a.gt1)')
         parser.add_argument('-cpu', type=str, action='store',
@@ -159,10 +200,10 @@ def main(argv):
         args = parser.parse_args(argv)
         if args.map == None:
             args.map = '64k'
-        if args.cpu == None:
-            args.cpu = 5
         if args.rom == None:
             args.rom = 'v5a'
+        if args.cpu == None:
+            args.cpu = 5
 
         ### Read interface.json
         with open(lccdir + '/interface.json') as file:
@@ -171,16 +212,18 @@ def main(argv):
 
         ### Read map
 
-        ### Load .s/.o/.a files
+        ### Load all .s/.o/.a files and libraries
         for f in args.files or []:
             read_file(f)
         for f in args.l or []:
             read_lib(f)
 
         return 0
+    
     except FileNotFoundError as err:
         fatal(str(err))
-    
+
+
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))
 

@@ -210,7 +210,7 @@ static Tree unary(void) {
 				      		error("invalid type argument `%t' to `sizeof'\n", ty);
 				      	else if (p && rightkid(p)->op == FIELD)
 				      		error("`sizeof' applied to a bit field\n");
-				      	p = cnsttree(unsignedlong, (unsigned long)ty->size);
+				      	p = cnsttree(unsignedptr, (unsigned long)ty->size);
 				      } } break;
 	case '(':
 		t = gettok();

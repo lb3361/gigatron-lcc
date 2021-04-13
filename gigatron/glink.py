@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-
-from __future__ import print_function
+# -------------- glink proper
 
 import argparse, json, string
 import os, sys, traceback
@@ -13,6 +11,8 @@ interface_dict = {}
 map_dict = {}
 safe_dict = {}
 module_list = []
+
+# --------------- utils
 
 
 def where(tb=None):

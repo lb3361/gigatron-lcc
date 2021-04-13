@@ -9,7 +9,7 @@ LDFLAGS=-g
 
 B=${BUILDDIR}/
 G=${TOP}/gigatron/
-FILES=${B}include ${B}glcc ${B}glink ${B}interface.json
+FILES=${B}include ${B}glcc ${B}glink ${B}glink.py ${B}interface.json
 
 default: all
 
@@ -33,9 +33,13 @@ ${B}include:
 	-rm ${B}include
 	ln -s ${TOP}/include/gigatron ${B}include
 
-${B}glink: ${G}glink.py
-	cp ${G}glink.py ${B}glink
+${B}glink: ${G}glink
+	cp ${G}glink ${B}glink
 	chmod a+x ${B}glink
+
+${B}glink.py: ${G}glink.py
+	cp ${G}glink.py ${B}glink.py
+	python -m compileall -b ${B}glink.py
 
 ${B}glcc: ${G}glcc.sh
 	cp ${G}glcc.sh ${B}glcc

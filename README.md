@@ -67,38 +67,18 @@ the compiler driver recognizes a few Gigatron-specific options.
 
 ## Internals
 
-On the one hand, the VCPU design establishes a three-level hierarchy
-of memory locations.  First comes the accumulator `vAC` which is read
-or written by virtually all VCPU instructions. Then come the zero page
-locations which are conveniently read or written by the VCPU. Finally
-come all other memory locations which are only accessible indirectly
-at addresses found in zero page locations. On the other hand, the LCC
-code generator deals with only two levels, namely a handful of
-registers and the memory. 
-
-Treating both the accumulator and the zero page location as registers
-causes countless problems because there is essentially nothing the
-VCPU can do once the accumulator is allocated to represent a
-particular variable or a temporary.  It is then necessary to revise
-the allocation by spill the accumulator, that is, storing its contents
-elsewhere and patch the remaining code to reload it when needed. Alas
-both spilling and reloading the accumulator cannot be done without
-using the accumulator.
-
-The GLCC code generator uses a block of zero page locations as 32
-sixteen bit registers. It produces code that is made of successive
-bursts of VCPU instructions. These bursts are in fact what LCC calls
-an "instruction". This is why each burst is packed on a single line of
-the generated assembly code. The burst themselves are produced by
-abusing the mechanisms defined by LCC to construct various parts of a
-typical CPU instruction such as the mnemonic, the address mode,
-etc. The accumulator `vAC` is treated as a scratch register inside a
-burst. Meanwhile LCC allocates zero page registers to pass data across
-bursts.
-
-The registers are named `R0` to `R31`. Register `R0` is in fact the
-accumulator `vAC`. Register `R1`, also named `SR`, is a scratch
-register that is mostly used within canned instruction sequences.
+The code generator uses two blocks of zero page locations:
+  *  The first block, located at addresses `0x81-0x8f`, is dedicated to
+     the routines that implement long and float arithmetic. The long accumulator `LAC`
+     uses locations `0x84-0x87`. The floating point accumulator `FAC` uses location `0x81-0x87`.
+     The remaining locations `0x88-0x8f` are working space for these routines.
+     They are also known as scratch registers `R4` to `R7` which are
+     occasionally used as scratch registers by the code generator.
+  *  The second block, located at addresses `0x90-0xbf`, contains 24 general 
+     purpose sixteen bits registers named `R8` to `R31`. 
+     Register pairs named can hold longs. Register triplets named
+     can hold floats.
+     
 Register `R31`, also named `SP`, is a stack pointer whose value is
 adjusted only twice by each function, once in the prologue to
 construct a stack frame, and once in the epilogue to return to the
@@ -106,26 +86,33 @@ caller's frame. In addition the prologue saves the link register a`vLR`
 into register `R30` and the epilogue restores it just before the `RET`
 instruction. Saving `vLR` allows us to use `CALLI` as a long jump
 without fearing to erase the function return address.
-
-Long integers are pairs of consecutive registers. These pairs are
-named `L2` to `L28`. For instance, `L3` is made of registers `R3` and
-`R4`. Register pair `L3` and `L6` are also known as `LAC` and `LARG`
-because they're implicitly used by the runtime routines that implement
-long arithmetic.  Similarly, floating point numbers are stored in
-register triples named `F2` to `F27`. Register triples `F2` and `F5`
-are also known as `FAC` and `FARG` for the same reasons.  Floating
-point numbers in registers occupy six bytes instead of five. The
-additional byte unpack information that is useful for the floating
-point emulation runtime such as sign bits and carry flags.
-
 Registers `R8` to `R13` are used to pass arguments to functions.
 Registers `R14` to `R23` contain local variables and must be saved and
-restored by all functions. Temporary variables are first allocated in
+restored by all functions. Temporaries are first allocated in
 registers `R24` to `R29`, then in other free registers as needed.  The
 stack frames are close to MIPS stack frame with an argument building
 zone where a function stores arguments for the function it calls, a
 local variable zone for the local variables that didn't fit in
 registers, and a saved register area for the callee-saved registers.
+
+The VCPU accumulator `AC` is not treated by the compiler as a normal 
+register because there is essentially nothing the VCPU can do once the 
+accumulator is allocated to represent a particular variable or a temporary.
+The compiler generic code then must spill its content to a stack location
+in ways that not only produce less efficient code, but often result
+in an infinite loop because the spilling code must itself use `AC`.
+Instead, the code generator produces VCPU instructions in bursts 
+that are packed on a single line of the generated assembly code. 
+Each burst is in fact what LCC calls an instruction. Bursts are
+produced by subverting the mechanisms defined by LCC to construct 
+various parts of a typical CPU instruction such as the mnemonic, 
+the address mode, etc. The VCPU accumulator `AC` is treated as a scratch 
+register inside a burst. Meanwhile LCC allocates zero page registers 
+to pass data across bursts. This approach avoid the spilling problems
+but sometimes needs improving because we do not keep track
+of what data is left on the accumulator after each burst.
+This could be improved by adding a peephole optimization pass
+at some point.
 
 The compiler produces python files that define a single function whose
 argument is an object `x`. This function calls methods that emit the

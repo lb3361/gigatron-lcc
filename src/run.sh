@@ -10,11 +10,12 @@ dir=$target/$os
 case "$1" in
 *symbolic/irix*)	idir=include/mips/irix; remotehost=noexecute ;;
 *symbolic/osf*)		idir=include/alpha/osf;	remotehost=noexecute ;;
+*/gigatron/*)		idir=include/gigatron;	remotehost=noexecute; dir=gigatron ;;
 *)			idir=include/$dir;      remotehost=${2-$REMOTEHOST} ;;
 esac
 
-if [ ! -d "$target/$os" -o ! -d "$idir" ]; then
-	echo 2>&1 $0: unknown combination '"'$target/$os'"'
+if [ ! -d "$dir" -o ! -d "$idir" ]; then
+	echo 2>&1 $0: unknown combination '"'$dir'"'
 	exit 1
 fi
 
@@ -23,10 +24,12 @@ BUILDDIR=${BUILDDIR-.} LCC="${LCC-${BUILDDIR}/lcc} -Wo-lccdir=$BUILDDIR"
 TSTDIR=${TSTDIR-${BUILDDIR}/$dir/tst}
 if [ ! -d $TSTDIR ]; then mkdir -p $TSTDIR; fi
 
-echo ${BUILDDIR}/rcc$EXE -target=$target/$os $1: 1>&2
+echo $LCC -S -I$idir -Ualpha -Usun -Uvax -Umips -Ux86 \
+	-Wf-errout=$TSTDIR/$C.2 -D$target -Wf-g0,#### \
+	-Wf-target=$dir -o $1 tst/$C.c
 $LCC -S -I$idir -Ualpha -Usun -Uvax -Umips -Ux86 \
-	-Wf-errout=$TSTDIR/$C.2 -D$target -Wf-g0 \
-	-Wf-target=$target/$os -o $1 tst/$C.c
+	-Wf-errout=$TSTDIR/$C.2 -D$target -Wf-g0,#### \
+	-Wf-target=$dir -o $1 tst/$C.c
 if [ $? != 0 ]; then remotehost=noexecute; fi
 if [ -r $dir/tst/$C.2bk ]; then
 	diff $dir/tst/$C.2bk $TSTDIR/$C.2

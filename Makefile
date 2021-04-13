@@ -24,6 +24,7 @@ lcc-%: FORCE
 		"PREFIX=${PREFIX}" \
 		"BUILDDIR=${BUILDDIR}" \
 		"HOSTFILE=${HOSTFILE}" \
+                "TARGET=${TARGET}" \
 		"CFLAGS=${CFLAGS}" \
 		"LDFLAGS=${LDFLAGS}" \
 		`echo $@ | sed -e 's/^lcc-//'`

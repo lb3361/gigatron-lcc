@@ -387,19 +387,19 @@ ac: BXORU2(ac,con8)  "%0XORI(%1);"
 
 stmt: ASGNP2(zddr,ac)  "\t%1STW(%0);\n" 20
 stmt: ASGNP2(iarg,ac)  "\t%1%{iarg0}DOKE(%0);\n" 28
-stmt: ASGNP2(ac,iarg)  "\t%0%{iarg1}_DOKEA(%1);\n" 28+20
+stmt: ASGNP2(ac,iarg)  "\t%0%{iarg1}_DOKEA(%1);\n" 28+20+20
 stmt: ASGNI2(zddr,ac)  "\t%1STW(%0);\n" 20
 stmt: ASGNI2(iarg,ac)  "\t%1%{iarg0}DOKE(%0);\n" 28
-stmt: ASGNI2(ac,iarg)  "\t%0%{iarg1}_DOKEA(%1);\n" 28+20
+stmt: ASGNI2(ac,iarg)  "\t%0%{iarg1}_DOKEA(%1);\n" 28+20+20
 stmt: ASGNU2(zddr,ac)  "\t%1STW(%0);\n" 20
 stmt: ASGNU2(iarg,ac)  "\t%1%{iarg0}DOKE(%0);\n" 28
-stmt: ASGNU2(ac,iarg)  "\t%0%{iarg1}_DOKEA(%1);\n" 28+20
+stmt: ASGNU2(ac,iarg)  "\t%0%{iarg1}_DOKEA(%1);\n" 28+20+20
 stmt: ASGNI1(zddr,ac1) "\t%1ST(%0);\n" 20
 stmt: ASGNI1(iarg,ac1) "\t%1%{iarg0}POKE(%0);\n" 28
-stmt: ASGNI1(ac,iarg)  "\t%0%{iarg1}_POKEA(%1);\n" 28+20
+stmt: ASGNI1(ac,iarg)  "\t%0%{iarg1}_POKEA(%1);\n" 28+20+20
 stmt: ASGNU1(zddr,ac1) "\t%1ST(%0);\n" 20
 stmt: ASGNU1(iarg,ac1) "\t%1%{iarg0}POKE(%0);\n" 28
-stmt: ASGNI1(ac,iarg)  "\t%0%{iarg1}_POKEA(%1);\n" 28+20
+stmt: ASGNI1(ac,iarg)  "\t%0%{iarg1}_POKEA(%1);\n" 28+20+20
 
 stmt: EQI2(ac,con0)  "\t%0_BEQ(%a);\n" 28
 stmt: EQI2(ac,con8)  "\t%0XORI(con8);_BEQ(%a);\n" 42

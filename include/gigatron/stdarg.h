@@ -20,7 +20,7 @@ typedef __va_list va_list;
   ((size_t)&(((struct{char c; mode m;}*)(0))->m))
 
 #define __va_roundup(x,n)\
-  (((x)+(n)-1)&(~((n)-1)))
+  ((n==1)?x:(((x)+(n)-1)&(~((n)-1))))
 
 #define va_start(list, start)\
   ((void)((list)=(__va_list)&((&start)[1])))

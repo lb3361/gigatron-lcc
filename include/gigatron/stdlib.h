@@ -23,7 +23,7 @@ typedef unsigned int size_t;
 #define _WCHAR_T
 #define _WCHAR_T_
 #define _WCHAR_T_DEFINED
-typedef unsigned int wchar_t;
+typedef unsigned short wchar_t;
 #endif
 
 extern double atof(const char *);

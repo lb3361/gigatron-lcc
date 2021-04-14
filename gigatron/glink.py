@@ -1,7 +1,7 @@
 # -------------- glink proper
 
 import argparse, json, string
-import os, sys, traceback
+import os, sys, traceback, functools
 
 args = None
 lccdir = '/usr/local/lib/gigatron-lcc'
@@ -46,6 +46,75 @@ class Module:
         current_module = None
 
 
+class __metaUnk(type):
+    wrapped = ''' 
+      __abs__ __add__ __and__ __eq__ __floordiv__ __ge__ __gt__ __invert__
+      __le__ __le__ __lshift__ __lt__ __mod__ __mul__ __neg__ __or__ 
+      __pos__ __pow__ __radd__ __rand__ __rfloordiv__ __rlshift__ __rmod__
+      __rmul__ __ror__ __rpow__ __rrshift__ __rshift__ __rsub__ 
+      __rtruediv__ __rxor__ __sub__ __truediv__  __xor__
+    '''
+    def __new__(cls, name, bases, namespace, **kwargs):
+        def wrap(f):
+            @functools.wraps(f)
+            def wrapper(self, *args):
+                return Unk(f(int(self), *map(int, args)))
+            return wrapper if f else None
+        for m in cls.wrapped.split():
+            namespace[m] = wrap(getattr(int, m))
+        return type(name, bases, namespace)
+    
+class Unk(int, metaclass=__metaUnk):
+    '''Class to flag unknow integers'''
+    __slots__= ()
+    def __new__(cls,val):
+        return int.__new__(cls,val)
+    def __repr__(self):
+        return f"Unk({hex(int(self))})"
+
+def is_zero_page(x):
+    if not isinstance(x,Unk):
+        return int(x) & 0xff00 == 0
+    return False
+
+def is_not_zero_page(x):
+    if not isinstance(x,Unk):
+        return int(x) & 0xff00 == 0
+    return False
+
+def is_pc_page(x):
+    if not isinstance(x,Unk):
+        return int(x) & 0xff00 == pc() & 0xff00
+    return False
+
+def is_not_pc_page(x):
+    if not isinstance(x,Unk):
+        return int(x) & 0xff00 == pc() & 0xff00
+    return False
+
+def check_zp(x):
+    if is_not_zeropage(x):
+        warning(f"zero page argument overflow")
+    return x
+
+def check_br(x):
+    if is_not_pcpage(x):
+        warning(f"short branch overflow")
+    return x
+
+def check_cpu(op, v):
+    if args.cpu < v:
+        warning(f"opcode not implemented for cpu={arg.cpu}")
+
+def emit(*args):
+    current_proc.emit(*args)
+
+def emitbcc(op,cc,dd):
+    if args.cpu < 6:
+        emit(op,cc,dd)
+    else:
+        emit(cc,dd)
+
 # ------------- usable vocabulary for .s/.o/.a files
 
 def register_names():
@@ -72,19 +141,7 @@ def vasm(func):
     '''Decorator to mark functions usable in .s/.o/.a files'''
     safe_dict[func.__name__] = func
     return func
-
-@vasm
-def pc():
-    return current_proc.pc()
-@vasm
-def v(x):
-    return x if isinstance(x,int) else current_proc.v(x)
-@vasm
-def lo(x):
-    return v(x) & 0xff
-@vasm
-def hi(x):
-    return (v(x) >> 8) & 0xff
+      
 @vasm
 def error(s):
     w = where()
@@ -99,6 +156,7 @@ def fatal(s):
     w = "" if w == None else w + ": "
     print(f"glink: {w}fatal error: {s}", file=sys.stderr)
     sys.exit(1)
+
 @vasm
 def module(code=None,name=None,cpu=None):
     global module_list
@@ -107,7 +165,154 @@ def module(code=None,name=None,cpu=None):
     else:
         module_list.append(Module(name,cpu,code))
 
+@vasm
+def pc():
+    return current_proc.pc()
+@vasm
+def v(x):
+    return current_proc.v(x) if isinstance(x,str) else x
+@vasm
+def lo(x):
+    return v(x) & 0xff
+@vasm
+def hi(x):
+    return (v(x) >> 8) & 0xff
 
+@vasm
+def ST(d):
+    emit(0x5e, check_zp(v(d)))
+@vasm
+def STW(d):
+    emit(0x2b, check_zp(v(d)))
+@vasm
+def STLW(d):
+    emit(0xec, check_zp(v(d)))
+@vasm
+def LD(d):
+    emit(0x1a, check_zp(v(d)))
+@vasm
+def LDI(d):
+    emit(0x59, check_zp(v(d)))
+@vasm
+def LDWI(d):
+    emit(0x11, *w(d))
+@vasm
+def LDW(d):
+    emit(0x21, check_zp(v(d)))
+@vasm
+def LDLW(d):
+    emit(0xee, check_zp(v(d)))
+@vasm
+def ADDW(d):
+    emit(0x99, check_zp(v(d)))
+@vasm
+def SUBW(d):
+    emit(0xb8, check_zp(v(d)))
+@vasm
+def ADDI(d):
+    emit(0xe3, check_zp(v(d)))
+@vasm
+def SUBI(d):
+    emit(0x36, check_zp(v(d)))
+@vasm
+def LSLW():
+    emit(0xe9)
+@vasm
+def INC(d):
+    emit(0x93, check_zp(v(d)))
+@vasm
+def ANDI(d):
+    emit(0x82, check_zp(v(d)))
+@vasm
+def ANDW(d):
+    emit(0xf8, check_zp(v(d)))
+@vasm
+def ORI(d):
+    emit(0x88, check_zp(v(d)))
+@vasm
+def ORW(d):
+    emit(0xfa, check_zp(v(d)))
+@vasm
+def XORI(d):
+    emit(0x8c, check_zp(v(d)))
+@vasm
+def XORW(d):
+    emit(0xfc, check_zp(v(d)))
+@vasm
+def PEEK():
+    emit(0xad)
+@vasm
+def DEEK():
+    emit(0xf6)
+@vasm
+def POKE(d):
+    emit(0xf0, check_zp(v(d)))
+@vasm
+def DOKE(d):
+    emit(0xf3, check_zp(v(d)))
+@vasm
+def LUP(d):
+    emit(0x7f, check_zp(v(d)))
+@vasm
+def BRA(d):
+    emit(0x90, check_br(v(d)))
+@vasm
+def BEQ(d):
+    emitbcc(0x35, 0x3f, check_br(v(d)))
+@vasm
+def BNE(d):
+    emitbcc(0x35, 0x72, check_br(v(d)))
+@vasm
+def BLT(d):
+    emitbcc(0x35, 0x50, check_br(v(d)))
+@vasm
+def BGT(d):
+    emitbcc(0x35, 0x4d, check_br(v(d)))
+@vasm
+def BLE(d):
+    emitbcc(0x35, 0x56, check_br(v(d)))
+@vasm
+def BGE(d):
+    emitbcc(0x35, 0x53, check_br(v(d)))
+@vasm
+def CALL(d):
+    emit(0xcf, check_zp(v(d)))
+@vasm
+def RET():
+    emit(0xff)
+@vasm
+def PUSH():
+    emit(0x75)
+@vasm
+def POP():
+    emit(0x63)
+@vasm
+def ALLOC(d):
+    emit(0xdf, check_zp(v(d)))
+@vasm
+def SYS(op):
+    t = 270-op//2 if op>28 else 0
+    if not isinstance(t,Unk) and (t <= 128 or t > 255):
+        error(f"argument overflow in SYS opcode");
+    emit(0xb4, t)
+@vasm
+def HALT():
+    emit(0xb4, 0x80)
+@vasm
+def DEF(d):
+    emit(0xcd, check_br(v(d)))
+@vasm
+def CALLI(d):
+    check_cpu(5); emit(0x85, *w(d))
+@vasm
+def CMPHS(d):
+    check_cpu(5); emit(0x1f, check_zp(v(d)))
+@vasm
+def CMPHU(d):
+    check_cpu(5); emit(0x97, check_zp(v(d)))
+
+
+        
 # ------------- reading .s/.o/.a files
         
               

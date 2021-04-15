@@ -268,6 +268,7 @@ zddr: con8 "%0"
 eac: zddr "LDI(%0);" 
 eac: addr "LDWI(%0);"
 eac: lddr "_SP(%0);"
+eac: reg  "LDW(%0);"
 
 # -- stmt & reg
 stmt: reg ""
@@ -387,19 +388,19 @@ ac: BXORU2(ac,con8)  "%0XORI(%1);"
 
 stmt: ASGNP2(zddr,ac)  "\t%1STW(%0);\n" 20
 stmt: ASGNP2(iarg,ac)  "\t%1%{iarg0}DOKE(%0);\n" 28
-stmt: ASGNP2(ac,iarg)  "\t%0%{iarg1}_DOKEA(%1);\n" 28+20+20
+stmt: ASGNP2(ac,iarg)  "\t%0%{iarg1}DOKEA(%1);\n"  mincpu6(30)
 stmt: ASGNI2(zddr,ac)  "\t%1STW(%0);\n" 20
 stmt: ASGNI2(iarg,ac)  "\t%1%{iarg0}DOKE(%0);\n" 28
-stmt: ASGNI2(ac,iarg)  "\t%0%{iarg1}_DOKEA(%1);\n" 28+20+20
+stmt: ASGNI2(ac,iarg)  "\t%0%{iarg1}DOKEA(%1);\n"  mincpu6(30)
 stmt: ASGNU2(zddr,ac)  "\t%1STW(%0);\n" 20
 stmt: ASGNU2(iarg,ac)  "\t%1%{iarg0}DOKE(%0);\n" 28
-stmt: ASGNU2(ac,iarg)  "\t%0%{iarg1}_DOKEA(%1);\n" 28+20+20
+stmt: ASGNU2(ac,iarg)  "\t%0%{iarg1}DOKEA(%1);\n"  mincpu6(30)
 stmt: ASGNI1(zddr,ac1) "\t%1ST(%0);\n" 20
-stmt: ASGNI1(iarg,ac1) "\t%1%{iarg0}POKE(%0);\n" 28
-stmt: ASGNI1(ac,iarg)  "\t%0%{iarg1}_POKEA(%1);\n" 28+20+20
+stmt: ASGNI1(iarg,ac1) "\t%1%{iarg0}POKE(%0);\n" 26
+stmt: ASGNI1(ac,iarg)  "\t%0%{iarg1}POKEA(%1);\n" mincpu6(28)
 stmt: ASGNU1(zddr,ac1) "\t%1ST(%0);\n" 20
-stmt: ASGNU1(iarg,ac1) "\t%1%{iarg0}POKE(%0);\n" 28
-stmt: ASGNI1(ac,iarg)  "\t%0%{iarg1}_POKEA(%1);\n" 28+20+20
+stmt: ASGNU1(iarg,ac1) "\t%1%{iarg0}POKE(%0);\n" 26
+stmt: ASGNI1(ac,iarg)  "\t%0%{iarg1}POKEA(%1);\n" mincpu6(28)
 
 stmt: EQI2(ac,con0)  "\t%0_BEQ(%a);\n" 28
 stmt: EQI2(ac,con8)  "\t%0XORI(con8);_BEQ(%a);\n" 42
@@ -441,26 +442,26 @@ stmt: GTU2(ac,iarg) "\t%0%{iarg1}_CMPWU(%1);_BGT(%a);\n" 100
 stmt: GEU2(ac,iarg) "\t%0%{iarg1}_CMPWU(%1);_BGE(%a);\n" 100
 
 # Structs
-stmt: ARGB(INDIRB(reg))       "\t_SP(%c);_MEMCPY(AC,%0,%a);\n"   200
-stmt: ASGNB(reg,INDIRB(ac))   "\t%1_MEMCPY(%0,AC,%a);\n"   200
-stmt: ASGNB(ac,INDIRB(reg))   "\t%0_MEMCPY(AC,%1,%a);\n"   200
-stmt: ASGNB(reg,INDIRB(reg))  "\t_MEMCPY(%0,%1,%a);\n"   200
+stmt: ARGB(INDIRB(reg))       "\t_SP(%c);_BMOV(%0,[AC],%a);\n"  200
+stmt: ASGNB(reg,INDIRB(ac))   "\t%1_BMOV([AC],%0,%a);\n"  200
+stmt: ASGNB(ac,INDIRB(reg))   "\t%0_BMOV(%1,[AC],%a);\n"  200
+stmt: ASGNB(reg,INDIRB(reg))  "\t_BMOV(%1,%0,%a);\n"  200
 
 # Longs
 stmt: lac "\t%0\n"
-larg: reg "LDI(%0);" 16
+larg: reg "LDI(%0);"
 larg: INDIRI4(eac) "%0" 
 larg: INDIRU4(eac) "%0" 
-reg: lac "\t%0%{%c!=LAC:_LMOV(LAC,%c);}\n" 80
-reg: INDIRI4(ac) "\t%0_LPEEKA(%c);\n" 150
-reg: INDIRU4(ac) "\t%0_LPEEKA(%c);\n" 150
-reg: INDIRI4(zddr) "\t_LMOV(%0,%c);\n" 150
-reg: INDIRU4(zddr) "\t_LMOV(%0,%c);\n" 150
+reg: lac "\t%0_LMOV(LAC,%c);\n" 80
+reg: INDIRI4(ac) "\t%0_LMOV([AC],%c);\n" 150
+reg: INDIRU4(ac) "\t%0_LMOV([AC],%c);\n" 150
+reg: INDIRI4(zddr) "\t_LMOV(%0,%c);\n" 100
+reg: INDIRU4(zddr) "\t_LMOV(%0,%c);\n" 100
 reg: LOADI4(reg) "\t_LMOV(%0,%c)\n" move(a)
 reg: LOADU4(reg) "\t_LMOV(%0,%c)\n" move(a)
 lac: reg "%{%0!=LAC:_LMOV(%0,LAC);}" 80
-lac: INDIRI4(ac) "%0_LPEEKA(LAC);" 150
-lac: INDIRU4(ac) "%0_LPEEKA(LAC);" 150
+lac: INDIRI4(ac) "%0_LMOV([AC],LAC);" 150
+lac: INDIRU4(ac) "%0_LMOV([AC],LAC);" 150
 lac: INDIRI4(zddr) "_LMOV(%0,LAC);" 150
 lac: INDIRU4(zddr) "_LMOV(%0,LAC);" 150
 lac: ADDI4(lac,larg) "%0%1_LADD();" 200
@@ -500,10 +501,14 @@ lac: BORI4(lac,larg) "%0%1_LOR();" 200
 lac: BORI4(larg,lac) "%1%0_LOR();" 200
 lac: BXORI4(lac,larg) "%0%1_LXOR();" 200
 lac: BXORI4(larg,lac) "%1%0_LXOR();" 200
-stmt: ASGNI4(eac,lac) "\t%1%0_LPOKEA(LAC);\n" 200
-stmt: ASGNU4(eac,lac) "\t%1%0_LPOKEA(LAC);\n" 200
-stmt: ASGNI4(ac,reg) "\t%0_LPOKEA(%1);\n" 160
-stmt: ASGNU4(ac,reg) "\t%0_LPOKEA(%1);\n" 160
+stmt: ASGNI4(eac,lac) "\t%1%0_LMOV(LAC,[AC]);\n" 200
+stmt: ASGNU4(eac,lac) "\t%1%0_LMOV(LAC,[AC]);\n" 200
+stmt: ASGNI4(ac,reg) "\t%0_LMOV(%1,[AC]);\n" 160
+stmt: ASGNU4(ac,reg) "\t%0_LMOV(%1,[AC]);\n" 160
+stmt: ASGNI4(eac,INDIRI4(ac)) "\t%1STW(R7);%0STW(R6);_LMOV([R7],[R6]);\n" 180
+stmt: ASGNI4(ac,INDIRI4(eac)) "\t%0STW(R6);%1STW(R7);_LMOV([R7],[R6]);\n" 180
+stmt: ASGNU4(eac,INDIRU4(ac)) "\t%1STW(R7);%0STW(R6);_LMOV([R7],[R6]);\n" 180
+stmt: ASGNU4(ac,INDIRU4(eac)) "\t%0STW(R6);%1STW(R7);_LMOV([R7],[R6]);\n" 180
 stmt: LTI4(lac,larg) "\t%0%1_LCMPS();_BLT(%a);\n" 200
 stmt: LEI4(lac,larg) "\t%0%1_LCMPS();_BLE(%a);\n" 200
 stmt: GTI4(lac,larg) "\t%0%1_LCMPS();_BGT(%a);\n" 200
@@ -519,13 +524,13 @@ stmt: EQU4(lac,larg) "\t%0%1_LCMPX();_BEQ(%a);\n" 100
 
 # Floats
 stmt: fac "\t%0\n"
-farg: reg "LDI(%0);" 16
+farg: reg "LDI(%0);"
 farg: INDIRF5(eac) "%0"
 reg: fac "\t%0_FMOV(FAC,%c);\n" 200
-reg: INDIRF5(ac) "\t%0_FPEEKA(%c);\n" 150
+reg: INDIRF5(ac) "\t%0_FMOV([AC],%c);\n" 150
 reg: LOADF5(reg) "\t_FMOV(%0,%c)\n" move(a)
 fac: reg "_FMOV(%0,FAC);" 200
-fac: INDIRF5(ac) "%0_FLD();" 200
+fac: INDIRF5(ac) "%0_FMOV([AC],FAC);" 200
 fac: ADDF5(fac,farg) "%0%1_FADD();" 200
 fac: ADDF5(farg,fac) "%1%0_FADD();" 200
 fac: SUBF5(fac,farg) "%0%1_FSUB();" 200
@@ -534,10 +539,11 @@ fac: MULF5(fac,farg) "%0%1_FMUL();" 200
 fac: MULF5(farg,fac) "%1%0_FMUL();" 200
 fac: DIVF5(fac,farg) "%0%1_FDIV();" 200
 fac: NEGF5(fac)      "%0_FNEG();" 50
-stmt: ASGNF5(eac,fac) "\t%1%0_FST();\n" 200
-stmt: ASGNF5(reg,fac) "\t%1LDW(%0);_FST();\n" 220
-stmt: ASGNF5(ac,reg)  "\t%0_FPOKEA(%1);\n" 150
-stmt: ASGNF5(reg,INDIRF5(ac)) "\t%1_FPEEKA(F4);LDW(%0);_FPOKEA(F4);\n" 220
+stmt: ASGNF5(eac,fac)  "\t%1%0_FMOV(FAC,[AC]);\n" 200
+stmt: ASGNF5(reg,fac)  "\t%1LDW(%0);_FMOV(FAC,[AC]);\n" 220
+stmt: ASGNF5(ac,reg)   "\t%0_FMOV(%1,[AC]);\n" 150
+stmt: ASGNF5(eac,INDIRF5(ac)) "\t%1STW(R7);%0STW(R6);_FMOV([R7],[R6]);\n" 240
+stmt: ASGNF5(ac,INDIRF5(eac)) "\t%0STW(R6);%1STW(R7);_FMOV([R7],[R6]);\n" 240
 stmt: EQF5(fac,farg) "\t%0%1_FCMP();_BEQ(%a);\n" 200
 stmt: NEF5(fac,farg) "\t%0%1_FCMP();_BNE(%a);\n" 200
 stmt: LTF5(fac,farg) "\t%0%1_FCMP();_BLT(%a);\n" 200
@@ -560,15 +566,15 @@ ac: CALLP2(addr)  "CALLI(%0);" mincpu5(28)
 ac: CALLP2(reg)   "CALL(%0);" 26
 stmt: CALLV(addr) "\tCALLI(%0);\n" mincpu5(28)
 stmt: CALLV(reg)  "\tCALL(%0);\n" 26
-stmt: ARGF5(fac)  "\t%0_SP(%c);_FPOKEA(FAC);\n"  if_arg_stk(a)
-stmt: ARGI4(lac)  "\t%0_SP(%c);_LPOKEA(FAC);\n"  if_arg_stk(a)
-stmt: ARGU4(lac)  "\t%0_SP(%c);_LPOKEA(FAC);\n"  if_arg_stk(a)
-stmt: ARGF5(reg)  "\t_SP(%c);_FPOKEA(%0);\n"     if_arg_stk(a)
-stmt: ARGI4(reg)  "\t_SP(%c);_LPOKEA(%0);\n"     if_arg_stk(a)
-stmt: ARGU4(reg)  "\t_SP(%c);_LPOKEA(%0);\n"     if_arg_stk(a)
-stmt: ARGI2(reg)  "\t_SP(%c);_DOKEA(%0);\n"      if_arg_stk(a)
-stmt: ARGU2(reg)  "\t_SP(%c);_DOKEA(%0);\n"      if_arg_stk(a)
-stmt: ARGP2(reg)  "\t_SP(%c);_DOKEA(%0);\n"      if_arg_stk(a)
+stmt: ARGF5(fac)  "\t%0_SP(%c);_FMOV(FAC,[AC]);\n"  if_arg_stk(a)
+stmt: ARGI4(lac)  "\t%0_SP(%c);_LMOV(LAC,[AC]);\n"  if_arg_stk(a)
+stmt: ARGU4(lac)  "\t%0_SP(%c);_LMOV(LAC,[AC]);\n"  if_arg_stk(a)
+stmt: ARGF5(reg)  "\t_SP(%c);_FMOV(%0,[AC]);\n"     if_arg_stk(a)
+stmt: ARGI4(reg)  "\t_SP(%c);_LMOV(%0,[AC]);\n"     if_arg_stk(a)
+stmt: ARGU4(reg)  "\t_SP(%c);_LMOV(%0,[AC]);\n"     if_arg_stk(a)
+stmt: ARGI2(reg)  "\t_SP(%c);_MOV(%0,[AC]);\n"      if_arg_stk(a)
+stmt: ARGU2(reg)  "\t_SP(%c);_MOV(%0,[AC]);\n"      if_arg_stk(a)
+stmt: ARGP2(reg)  "\t_SP(%c);_MOV(%0,[AC]);\n"      if_arg_stk(a)
 stmt: ARGF5(reg)  "# arg\n"  if_arg_reg(a)
 stmt: ARGI4(reg)  "# arg\n"  if_arg_reg(a)
 stmt: ARGU4(reg)  "# arg\n"  if_arg_reg(a)
@@ -578,9 +584,9 @@ stmt: ARGP2(reg)  "# arg\n"  if_arg_reg(a)
 stmt: RETF5(fac)  "\t%0\n"  1
 stmt: RETI4(lac)  "\t%0\n"  1
 stmt: RETU4(lac)  "\t%0\n"  1
-stmt: RETI2(ac)   "\t%0STW(R6);\n"  1
-stmt: RETU2(ac)   "\t%0STW(R6);\n"  1
-stmt: RETP2(ac)   "\t%0STW(R6);\n"  1
+stmt: RETI2(ac)   "\t%0\n"  1
+stmt: RETU2(ac)   "\t%0\n"  1
+stmt: RETP2(ac)   "\t%0\n"  1
 
 # Conversions
 #            I1   U1
@@ -1070,9 +1076,9 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   gencode(caller, callee);
   /* prologue */
   segment(CODE);
-  print("\tfunction(%s);\n", f->x.name);
+  print("# ========\n\tfunction(%s);\n", f->x.name);
   print("\tlabel(%s);\n", f->x.name);
-  print("\tLDW('vLR');STW(LR);");
+  print("\t_MOV('vLR',LR);"); /* no hops */
   if (ncalls)
     usedmask[IREG] |= REGMASK_LR;
   i = bitcount(REGMASK_ARGS) * 2;
@@ -1083,13 +1089,16 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   framesize = maxargoffset + sizesave + maxoffset;
   if (framesize > 0)
     print("_SP(%d);STW(SP);",-framesize);
-  /* allow page hops */
-  print("sethop(1);");
   /* save callee saved registers */
   offset = maxargoffset;
   for (i=0; i<=31; i++)
     if (usedmask[IREG]&(1<<i)) {
-      print("_SP(%d);_DOKEA(R%d);", offset, i);
+      if (cpu > 5 && offset == maxargoffset) 
+        print("_SP(%d);DOKEA(R%d);", offset, i);
+      else if (cpu > 5)
+        print("ADDI(2);DOKEA(R%d);", i);
+      else
+        print("_SP(%d);_MOV(R%d,[AC]);", offset, i);
       offset += 2;
     }
   /* save args into new registers or vars */
@@ -1107,23 +1116,25 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
         else if (in->type->size > 2)
           print("_LMOV(%s,%s);", rn, out->x.name);
         else 
-          print("LDW(%s);STW(%s);", rn, out->x.name);
+          print("_MOV(%s,%s);", rn, out->x.name);
       } else {
         if (isfloat(in->type))
-          print("_FMOV(%s,FAC);_SP(%s+%d);_FPOKEA(FAC);", rn, out->x.name, framesize);
+          print("_SP(%s+%d);_FMOV(%s,[AC]);", out->x.name, framesize, rn);
         else if (in->type->size == 4)
-          print("_SP(%s+%d);_LPOKEA(%s);", out->x.name, framesize, rn);
+          print("_SP(%s+%d);_LMOV(%s,[AC]);", out->x.name, framesize, rn);
         else if (in->type->size == 2)
-          print("_SP(%s+%d);_DOKEA(%s);", out->x.name, framesize, rn); 
-        else if (in->type->size == 1)
-          print("_SP(%s+%d);_POKEA(%s);", out->x.name, framesize, rn); 
+          print("_SP(%s+%d);_MOV([AC],%s);", out->x.name, framesize, rn); 
+        else if (in->type->size == 1 && cpu > 5)
+          print("_SP(%s+%d);POKEA(%s);", out->x.name, framesize, rn); 
+        else if (in->type->size == 1 && cpu <= 5)
+          print("_SP(%s+%d);STW(R6);LD(%s);POKE(R6);", out->x.name, framesize, rn); 
       }
     }
   }
   /* for variadic functions, save remaining registers */
   if (varargs)
     while (! ((r=ireg[roffset])->x.regnode->mask & ~REGMASK_ARGS)) {
-      print("_SP(%d+%d);_DOKEA(%s);", soffset, framesize, r->x.name);
+      print("_SP(%d+%d);_MOV(%s,[AC]);", soffset, framesize, r->x.name);
       roffset += 1;
       soffset += 2;
     }
@@ -1132,18 +1143,24 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   emitcode();
   /* Restore callee saved registers */
   print("\t");
+  if (opsize(ty) <= 2 && (optype(ty) == I || optype(ty) == U || optype(ty) == P))
+    print("STW(R6);");
   offset = maxargoffset;
   for (i=0; i<=31; i++)
     if (usedmask[IREG]&(1<<i)) {
-      print("_SP(%d);DEEK();STW(R%d);", offset, i);
+      if (cpu > 5 && offset == maxargoffset)
+        print("_SP(%d);PEEKA(R%d);", offset, i);
+      else if (cpu > 5)
+        print("ADDI(2);PEEKA(R%d);", i);
+      else
+        print("_SP(%d);_MOV([AC],R%d);", offset, i);
       offset += 2;
     }
-  print("sethop(0);");
   if (framesize > 0)
     print("_SP(%d);STW(SP);", framesize);
-  print("LDW(LR);STW('vLR');");
-  if (ty == I+sizeop(2) || ty == U+sizeop(2) || ty == P+sizeop(2))
-    print("LDW(R6);");
+  print("_MOV(LR,'vLR');");  /* no hops */
+  if (opsize(ty) <= 2 && (optype(ty) == I || optype(ty) == U || optype(ty) == P))
+    print("_LDW(R6);");      /* no hops */
   print("RET();\n");
 }
 
@@ -1233,7 +1250,8 @@ static void global(Symbol p)
 {
   if (p->u.seg == BSS && p->sclass != STATIC)
     return;
-  print("\talign(%d);\n", p->type->align);
+  print("# ========\n\tglobvar(%s,%d,%d);\n", p->x.name, p->type->size, p->type->align);
+  if (p->type->align > 1) print("\talign(%d);\n", p->type->align);
   print("\tlabel(%s);\n", p->x.name);
   if (p->u.seg == BSS && p->sclass == STATIC)
     print("\tspace(%d);\n", p->type->size);

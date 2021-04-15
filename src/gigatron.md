@@ -477,12 +477,14 @@ lac: DIVI4(lac,larg) "%0%1_LDIVS();" 200
 lac: DIVU4(lac,larg) "%0%1_LDIVU();" 200
 lac: MODI4(lac,larg) "%0%1_LMODS();" 200
 lac: MODU4(lac,larg) "%0%1_LMODU();" 200
-lac: LSHI4(lac,iarg) "%0%{iarg1}_LSHL(%1);" 200
-lac: LSHI4(lac,con8) "%0LDI(%1);_LSHL(AC);" 1
-lac: LSHU4(lac,iarg) "%0%{iarg1}_LSHL(%1);" 200
-lac: LSHU4(lac,con8) "%0LDI(%1);_LSHL(AC);" 1
-lac: RSHI4(lac,iarg) "%0%{iarg1}_LAR7(%1);" 200
-lac: RSHU4(lac,iarg) "%0%{iarg1}_LLR7(%1);" 200
+lac: LSHI4(lac,reg)  "%0LDW(reg);_LSHL();" 200
+lac: LSHI4(lac,con8) "%0LDI(%1);_LSHL();"  200
+lac: LSHU4(lac,reg)  "%0LDW(%1);_LSHL();"  200
+lac: LSHU4(lac,con8) "%0LDI(%1);_LSHL();"  200
+lac: RSHI4(lac,reg)  "%0LDW(%1);_LSHRS();" 200
+lac: RSHI4(lac,con8) "%0LDI(%1);_LSHRS();" 200
+lac: RSHU4(lac,reg)  "%0LDW(%1);_LSHRU();" 200
+lac: RSHU4(lac,con8) "%0LDI(%1);_LSHRU();" 200
 lac: NEGI4(lac) "%0_LNEG();" 200
 lac: BCOMU4(lac) "%0_LCOM();" 200
 lac: BANDU4(lac,larg) "%0%1_LAND();" 200
@@ -602,7 +604,7 @@ fac: LOADF5(fac) "%0"
 ac: CVII2(ac) "%0XORI(128);SUBI(128);" if_cv_from(a,1,48)
 ac: CVUI2(ac) "%0" if_cv_from(a,1,0)
 lac: CVIU4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);" 50
-lac: CVII4(ac) "%0STW(LAC);LD(vAH);XORI(128);SUBI(128);LD(vAH);ST(LAC+2);ST(LAC+3);" if_cv_from(a,2,120)
+lac: CVII4(ac) "%0STW(LAC);LD(vACH);XORI(128);SUBI(128);LD(vACH);ST(LAC+2);ST(LAC+3);" if_cv_from(a,2,120)
 lac: CVUU4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);"
 lac: CVUI4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);"
 # 3) floating point conversions
@@ -936,7 +938,7 @@ static void emit3(const char *fmt, Node p, Node *kids, short *nts)
         return;
       }
       if (c >= 8) {
-        print("ST(v('vAH'));ORI(255);XORI(255);");
+        print("ST(v('vACH'));ORI(255);XORI(255);");
         c -= 8;
       }
       while (c > 0) {
@@ -1239,7 +1241,7 @@ static void global(Symbol p)
 
 static void segment(int n)
 {
-  if (n == cseg)
+  if (cseg == n)
     return;
   switch (n) {
   case CODE: print("\tsegment('CODE');\n"); break;

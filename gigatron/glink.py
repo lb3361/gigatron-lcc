@@ -34,17 +34,21 @@ class Module:
         self.cpu = cpu if cpu != None else args.cpu
         self.exports = {}
         self.externs = {}
+        self.genlabelcounter = 0
     def __repr__(self):
         return f"Module('{self.name}',...)"
+    def genlabel():
+        self.genlabelcounter += 1
+        return f".LL{self.genlabelcounter}"
     def run(self,proc):
         '''Execute the module code with the specified delegate''' 
         global current_proc, current_module
         current_proc = proc
         current_module = self
+        self.genlabelcounter = 0
         self.code()
         current_proc = None
         current_module = None
-
 
 class __metaUnk(type):
     wrapped = ''' 
@@ -72,6 +76,11 @@ class Unk(int, metaclass=__metaUnk):
     def __repr__(self):
         return f"Unk({hex(int(self))})"
 
+def is_zero(x):
+    if not isinstance(x,Unk):
+        return int(x) == 0
+    return False
+
 def is_zero_page(x):
     if not isinstance(x,Unk):
         return int(x) & 0xff00 == 0
@@ -93,14 +102,16 @@ def is_not_pc_page(x):
     return False
 
 def check_zp(x):
-    if is_not_zeropage(x):
+    x = v(x)
+    if is_not_zero_page(x):
         warning(f"zero page argument overflow")
     return x
 
 def check_br(x):
-    if is_not_pcpage(x):
+    x = v(x)
+    if is_not_pc_page(x):
         warning(f"short branch overflow")
-    return x
+    return (int(x)-2) & 0xff
 
 def check_cpu(op, v):
     if args.cpu < v:
@@ -109,12 +120,31 @@ def check_cpu(op, v):
 def emit(*args):
     current_proc.emit(*args)
 
-def emitbcc(op,cc,dd):
-    if args.cpu < 6:
-        emit(op,cc,dd)
+def emitjmp(d, saveac=False):
+    if is_pc_page(d):   # 2 bytes
+        BRA(d)
+    elif args.cpu >= 5: # 3 bytes
+        CALLI(d)
+    elif not saveac:    # 5 bytes
+        LDWI(int(d)-2, hop=False)
+        STW('vPC')
+    else:               # 10 bytes (sigh!)
+        STLW(-2)
+        LDWI(int(d), hop=False)
+        STW('vLR')
+        LDLW(-2, hop=False)
+        RET()
+    
+def emitjcc(BCC, BNCC, d, saveac=False):
+    lbl = current_module.genlabel()
+    if is_pc_page(d):
+        BCC(d)
     else:
-        emit(cc,dd)
-
+        BNCC(lbl);
+        emitjmp(int(d), saveac=saveac)
+        label(lbl)
+    
+        
 # ------------- usable vocabulary for .s/.o/.a files
 
 def register_names():
@@ -180,64 +210,64 @@ def hi(x):
 
 @vasm
 def ST(d):
-    emit(0x5e, check_zp(v(d)))
+    emit(0x5e, check_zp(d))
 @vasm
 def STW(d):
-    emit(0x2b, check_zp(v(d)))
+    emit(0x2b, check_zp(d))
 @vasm
 def STLW(d):
-    emit(0xec, check_zp(v(d)))
+    emit(0xec, check_zp(d))
 @vasm
-def LD(d):
-    emit(0x1a, check_zp(v(d)))
+def LD(d, hop=True):
+    tryhop(ok=hop); emit(0x1a, check_zp(d))
 @vasm
-def LDI(d):
-    emit(0x59, check_zp(v(d)))
+def LDI(d, hop=True):
+    tryhop(ok=hop); emit(0x59, check_zp(d))
 @vasm
 def LDWI(d):
-    emit(0x11, *w(d))
+    tryhop(ok=hop); d=int(v(d)); emit(0x11, lo(d), hi(d))
 @vasm
-def LDW(d):
-    emit(0x21, check_zp(v(d)))
+def LDW(d, hop=True):
+    tryhop(ok=hop); emit(0x21, check_zp(d))
 @vasm
-def LDLW(d):
-    emit(0xee, check_zp(v(d)))
+def LDLW(d, hop=True):
+    tryhop(ok=hop); emit(0xee, check_zp(d))
 @vasm
 def ADDW(d):
-    emit(0x99, check_zp(v(d)))
+    emit(0x99, check_zp(d))
 @vasm
 def SUBW(d):
-    emit(0xb8, check_zp(v(d)))
+    emit(0xb8, check_zp(d))
 @vasm
 def ADDI(d):
-    emit(0xe3, check_zp(v(d)))
+    emit(0xe3, check_zp(d))
 @vasm
 def SUBI(d):
-    emit(0x36, check_zp(v(d)))
+    emit(0x36, check_zp(d))
 @vasm
 def LSLW():
     emit(0xe9)
 @vasm
 def INC(d):
-    emit(0x93, check_zp(v(d)))
+    emit(0x93, check_zp(d))
 @vasm
 def ANDI(d):
-    emit(0x82, check_zp(v(d)))
+    emit(0x82, check_zp(d))
 @vasm
 def ANDW(d):
-    emit(0xf8, check_zp(v(d)))
+    emit(0xf8, check_zp(d))
 @vasm
 def ORI(d):
-    emit(0x88, check_zp(v(d)))
+    emit(0x88, check_zp(d))
 @vasm
 def ORW(d):
-    emit(0xfa, check_zp(v(d)))
+    emit(0xfa, check_zp(d))
 @vasm
 def XORI(d):
-    emit(0x8c, check_zp(v(d)))
+    emit(0x8c, check_zp(d))
 @vasm
 def XORW(d):
-    emit(0xfc, check_zp(v(d)))
+    emit(0xfc, check_zp(d))
 @vasm
 def PEEK():
     emit(0xad)
@@ -246,40 +276,40 @@ def DEEK():
     emit(0xf6)
 @vasm
 def POKE(d):
-    emit(0xf0, check_zp(v(d)))
+    emit(0xf0, check_zp(d))
 @vasm
 def DOKE(d):
-    emit(0xf3, check_zp(v(d)))
+    emit(0xf3, check_zp(d))
 @vasm
 def LUP(d):
-    emit(0x7f, check_zp(v(d)))
+    emit(0x7f, check_zp(d))
 @vasm
 def BRA(d):
-    emit(0x90, check_br(v(d)))
+    emit(0x90, check_br(d)); tryhop(jump=False);
 @vasm
 def BEQ(d):
-    emitbcc(0x35, 0x3f, check_br(v(d)))
+    emit(0x35, 0x3f, check_br(d))
 @vasm
 def BNE(d):
-    emitbcc(0x35, 0x72, check_br(v(d)))
+    emit(0x35, 0x72, check_br(d))
 @vasm
 def BLT(d):
-    emitbcc(0x35, 0x50, check_br(v(d)))
+    emit(0x35, 0x50, check_br(d))
 @vasm
 def BGT(d):
-    emitbcc(0x35, 0x4d, check_br(v(d)))
+    emit(0x35, 0x4d, check_br(d))
 @vasm
 def BLE(d):
-    emitbcc(0x35, 0x56, check_br(v(d)))
+    emit(0x35, 0x56, check_br(d))
 @vasm
 def BGE(d):
-    emitbcc(0x35, 0x53, check_br(v(d)))
+    emit(0x35, 0x53, check_br(d))
 @vasm
 def CALL(d):
-    emit(0xcf, check_zp(v(d)))
+    emit(0xcf, check_zp(d))
 @vasm
 def RET():
-    emit(0xff)
+    emit(0xff); tryhop(jump=False)
 @vasm
 def PUSH():
     emit(0x75)
@@ -288,30 +318,408 @@ def POP():
     emit(0x63)
 @vasm
 def ALLOC(d):
-    emit(0xdf, check_zp(v(d)))
+    emit(0xdf, check_zp(d))
 @vasm
 def SYS(op):
     t = 270-op//2 if op>28 else 0
-    if not isinstance(t,Unk) and (t <= 128 or t > 255):
-        error(f"argument overflow in SYS opcode");
+    if not isinstance(t,Unk):
+        if t <= 128 or t > 255:
+            error(f"argument overflow in SYS opcode");
     emit(0xb4, t)
 @vasm
 def HALT():
-    emit(0xb4, 0x80)
+    emit(0xb4, 0x80); tryhop(jump=False)
 @vasm
 def DEF(d):
-    emit(0xcd, check_br(v(d)))
+    emit(0xcd, check_br(d))
 @vasm
 def CALLI(d):
-    check_cpu(5); emit(0x85, *w(d))
+    check_cpu(5); d=int(v(d))-2; emit(0x85, lo(d), hi(d))
 @vasm
 def CMPHS(d):
-    check_cpu(5); emit(0x1f, check_zp(v(d)))
+    check_cpu(5); emit(0x1f, check_zp(d))
 @vasm
 def CMPHU(d):
-    check_cpu(5); emit(0x97, check_zp(v(d)))
+    check_cpu(5); emit(0x97, check_zp(d))
+
+@vasm
+def _SP(n):
+    n = v(n)
+    if is_zero(n):
+        LDW(SP);
+    elif is_zero_page(n):
+        LDW(SP); ADDI(n)
+    elif is_zero_page(-n):
+        LDW(SP); SUBI(n)
+    else:
+        LDWI(n); ADDW(SP)
+@vasm
+def _SHL(d):
+    STW(R7); LDW(d); STW(R6)
+    extern('_@_shl16');
+    _CALLI('_@_shl')
+@vasm
+def _SHRS(d):
+    STW(R7); LDW(d); STW(R6)
+    extern('_@_shrs16');
+    _CALLI('_@_shrs16')
+@vasm
+def _SHRU(d):
+    STW(R7); LDW(d); STW(R6)
+    extern('_@_shru16');
+    _CALLI('_@_shru16')
+@vasm
+def _MUL(d):
+    STW(R7); LDW(d); STW(R6)
+    extern('_@_mul16');
+    _CALLI('_@_mul16')
+@vasm
+def _DIVS(d):
+    STW(R7); LDW(d); STW(R6)
+    extern('_@_divs16');
+    _CALLI('_@_divs16')
+@vasm
+def _DIVU(d):
+    STW(R7); LDW(d); STW(R6)
+    extern('_@_divu16');
+    _CALLI('_@_divu16')
+@vasm
+def _MODS(d):
+    STW(R7); LDW(d); STW(R6)
+    extern('_@_mods16');
+    _CALLI('_@_mods16')
+@vasm
+def _MODU(d):
+    STW(R7); LDW(d); STW(R6)
+    extern('_@_modu16');
+    _CALLI('_@_modu16')
+@vasm
+def _POKEA(d, saveac=False):
+    if args.cpu >= 6:
+        POKEA(d)
+    else:
+        STW(R7); LD(d); POKE(R7)
+        if saveac:
+            LDW(R7)
+@vasm
+def _DOKEA(d, saveac=False):
+    if args.cpu >= 6:
+        DOKEA(d)
+    else:
+        STW(R7); LDW(d); DOKE(R7)
+        if saveac:
+            LDW(R7)
+@vasm
+def _BRA(d, saveac=False):
+    emitjmp(v(d), saveac=saveac)
+@vasm
+def _BEQ(d, saveac=False):
+    emitjcc(BEQ, BNE, v(d), saveac=saveac)
+@vasm
+def _BNE(d, saveac=False):
+    emitjcc(BNE, BEQ, v(d), saveac=saveac)
+@vasm
+def _BLT(d, saveac=False):
+    emitjcc(BLT,_BGE, v(d), saveac=saveac)
+@vasm
+def _BGT(d, saveac=False):
+    emitjcc(BGT,_BLE, v(d), saveac=saveac)
+@vasm
+def _BLE(d, saveac=False):
+    emitjcc(BLE, BGT, v(d), saveac=saveac)
+@vasm
+def _BGE(d, saveac=False):
+    emitjcc(BGE, BLT, v(d), saveac=saveac)
+@vasm
+def _CMPIS(d):
+    if args.cpu >= 5:
+        CMPHS(0); SUBI(d)
+    else:
+        lbl = current_module.genlabel()
+        BLT(lbl)
+        SUBI(d)
+        label(lbl)
+@vasm
+def _CMPIU(d):
+    if args.cpu >= 5:
+        CMPHU(0); SUBI(d)
+    else:
+        lbl = current_module.genlabel()
+        BGE(lbl)
+        LDWI(0x100)
+        label(lbl)
+        SUBI(d)
+@vasm
+def _CMPWS(d):
+    if args.cpu >= 5:
+        CMPHS(d+1); SUBW(d)
+    else:
+        lbl1 = current_module.genlabel()
+        lbl2 = current_module.genlabel()
+        STW(R7); XORW(d)
+        BGE(lbl1)
+        LDW(R7); ORI(1)
+        BRA(lbl2)
+        label(lbl1)
+        LDW(R7); SUBW(d)
+        label(lbl2)
+@vasm
+def _CMPWU(d):
+    if args.cpu >= 5:
+        CMPHU(d+1); SUBW(d)
+    else:
+        lbl1 = current_module.genlabel()
+        lbl2 = current_module.genlabel()
+        STW(R7); XORW(d)
+        BGE(lbl1)
+        LDW(d); ORI(1)
+        BRA(lbl2)
+        label(lbl1)
+        LDW(R7); SUBW(d)
+        label(lbl2)
+@vasm
+def _MEMCPY(dr,sr,n):
+    dr = v(dr)
+    sr = v(sr)
+    n = v(n)
+    if dr == AC:
+        STW(R7)
+    if sr == AC:
+        STW(R6)
+    if dr != AC:
+        LDW(dr); STW(R7)
+    if sr != AC:
+        LDW(sr); STW(R6)
+    if is_zero_page(n):
+        LDI(n)
+    else:
+        LDWI(n)
+    STW(R5)
+    extern('_@_memcpy')
+    _CALLI('_@_memcpy')
+@vasm
+def _MEMSET(dr,i,n):
+    d = v(d)
+    s = v(s)
+    i = v(i)
+    if d != AC:
+        LDW(d)
+    STW(R7)
+    LDI(check_zp(i))
+    ST(R6)
+    if is_zero_page(n):
+        LDI(n)
+    else:
+        LDWI(n)
+    STW(R5)
+    extern('_@_memset')
+    _CALLI('_@_memset')
+@vasm
+def _LMOV(s,d):
+    s = v(s)
+    d = v(d)
+    if s != d:
+        LDW(s); STW(d)
+        LDW(s+2); STW(d+2)
+@vasm
+def _LPEEKA(r):
+    r = v(r)
+    if args.cpu >= 6:
+        PEEKA(r); ADDI(2); PEEKA(r+2)
+    else:
+        STW(R7); DEEK(); STW(r)
+        LDW(R7); ADDI(2); DEEK(); STW(r+2)
+@vasm
+def _LPOKEA(r):
+    r = v(r)
+    if args.cpu >= 6:
+        POKEA(r); ADDI(2); POKEA(r+2)
+    else:
+        STW(R7); LDW(r); DOKE(R7)
+        LDW(R7); ADDI(2); STW(R7); LDW(r+2); DOKE(R7)
+@vasm
+def _LADD():
+    STW(R7)
+    extern('_@_ladd')
+    _CALLI('_@_ladd')
+@vasm
+def _LSUB():
+    STW(R7)
+    extern('_@_lsub')
+    _CALLI('_@_lsub')
+@vasm
+def _LMUL():
+    STW(R7)
+    extern('_@_lmul')
+    _CALLI('_@_lmul')
+@vasm
+def _LDIVS():
+    STW(R7)
+    extern('_@_ldivs')
+    _CALLI('_@_ldivs')
+@vasm
+def _LDIVU():
+    STW(R7)
+    extern('_@_ldivu')
+    _CALLI('_@_ldivu')
+@vasm
+def _LMODS():
+    STW(R7)
+    extern('_@_lmods')
+    _CALLI('_@_lmods')
+@vasm
+def _LMODU():
+    STW(R7)
+    extern('_@_lmodu')
+    _CALLI('_@_lmodu')
+@vasm
+def _LSHL(d):
+    STW(R7)
+    extern('_@_lshl')
+    _CALLI('_@_lshl')
+@vasm
+def _LSHRS(d):
+    STW(R7)
+    extern('_@_lshrs')
+    _CALLI('_@_lshrs')
+@vasm
+def _LSHRU(d):
+    STW(R7)
+    extern('_@_lshru')
+    _CALLI('_@_lshru')
+@vasm
+def _LNEG():
+    extern('_@_lneg')
+    _CALLI('_@_lneg')
+@vasm
+def _LCOM():
+    extern('_@_lcom')
+    _CALLI('_@_lcom')
+@vasm
+def _LAND():
+    STW(R7)
+    extern('_@_land')
+    _CALLI('_@_land')
+@vasm
+def _LOR():
+    STW(R7)
+    extern('_@_lor')
+    _CALLI('_@_lor')
+@vasm
+def _LXOR():
+    STW(R7)
+    extern('_@_lxor')
+    _CALLI('_@_lxor')
+@vasm
+def _LCMPS():
+    STW(R7)
+    extern('_@_lcmps')
+    _CALLI('_@_lcmps')
+@vasm
+def _LCMPU():
+    STW(R7)
+    extern('_@_lcmpu')
+    _CALLI('_@_lcmpu')
+@vasm
+def _LCMPX():
+    STW(R7)
+    extern('_@_lcmpx')
+    _CALLI('_@_lcmpx')
+@vasm
+def _FMOV(s,d):
+    s = v(s)
+    d = v(d)
+    if s != d:
+        if s == FAC:
+            LDI(d);_FST()
+        elif d == FAC:
+            LDI(s);_FLD()
+        else:
+            LDI(d); STW(R7); LDI(s); STW(R6)
+            extern('_@_fcopy')
+            _CALLI('_@_fcopy')
+@vasm
+def _FPEEKA(d):
+    STW(R6); LDI(d); STW(R7)
+    extern('_@_fcopy')
+    _CALLI('_@_fcopy')
+@vasm
+def _FPOKEA(s):
+    STW(R7); LDI(s); STW(R6)
+    extern('_@_fcopy')
+    _CALLI('_@_fcopy')
+@vasm
+def _FADD():
+    STW(R7)
+    extern('_@_fadd')
+    _CALLI('_@_fadd')
+@vasm
+def _FSUB():
+    STW(R7)
+    extern('_@_fsub')
+    _CALLI('_@_fsub')
+@vasm
+def _FMUL():
+    STW(R7)
+    extern('_@_fmul')
+    _CALLI('_@_fmul')
+@vasm
+def _FDIV():
+    STW(R7)
+    extern('_@_fdiv')
+    _CALLI('_@_fdiv')
+@vasm
+def _FNEG():
+    STW(R7)
+    extern('_@_fneg')
+    _CALLI('_@_fneg')
+@vasm
+def _FST():
+    STW(R7)
+    extern('_@_fst')
+    _CALLI('_@_fst')
+@vasm
+def _FLD():
+    STW(R7)
+    extern('_@_fld')
+    _CALLI('_@_fld')
+@vasm
+def _FCMP():
+    STW(R7)
+    extern('_@_fcmp')
+    _CALLI('_@_fcmp')
+@vasm
+def _CALLI(d, saveac=False):
+    if args.cpu >= 5:
+        CALLI(d)
+    elif not saveac:
+        LDWI(d)
+        STW('sysFn')
+        CALL('sysFn')
+    else:
+        STSW(-2)
+        LDWI(d)
+        STW('sysFn')
+        LDSW(-2)
+        CALL('sysFn')
+
+# export(sym):
+# extern(sym)
+# common(sym,size,align)
+# segment(seg)
+# function(sym)
+# label(sym)
+# sethop(n)
+# tryhop(ok=True,jump=True)
+# align(d)
+# bytes(*args)
+# words(*args)
+# space(d)
 
 
+
+
+    
         
 # ------------- reading .s/.o/.a files
         

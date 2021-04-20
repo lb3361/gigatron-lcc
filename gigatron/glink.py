@@ -8,7 +8,7 @@ lccdir = '/usr/local/lib/gigatron-lcc'
 current_module = None
 current_proc = None
 interface_dict = {}
-map_dict = {}
+mapper = None
 safe_dict = {}
 module_list = []
 emit_counter = 0
@@ -83,9 +83,10 @@ def is_zero(x):
         return int(x) == 0
     return False
 
-def is_zeropage(x):
+def is_zeropage(x, l = 0):
     if isinstance(x,int) and not isinstance(x,Unk):
-        return int(x) & 0xff00 == 0
+        if int(x) & 0xff00 == 0:
+            return l < 1 or int(x + l) & 0xff00 == 0
     return False
 
 def is_not_zeropage(x):
@@ -124,7 +125,7 @@ def emit(*args):
     emit_counter += len(args)
     current_proc.emit(*args)
 
-def emitjmp(d, saveac=False):
+def emitjmp(d, saveAC=False):
     if is_pcpage(d): # 2 bytes
         BRA(d)
         return
@@ -132,7 +133,7 @@ def emitjmp(d, saveac=False):
     if args.cpu >= 5: # 3 bytes
         lbranch_counter += 3
         CALLI(d)
-    elif not saveac:  # 5 bytes
+    elif not saveAC:  # 5 bytes
         lbranch_counter += 5
         emit(0x11, lo(int(d)-2), hi(int(d))) # LDWI (nohop)
         STW('vPC')
@@ -144,13 +145,13 @@ def emitjmp(d, saveac=False):
         LDLW(-2)
         RET()
     
-def emitjcc(BCC, BNCC, d, saveac=False):
+def emitjcc(BCC, BNCC, d, saveAC=False):
     lbl = current_module.genlabel()
     if is_pcpage(d):
         BCC(d)
     else:
         BNCC(lbl);
-        emitjmp(int(d), saveac=saveac)
+        emitjmp(int(d), saveAC=saveAC)
         label(lbl)
     
         
@@ -164,7 +165,7 @@ def register_names():
     d['FACSGN'] = 0x83
     d['FACM'] = 0x84
     d['LAC'] = 0x84
-    for i in range(0,4): d[f'T{i}'] = 0x8e-i-i
+    for i in range(0,4): d[f'T{i}'] = 0x88+i+i
     for i in range(8,32): d[f'R{i}'] = 0x80+i+i
     for i in range(8,29): d[f'L{i}'] = d[f'R{i}']
     for i in range(8,28): d[f'F{i}'] = d[f'R{i}']
@@ -238,6 +239,9 @@ def LDWI(d):
 @vasm
 def LDW(d):
     tryhop(); emit(0x21, check_zp(d))
+@vasm
+def _LDW(d): # same but no hops
+    emit(0x21, check_zp(d))
 @vasm
 def LDLW(d):
     emit(0xee, check_zp(d))
@@ -370,99 +374,103 @@ def _LDI(d):
     else:
         emit(0x11, lo(d), hi(d))  # LDWI (nohop)
 @vasm
-def _LDW(d):
-    emit(0x21, v(d))              # LDW (nohop)
-@vasm
 def _SHL(d):
-    STW(T0); LDW(d); STW(T1)
+    STW(T3); LDW(d); STW(T2)
     extern('_@_shl16')
-    _CALLI('_@_shl')            # T0<<T1 -> AC
+    _CALLI('_@_shl')            # T3<<T2 -> AC
 @vasm
 def _SHRS(d):
-    STW(T0); LDW(d); STW(T1)
+    STW(T3); LDW(d); STW(T2)
     extern('_@_shrs16')
-    _CALLI('_@_shrs16')         # T0>>T1 --> AC
+    _CALLI('_@_shrs16')         # T3>>T2 --> AC
 @vasm
 def _SHRU(d):
-    STW(T0); LDW(d); STW(T1)
+    STW(T3); LDW(d); STW(T2)
     extern('_@_shru16')
-    _CALLI('_@_shru16')         # T0>>T1 --> AC
+    _CALLI('_@_shru16')         # T3>>T2 --> AC
 @vasm
 def _MUL(d):
-    STW(T0); LDW(d); STW(T1)
+    STW(T3); LDW(d); STW(T2)
     extern('_@_mul16')
-    _CALLI('_@_mul16')          # T0*T1 --> AC
+    _CALLI('_@_mul16')          # T3*T2 --> AC
 @vasm
 def _DIVS(d):
-    STW(T0); LDW(d); STW(T1)
+    STW(T3); LDW(d); STW(T2)
     extern('_@_divs16')
-    _CALLI('_@_divs16')         # T0/T1 --> AC
+    _CALLI('_@_divs16')         # T3/T2 --> AC
 @vasm
 def _DIVU(d):
-    STW(T0); LDW(d); STW(T1)
+    STW(T3); LDW(d); STW(T2)
     extern('_@_divu16')
-    _CALLI('_@_divu16')         # T0/T1 --> AC
+    _CALLI('_@_divu16')         # T3/T2 --> AC
 @vasm
 def _MODS(d):
-    STW(T0); LDW(d); STW(T1)
+    STW(T3); LDW(d); STW(T2)
     extern('_@_mods16')
-    _CALLI('_@_mods16')         # T0%T1 --> AC
+    _CALLI('_@_mods16')         # T3%T2 --> AC
 @vasm
 def _MODU(d):
-    STW(T0); LDW(d); STW(T1)
+    STW(T3); LDW(d); STW(T2)
     extern('_@_modu16')
-    _CALLI('_@_modu16')         # T0%T1 --> AC
+    _CALLI('_@_modu16')         # T3%T2 --> AC
 @vasm
 def _MOV(s,d):
-    '''Move word from s to d.
+    '''Move word from reg/addr s to d.
        Also accepts [AC] for s or d.'''
+    s = v(s)
+    d = v(d)
     if s != d:
-        if d == [AC] and is_zeropage(s) and args.cpu > 5:
-            DOKEA(s)
-            return
-        if s == [AC] and is_zeropage(d) and args.cpu > 5:
+        if args.cpu > 5 and s == [AC] and is_zeropage(d):
             DEEKA(d)
-            return
-        if d == [AC]:
-            STW(T0)
-        if s == AC:
-            pass
-        elif s == [AC]:
-            DEEK()
-        elif is_zeropage(s):
-            _LDW(s)
-        else:
-            _LDI(s); DEEK()
-        if d == AC:
-            pass
-        elif is_zeropage(d):
-            STW(d)
+        elif args.cpu > 5 and is_zeropage(s) and d == [AC]:
+            DOKEA(s)
         elif d == [AC]:
-            DOKE(T0)
+            STW(T3)
+            if s == AC:
+                DOKE(T3)
+            elif is_zeropage(s):
+                LDW(s); DOKE(T3)
+            else:
+                LDWI(s); DEEK(); DOKE(T3)
         else:
-            STW(T1); _LDI(d); STW(T0); _LDW(T1); DOKE(T0)
+            if d != AC and not is_zeropage(d):
+                LDWI(d); STW(T3)
+            if s == AC:
+                pass
+            elif s == [AC]:
+                DEEK()
+            elif is_zeropage(s):
+                LDW(s)
+            else:
+                LDWI(s); DEEK()
+            if d == AC:
+                pass
+            elif is_zeropage(d):
+                STW(d)
+            else:
+                DOKE(T3)
     
 @vasm
-def _BRA(d, saveac=False):
-    emitjmp(v(d), saveac=saveac)
+def _BRA(d, saveAC=False):
+    emitjmp(v(d), saveAC=saveAC)
 @vasm
-def _BEQ(d, saveac=False):
-    emitjcc(BEQ, BNE, v(d), saveac=saveac)
+def _BEQ(d, saveAC=False):
+    emitjcc(BEQ, BNE, v(d), saveAC=saveAC)
 @vasm
-def _BNE(d, saveac=False):
-    emitjcc(BNE, BEQ, v(d), saveac=saveac)
+def _BNE(d, saveAC=False):
+    emitjcc(BNE, BEQ, v(d), saveAC=saveAC)
 @vasm
-def _BLT(d, saveac=False):
-    emitjcc(BLT,_BGE, v(d), saveac=saveac)
+def _BLT(d, saveAC=False):
+    emitjcc(BLT,_BGE, v(d), saveAC=saveAC)
 @vasm
-def _BGT(d, saveac=False):
-    emitjcc(BGT,_BLE, v(d), saveac=saveac)
+def _BGT(d, saveAC=False):
+    emitjcc(BGT,_BLE, v(d), saveAC=saveAC)
 @vasm
-def _BLE(d, saveac=False):
-    emitjcc(BLE, BGT, v(d), saveac=saveac)
+def _BLE(d, saveAC=False):
+    emitjcc(BLE, BGT, v(d), saveAC=saveAC)
 @vasm
-def _BGE(d, saveac=False):
-    emitjcc(BGE, BLT, v(d), saveac=saveac)
+def _BGE(d, saveAC=False):
+    emitjcc(BGE, BLT, v(d), saveAC=saveAC)
 @vasm
 def _CMPIS(d):
     if args.cpu >= 5:
@@ -489,12 +497,12 @@ def _CMPWS(d):
     else:
         lbl1 = current_module.genlabel()
         lbl2 = current_module.genlabel()
-        STW(T0); XORW(d)
+        STW(T3); XORW(d)
         BGE(lbl1)
-        LDW(T0); ORI(1)
+        LDW(T3); ORI(1)
         BRA(lbl2)
         label(lbl1)
-        LDW(T0); SUBW(d)
+        LDW(T3); SUBW(d)
         label(lbl2)
 @vasm
 def _CMPWU(d):
@@ -503,114 +511,115 @@ def _CMPWU(d):
     else:
         lbl1 = current_module.genlabel()
         lbl2 = current_module.genlabel()
-        STW(T0); XORW(d)
+        STW(T3); XORW(d)
         BGE(lbl1)
         LDW(d); ORI(1)
         BRA(lbl2)
         label(lbl1)
-        LDW(T0); SUBW(d)
+        LDW(T3); SUBW(d)
         label(lbl2)
 @vasm
 def _BMOV(s,d,n):
-    '''Move memory block of size n from s to d.
-       Also accepts [AC] or [T0] for s and [AC] or [T1] for d.'''
+    '''Move memory block of size n from addr s to d.
+       Also accepts [AC] or [T3] as s and [AC] or [T2] as d.'''
     dr = v(dr)
     sr = v(sr)
     n = v(n)
     if s != d:
         if d == [AC]:
-            STW(T1)
+            STW(T2)
         if s == [AC]:
-            STW(T0)
-        if d != [AC] and d != [T1]:
-            _LDI(d); STW(T1)
-        if s != [AC] and s != [T0]:
-            _LDI(s); STW(T0)
-        _LDI(n); STW(T2)
+            STW(T3)
+        if d != [AC] and d != [T2]:
+            _LDI(d); STW(T2)
+        if s != [AC] and s != [T3]:
+            _LDI(s); STW(T3)
+        _LDI(n);
         extern('_@_memcpy')
-        _CALLI('_@_memcpy')         # [T1..T1+T2) --> [T0..T0+T2)
+        _CALLI('_@_memcpy', storeAC=T1)         # [T2..T2+AC) --> [T3..T3+AC)
 @vasm
 def _LMOV(s,d):
-    '''Move long from reg s to d.
-       Also accepts [AC] or [T0] for s and [AC] or [T1] for d.'''
+    '''Move long from reg/addr s to d.
+       Also accepts [AC] as s, and [AC] or [T2] as d.'''
     s = v(s)
     d = v(d)
     if s != d:
-        if is_zeropage(s) and is_zeropage(d):
+        if is_zeropage(s, 3) and is_zeropage(d, 3): 
             LDW(s); STW(d); LDW(s+2); STW(d+2)
-        elif is_zeropage(d) and args.cpu  > 5:
-            if s == [T0]:
-                LDW(T0)
-            elif s != [AC]:
-                _LDI(s)
-            DEEKA(d); ADDI(2); DEEKA(d+2)
-        elif is_zeropage(s) and args.cpu  > 5:
-            if d == [T1]:
-                LDW(T1)
-            elif d != [AC]:
-                _LDI(s)
-            DOKEA(s); ADDI(2); DOKEA(d+2)
-        elif is_zeropage(d):
-            if s == [AC]:
-                STW(T0)
-            elif s != [T0]:
-                _LDI(s); STW(T0)
-            DEEK(); STW(d); LDW(T0); ADDI(2); DEEK(); STW(d+2)
-        else:
-            if d == [AC]:
-                STW(T1)
-            if s == [AC]:
-                STW(T0)
-            if d != [AC] and d != [T1]:
-                _LDI(d); STW(T1)
-            if s != [AC] and s != [T0]:
-                _LDI(s); STW(T0)
+        elif is_zeropage(d, 3):
+            if s != [AC]:
+                LDWI(s)
+            if args.cpu > 5:
+                DEEKA(d); ADDI(2); DEEKA(d+2)
             else:
-                LDW(T0)
-            DEEK(); DOKE(T1)
-            LDW(T1); ADDI(2); STW(T1);
-            LDW(T0); ADDI(2);
-            DEEK(); DOKE(T0)
+                DEEK(); STW(d); LDWI(s+2); DEEK(); STW(d+2)
+        elif is_zeropage(s, 3) and args.cpu > 5:
+            if d == [T2]:
+                LDW(T2)
+            elif d != [AC]:
+                LDWI(d)
+            DOKEA(s); ADDI(2); DOKEA(s+2)
+        elif is_zeropage(s, 3):
+            if d == [AC]:
+                STW(T2)
+            elif d != [T2]:
+                LDWI(d); STW(T2)
+            LDW(s); DOKE(T2)
+            LDW(T2); ADDI(2); STW(T2)
+            LDW(s+2); DOKE(T2)
+        else:
+            if s == [AC]:
+                STW(T3)
+            if d == [AC]:
+                STW(T2)
+            elif d != [T2]:
+                _LDI(d); STW(T2)
+            if s != [AC]:
+                _LDI(s); STW(T3)
+            extern('_@_lcopy')
+            _CALLI('_@_lcopy')  #   [T3..T3+4) --> [T2..T2+4)
+                
+            
 @vasm
 def _LADD():
-    extern('_@_ladd')              # [AC/T0] means [AC] for cpu>=5, [T0] for cpu<5
-    _CALLI('_@_ladd', storeac=T0)  # LAC+[AC/T0] --> LAC
+    extern('_@_ladd')              # [AC/T3] means [AC] for cpu>=5, [T3] for cpu<5
+    _CALLI('_@_ladd', storeAC=T3)  # LAC+[AC/T3] --> LAC
 @vasm
 def _LSUB():
     extern('_@_lsub') 
-    _CALLI('_@_lsub', storeac=T0)  # LAC-[AC/T0] --> LAC
+    _CALLI('_@_lsub', storeAC=T3)  # LAC-[AC/T3] --> LAC
 @vasm
 def _LMUL():
     extern('_@_lmul')
-    _CALLI('_@_lmul', storeac=T0)  # LAC*[AC/T0] --> LAC
+    _CALLI('_@_lmul', storeAC=T3)  # LAC*[AC/T3] --> LAC
 @vasm
 def _LDIVS():
     extern('_@_ldivs')
-    _CALLI('_@_ldivs', storeac=T0)  # LAC/[AC/T0] --> LAC
+    _CALLI('_@_ldivs', storeAC=T3)  # LAC/[AC/T3] --> LAC
 @vasm
 def _LDIVU():
     extern('_@_ldivu')
-    _CALLI('_@_ldivu', storeac=T0)  # LAC/[AC/T0] --> LAC
+    _CALLI('_@_ldivu', storeAC=T3)  # LAC/[AC/T3] --> LAC
 @vasm
 def _LMODS():
     extern('_@_lmods')
-    _CALLI('_@_lmods', storeac=T0)  # LAC%[AC/T0] --> LAC
+    _CALLI('_@_lmods', storeAC=T3)  # LAC%[AC/T3] --> LAC
 @vasm
 def _LMODU():
     extern('_@_lmodu')
-    _CALLI('_@_lmodu', storeac=T0)  # LAC%[AC/T0] --> LAC
+    _CALLI('_@_lmodu', storeAC=T3)  # LAC%[AC/T3] --> LAC
 @vasm
 def _LSHL(d):
     extern('_@_lshl')
-    _CALLI('_@_lshl', storeac=T0)  # LAC<<[AC/T0] --> LAC
+    _CALLI('_@_lshl', storeAC=T3)  # LAC<<[AC/T3] --> LAC
 @vasm
 def _LSHRS(d):
     extern('_@_lshrs')
-    _CALLI('_@_lshrs', storeac=T0)  # LAC>>[AC/T0] --> LAC
+    _CALLI('_@_lshrs', storeAC=T3)  # LAC>>[AC/T3] --> LAC
 @vasm
 def _LSHRU(d):
     extern('_@_lshru')
-    _CALLI('_@_lshru', storeac=T0)  # LAC>>[AC/T0] --> LAC
+    _CALLI('_@_lshru', storeAC=T3)  # LAC>>[AC/T3] --> LAC
 @vasm
 def _LNEG():
     extern('_@_lneg')
@@ -622,67 +631,77 @@ def _LCOM():
 @vasm
 def _LAND():
     extern('_@_land')
-    _CALLI('_@_land', storeac=T0)   # LAC&[AC/T0] --> LAC
+    _CALLI('_@_land', storeAC=T3)   # LAC&[AC/T3] --> LAC
 @vasm
 def _LOR():
     extern('_@_lor')
-    _CALLI('_@_lor', storeac=T0)    # LAC|[AC/T0] --> LAC
+    _CALLI('_@_lor', storeAC=T3)    # LAC|[AC/T3] --> LAC
 @vasm
 def _LXOR():
     extern('_@_lxor')
-    _CALLI('_@_lxor', storeac=T0)   # LAC^[AC/T0] --> LAC
+    _CALLI('_@_lxor', storeAC=T3)   # LAC^[AC/T3] --> LAC
 @vasm
 def _LCMPS():
     extern('_@_lcmps')
-    _CALLI('_@_lcmps', storeac=T0)  # SGN(LAC-[AC/T0]) --> AC
+    _CALLI('_@_lcmps', storeAC=T3)  # SGN(LAC-[AC/T3]) --> AC
 @vasm
 def _LCMPU():
     extern('_@_lcmpu')
-    _CALLI('_@_lcmpu', storeac=T0)  # SGN(LAC-[AC/T0]) --> AC
+    _CALLI('_@_lcmpu', storeAC=T3)  # SGN(LAC-[AC/T3]) --> AC
 @vasm
 def _LCMPX():
     extern('_@_lcmpx')
-    _CALLI('_@_lcmpx', storeac=T0)  # TST(LAC-[AC/T0]) --> AC
+    _CALLI('_@_lcmpx', storeAC=T3)  # TST(LAC-[AC/T3]) --> AC
 @vasm
 def _FMOV(s,d):
     '''Move float from reg s to d with special cases when s or d is FAC.
-       Also accepts [AC] or [T0] for s and [AC] or [T1] for d.'''
+       Also accepts [AC] or [T3] for s and [AC] or [T2] for d.'''
     s = v(s)
     d = v(d)
     if s != d:
-        if d == [AC]:
-            STW(T1)
-        if s == [AC]:
-            STW(T0)
-        if d != [AC] and d != [T1]:
-            _LDI(d); STW(T1)
-        if s != [AC] and s != [T0]:
-            _LDI(s); STW(T0)
-        if s == FAC:
+        if d == FAC:
+            if s == [AC]:
+                STW(T3)
+            elif s != [T3]:
+                _LDI(s); STW(T3)
             extern('_@_fstorefac') 
-            _CALLI('_@_fstorefac')   # [T0] --> FAC
-        elif d == FAC:
-            extern('_@_floadfac')
-            _CALLI('_@_floadfac')    #  FAC --> [T1]
+            _CALLI('_@_fstorefac')   # [T3..T3+5) --> FAC
+        elif s == FAC:
+            if d == [AC]:
+                STW(T2)
+            elif d != [T2]:
+                _LDI(d); STW(T2)
+            extern('_@_floadfac') 
+            _CALLI('_@_floadfac')   # FAC --> [T2..T2+5)
+        elif is_zeropage(d, 4) and is_zeropage(s, 4):
+            LDW(s); STW(d); LDW(s+2); STW(d+2); LD(s+4); ST(d+4)
         else:
-            extern('_@_fcopy')       # [T0] --> [T1]
+            if d == [AC]:
+                STW(T2)
+            if s == [AC]:
+                STW(T3)
+            if d != [AC] and d != [T2]:
+                _LDI(d); STW(T2)
+            if s != [AC] and s != [T3]:
+                _LDI(s); STW(T3)
+            extern('_@_fcopy')       # [T3..T3+5) --> [T2..T2+5)
             _CALLI('_@_fcopy')
 @vasm
 def _FADD():
     extern('_@_fadd')
-    _CALLI('_@_fadd', storeac=T0)   # FAC+[AC/T0] --> FAC
+    _CALLI('_@_fadd', storeAC=T3)   # FAC+[AC/T3] --> FAC
 @vasm
 def _FSUB():
     extern('_@_fsub')
-    _CALLI('_@_fsub', storeac=T0)   # FAC-[AC/T0] --> FAC
+    _CALLI('_@_fsub', storeAC=T3)   # FAC-[AC/T3] --> FAC
 @vasm
 def _FMUL():
     extern('_@_fmul')
-    _CALLI('_@_fmul', storeac=T0)   # FAC*[AC/T0] --> FAC
+    _CALLI('_@_fmul', storeAC=T3)   # FAC*[AC/T3] --> FAC
 @vasm
 def _FDIV():
     extern('_@_fdiv')
-    _CALLI('_@_fdiv', storeac=T0)   # FAC/[AC/T0] --> FAC
+    _CALLI('_@_fdiv', storeAC=T3)   # FAC/[AC/T3] --> FAC
 @vasm
 def _FNEG():
     extern('_@_fneg')
@@ -690,23 +709,23 @@ def _FNEG():
 @vasm
 def _FCMP():
     extern('_@_fcmp')
-    _CALLI('_@_fcmp', storeac=T0)   # SGN(FAC-[AC/T0]) --> AC
+    _CALLI('_@_fcmp', storeAC=T3)   # SGN(FAC-[AC/T3]) --> AC
 @vasm
-def _CALLI(d, saveac=False, storeac=None):
+def _CALLI(d, saveAC=False, storeAC=None):
     '''Call subroutine at far location d.
-       When cpu<5, option saveac=True ensures AC is preserved, 
-       and option storeac=reg stores AC into a register before jumping.
+       When cpu<5, option saveAC=True ensures AC is preserved, 
+       and option storeAC=reg stores AC into a register before jumping.
        When cpu>=5, this just calls CALLI. '''
     if args.cpu >= 5:
         CALLI(d)
-    elif saveac:
+    elif saveAC:
         STSW(-2)
         LDWI(d)
         STW('sysFn')
         LDSW(-2)
         CALL('sysFn')
-    elif storeac:
-        STW(storeac)
+    elif storeAC:
+        STW(storeAC)
         LDWI(d)
         STW('sysFn')
         CALL('sysFn')
@@ -730,6 +749,7 @@ def _CALLI(d, saveac=False, storeac=None):
 # space(d)
 
 
+# ------------- reading .s/.o/.a files
 
 
     
@@ -773,7 +793,7 @@ def read_lib(l):
 def main(argv):
     '''Main entry point'''
     global lccdir, args
-    global interface_syms
+    global interface_dict
     try:
         ## Obtain LCCDIR
         lccdir = os.getenv("LCCDIR", default=lccdir)
@@ -837,6 +857,7 @@ def main(argv):
                 interface_dict[name] = value if isinstance(value, int) else int(value, base=0)
 
         ### Read map
+        
 
         ### Load all .s/.o/.a files and libraries
         for f in args.files or []:

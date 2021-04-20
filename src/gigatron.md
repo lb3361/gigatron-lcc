@@ -376,7 +376,7 @@ ac: SUBP2(ac,con8) "%0SUBI(%1);" 28
 ac: SUBI2(ac,co8n) "%0ADDI(-(%1));" 28
 ac: SUBU2(ac,co8n) "%0ADDI(-(%1));" 28
 ac: SUBP2(ac,co8n) "%0ADDI(-(%1));" 28
-ac: NEGI2(ac) "%0ST(T3);LDI(0);SUBW(T3);" 68
+ac: NEGI2(ac)   "%0STW(T3);LDI(0);SUBW(T3);" 68
 ac: NEGI2(iarg) "LDI(0);%[0b]SUBW(%0);" 48
 ac: LSHI2(ac, con8) "%0%{shl1}" 100
 ac: LSHI2(ac, iarg) "%0%[1b]_SHL(%1);" 200
@@ -397,8 +397,8 @@ ac: DIVI2(ac, iarg) "%0%[1b]_DIVS(%1);" 200
 ac: DIVU2(ac, iarg) "%0%[1b]_DIVU(%1);" 200
 ac: MODI2(ac, iarg) "%0%[1b]_MODS(%1);" 200
 ac: MODU2(ac, iarg) "%0%[1b]_MODU(%1);" 200
-ac: BCOMI2(ac) "%0ST(T3);LDWI(-1);XORW(T3);" 68
-ac: BCOMU2(ac) "%0ST(T3);LDWI(-1);XORW(T3);" 68
+ac: BCOMI2(ac)      "%0STW(T3);LDWI(-1);XORW(T3);" 68
+ac: BCOMU2(ac)      "%0STW(T3);LDWI(-1);XORW(T3);" 68
 ac: BANDI2(ac,iarg)  "%0%[1b]ANDW(%1);" 28
 ac: BANDU2(ac,iarg)  "%0%[1b]ANDW(%1);" 28
 ac: BANDI2(iarg,ac)  "%1%[0b]ANDW(%0);" 28
@@ -666,7 +666,7 @@ fac: LOADF5(fac) "%0"
 ac: CVII2(ac) "%0XORI(128);SUBI(128);" if_cv_from(a,1,48)
 ac: CVUI2(ac) "%0" if_cv_from(a,1,0)
 lac: CVIU4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);" 50
-lac: CVII4(ac) "%0STW(LAC);LD(vACH);XORI(128);SUBI(128);LD(vACH);ST(LAC+2);ST(LAC+3);" if_cv_from(a,2,120)
+lac: CVII4(ac) "%0STW(LAC);LD('vACH');XORI(128);SUBI(128);LD('vACH');ST(LAC+2);ST(LAC+3);" if_cv_from(a,2,120)
 lac: CVUU4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);"
 lac: CVUI4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);"
 # 3) floating point conversions
@@ -921,7 +921,7 @@ static void emit3(const char *fmt, Node p, Node *kids, short *nts)
         return;
       }
       if (c >= 8) {
-        print("ST(v('vACH'));ORI(255);XORI(255);");
+        print("ST('vACH');ORI(255);XORI(255);");
         c -= 8;
       }
       while (c > 0) {

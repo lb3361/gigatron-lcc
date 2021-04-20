@@ -386,6 +386,8 @@ ac: LSHU2(ac, iarg) "%0%[1b]_SHL(%1);" 200
 ac: RSHU2(ac, iarg) "%0%[1b]_SHRU(%1);" 200
 ac: MULI2(con8, ac) "%1%{mul0}" 100
 ac: MULI2(co8n, ac) "%1%{mul0}" 110
+ac: MULI2(con8, reg) "%{mul0%1}" 100
+ac: MULI2(co8n, reg) "%{mul0%1}" 110
 ac: MULI2(ac, iarg) "%0%[1b]_MUL(%1);" 200
 ac: MULI2(iarg, ac) "%1%[0b]_MUL(%0);" 200
 ac: MULU2(con8, ac) "%1%{mul0}" 100
@@ -928,9 +930,10 @@ static void emit3(const char *fmt, Node p, Node *kids, short *nts)
       }
       return;
     }
-  /* ${mulC} -- multiplication by a small constant */
-  if (!strncmp(fmt,"mul", 3) && fmt[3] >= '0' && fmt[3] <= '9' && !fmt[4])
+  /* ${mulC[:R]} -- multiplication by a small constant */
+  if (!strncmp(fmt,"mul", 3) && fmt[3] >= '0' && fmt[3] <= '9')
     {
+      const char *r;
       int i, c;
       Node k;
       i = fmt[3] - '0';
@@ -941,6 +944,11 @@ static void emit3(const char *fmt, Node p, Node *kids, short *nts)
           k = k->syms[2]->u.t.cse;
       assert(k->syms[0] && k->syms[0]->scope == CONSTANTS);
       c = k->syms[0]->u.c.v.i;
+      if (fmt[4]) {
+        assert(fmt[4]=='%' && fmt[5]>='0' && fmt[5]<='9' && !fmt[6]);
+        assert(kids[fmt[5]-'0'] && kids[fmt[5]-'0']->syms[RX]);
+        r = kids[fmt[5]-'0']->syms[RX]->x.name;
+      }
       if(c == 0) {
         print("LDI(0);");
       } else {
@@ -949,14 +957,18 @@ static void emit3(const char *fmt, Node p, Node *kids, short *nts)
         assert(x>=0 && x<256);
         while (m && !(m & x))
           m >>= 1;
-        if (c < 0)
+        if (fmt[4] && c < 0)
+          print("LDI(0);SUBW(%s);", r);
+        else if (fmt[4])
+          print("LDW(%s);", r);
+        else if (c < 0)
           print("STW(T3);LDI(0);SUBW(T3);");
         else if (x & (m-1))
           print("STW(T3);");
         for (m >>= 1; m; m >>= 1) {
           print("LSLW();");
           if (m & x)
-            print("%s(T3);", (c > 0) ? "ADDW" : "SUBW");
+            print("%s(%s);", (c > 0) ? "ADDW" : "SUBW", r);
         }
       }
       return;

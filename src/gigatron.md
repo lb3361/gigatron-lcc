@@ -489,11 +489,22 @@ stmt: LEU2(ac,iarg) "\t%0%[1b]_CMPWU(%1);_BLE(%a);\n" 100
 stmt: GTU2(ac,iarg) "\t%0%[1b]_CMPWU(%1);_BGT(%a);\n" 100
 stmt: GEU2(ac,iarg) "\t%0%[1b]_CMPWU(%1);_BGE(%a);\n" 100
 
+# Nonterminals for BMOV/LMOV/FMOV:
+#   stmt: ASGNx(vdst,vsrc) "\t%[1b]%[0b]_xMOV(%1,%0);\n"
+#   stmt: ASGNx(pdst,INDIRx(psrc)) "\t%[0b]%[1b]_xMOV(%1,%0);\n"
+vsrc: reg "%0"
+vsrc: fac "FAC|%0"
+vsrc: lac "LAC|%0"
+vdst: addr "%0"
+vdst: eac "[AC]|%0"
+psrc: addr "%0"
+psrc: eac "[AC]|%0" 20
+pdst: addr "%0"
+pdst: ac "[T2]|%0STW(T2);" 20
+
 # Structs
-stmt: ARGB(INDIRB(reg))       "\t_SP(%c);_BMOV(%0,[AC],%a);\n"  200
-stmt: ASGNB(reg,INDIRB(ac))   "\t%1_BMOV([AC],%0,%a);\n"  200
-stmt: ASGNB(ac,INDIRB(reg))   "\t%0_BMOV(%1,[AC],%a);\n"  200
-stmt: ASGNB(reg,INDIRB(reg))  "\t_BMOV(%1,%0,%a);\n"  200
+stmt: ARGB(INDIRB(psrc))        "\t_SP(%c);STW(T2);%[0b]_BMOV(%0,[T2],%a);\n"  220
+stmt: ASGNB(pdst,INDIRB(psrc)) "\t%[0b]%[1b]_BMOV(%1,%0,%a)\n" 200
 
 # Longs
 # - larg represent argument expressions in binary tree nodes,
@@ -552,14 +563,6 @@ lac: BORI4(lac,larg) "%0%1_LOR();" 200
 lac: BORI4(larg,lac) "%1%0_LOR();" 200
 lac: BXORI4(lac,larg) "%0%1_LXOR();" 200
 lac: BXORI4(larg,lac) "%1%0_LXOR();" 200
-stmt: ASGNI4(addr,lac) "\t%1_LMOV(LAC,%0);\n" 160
-stmt: ASGNU4(addr,lac) "\t%1_LMOV(LAC,%0);\n" 160
-stmt: ASGNI4(eac,lac) "\t%1%0_LMOV(LAC,[AC]);\n" 160
-stmt: ASGNU4(eac,lac) "\t%1%0_LMOV(LAC,[AC]);\n" 160
-stmt: ASGNI4(ac,reg) "\t%0_LMOV(%1,[AC]);\n" 160
-stmt: ASGNU4(ac,reg) "\t%0_LMOV(%1,[AC]);\n" 160
-stmt: ASGNI4(ac,INDIRI4(eac)) "\t%0STW(T2);%1_LMOV([AC],[T2]);\n" 180
-stmt: ASGNU4(ac,INDIRU4(eac)) "\t%0STW(T2);%1_LMOV([AC],[T2]);\n" 180
 stmt: LTI4(lac,larg) "\t%0%1_LCMPS();_BLT(%a);\n" 200
 stmt: LEI4(lac,larg) "\t%0%1_LCMPS();_BLE(%a);\n" 200
 stmt: GTI4(lac,larg) "\t%0%1_LCMPS();_BGT(%a);\n" 200
@@ -572,6 +575,10 @@ stmt: NEI4(lac,larg) "\t%0%1_LCMPX();_BNE(%a);\n" 100
 stmt: EQI4(lac,larg) "\t%0%1_LCMPX();_BEQ(%a);\n" 100
 stmt: NEU4(lac,larg) "\t%0%1_LCMPX();_BNE(%a);\n" 100
 stmt: EQU4(lac,larg) "\t%0%1_LCMPX();_BEQ(%a);\n" 100
+stmt: ASGNI4(vdst,vsrc)          "\t%[1b]%[0b]_LMOV(%1,%0);\n" 160
+stmt: ASGNI4(pdst,INDIRI4(psrc)) "\t%[0b]%[1b]_LMOV(%1,%0);\n" 160
+stmt: ASGNU4(vdst,vsrc)          "\t%[1b]%[0b]_LMOV(%1,%0);\n" 160
+stmt: ASGNU4(pdst,INDIRU4(psrc)) "\t%[0b]%[1b]_LMOV(%1,%0);\n" 160
 
 # Floats
 stmt: fac "\t%0\n"
@@ -579,10 +586,9 @@ farg: reg "LDI(%0);"
 farg: INDIRF5(eac) "%0"
 reg: fac "\t%0_FMOV(FAC,%c);\n" 200
 reg: INDIRF5(ac)   "\t%0_FMOV([AC],%c);\n" 150
-reg: INDIRF5(reg)   "\t%_FMOV(%0,%c);\n" 150
 reg: INDIRF5(addr) "\t_FMOV(%0,%c);\n" 150
 reg: LOADF5(reg) "\t_FMOV(%0,%c)\n" 150
-fac: reg "_FMOV(%0,FAC);" 200
+fac: reg "_FMOV(%0,FAC);" 100
 fac: INDIRF5(ac)    "%0_FMOV([AC],FAC);" 200
 fac: INDIRF5(addr)  "_FMOV(%0,FAC);" 200
 fac: ADDF5(fac,farg) "%0%1_FADD();" 200
@@ -599,12 +605,8 @@ stmt: LTF5(fac,farg) "\t%0%1_FCMP();_BLT(%a);\n" 200
 stmt: LEF5(fac,farg) "\t%0%1_FCMP();_BLE(%a);\n" 200
 stmt: GTF5(fac,farg) "\t%0%1_FCMP();_BGT(%a);\n" 200
 stmt: GEF5(fac,farg) "\t%0%1_FCMP();_BGE(%a);\n" 200
-
-stmt: ASGNF5(addr,fac) "\t%1_FMOV(FAC,%0);\n" 200
-stmt: ASGNF5(eac,fac)  "\t%1%0_FMOV(FAC,[AC]);\n" 200
-stmt: ASGNF5(ac,reg)   "\t%0_FMOV(%1,[AC]);\n" 150
-stmt: ASGNF5(ac,INDIRF5(eac)) "\t%0STW(T2);%1_FMOV([AC],[T2]);\n" 240
-stmt: ASGNF5(ac,INDIRF5(addr)) "\t%0STW(T2);_FMOV(%1,[T2]);\n" 240
+stmt: ASGNF5(vdst,vsrc) "\t%[1b]%[0b]_FMOV(%1,%0);\n"
+stmt: ASGNF5(pdst,INDIRF5(psrc)) "\t%[0b]%[1b]_FMOV(%1,%0);\n"
 
 # Calls
 fac: CALLF5(addr) "CALLI(%0);" mincpu5(28)
@@ -621,15 +623,12 @@ ac: CALLP2(addr)  "CALLI(%0);" mincpu5(28)
 ac: CALLP2(reg)   "CALL(%0);" 26
 stmt: CALLV(addr) "\tCALLI(%0);\n" mincpu5(28)
 stmt: CALLV(reg)  "\tCALL(%0);\n" 26
-stmt: ARGF5(fac)  "\t%0_SP(%c);_FMOV(FAC,[AC]);\n"  if_arg_stk(a)
-stmt: ARGI4(lac)  "\t%0_SP(%c);_LMOV(LAC,[AC]);\n"  if_arg_stk(a)
-stmt: ARGU4(lac)  "\t%0_SP(%c);_LMOV(LAC,[AC]);\n"  if_arg_stk(a)
-stmt: ARGF5(reg)  "\t_SP(%c);_FMOV(%0,[AC]);\n"     if_arg_stk(a)
-stmt: ARGI4(reg)  "\t_SP(%c);_LMOV(%0,[AC]);\n"     if_arg_stk(a)
-stmt: ARGU4(reg)  "\t_SP(%c);_LMOV(%0,[AC]);\n"     if_arg_stk(a)
-stmt: ARGI2(reg)  "\t_SP(%c);_MOV(%0,[AC]);\n"      if_arg_stk(a)
-stmt: ARGU2(reg)  "\t_SP(%c);_MOV(%0,[AC]);\n"      if_arg_stk(a)
-stmt: ARGP2(reg)  "\t_SP(%c);_MOV(%0,[AC]);\n"      if_arg_stk(a)
+stmt: ARGF5(vsrc) "\t%[0b]_SP(%c);_FMOV(%0,[AC]);\n"  if_arg_stk(a)
+stmt: ARGI4(vsrc) "\t%[0b]_SP(%c);_LMOV(%0,[AC]);\n"  if_arg_stk(a)
+stmt: ARGU4(vsrc) "\t%[0b]_SP(%c);_LMOV(%0,[AC]);\n"  if_arg_stk(a)
+stmt: ARGI2(reg)  "\t_SP(%c);_MOV(%0,[AC]);\n"        if_arg_stk(a)
+stmt: ARGU2(reg)  "\t_SP(%c);_MOV(%0,[AC]);\n"        if_arg_stk(a)
+stmt: ARGP2(reg)  "\t_SP(%c);_MOV(%0,[AC]);\n"        if_arg_stk(a)
 stmt: ARGF5(reg)  "# arg\n"  if_arg_reg(a)
 stmt: ARGI4(reg)  "# arg\n"  if_arg_reg(a)
 stmt: ARGU4(reg)  "# arg\n"  if_arg_reg(a)
@@ -1105,6 +1104,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
     }
   print("\n");
   /* Emit actual code */
+  assignargs = 0; /* ????? */
   emitcode();
   /* Restore callee saved registers */
   print("\t");
@@ -1216,7 +1216,8 @@ static void global(Symbol p)
   if (p->u.seg == BSS && p->sclass != STATIC)
     return;
   print("# ========\n\tglobvar(%s,%d,%d);\n", p->x.name, p->type->size, p->type->align);
-  if (p->type->align > 1) print("\talign(%d);\n", p->type->align);
+  if (p->type->align > 1)
+    print("\talign(%d);\n", p->type->align);
   print("\tlabel(%s);\n", p->x.name);
   if (p->u.seg == BSS && p->sclass == STATIC)
     print("\tspace(%d);\n", p->type->size);

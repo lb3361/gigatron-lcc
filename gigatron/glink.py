@@ -521,7 +521,7 @@ def _CMPWU(d):
 @vasm
 def _BMOV(s,d,n):
     '''Move memory block of size n from addr s to d.
-       Also accepts [AC] or [T3] as s and [AC] or [T2] as d.'''
+       Also accepts [AC] as s and [AC] or [T2] as d.'''
     dr = v(dr)
     sr = v(sr)
     n = v(n)
@@ -547,26 +547,32 @@ def _LMOV(s,d):
         if is_zeropage(s, 3) and is_zeropage(d, 3): 
             LDW(s); STW(d); LDW(s+2); STW(d+2)
         elif is_zeropage(d, 3):
-            if s != [AC]:
-                LDWI(s)
             if args.cpu > 5:
+                if s != [AC]:
+                    LDWI(s)
                 DEEKA(d); ADDI(2); DEEKA(d+2)
+            elif s == [AC]:
+                STW(T3); DEEK(); STW(d);
+                LDW(T3); ADDI(2); DEEK(); STW(d+2);
             else:
-                DEEK(); STW(d); LDWI(s+2); DEEK(); STW(d+2)
-        elif is_zeropage(s, 3) and args.cpu > 5:
-            if d == [T2]:
-                LDW(T2)
-            elif d != [AC]:
-                LDWI(d)
-            DOKEA(s); ADDI(2); DOKEA(s+2)
+                LDWI(s); DEEK(); STW(d);
+                LDWI(s+2); DEEK(); STW(d+2)
         elif is_zeropage(s, 3):
-            if d == [AC]:
-                STW(T2)
-            elif d != [T2]:
-                LDWI(d); STW(T2)
-            LDW(s); DOKE(T2)
-            LDW(T2); ADDI(2); STW(T2)
-            LDW(s+2); DOKE(T2)
+            if args.cpu > 5:
+                if d == [T2]:
+                    LDW(T2)
+                elif d != [AC]:
+                    LDWI(d)
+                DOKEA(s); ADDI(2); DOKEA(s+2)
+            elif d == [AC] or d == [T2]:
+                if d == [AC]:
+                    STW(T2)
+                LDW(s); DOKE(T2);
+                LDW(T2); ADDI(2); STW(T2);
+                LDW(s+2); DOKE(T2)
+            else:
+                LDI(d); STW(T2); LDW(s); DOKE(T2)
+                LDI(d+2); STW(T2); LDW(s+2); DOKE(T2)
         else:
             if s == [AC]:
                 STW(T3)
@@ -578,8 +584,6 @@ def _LMOV(s,d):
                 _LDI(s); STW(T3)
             extern('_@_lcopy')
             _CALLI('_@_lcopy')  #   [T3..T3+4) --> [T2..T2+4)
-                
-            
 @vasm
 def _LADD():
     extern('_@_ladd')              # [AC/T3] means [AC] for cpu>=5, [T3] for cpu<5

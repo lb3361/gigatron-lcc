@@ -345,10 +345,8 @@ unsigned emitfmt(const char *fmt, Node p, Node *kids, short *nts)
              The other sections can be accessed with syntax $[0b] where '0'
              is the kid number and 'b' is a letter indicating which section
 	     to process. */
-	static Node alt_p;
 	static int alt_s;
-	int s = (p == alt_p) ? alt_s : 0;
-	alt_p = 0;
+	int s = alt_s;
 	alt_s = 0;
 	for (; *fmt; fmt++)
 		if (*fmt == '|' && s == 0)
@@ -369,8 +367,8 @@ unsigned emitfmt(const char *fmt, Node p, Node *kids, short *nts)
 				&& fmt[2] >= 'a' && fmt[2] <= 'z') {      /* %[0a] */
 			fmt += 3;
 			alt_s = fmt[-1] - 'a';
-			alt_p = kids[fmt[-2] - '0'];
 			emitasm(kids[fmt[-2] - '0'], nts[fmt[-2] - '0']);
+			alt_s = 0;
 		} else if (*fmt == '{') {
 			int level = 0;
 			const char *s;

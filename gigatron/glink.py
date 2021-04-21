@@ -240,9 +240,6 @@ def LDWI(d):
 def LDW(d):
     tryhop(); emit(0x21, check_zp(d))
 @vasm
-def _LDW(d): # same but no hops
-    emit(0x21, check_zp(d))
-@vasm
 def LDLW(d):
     emit(0xee, check_zp(d))
 @vasm
@@ -368,11 +365,28 @@ def _SP(n):
         LDWI(n); ADDW(SP)
 @vasm
 def _LDI(d):
+    '''Emit LDI or LDWI depending on the size of d. No hops.'''
     d = v(d)
     if is_zeropage(d):
-        emit(0x59, d)             # LDI  (nohop)
+        emit(0x59, d)
     else:
-        emit(0x11, lo(d), hi(d))  # LDWI (nohop)
+        emit(0x11, lo(d), hi(d))
+@vasm
+def _LDW(d):
+    '''Emit LDW or LDWI+DEEK depending on the size of d. No hops.'''
+    d = v(d)
+    if is_zeropage(d):
+        emit(0x21, d)
+    else:
+        _LDI(d); DEEK()
+@vasm
+def _LD(d):
+    '''Emit LD or LDWI+PEEK depending on the size of d. No hops.'''
+    d = v(d)
+    if is_zeropage(d):
+        emit(0x21, d)
+    else:
+        _LDI(d); PEEK()
 @vasm
 def _SHL(d):
     STW(T3); LDW(d); STW(T2)
@@ -426,30 +440,26 @@ def _MOV(s,d):
             DOKEA(s)
         elif d == [AC]:
             STW(T3)
-            if s == AC:
-                DOKE(T3)
-            elif is_zeropage(s):
-                LDW(s); DOKE(T3)
-            else:
-                LDWI(s); DEEK(); DOKE(T3)
-        else:
-            if d != AC and not is_zeropage(d):
-                LDWI(d); STW(T3)
-            if s == AC:
-                pass
-            elif s == [AC]:
+            if s != AC:
+                _LDW(s)
+            DOKE(T3)
+        elif is_zeropage(d):
+            if s == [AC]:
                 DEEK()
-            elif is_zeropage(s):
-                LDW(s)
-            else:
-                LDWI(s); DEEK()
-            if d == AC:
-                pass
-            elif is_zeropage(d):
+            elif s != AC:
+                _LDW(s)
+            if d != AC:
                 STW(d)
+        elif s == AC or s == [AC]:
+            if s == [AC]:
+                DEEK()
+            STW(T3); _LDI(d)
+            if args.cpu > 5:
+                DOKEA(T3)
             else:
-                DOKE(T3)
-    
+                STW(T2); LDW(T3); DOKE(T2)
+        else:
+            _LDI(d); STW(T2); _LDW(s); DOKE(T2)
 @vasm
 def _BRA(d, saveAC=False):
     emitjmp(v(d), saveAC=saveAC)
@@ -544,44 +554,33 @@ def _LMOV(s,d):
     s = v(s)
     d = v(d)
     if s != d:
-        if is_zeropage(s, 3) and is_zeropage(d, 3): 
-            LDW(s); STW(d); LDW(s+2); STW(d+2)
-        elif is_zeropage(d, 3):
-            if args.cpu > 5:
+        if is_zeropage(d, 3):
+            if is_zeropage(s, 3):
+                _LDW(s); STW(d); _LDW(s+2); STW(d+2)      # 8 bytes
+            elif args.cpu > 5:
                 if s != [AC]:
-                    LDWI(s)
-                DEEKA(d); ADDI(2); DEEKA(d+2)
-            elif s == [AC]:
-                STW(T3); DEEK(); STW(d);
-                LDW(T3); ADDI(2); DEEK(); STW(d+2);
+                    _LDI(s)
+                DEEKA(d); ADDI(2); DEEKA(d+2)             # 6-9 bytes
+            elif s != [AC]:
+                _LDW(s); STW(d); _LDW(s+2); STW(d+2)      # 12 bytes
             else:
-                LDWI(s); DEEK(); STW(d);
-                LDWI(s+2); DEEK(); STW(d+2)
-        elif is_zeropage(s, 3):
-            if args.cpu > 5:
-                if d == [T2]:
-                    LDW(T2)
-                elif d != [AC]:
-                    LDWI(d)
-                DOKEA(s); ADDI(2); DOKEA(s+2)
-            elif d == [AC] or d == [T2]:
-                if d == [AC]:
-                    STW(T2)
-                LDW(s); DOKE(T2);
-                LDW(T2); ADDI(2); STW(T2);
-                LDW(s+2); DOKE(T2)
-            else:
-                LDI(d); STW(T2); LDW(s); DOKE(T2)
-                LDI(d+2); STW(T2); LDW(s+2); DOKE(T2)
+                STW(T3); DEEK(); STW(d)
+                _LDW(T3); ADDI(2); DEEK(); STW(d+2);      # 12 bytes
+        elif is_zeropage(s, 3) and args.cpu > 5:
+            if d == [T2]:
+                _LDW(T2)
+            elif s != [AC]:
+                _LDI(s)
+            DOKEA(s); ADDI(2); DOKEA(s+2)                 # 6-9 bytes
         else:
-            if s == [AC]:
-                STW(T3)
             if d == [AC]:
                 STW(T2)
-            elif d != [T2]:
+            if s == [AC]:
+                STW(T3)
+            if d != [AC] and d != [T2]:
                 _LDI(d); STW(T2)
-            if s != [AC]:
-                _LDI(s); STW(T3)
+            if s != [AC] and s != [T3]:               # call sequence
+                _LDI(s); STW(T3)                      # 5-13 bytes
             extern('_@_lcopy')
             _CALLI('_@_lcopy')  #   [T3..T3+4) --> [T2..T2+4)
 @vasm
@@ -678,7 +677,7 @@ def _FMOV(s,d):
             extern('_@_floadfac') 
             _CALLI('_@_floadfac')   # FAC --> [T2..T2+5)
         elif is_zeropage(d, 4) and is_zeropage(s, 4):
-            LDW(s); STW(d); LDW(s+2); STW(d+2); LD(s+4); ST(d+4)
+            _LDW(s); STW(d); _LDW(s+2); STW(d+2); _LD(s+4); ST(d+4)
         else:
             if d == [AC]:
                 STW(T2)

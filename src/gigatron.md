@@ -316,7 +316,7 @@ ac: zddr "LDI(%0);" 16
 ac: addr "LDWI(%0);" 20
 ac: eac "%0" 
 ac1: ac "%0"
-ac: ac1 "%0LD('vAC');" 16
+ac: ac1 "%0LD(vACL);" 16
 eac: reg "LDW(%0);" 20
 eac: zddr "LDI(%0);" 16
 eac: addr "LDWI(%0);" 20
@@ -666,7 +666,7 @@ fac: LOADF5(fac) "%0"
 ac: CVII2(ac) "%0XORI(128);SUBI(128);" if_cv_from(a,1,48)
 ac: CVUI2(ac) "%0" if_cv_from(a,1,0)
 lac: CVIU4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);" 50
-lac: CVII4(ac) "%0STW(LAC);LD('vACH');XORI(128);SUBI(128);LD('vACH');ST(LAC+2);ST(LAC+3);" if_cv_from(a,2,120)
+lac: CVII4(ac) "%0STW(LAC);LD(vACH);XORI(128);SUBI(128);LD(vACH);ST(LAC+2);ST(LAC+3);" if_cv_from(a,2,120)
 lac: CVUU4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);"
 lac: CVUI4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);"
 # 3) floating point conversions
@@ -921,7 +921,7 @@ static void emit3(const char *fmt, Node p, Node *kids, short *nts)
         return;
       }
       if (c >= 8) {
-        print("ST('vACH');ORI(255);XORI(255);");
+        print("ST(vACH);ORI(255);XORI(255);");
         c -= 8;
       }
       while (c > 0) {
@@ -1054,7 +1054,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   segment(CODE);
   print("# ========\n\tfunction(%s);\n", f->x.name);
   print("\tlabel(%s);\n", f->x.name);
-  print("\tLDW('vLR');STW(LR);");
+  print("\tLDW(vLR);STW(LR);");
   if (ncalls)
     usedmask[IREG] |= REGMASK_LR;
   i = bitcount(REGMASK_ARGS) * 2;
@@ -1135,7 +1135,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
     }
   if (framesize > 0)
     print("_SP(%d);STW(SP);", framesize);
-  print("LDW(LR);STW('vLR');");
+  print("LDW(LR);STW(vLR);");
   if (opsize(ty) <= 2 && (optype(ty) == I || optype(ty) == U || optype(ty) == P))
     print("_LDW(T2);");      /* no hops */
   print("RET();\n");

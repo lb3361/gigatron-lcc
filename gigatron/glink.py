@@ -158,13 +158,10 @@ def emitjcc(BCC, BNCC, d, saveAC=False):
 # ------------- usable vocabulary for .s/.o/.a files
 
 def register_names():
-    d = {}
-    d['AC'] = 0x18
-    d['FACEXT'] = 0x81
-    d['FACEXP'] = 0x82
-    d['FACSGN'] = 0x83
-    d['FACM'] = 0x84
-    d['LAC'] = 0x84
+    d = { "vPC":  0x0016, "vAC":  0x0018, "vACL": 0x0018, "vACH": 0x0019,
+          "vLR":  0x001a, "vSP":  0x001c, 
+          "AC":   0x0018, "LAC":  0x0084, "FAC":  0x0081,
+          "FACS": 0x0081, "FACE": 0x0082, "FACX": 0x0083, "FACM": 0x0084 }
     for i in range(0,4): d[f'T{i}'] = 0x88+i+i
     for i in range(8,32): d[f'R{i}'] = 0x80+i+i
     for i in range(8,29): d[f'L{i}'] = d[f'R{i}']
@@ -181,7 +178,7 @@ def vasm(func):
     '''Decorator to mark functions usable in .s/.o/.a files'''
     safe_dict[func.__name__] = func
     return func
-      
+
 @vasm
 def error(s):
     w = where()

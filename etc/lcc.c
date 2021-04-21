@@ -429,9 +429,12 @@ static int filename(char *name, char *base) {
 		}
 		break;
 	case 2:	/* assembly language files */
-		if (Eflag || Sflag)
+		if (Eflag)
 			break;
-		if (cflag || suffix(name, &suffixes[3], 1) < 0) {
+		if (!cflag && suffix(name, &suffixes[3], 1) >= 0) {
+			if (!find(name, llist[1]))
+				llist[1] = append(name, llist[1]);
+		} else if (!Sflag) {
 			char *ofile;
 			if (cflag && outfile)
 				ofile = outfile;

@@ -4,11 +4,11 @@ import argparse, json, string
 import os, sys, traceback, functools
 
 args = None
+rominfo = None
 lccdir = '/usr/local/lib/gigatron-lcc'
 current_module = None
 current_proc = None
 symdefs = {}
-mapper = None
 safe_dict = {}
 module_list = []
 emit_counter = 0
@@ -788,13 +788,36 @@ def read_lib(l):
             return read_file(f)
     fatal(f"library -l{l} not found!")
 
+def read_map(m):
+    dn = os.path.dirname(__file__)
+    fn = os.path.join(dn, f"map{m}", "map.py")
+    if not os.access(fn, os.R_OK):
+        fatal(f"Cannot find linker map '{m}'")
+        with open(fn, 'r') as fd: 
+            exec(compile(fd.read(), fn, 'exec'))
 
+def read_interface():
+    global symdefs
+    with open(os.path.join(lccdir,'interface.json')) as file:
+        for (name, value) in json.load(file).items():
+            symdefs[name] = value if isinstance(value, int) else int(value, base=0)
+
+def read_rominfo(rom):
+    global rominfo
+    with open(os.path.join(lccdir,'roms.json')) as file:
+        d = json.load(file)
+        if rom in d:
+            rominfo = d[args.rom]
+    if not rominfo:
+        print(f"glink: warning: rom '{args.rom}' is not recognized", file=sys.stderr)
+    
+    
 # ------------- main function
 
 
 def main(argv):
     '''Main entry point'''
-    global lccdir, args, mapper, symdefs
+    global lccdir, args, rominfo, symdefs
     try:
         ## Obtain LCCDIR
         lccdir = os.getenv("LCCDIR", default=lccdir)
@@ -828,7 +851,7 @@ def main(argv):
                 symbols.''')
         parser.add_argument('-o', type=str, default='a.gt1', metavar='file.gt1',
                             help='select the output filename (default: a.gt1)')
-        parser.add_argument('-cpu', type=str, action='store',
+        parser.add_argument('-cpu', type=int, action='store',
                             help='select the target cpu version')
         parser.add_argument('-rom', type=str, action='store',
                             help='select the target rom version')
@@ -845,26 +868,21 @@ def main(argv):
         parser.add_argument('-L', type=str, action='append',
                             help='additional library directories')
         args = parser.parse_args(argv)
+
+        # defaults
         if args.map == None:
             args.map = '64k'
         if args.rom == None:
             args.rom = 'v5a'
-        if args.cpu == None:
+        read_rominfo(args.rom)
+        if rominfo and args.cpu and args.cpu > rominfo['cpu']:
+            print(f"glink: warning: rom '{args.rom}' does not implement cpu{args.cpu}", file=sys.stderr)
+        if rominfo and not args.cpu:
+            args.cpu = rominfo['cpu']
+        if not args.cpu:
             args.cpu = 5
-
-        ### Read interface.json into symdefs
-        with open(lccdir + '/interface.json') as file:
-            for (name, value) in json.load(file).items():
-                symdefs[name] = value if isinstance(value, int) else int(value, base=0)
-
-        ### Read map
-        if not mapper:
-            dn = os.path.dirname(__file__)
-            fn = os.path.join(dn, f"map{args.map}", "map.py")
-            if not os.access(fn, os.R_OK):
-                fatal(f"Cannot find linker map '{args.map}'")
-            with open(fn, 'r') as fd: 
-                exec(compile(fd.read(), fn, 'exec'))
+        read_interface()
+        read_map(args.map)
         
         ### Load all .s/.o/.a files and libraries
         for f in args.files or []:

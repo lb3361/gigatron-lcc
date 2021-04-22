@@ -11,5 +11,10 @@ def map_sp():
 def map_extra_modules():
     return []
 
+def map_extra_libraries():
+    return []
+
 def map_extra_symdefs():
     return { '_@_init_sp' : sp }
+
+print('foo')

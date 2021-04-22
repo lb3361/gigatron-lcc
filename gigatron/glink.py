@@ -780,21 +780,28 @@ def read_file(f):
     if len(module_list) <= n:
         fatal(f"no module found")
 
+def search_file(fn, path):
+    '''Searches a file along a given path.'''
+    for d in path:
+        f = os.path.join(d, fn)
+        if os.access(f, os.R_OK):
+            return f
+    return None
+        
 def read_lib(l):
     '''Search a library file along the library path and read it.'''
-    for d in (args.L or []) + [lccdir]:
-        f = os.path.join(d, f"lib{l}.a")
-        if os.access(f, os.R_OK):
-            return read_file(f)
-    fatal(f"library -l{l} not found!")
+    f = search_file(f"lib{l}.a", args.L)
+    if not f:
+        fatal(f"library -l{l} not found!")
+    return read_file(f)
 
 def read_map(m):
     dn = os.path.dirname(__file__)
     fn = os.path.join(dn, f"map{m}", "map.py")
     if not os.access(fn, os.R_OK):
         fatal(f"Cannot find linker map '{m}'")
-        with open(fn, 'r') as fd: 
-            exec(compile(fd.read(), fn, 'exec'))
+    with open(fn, 'r') as fd:
+        exec(compile(fd.read(), fn, 'exec'), globals())
 
 def read_interface():
     global symdefs
@@ -879,15 +886,27 @@ def main(argv):
             print(f"glink: warning: rom '{args.rom}' does not implement cpu{args.cpu}", file=sys.stderr)
         if rominfo and not args.cpu:
             args.cpu = rominfo['cpu']
-        if not args.cpu:
-            args.cpu = 5
+        args.cpu = args.cpu or 5
+        args.files = args.files or []
+        args.l = args.l or []
+        args.L = args.L or []
         read_interface()
+
+        ### process map
         read_map(args.map)
+        if map_extra_modules:
+            for n in map_extra_modules():
+                args.files.append(n)
+        if map_extra_libraries:
+            for n in map_extra_libraries():
+                args.l.append(n)
+        args.L.append(os.path.join(lccdir,f"map{args.map}"))
+        args.L.append(lccdir)
         
         ### Load all .s/.o/.a files and libraries
-        for f in args.files or []:
+        for f in args.files:
             read_file(f)
-        for f in args.l or []:
+        for f in args.l:
             read_lib(f)
 
         return 0

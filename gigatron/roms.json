@@ -1,0 +1,8 @@
+{
+    "_comment_" : [ "This file is not a json file.",
+		    "Each rom must be described on a single line",
+		    "with the same format and spacing." ], 
+    
+    "v4"  : { "cpu" : 4, "romType" : 0x38 },
+    "v5a" : { "cpu" : 5, "romType" : 0x40 },
+}

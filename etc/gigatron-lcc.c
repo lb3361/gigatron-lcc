@@ -31,6 +31,35 @@ char *ld[] = { LCCDIR "glink", "-cpu=6", "-rom=v5a", "-map=64k", "-o", "$3", "$1
 extern char *concat(char *, char *);
 extern int access(const char *, int);
 
+static int explicitcpu = 0;
+static char *romfile = LCCDIR "roms.json";
+
+void search_rom(const char *rom)
+{
+	char x_rom[10];
+	int x_cpu, x_romType;
+	int found = 0;
+	const char *fmt = " \"%8[^\"\n]\" : { \"cpu\" : %i , \"romType\" : %i }";
+	FILE *f = fopen(romfile, "r");
+	while (f && !feof(f)) {
+		if (fscanf(f, fmt, x_rom, &x_cpu, &x_romType) == 3)
+			if (! strcmp(rom, x_rom)) {
+				found = 1;
+				sprintf(x_rom, "%d", x_cpu);
+				if (! explicitcpu)
+					ld[1] = com[2] = concat("-cpu=", x_rom);
+			}
+		while (!feof(f))
+			if (fgetc(f) == '\n')
+				break;
+	}
+	if (f)
+		fclose(f);
+	if (! found)
+		fprintf(stderr,"(gigatron-lcc) warning: rom '%s' not recognized\n", rom);
+}
+
+
 int option(char *arg) {
 	if (strncmp(arg, "-lccdir=", 8) == 0) {
 		putenv(concat("LCCDIR=", &arg[8]));
@@ -38,9 +67,12 @@ int option(char *arg) {
 		include[0] = concat("-I", concat(&arg[8], "/include"));
 		com[0] = concat(&arg[8], "/rcc");
 		ld[0] = concat(&arg[8], "/glink");
+		romfile = concat(&arg[8], "/roms.json");
 	} else if (strncmp(arg, "-cpu=", 5) == 0) {
+		explicitcpu = 1;
 		ld[1] = com[2] = concat("-cpu=", &arg[5]);
 	} else if (strncmp(arg, "-rom=", 5) == 0) {
+		search_rom(&arg[5]);
 		ld[2] = concat("-rom=", &arg[5]);
 	} else if (strncmp(arg, "-map=", 5) == 0) {
 		ld[3] = concat("-map=", &arg[5]);

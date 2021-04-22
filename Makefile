@@ -9,7 +9,9 @@ LDFLAGS=-g
 
 B=${BUILDDIR}/
 G=${TOP}/gigatron/
-FILES=${B}glcc ${B}glink ${B}glink.py ${B}interface.json
+
+FILES=${B}glcc ${B}glink ${B}glink.py ${B}interface.json ${B}roms.json
+
 MAPS=64k 32k sim
 
 default: all

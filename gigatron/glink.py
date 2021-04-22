@@ -7,7 +7,7 @@ args = None
 lccdir = '/usr/local/lib/gigatron-lcc'
 current_module = None
 current_proc = None
-interface_dict = {}
+symdefs = {}
 mapper = None
 safe_dict = {}
 module_list = []
@@ -16,16 +16,18 @@ lbranch_counter = 0
 
 # --------------- utils
 
-
+def debug(s, level=1):
+    if args.v and args.v >= level:
+        print("(glink debug) " + s, file=sys.stderr)
+        
 def where(tb=None):
     '''Locate error in a .s/.o/.a file'''
     stb = traceback.extract_tb(tb, limit=8) if tb else \
           traceback.extract_stack(limit=8)
     for s in stb:
-        if (s[2] == 'code'):
+        if (s[2].startswith('code')):
             return "{0}:{1}".format(s[0],s[1])
     return None
-
 
 class Module:
     '''Class for assembly modules read from .s/.o/.a files.'''
@@ -136,12 +138,12 @@ def emitjmp(d, saveAC=False):
     elif not saveAC:  # 5 bytes
         lbranch_counter += 5
         emit(0x11, lo(int(d)-2), hi(int(d))) # LDWI (nohop)
-        STW('vPC')
+        STW(vPC)
     else:             # 10 bytes (sigh!)
         lbranch_counter += 10
         STLW(-2)
         emit(0x11, lo(int(d)), hi(int(d)))   # LDWI (nohop)
-        STW('vLR')
+        STW(vLR)
         LDLW(-2)
         RET()
     
@@ -768,8 +770,9 @@ def new_globals():
 def read_file(f):
     '''Safely read a .s/.o/.a file.'''
     global code, current_module, current_proc
-    with open(f,'r') as fd: 
-        c = compile(fd.read(),f,'exec')
+    debug(f"reading '{f}'")
+    with open(f, 'r') as fd: 
+        c = compile(fd.read(), f, 'exec')
     n = len(module_list)
     current_module = None
     current_proc = None
@@ -784,7 +787,6 @@ def read_lib(l):
         if os.access(f, os.R_OK):
             return read_file(f)
     fatal(f"library -l{l} not found!")
-        
 
 
 # ------------- main function
@@ -792,8 +794,7 @@ def read_lib(l):
 
 def main(argv):
     '''Main entry point'''
-    global lccdir, args
-    global interface_dict
+    global lccdir, args, mapper, symdefs
     try:
         ## Obtain LCCDIR
         lccdir = os.getenv("LCCDIR", default=lccdir)
@@ -833,8 +834,8 @@ def main(argv):
                             help='select the target rom version')
         parser.add_argument('-map', type=str, action='store',
                             help='select a linker map')
-        parser.add_argument('-d', action='store_true',
-                            help='enable debug output')
+        parser.add_argument('-v', action='count',
+                            help='enable verbose output')
         parser.add_argument('-e', type=str, action='store', default='_start',
                             help='select the entry point symbol (default _start)')
         parser.add_argument('files', type=str, nargs='+',
@@ -851,14 +852,20 @@ def main(argv):
         if args.cpu == None:
             args.cpu = 5
 
-        ### Read interface.json
+        ### Read interface.json into symdefs
         with open(lccdir + '/interface.json') as file:
             for (name, value) in json.load(file).items():
-                interface_dict[name] = value if isinstance(value, int) else int(value, base=0)
+                symdefs[name] = value if isinstance(value, int) else int(value, base=0)
 
         ### Read map
+        if not mapper:
+            dn = os.path.dirname(__file__)
+            fn = os.path.join(dn, f"map{args.map}", "map.py")
+            if not os.access(fn, os.R_OK):
+                fatal(f"Cannot find linker map '{args.map}'")
+            with open(fn, 'r') as fd: 
+                exec(compile(fd.read(), fn, 'exec'))
         
-
         ### Load all .s/.o/.a files and libraries
         for f in args.files or []:
             read_file(f)

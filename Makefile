@@ -9,11 +9,12 @@ LDFLAGS=-g
 
 B=${BUILDDIR}/
 G=${TOP}/gigatron/
-FILES=${B}include ${B}glcc ${B}glink ${B}glink.py ${B}interface.json
+FILES=${B}glcc ${B}glink ${B}glink.py ${B}interface.json
+MAPS=64k 32k sim
 
 default: all
 
-all: lcc-all ${FILES}
+all: lcc-all gigatron-dirs ${FILES}
 
 clean: lcc-clean
 	rm -rf ${FILES}
@@ -29,9 +30,17 @@ lcc-%: FORCE
 		"LDFLAGS=${LDFLAGS}" \
 		`echo $@ | sed -e 's/^lcc-//'`
 
-${B}include:
-	-rm ${B}include
-	ln -s ${TOP}/include/gigatron ${B}include
+gigatron-dirs: gigatron-include gigatron-maps
+
+gigatron-include: FORCE
+	-mkdir -p ${B}include
+	cp ${TOP}/include/gigatron/* ${B}/include/
+
+gigatron-maps: FORCE
+	for n in ${MAPS}; do \
+		mkdir -p ${B}map$$n;\
+		cp ${G}map$$n/* ${B}map$$n;\
+	done
 
 ${B}glink: ${G}glink
 	cp ${G}glink ${B}glink

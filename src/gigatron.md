@@ -35,6 +35,12 @@ static void segment(int);
 static void space(int);
 static void target(Node);
 
+/* string lists */
+typedef struct slist *SList;
+struct slist { SList prev; SList next; char s[1]; };
+static struct slist shead = { &shead, &shead, 0 };
+static void lprintf(const char *fmt, ...);
+int codenum = 0;
 
 /* Cost functions */
 static int  if_zpconst(Node);
@@ -56,7 +62,7 @@ static Symbol iregw, lregw, fregw;
 #define REGMASK_LR              0x40000000
 
 /* Misc */ 
-static int cseg;
+static int cseg = 0;
 static int cpu = 5;
 
 #define mincpu5(cost) ((cpu<5)?LBURG_MAX:(cost))
@@ -710,6 +716,29 @@ static void comment(const char *fmt, ...) {
   va_end(ap);
 }
 
+static const char *segname() {
+  if (cseg == CODE) return "CODE";
+  if (cseg == DATA) return "DATA";
+  if (cseg == LIT)  return "LIT";
+  if (cseg == BSS)  return "BSS";
+  return "?";
+}
+
+static void lprintf(const char *fmt, ...) {
+  char buf[1024];
+  SList n;
+  va_list ap;
+  va_start(ap, fmt);
+  vfprint(NULL, buf, fmt, ap);
+  va_end(ap);
+  n = allocate(sizeof(struct slist)+strlen(buf), PERM);
+  strcpy(n->s, buf);
+  n->next = &shead;
+  n->prev = shead.prev;
+  n->next->prev = n;
+  n->prev->next = n;
+}
+
 static int if_arg_reg(Node p)
 {
   return p->syms[1] ? 1 : LBURG_MAX;
@@ -786,7 +815,12 @@ static int if_cv_from(Node p, int sz, int cost)
 static void progend(void)
 {
   extern char *firstfile; /* From input.c */
-  print("\nmodule(code=code, ");
+  SList s;
+  print("# ======== (epilog)\n");
+  print("code=[\n");
+  for (s = shead.next; s != &shead; s = s->next)
+    print("\t%s%s", s->s, (s->next == &shead) ? " ]\n" : ",\n");
+  print("module(code=code, ");
   if (firstfile)
     print("name='%s', ", firstfile);
   print("cpu=%d);\n", cpu);
@@ -807,8 +841,7 @@ static void progbeg(int argc, char *argv[])
     else if (!strncmp(argv[i],"-cpu=",5))
       warning("invalid cpu %s\n", argv[i]+5);
   /* Print header */
-  comment("VCPUv%d\n",cpu);
-  print("def code():\n");
+  print("#VCPUv%d\n\n",cpu);
   /* Prepare registers */
   ireg[30] = mkreg("LR", 30, 1, IREG);
   ireg[31] = mkreg("SP", 31, 1, IREG);
@@ -1052,7 +1085,9 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   gencode(caller, callee);
   /* prologue */
   segment(CODE);
-  print("# ========\n\tfunction(%s);\n", f->x.name);
+  lprintf("('%s', %s, code%d)", segname(), f->x.name, codenum);
+  print("# ======== %s\n", shead.prev->s);
+  print("def code%d():\n", codenum++);
   print("\tlabel(%s);\n", f->x.name);
   print("\tLDW(vLR);STW(LR);");
   if (ncalls)
@@ -1187,17 +1222,17 @@ static void defstring(int n, char *str)
     print(");\n");
 }
 
+static void import(Symbol p)
+{
+  lprintf("('IMPORT', %s)", p->x.name);
+}
+
 static void export(Symbol p)
 {
   if (p->u.seg != BSS)
-    print("\texport(%s);\n", p->x.name);
+    lprintf("('EXPORT', %s)", p->x.name);
   else
-    print("\tcommon(%s,%d,%d);\n", p->x.name, p->type->size, p->type->align);
-}
-
-static void import(Symbol p)
-{
-  print("\textern(%s);\n", p->x.name);
+    lprintf("('COMMON', %s, %d, %d)", p->x.name, p->type->size, p->type->align);
 }
 
 static void defsymbol(Symbol p)
@@ -1226,25 +1261,26 @@ static void address(Symbol q, Symbol p, long n)
 static void global(Symbol p)
 {
   if (p->u.seg == BSS && p->sclass != STATIC)
-    return;
-  print("# ========\n\tglobvar(%s,%d,%d);\n", p->x.name, p->type->size, p->type->align);
-  if (p->type->align > 1)
-    print("\talign(%d);\n", p->type->align);
-  print("\tlabel(%s);\n", p->x.name);
-  if (p->u.seg == BSS && p->sclass == STATIC)
-    print("\tspace(%d);\n", p->type->size);
+    {
+      lprintf("('COMMON', %s, %d, %d)",
+              p->x.name, p->type->size, p->type->align);
+    }
+  else
+    {
+      lprintf("('%s', %s, code%d, %d, %d)",
+              segname(), p->x.name, codenum, p->type->size, p->type->align);
+      print("# ======== %s\n", shead.prev->s);
+      print("def code%d():\n", codenum++);
+      if (p->type->align > 1)
+        print("\talign(%d);\n", p->type->align);
+      print("\tlabel(%s);\n", p->x.name);
+      if (p->u.seg == BSS)
+        print("\tspace(%d);\n", p->type->size);
+    }
 }
 
 static void segment(int n)
 {
-  if (cseg == n)
-    return;
-  switch (n) {
-  case CODE: print("\tsegment('CODE');\n"); break;
-  case BSS:  print("\tsegment('BSS');\n");  break;
-  case DATA: print("\tsegment('DATA');\n"); break;
-  case LIT:  print("\tsegment('LIT');\n"); break;
-  }
   cseg = n;
 }
 

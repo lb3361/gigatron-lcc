@@ -9,9 +9,9 @@ def map_sp():
     return 0x0000
 
 def map_extra_modules():
-    return []
+    pass
 
-def map_extra_libraries():
+def map_extra_libs():
     return []
 
 def map_extra_symdefs():

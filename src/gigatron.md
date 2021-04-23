@@ -1231,8 +1231,6 @@ static void export(Symbol p)
 {
   if (p->u.seg != BSS)
     lprintf("('EXPORT', %s)", p->x.name);
-  else
-    lprintf("('COMMON', %s, %d, %d)", p->x.name, p->type->size, p->type->align);
 }
 
 static void defsymbol(Symbol p)
@@ -1260,23 +1258,18 @@ static void address(Symbol q, Symbol p, long n)
 
 static void global(Symbol p)
 {
+  const char *s = segname();
   if (p->u.seg == BSS && p->sclass != STATIC)
-    {
-      lprintf("('COMMON', %s, %d, %d)",
-              p->x.name, p->type->size, p->type->align);
-    }
-  else
-    {
-      lprintf("('%s', %s, code%d, %d, %d)",
-              segname(), p->x.name, codenum, p->type->size, p->type->align);
-      print("# ======== %s\n", shead.prev->s);
-      print("def code%d():\n", codenum++);
-      if (p->type->align > 1)
-        print("\talign(%d);\n", p->type->align);
-      print("\tlabel(%s);\n", p->x.name);
-      if (p->u.seg == BSS)
-        print("\tspace(%d);\n", p->type->size);
-    }
+    s = "COMMON";
+  lprintf("('%s', %s, code%d, %d, %d)",
+          s, p->x.name, codenum, p->type->size, p->type->align);
+  print("# ======== %s\n", shead.prev->s);
+  print("def code%d():\n", codenum++);
+  if (p->type->align > 1)
+    print("\talign(%d);\n", p->type->align);
+  print("\tlabel(%s);\n", p->x.name);
+  if (p->u.seg == BSS)
+    print("\tspace(%d);\n", p->type->size);
 }
 
 static void segment(int n)

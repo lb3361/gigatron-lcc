@@ -6,13 +6,28 @@ import os, sys, traceback, functools
 args = None
 rominfo = None
 lccdir = '/usr/local/lib/gigatron-lcc'
-current_module = None
-current_proc = None
-symdefs = {}
 safe_dict = {}
 module_list = []
-emit_counter = 0
+new_modules = []
+
+symdefs = {}
+exporters = {}
+commons = {}
+
+the_module = None
+the_segment = None
+the_fragment = None
+the_pc = 0
+the_pass = 0
+
+final_pass = False
 lbranch_counter = 0
+error_counter = 0
+warning_counter = 0
+
+map_extra_modules = None
+map_extra_libs = None
+
 
 # --------------- utils
 
@@ -28,31 +43,6 @@ def where(tb=None):
         if (s[2].startswith('code')):
             return "{0}:{1}".format(s[0],s[1])
     return None
-
-class Module:
-    '''Class for assembly modules read from .s/.o/.a files.'''
-    def __init__(self, name=None, cpu=None, code=None):
-        global args, current_module
-        self.code = code
-        self.name = name
-        self.cpu = cpu if cpu != None else args.cpu
-        self.exports = {}
-        self.externs = {}
-        self.genlabelcounter = 0
-    def __repr__(self):
-        return f"Module('{self.name}',...)"
-    def genlabel():
-        self.genlabelcounter += 1
-        return f".LL{self.genlabelcounter}"
-    def run(self,proc):
-        '''Execute the module code with the specified delegate''' 
-        global current_proc, current_module
-        current_proc = proc
-        current_module = self
-        self.genlabelcounter = 0
-        self.code()
-        current_proc = None
-        current_module = None
 
 class __metaUnk(type):
     wrapped = ''' 
@@ -122,10 +112,51 @@ def check_cpu(op, v):
     if args.cpu < v:
         warning(f"opcode not implemented for cpu={arg.cpu}")
 
+class Module:
+    '''Class for assembly modules read from .s/.o/.a files.'''
+    def __init__(self, name=None, cpu=None, code=None, library=True):
+        global args, current_module
+        self.cpu = cpu if cpu != None else args.cpu
+        self.code = code
+        self.name = name
+        self.exports = []
+        self.imports = []
+        self.library = library
+        self.genlabelcounter = 0
+        self.symdefs = {}
+        for tp in self.code:
+            if tp[0] == 'EXPORT':
+                self.exports.append(tp[1])
+            elif tp[0] == 'IMPORT':
+                self.imports.append(tp[1])
+    def __repr__(self):
+        return f"Module('{self.name}',...)"
+    def genlabel():
+        self.genlabelcounter += 1
+        return f".LL{self.genlabelcounter}"
+    def v(s):
+        global exporters
+        if not isintance(s, str):
+            return s
+        elif s in self.symdefs:
+            return self.symdefs[s]
+        elif s in exporters:
+            exporter = exporters[s]
+            if exporter != self:
+                return exporter.v(s)
+        elif s in symdefs:
+            return symdefs[s]
+        return Unk()
+
+def final_emit(*args):
+    fatal("not yet implemented")
+        
 def emit(*args):
-    global emit_counter
-    emit_counter += len(args)
-    current_proc.emit(*args)
+    global final_pass
+    if final_pass:
+        final_emit(*args)
+    else:
+        the_pc += len(args)
 
 def emitjmp(d, saveAC=False):
     if is_pcpage(d): # 2 bytes
@@ -183,12 +214,18 @@ def vasm(func):
 
 @vasm
 def error(s):
-    w = where()
-    current_proc.error(f"glink: {w}: error: {s}")
+    global the_pass, final_pass, error_counter
+    if the_pass == 0 or final_pass:
+        error_counter += 1
+        w = where()
+        print(f"glink: {w}: error: {s}", file=sys.stderr)
 @vasm
 def warning(s):
-    w = where()
-    current_proc.warning(f"glink: {w}: warning: {s}")
+    global the_pass, final_pass, warning_counter
+    if the_pass == 0 or final_pass:
+        warning_counter += 1
+        w = where()
+        print(f"glink: {w}: warning: {s}", file=sys.stderr)
 @vasm
 def fatal(s):
     w = where()
@@ -198,18 +235,20 @@ def fatal(s):
 
 @vasm
 def module(code=None,name=None,cpu=None):
-    global module_list
-    if current_module or current_proc:
-        warning("module() should not be called from the code fragment")
+    global new_modules
+    if the_module or the_fragment:
+        warning("module() should not be called from a code fragment")
     else:
-        module_list.append(Module(name,cpu,code))
+        new_modules.append(Module(name,cpu,code))
 
 @vasm
 def pc():
-    return current_proc.pc()
+    return the_pc
 @vasm
 def v(x):
-    return current_proc.v(x) if isinstance(x,str) else x
+    if isinstance(x,str):
+        return the_module.v(x)
+    return x
 @vasm
 def lo(x):
     return v(x) & 0xff
@@ -736,12 +775,6 @@ def _CALLI(d, saveAC=False, storeAC=None):
         STW('sysFn')
         CALL('sysFn')
 
-# export(sym):
-# extern(sym)
-# common(sym,size,align)
-# segment(seg)
-# function(sym)
-# globvar(sym)
 # label(sym,[def])
 # sethop(n)
 # tryhop(jump=True)
@@ -750,8 +783,6 @@ def _CALLI(d, saveAC=False, storeAC=None):
 # words(*args)
 # space(d)
 
-
-# ------------- reading .s/.o/.a files
 
 
     
@@ -769,16 +800,20 @@ def new_globals():
 
 def read_file(f):
     '''Safely read a .s/.o/.a file.'''
-    global code, current_module, current_proc
+    global the_module, the_fragment, new_modules, module_list
     debug(f"reading '{f}'")
     with open(f, 'r') as fd: 
         c = compile(fd.read(), f, 'exec')
-    n = len(module_list)
-    current_module = None
-    current_proc = None
+    the_module = None
+    the_fragment = None
+    new_modules = []
     exec(c, new_globals())
-    if len(module_list) <= n:
-        fatal(f"no module found")
+    if len(new_modules) == 0:
+        warning(f"File {f} did not define any module")
+    if len(new_modules) == 1 and not f.endswith(".a"):
+        new_modules[0].library = False
+    module_list += new_modules
+    new_modules = []
 
 def search_file(fn, path):
     '''Searches a file along a given path.'''
@@ -824,7 +859,7 @@ def read_rominfo(rom):
 
 def main(argv):
     '''Main entry point'''
-    global lccdir, args, rominfo, symdefs
+    global lccdir, args, rominfo, symdefs, module_list
     try:
         ## Obtain LCCDIR
         lccdir = os.getenv("LCCDIR", default=lccdir)
@@ -892,20 +927,22 @@ def main(argv):
         args.L = args.L or []
         read_interface()
 
-        ### process map
+        # process map
         read_map(args.map)
-        if map_extra_modules:
-            for n in map_extra_modules():
-                args.files.append(n)
-        if map_extra_libraries:
-            for n in map_extra_libraries():
-                args.l.append(n)
         args.L.append(os.path.join(lccdir,f"map{args.map}"))
         args.L.append(lccdir)
         
-        ### Load all .s/.o/.a files and libraries
+        # Load all .s/.o/.a files and libraries
         for f in args.files:
             read_file(f)
+        if map_extra_modules:
+            new_modules = []
+            map_extra_modules()
+            module_list += new_modules
+        global map_extra_libs
+        if map_extra_libs:
+            for n in map_extra_libs():
+                read_lib(n)
         for f in args.l:
             read_lib(f)
 

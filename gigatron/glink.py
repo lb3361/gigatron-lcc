@@ -861,8 +861,9 @@ def main(argv):
     '''Main entry point'''
     global lccdir, args, rominfo, symdefs
     try:
-        ## Obtain LCCDIR
-        lccdir = os.getenv("LCCDIR", default=lccdir)
+        # Obtain LCCDIR
+        lccdir = os.path.dirname(os.path.realpath(__file__))
+        lccdir = os.getenv("LCCDIR", lccdir)
 
         ## Parse arguments
         parser = argparse.ArgumentParser(

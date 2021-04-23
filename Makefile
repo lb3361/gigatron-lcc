@@ -52,8 +52,8 @@ ${B}glink.py: ${G}glink.py
 	cp ${G}glink.py ${B}glink.py
 	python -m compileall -b ${B}glink.py
 
-${B}glcc: ${G}glcc.sh
-	cp ${G}glcc.sh ${B}glcc
+${B}glcc: ${G}glcc
+	cp ${G}glcc ${B}glcc
 	chmod a+x ${B}glcc
 
 ${B}%: ${G}%

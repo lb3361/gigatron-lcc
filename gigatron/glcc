@@ -1,0 +1,68 @@
+#!/usr/bin/env python3
+
+from __future__ import print_function
+import sys
+
+if sys.version_info < (3, 6):
+    print('glcc: fatal error: python 3.6.0 or higher is required.')
+    sys.exit(1)
+
+import os, sys, json
+import os.path as path
+
+# locate progdir
+progname = path.realpath(__file__)
+progdir = path.dirname(progname)
+
+# read rom data
+roms = {}
+romfile = path.join(progdir, 'roms.json')
+if os.access(romfile, os.R_OK):
+    with open(romfile) as file:
+        roms = json.load(file)
+else:
+    printf("glcc: cannot access rom file %s" % romfile, file = sys.stderr)
+
+# copy arguments
+hascpu = False
+hasrom = False
+hasv = False
+for arg in sys.argv:
+    if arg.startswith('-cpu='):
+        hascpu = True
+    elif arg.startswith('-rom='):
+        hasrom = True
+    elif arg == '-v':
+        hasv = True
+if hascpu or not hasrom:
+    argv = sys.argv
+else:
+    argv = []
+    for arg in sys.argv:
+        argv.append(arg)
+        if arg.startswith('-rom='):
+            rom = arg[5:]
+            if not rom in roms:
+                print("glcc: warning. unrecognized rom '%s'" % rom, file=sys.stderr)
+            else:
+                argv.append("-cpu=%d" % roms[rom]['cpu'])
+        romarg = False
+
+# find and exec lcc
+lccname = path.join(progdir, "lcc")
+if not os.access(lccname, os.X_OK):
+   lccname = path.join(progdir, "lcc")
+if not os.access(lccname, os.X_OK):
+   print("glcc: fatal error: cannot find executable lcc in %s" % progdir, file=sys.stderr)
+   sys:exit(1)
+if hasv:
+    argv[0] = lccname
+    print(*argv, file=sys.stderr)
+argv[0] = path.basename(lccname)
+os.putenv("LCCDIR", progdir)
+os.execv(lccname, argv)
+
+# Local Variables:
+# mode: python
+# indent-tabs-mode: ()
+# End:

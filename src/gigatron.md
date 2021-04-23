@@ -719,7 +719,7 @@ static void comment(const char *fmt, ...) {
 static const char *segname() {
   if (cseg == CODE) return "CODE";
   if (cseg == DATA) return "DATA";
-  if (cseg == LIT)  return "LIT";
+  if (cseg == LIT)  return "DATA";
   if (cseg == BSS)  return "BSS";
   return "?";
 }

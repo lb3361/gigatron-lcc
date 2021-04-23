@@ -859,7 +859,7 @@ def read_rominfo(rom):
 
 def main(argv):
     '''Main entry point'''
-    global lccdir, args, rominfo, symdefs, module_list
+    global lccdir, args, rominfo, symdefs
     try:
         ## Obtain LCCDIR
         lccdir = os.getenv("LCCDIR", default=lccdir)
@@ -911,7 +911,7 @@ def main(argv):
                             help='additional library directories')
         args = parser.parse_args(argv)
 
-        # defaults
+        # set defaults
         if args.map == None:
             args.map = '64k'
         if args.rom == None:
@@ -931,18 +931,25 @@ def main(argv):
         read_map(args.map)
         args.L.append(os.path.join(lccdir,f"map{args.map}"))
         args.L.append(lccdir)
-        
-        # Load all .s/.o/.a files and libraries
+
+        # load all .s/.o/.a files
         for f in args.files:
             read_file(f)
+
+        # load modules synthetized by the map
         if map_extra_modules:
+            global new_modules, module_list
             new_modules = []
             map_extra_modules()
             module_list += new_modules
+
+        # load libraries requested by the map
         global map_extra_libs
         if map_extra_libs:
             for n in map_extra_libs():
                 read_lib(n)
+
+        # load libraries
         for f in args.l:
             read_lib(f)
 

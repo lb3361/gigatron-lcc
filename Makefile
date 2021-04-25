@@ -7,13 +7,14 @@ TARGET=gigatron
 CFLAGS=-g -Wno-abi
 LDFLAGS=-g
 INSTALL=${TOP}/gigatron/install-sh
+LN_S=ln -s
 bindir=${DESTDIR}${PREFIX}/bin
-libdir=${DESTDIR}${PREFIX}/lib/gigatron-lcc/
+libdir=${DESTDIR}${PREFIX}/lib/gigatron-lcc
 TOP=.
 B=${BUILDDIR}/
 G=${TOP}/gigatron/
 
-SUBDIRS=${G}lib ${G}runtime
+SUBDIRS=${G}runtime ${G}lib 
 
 FILES=${B}glcc ${B}glink ${B}glink.py ${B}interface.json ${B}roms.json
 
@@ -60,7 +61,25 @@ gigatron-clean: FORCE
 	-for n in ${MAPS} ; do rm -rf ${B}map$$n; done
 
 gigatron-install: FORCE
-	@echo Installing
+	-${INSTALL} -d ${libdir}
+	${INSTALL} -m 755 ${B}cpp ${libdir}/cpp
+	${INSTALL} -m 755 ${B}rcc ${libdir}/rcc
+	${INSTALL} -m 755 ${B}lcc ${libdir}/lcc
+	for n in ${FILES}; do \
+	    mode=644; test -x "$$n" && mode=755 ; \
+	    ${INSTALL} -m $$mode "$$n" ${libdir}/ ; done
+	for m in ${MAPS} ; do \
+	    ${INSTALL} -d "${libdir}/map$$m" ; \
+	    for n in "${G}map$$m/*" ; do \
+	        ${INSTALL} -m 0644 "${B}map$$m/"`basename "$$n"` "${libdir}/map$$m/" ; \
+	done ; done
+	-${INSTALL} -d "${libdir}/include"
+	for n in "${B}include"/* ; do \
+	    ${INSTALL} -m 0644 "$$n" "${libdir}/include/" ; done
+	-${INSTALL} -d ${bindir}
+	${LN_S} ${libdir}/glcc ${bindir}/glcc
+	${LN_S} ${libdir}/glink ${bindir}/glink
+
 
 gigatron-include: FORCE
 	-mkdir -p ${B}include

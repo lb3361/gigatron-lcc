@@ -1,18 +1,20 @@
 SHELL=/bin/sh
+TOP=
 PREFIX=/usr/local
-BUILDDIR=${TOP}/build
 DESTDIR=
-HOSTFILE=${TOP}/etc/gigatron-lcc.c
+BUILDDIR=build
+bindir=${DESTDIR}${PREFIX}/bin
+libdir=${DESTDIR}${PREFIX}/lib/gigatron-lcc
+INSTALL=${TOP}gigatron/install-sh
+LN_S=ln -s
+B=${TOP}${BUILDDIR}/
+G=${TOP}gigatron/
+
 TARGET=gigatron
 CFLAGS=-g -Wno-abi
 LDFLAGS=-g
-INSTALL=${TOP}/gigatron/install-sh
-LN_S=ln -s
-bindir=${DESTDIR}${PREFIX}/bin
-libdir=${DESTDIR}${PREFIX}/lib/gigatron-lcc
-TOP=.
-B=${BUILDDIR}/
-G=${TOP}/gigatron/
+HOSTFILE=${TOP}etc/gigatron-lcc.c
+
 
 SUBDIRS=${G}runtime ${G}lib 
 
@@ -35,7 +37,7 @@ build-dir-clean: FORCE
 	-rm -rf ${B}
 
 lcc-%: FORCE
-	${MAKE} -f makefile.lcc \
+	@${MAKE} -f makefile.lcc \
 		"PREFIX=${PREFIX}" \
 		"BUILDDIR=${BUILDDIR}" \
 		"HOSTFILE=${HOSTFILE}" \
@@ -45,12 +47,11 @@ lcc-%: FORCE
 		`echo $@ | sed -e 's/^lcc-//'`
 
 subdirs-%: FORCE
-	for n in ${SUBDIRS} ; do \
+	@for n in ${SUBDIRS} ; do \
 	   ${MAKE} -C $$n \
 		"PREFIX=${PREFIX}" \
 		"BUILDDIR=${BUILDDIR}" \
-		"CFLAGS=${CFLAGS}" \
-		"LDFLAGS=${LDFLAGS}" \
+		"DESTDIR=${DESTDIR}" \
 		`echo $@ | sed -e 's/^subdirs-//'`; \
 	   done
 
@@ -83,7 +84,7 @@ gigatron-install: FORCE
 
 gigatron-include: FORCE
 	-mkdir -p ${B}include
-	cp ${TOP}/include/gigatron/* ${B}/include/
+	cp ${TOP}include/gigatron/* ${B}/include/
 
 gigatron-maps: FORCE
 	for n in ${MAPS}; do mkdir -p ${B}map$$n; cp ${G}map$$n/* ${B}map$$n; done

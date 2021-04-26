@@ -17,11 +17,14 @@ def map_segments():
 def map_sp():
     return 0x0000
 
+def map_ram():
+    return 0x0000
+
 def map_extra_libs():
     return []
 
 def map_extra_symdefs():
-    return { '_initsp' : map_sp() }
+    return {}
 
 def map_extra_modules():
     '''Generate extra modules for this map.
@@ -39,12 +42,12 @@ def map_extra_modules():
         align(2);
         label('_segments');
         for tp in segments:
-            words(tp[0], tp[1], tp[2] or 0, tp[3] or 0)
-        words(0,0,0,0)
+            words(tp[0], tp[1], tp[2] or 1, tp[3] or tp[1] + 1)
+        words(0)
     code=[ ('EXPORT', '_init2'),
            ('DATA', '_init2', code0, 2, 2),
            ('EXPORT', '_segments'),
-           ('DATA', '_segments', code1, 8*len(segments)+8, 2) ]
+           ('DATA', '_segments', code1, 8*len(segments)+2, 2) ]
     name='_map64k.s'
     debug(f"synthetizing module '{name}'")
     module(code=code, name=name);

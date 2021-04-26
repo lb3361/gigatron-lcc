@@ -728,9 +728,11 @@ xx(unsigned_int,4)
 			}
 			return;
 		}
+	if (option(arg))
+		return;
 	if (cflag || Sflag || Eflag)
 		fprintf(stderr, "%s: %s ignored\n", progname, arg);
-	else if (!option(arg))
+	else
 		llist[1] = append(arg, llist[1]);
 }
 

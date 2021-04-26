@@ -27,7 +27,8 @@ warning_counter = 0
 
 map_extra_modules = None
 map_extra_libs = None
-
+map_sp = None
+map_ram = None
 
 # --------------- utils
 
@@ -584,7 +585,7 @@ def _BMOV(s,d,n):
             _LDI(s); STW(T3)
         _LDI(n);
         extern('_@_memcpy')
-        _CALLI('_@_memcpy', storeAC=T1)         # [T2..T2+AC) --> [T3..T3+AC)
+        _CALLI('_@_memcpy', storeAC=T1)         # [T3..T3+AC) --> [T2..T2+AC)
 @vasm
 def _LMOV(s,d):
     '''Move long from reg/addr s to d.
@@ -837,6 +838,8 @@ def read_map(m):
         fatal(f"Cannot find linker map '{m}'")
     with open(fn, 'r') as fd:
         exec(compile(fd.read(), fn, 'exec'), globals())
+    if not map_sp:
+        fatal(f"Map '{m}' does not define 'map_sp'")
 
 def read_interface():
     global symdefs
@@ -954,6 +957,14 @@ def main(argv):
         for f in args.l:
             read_lib(f)
 
+        # symdefs
+        symdefs['_etext'] = 0x0
+        symdefs['_edata'] = 0x0
+        symdefs['_ebss'] = 0x0
+        symdefs['_initsp'] = map_sp()
+        symdefs['_minrom'] = rominfo['romType'] if rominfo else 0
+        symdefs['_minram'] = map_ram() if map_ram else 1
+            
         return 0
     
     except FileNotFoundError as err:

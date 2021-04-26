@@ -1224,7 +1224,8 @@ static void defstring(int n, char *str)
 
 static void import(Symbol p)
 {
-  lprintf("('IMPORT', %s)", p->x.name);
+  if (p->ref > 0)
+    lprintf("('IMPORT', %s)", p->x.name);
 }
 
 static void export(Symbol p)

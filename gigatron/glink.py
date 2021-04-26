@@ -12,7 +12,6 @@ new_modules = []
 
 symdefs = {}
 exporters = {}
-commons = {}
 
 the_module = None
 the_segment = None
@@ -24,6 +23,7 @@ final_pass = False
 lbranch_counter = 0
 error_counter = 0
 warning_counter = 0
+labelchange_counter = 0
 
 map_extra_modules = None
 map_extra_libs = None
@@ -120,18 +120,22 @@ class Module:
         self.cpu = cpu if cpu != None else args.cpu
         self.code = code
         self.name = name
+        self.fname = None
         self.exports = []
         self.imports = []
         self.library = library
         self.genlabelcounter = 0
         self.symdefs = {}
+        self.sympass = {}
+        self.used = False
+        self.hops = []
         for tp in self.code:
             if tp[0] == 'EXPORT':
                 self.exports.append(tp[1])
             elif tp[0] == 'IMPORT':
                 self.imports.append(tp[1])
     def __repr__(self):
-        return f"Module('{self.name}',...)"
+        return f"Module('{self.fname or self.name}',...)"
     def genlabel():
         self.genlabelcounter += 1
         return f".LL{self.genlabelcounter}"
@@ -148,6 +152,20 @@ class Module:
         elif s in symdefs:
             return symdefs[s]
         return Unk()
+    def label(sym, val):
+        if the_pass > 0:
+            if sym in self.symdefs:
+                if val != self.symdefs[sym]:
+                    labelchange_counter += 1
+                    if self.sympass[sym] == the_pass:
+                        error(f"Multiple definitions of label '{sym}'")
+                self.symdefs[sym] = v
+                self.sympass[sym] = the_pass
+    def tryhop(jump=True):
+        if the_pass == 0:
+            self.hops.append(the_pc)
+        else:
+            pass ## TODO: check segment, hop if necessary
 
 def final_emit(*args):
     fatal("not yet implemented")
@@ -183,6 +201,8 @@ def emitjcc(BCC, BNCC, d, saveAC=False):
     lbl = current_module.genlabel()
     if is_pcpage(d):
         BCC(d)
+    elif args.cpu > 5:
+        JCC(d)
     else:
         BNCC(lbl);
         emitjmp(int(d), saveAC=saveAC)
@@ -219,14 +239,16 @@ def error(s):
     if the_pass == 0 or final_pass:
         error_counter += 1
         w = where()
-        print(f"glink: {w}: error: {s}", file=sys.stderr)
+        w = "" if w == None else w + ": "
+        print(f"glink: {w}error: {s}", file=sys.stderr)
 @vasm
 def warning(s):
     global the_pass, final_pass, warning_counter
     if the_pass == 0 or final_pass:
         warning_counter += 1
         w = where()
-        print(f"glink: {w}: warning: {s}", file=sys.stderr)
+        w = "" if w == None else w + ": "
+        print(f"glink: {w}warning: {s}", file=sys.stderr)
 @vasm
 def fatal(s):
     w = where()
@@ -256,6 +278,30 @@ def lo(x):
 @vasm
 def hi(x):
     return (v(x) >> 8) & 0xff
+
+@vasm
+def align(d):
+    while the_pc & (d-1):
+        emit(0)
+@vasm
+def bytes(*args):
+    for w in args:
+        emit(v(w))
+@vasm
+def words(*args):
+    for w in args:
+        emit(lo(w), hi(w))
+@vasm
+def space(d):
+    for i in range(0,d):
+        emit(0)
+@vasm
+def label(sym, val=None):
+    if the_pass > 0:
+        the_module.label(sym, v(val) if val else the_pc)
+@vasm
+def tryhop(jump=True):
+    the_module.tryhop(jump)
 
 @vasm
 def ST(d):
@@ -776,13 +822,6 @@ def _CALLI(d, saveAC=False, storeAC=None):
         STW('sysFn')
         CALL('sysFn')
 
-# label(sym,[def])
-# sethop(n)
-# tryhop(jump=True)
-# align(d)
-# bytes(*args)
-# words(*args)
-# space(d)
 
 
 
@@ -813,6 +852,8 @@ def read_file(f):
         warning(f"File {f} did not define any module")
     if len(new_modules) == 1 and not f.endswith(".a"):
         new_modules[0].library = False
+    for m in new_modules:
+        m.fname = f"{f}({m.name})" if m.library else f
     module_list += new_modules
     new_modules = []
 
@@ -855,14 +896,66 @@ def read_rominfo(rom):
             rominfo = d[args.rom]
     if not rominfo:
         print(f"glink: warning: rom '{args.rom}' is not recognized", file=sys.stderr)
-    
+
+
+
+# ------------- closure
+
+def find_exporters(sym):
+    elist = []
+    for m in module_list:
+        if sym in m.exports:
+            elist.append(m)
+    return elist
+
+def compute_closure():
+    global module_list, exporters
+    # compute closure from start symbol
+    implist = [ args.e ]
+    for sym in implist:
+        if sym in exporters:
+            pass
+        elif sym in symdefs:
+            pass
+        else:
+            e = None
+            elist = find_exporters(sym)
+            for m in elist:
+                if m.library:
+                    if e and not e.library:
+                        pass
+                    elif m.cpu > args.cpu:
+                        pass
+                    elif not e or m.cpu > e.cpu:
+                        e = m
+                else:
+                    if e and not e.library:
+                        error(f"Symbol {sym} is exported by both {e.fname} and {m.fname}")
+                    e = m
+            if not e:
+                error(f"No definition found for symbol {sym}")
+            else:
+                debug(f"Including module {e.fname or e.name} for symbol {sym}")
+                e.used = True
+                for sym in e.exports:
+                    exporters[sym] = e
+                for sym in e.imports:
+                    implist.append(sym)
+    # only keep used modules
+    nml = []
+    for m in module_list:
+        if m.used:
+            nml.append(m)
+        elif not m.library:
+            warning(f"File '{m.fname}' was not used")
+    return nml
     
 # ------------- main function
 
 
 def main(argv):
     '''Main entry point'''
-    global lccdir, args, rominfo, symdefs
+    global lccdir, args, rominfo, symdefs, module_list
     try:
         # Obtain LCCDIR
         lccdir = os.path.dirname(os.path.realpath(__file__))
@@ -927,6 +1020,7 @@ def main(argv):
             args.cpu = rominfo['cpu']
         args.cpu = args.cpu or 5
         args.files = args.files or []
+        args.e = args.e or "_start"
         args.l = args.l or []
         args.L = args.L or []
         read_interface()
@@ -939,10 +1033,13 @@ def main(argv):
         # load all .s/.o/.a files
         for f in args.files:
             read_file(f)
+        for m in module_list:
+            if m.cpu > args.cpu:
+                warning(f"Module '{m.name}' was compiled for cpu {m.cpu} > {args.cpu}")
 
         # load modules synthetized by the map
         if map_extra_modules:
-            global new_modules, module_list
+            global new_modules
             new_modules = []
             map_extra_modules()
             module_list += new_modules
@@ -964,7 +1061,10 @@ def main(argv):
         symdefs['_initsp'] = map_sp()
         symdefs['_minrom'] = rominfo['romType'] if rominfo else 0
         symdefs['_minram'] = map_ram() if map_ram else 1
-            
+
+        # retain only modules that export what is needed for _start
+        module_list = compute_closure()
+        
         return 0
     
     except FileNotFoundError as err:

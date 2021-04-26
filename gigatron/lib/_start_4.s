@@ -46,7 +46,7 @@ def code0():
 code=[
     ('EXPORT', '_start'),
     ('CODE', '_start', code0),
-    ('IMPORT', '_main'),
+    ('IMPORT', 'main'),
     ('IMPORT', '_exit'),
     ('IMPORT', '_init1'),
     ('IMPORT', '_init2'),

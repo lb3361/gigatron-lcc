@@ -38,9 +38,15 @@ static void target(Node);
 /* string lists */
 typedef struct slist *SList;
 struct slist { SList prev; SList next; char s[1]; };
-static struct slist shead = { &shead, &shead, 0 };
-static void lprintf(const char *fmt, ...);
-int codenum = 0;
+static struct slist lhead = { &lhead, &lhead, 0 };
+static void lprint(const char *fmt, ...);
+
+static int in_function = 0;
+static struct slist xhead = { &xhead, &xhead, 0 };
+static void xprint_init(void);
+static void xprint(const char *fmt, ...);
+static void xprint_finish(void);
+
 
 /* Cost functions */
 static int  if_zpconst(Node);
@@ -62,6 +68,7 @@ static Symbol iregw, lregw, fregw;
 #define REGMASK_LR              0x40000000
 
 /* Misc */ 
+static int codenum = 0;
 static int cseg = 0;
 static int cpu = 5;
 
@@ -708,14 +715,6 @@ stmt: ASGNI2(zddr, ADDI2(INDIRI2(zddr), con1)) "\tINCW(%1);\n" mincpu6(if_rmw2(a
 /*---- BEGIN CODE --*/
 
 
-static void comment(const char *fmt, ...) {
-  va_list ap;
-  print("# ");
-  va_start(ap, fmt);
-  vfprint(stdout, NULL, fmt, ap);
-  va_end(ap);
-}
-
 static const char *segname() {
   if (cseg == CODE) return "CODE";
   if (cseg == DATA) return "DATA";
@@ -724,7 +723,7 @@ static const char *segname() {
   return "?";
 }
 
-static void lprintf(const char *fmt, ...) {
+static void lprint(const char *fmt, ...) {
   char buf[1024];
   SList n;
   va_list ap;
@@ -733,10 +732,45 @@ static void lprintf(const char *fmt, ...) {
   va_end(ap);
   n = allocate(sizeof(struct slist)+strlen(buf), PERM);
   strcpy(n->s, buf);
-  n->next = &shead;
-  n->prev = shead.prev;
+  n->next = &lhead;
+  n->prev = lhead.prev;
   n->next->prev = n;
   n->prev->next = n;
+}
+
+/* Sometimes gen outputs data in the middle of a function.
+   We don't want that here. */
+static void xprint_init(void)
+{
+  in_function = 1;
+  xhead.prev = xhead.next = &xhead;
+}
+static void xprint(const char *fmt, ...)
+{
+  char buf[1024];
+  SList n;
+  va_list ap;
+  va_start(ap, fmt);
+  vfprint(NULL, buf, fmt, ap);
+  va_end(ap);
+  if (in_function) {
+    n = allocate(sizeof(struct slist)+strlen(buf), FUNC);
+    strcpy(n->s, buf);
+    n->next = &xhead;
+    n->prev = xhead.prev;
+    n->next->prev = n;
+    n->prev->next = n;
+  } else {
+    print("%s", buf);
+  }
+}
+static void xprint_finish(void)
+{
+  SList n;
+  for (n = xhead.next; n != &xhead; n = n->next)
+    print("%s", n->s);
+  xhead.prev = xhead.next = &xhead;
+  in_function = 0;
 }
 
 static int if_arg_reg(Node p)
@@ -818,12 +852,16 @@ static void progend(void)
   SList s;
   print("# ======== (epilog)\n");
   print("code=[\n");
-  for (s = shead.next; s != &shead; s = s->next)
-    print("\t%s%s", s->s, (s->next == &shead) ? " ]\n" : ",\n");
+  for (s = lhead.next; s != &lhead; s = s->next)
+    print("\t%s%s", s->s, (s->next == &lhead) ? " ]\n" : ",\n");
   print("module(code=code, ");
   if (firstfile)
     print("name='%s', ", firstfile);
   print("cpu=%d);\n", cpu);
+  print("\n# Local Variables:"
+        "\n# mode: python"
+        "\n# indent-tabs-mode: t"
+        "\n# End:\n");
 }
 
 static void progbeg(int argc, char *argv[])
@@ -966,9 +1004,9 @@ static void emit3(const char *fmt, Node p, Node *kids, short *nts)
   /* ${mulC[:R]} -- multiplication by a small constant */
   if (!strncmp(fmt,"mul", 3) && fmt[3] >= '0' && fmt[3] <= '9')
     {
-      const char *r;
       int i, c;
       Node k;
+      const char *r = "T3";
       i = fmt[3] - '0';
       k = kids[i];
       assert(k);
@@ -1084,9 +1122,10 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   offset = 0;
   gencode(caller, callee);
   /* prologue */
+  xprint_init();
   segment(CODE);
-  lprintf("('%s', %s, code%d)", segname(), f->x.name, codenum);
-  print("# ======== %s\n", shead.prev->s);
+  lprint("('%s', %s, code%d)", segname(), f->x.name, codenum);
+  print("# ======== %s\n", lhead.prev->s);
   print("def code%d():\n", codenum++);
   print("\tlabel(%s);\n", f->x.name);
   print("\tLDW(vLR);STW(LR);");
@@ -1174,6 +1213,8 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   if (opsize(ty) <= 2 && (optype(ty) == I || optype(ty) == U || optype(ty) == P))
     print("_LDW(T2);");      /* no hops */
   print("RET();\n");
+  /* print delayed data */
+  xprint_finish();
 }
 
 static void defconst(int suffix, int size, Value v)
@@ -1186,52 +1227,52 @@ static void defconst(int suffix, int size, Value v)
     assert(isfinite(d));
     mantissa = (unsigned long)(frexp(d,&exp) * pow(2.0, 32));
     if (mantissa == 0 || exp < -128)
-      print("\tbytes(0,0,0,0,0); ");
+      xprint("\tbytes(0,0,0,0,0);");
     else
-      print("\tbytes(%d,%d,%d,%d,%d); ",
-            exp+128, ((mantissa>>24)&0x7f)|((d<0.0)?0x80:0x00),
-            (mantissa>>16)&0xff, (mantissa>>8)&0xff, (mantissa&0xff) );
-    comment("%f\n", d);
+      xprint("\tbytes(%d,%d,%d,%d,%d);",
+             exp+128, ((mantissa>>24)&0x7f)|((d<0.0)?0x80:0x00),
+             (mantissa>>16)&0xff, (mantissa>>8)&0xff, (mantissa&0xff) );
+    xprint(" # %f\n", d);
   } else {
     unsigned long x = (suffix == P) ? (unsigned)(size_t)v.p : (suffix == I) ? v.i : v.u;
     if (size == 1) 
-      print("\tbytes(%d); ", x&0xff);
+      print("\tbytes(%d);", x&0xff);
     else if (size == 2)
-      print("\twords(%d); ", x&0xffff);
+      print("\twords(%d);", x&0xffff);
     else if (size == 4)
-      print("\twords(%d,%d); ", x&0xffff, (x>>16)&0xffff);
+      print("\twords(%d,%d);", x&0xffff, (x>>16)&0xffff);
     if (suffix == I)
-      comment("%D", (long)x);
+      xprint(" # %D", (long)x);
     else if (suffix == U)
-      comment("%U", x);
-  print("\n");
+      xprint(" # %U", (unsigned long)x);
+    xprint("\n");
   }
 }
 
 static void defaddress(Symbol p)
 {
-  print("\twords(%s);\n", p->x.name);
+  xprint("\twords(%s);\n", p->x.name);
 }
 
 static void defstring(int n, char *str)
 {
   int i;
   for (i=0; i<n; i++)
-    print( ((i&7)==0) ? "\tbytes(%d" : ((i&7)==7) ? ",%d);\n" : ",%d", (int)str[i]&0xff );
+    xprint( ((i&7)==0) ? "\tbytes(%d" : ((i&7)==7) ? ",%d);\n" : ",%d", (int)str[i]&0xff );
   if (i&7)
-    print(");\n");
+    xprint(");\n");
 }
 
 static void import(Symbol p)
 {
   if (p->ref > 0)
-    lprintf("('IMPORT', %s)", p->x.name);
+    lprint("('IMPORT', %s)", p->x.name);
 }
 
 static void export(Symbol p)
 {
   if (p->u.seg != BSS)
-    lprintf("('EXPORT', %s)", p->x.name);
+    lprint("('EXPORT', %s)", p->x.name);
 }
 
 static void defsymbol(Symbol p)
@@ -1262,15 +1303,15 @@ static void global(Symbol p)
   const char *s = segname();
   if (p->u.seg == BSS && p->sclass != STATIC)
     s = "COMMON";
-  lprintf("('%s', %s, code%d, %d, %d)",
+  lprint("('%s', %s, code%d, %d, %d)",
           s, p->x.name, codenum, p->type->size, p->type->align);
-  print("# ======== %s\n", shead.prev->s);
-  print("def code%d():\n", codenum++);
+  xprint("# ======== %s\n", lhead.prev->s);
+  xprint("def code%d():\n", codenum++);
   if (p->type->align > 1)
-    print("\talign(%d);\n", p->type->align);
-  print("\tlabel(%s);\n", p->x.name);
+    xprint("\talign(%d);\n", p->type->align);
+  xprint("\tlabel(%s);\n", p->x.name);
   if (p->u.seg == BSS)
-    print("\tspace(%d);\n", p->type->size);
+    xprint("\tspace(%d);\n", p->type->size);
 }
 
 static void segment(int n)
@@ -1281,7 +1322,7 @@ static void segment(int n)
 static void space(int n)
 {
   if (cseg != BSS)
-    print("\tspace(%d);\n", n);
+    xprint("\tspace(%d);\n", n);
 }
 
 Interface gigatronIR = {

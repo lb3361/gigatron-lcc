@@ -514,6 +514,8 @@ static Tree subtree(int op, Tree l, Tree r) {
 			error("unknown size for type `%t'\n", ty->type);
 		l = simplify(SUB+U, unsignedptr,
 			cast(l, unsignedptr), cast(r, unsignedptr));
+		if (n == 1)
+			return l;
 		return simplify(DIV+I, longtype,
 			cast(l, longtype), cnsttree(longtype, n));
 	} else

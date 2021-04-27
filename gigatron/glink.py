@@ -882,7 +882,10 @@ def read_file(f):
     if len(new_modules) == 1 and not f.endswith(".a"):
         new_modules[0].library = False
     for m in new_modules:
-        m.fname = f"{os.path.basename(f)}({m.name})" if m.library else f
+        if m.library:
+            m.fname = f"{os.path.basename(f)}({m.name})"
+        else:
+            m.fname = m.name
     module_list += new_modules
     new_modules = []
 
@@ -961,9 +964,7 @@ def compute_closure():
                     if e and not e.library:
                         error(f"Symbol {sym} is exported by both {e.fname} and {m.fname}")
                     e = m
-            if not e:
-                error(f"No definition found for symbol {sym}")
-            else:
+            if e:
                 debug(f"Including module {e.fname or e.name} for symbol {sym}")
                 e.used = True
                 for sym in e.exports:
@@ -978,7 +979,23 @@ def compute_closure():
         elif not m.library:
             warning(f"File '{m.fname}' was not used")
     return nml
-    
+
+
+def check_undefined_symbols():
+    und = {}
+    comma = ", "
+    for m in module_list:
+        for s in m.imports:
+            if s not in exporters and s not in symdefs:
+                mn = f"'{m.fname}'"
+                if s in und:
+                    und[s].append(mn)
+                else:
+                    und[s] = [mn]
+    for s in und:
+        error(f"Undefined symbol '{s}' imported by {comma.join(und[s])}")
+
+
 # ------------- main function
 
 
@@ -1091,8 +1108,12 @@ def main(argv):
         symdefs['_minrom'] = rominfo['romType'] if rominfo else 0
         symdefs['_minram'] = map_ram() if map_ram else 1
 
-        # retain only modules that export what is needed for _start
+        # resolve import/exports/common and prune unused modules
         module_list = compute_closure()
+        check_undefined_symbols()
+        if error_counter > 0:
+            fatal(f"{error_counter} errors")
+
         
         return 0
     

@@ -27,9 +27,9 @@ def code0():
 # ======== (epilog)
 code=[
         ('EXPORT', '_@_memset'),
-        ('CODE', '_@_memset', code1) ]
+        ('CODE', '_@_memset', code0) ]
 	
-module(code=code, name='_rt_memset_4.s', cpu=4);
+module(code=code, name='_rt_memset.s');
 
 # Local Variables:
 # mode: python

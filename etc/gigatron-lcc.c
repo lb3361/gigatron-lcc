@@ -26,7 +26,7 @@ char *cpp[] = { LCCDIR "cpp", "-D__gigatron", "-D__gigatron__", "-D__CHAR_UNSIGN
 char *com[] =  { LCCDIR "rcc", "-target=gigatron", "-cpu=5", "$1", "$2", "$3", "", 0 };
 char *include[] = { "-I" LCCDIR "include", 0 };
 char *as[] = { "/bin/cp", "$2", "$3", 0 };
-char *ld[] = { LCCDIR "glink", "-cpu=5", "-rom=v5a", "-map=64k", "-o", "$3", "$1", "$2", 0 };
+char *ld[] = { LCCDIR "glink", "-cpu=5", "-rom=v5a", "-map=64k", "-o", "$3", "$1", "$2", "-lc", 0 };
 
 extern char *concat(char *, char *);
 extern int access(const char *, int);

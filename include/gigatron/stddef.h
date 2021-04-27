@@ -28,6 +28,5 @@ typedef unsigned int size_t;
 #define _WCHAR_T_DEFINED
 typedef unsigned short wchar_t;
 #endif
-#endif
 
 #endif /* __STDDEF */

@@ -30,9 +30,9 @@ def code0():
 # ======== (epilog)
 code=[
         ('EXPORT', '_@_memcpy'),
-        ('CODE', '_@_memcpy', code1) ]
+        ('CODE', '_@_memcpy', code0) ]
 	
-module(code=code, name='_rt_memcpy_4.s', cpu=4);
+module(code=code, name='_rt_memcpy.s');
 
 # Local Variables:
 # mode: python

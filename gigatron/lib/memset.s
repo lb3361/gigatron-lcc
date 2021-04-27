@@ -1,4 +1,3 @@
-#VCPUv4
 
 # ======== ('CODE', 'memset', code0)
 def code0():
@@ -15,7 +14,7 @@ code=[
     ('EXPORT', 'memset'),
     ('CODE', 'memset', code0) ]
 
-module(code=code, name='_memset_4.s', cpu=4);
+module(code=code, name='_memset.s');
 
 
 # Local Variables:

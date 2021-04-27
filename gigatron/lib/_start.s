@@ -1,4 +1,5 @@
-#VCPUv4
+
+### The rom/ram checking code must work on all cpu
 
 def code0():
     label('_start');
@@ -36,8 +37,9 @@ def code0():
     # call exit in vcpu4 compatible way
     label('.exit')
     STW(R8)
-    LDWI('exit')
+    LDWI('_@_exit')
     STW(T3)
+    LDW(R8)
     CALL(T3)
     HALT()
 
@@ -47,14 +49,15 @@ code=[
     ('EXPORT', '_start'),
     ('CODE', '_start', code0),
     ('IMPORT', 'main'),
-    ('IMPORT', '_exit'),
     ('IMPORT', '_init1'),
     ('IMPORT', '_init2'),
     ('IMPORT', '_initsp'),
     ('IMPORT', '_minrom'),
-    ('IMPORT', '_minram') ]
+    ('IMPORT', '_minram'),
+    ('IMPORT', '_@_exit') ]
+    
 
-module(code=code, name='_start.s', cpu=4);
+module(code=code, name='_start.s');
 
 
 # Local Variables:

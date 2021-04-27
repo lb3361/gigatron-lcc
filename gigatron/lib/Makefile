@@ -1,3 +1,5 @@
+# GNUmake required
+
 SHELL=/bin/sh
 TOP=../../
 PREFIX=/usr/local
@@ -8,26 +10,35 @@ libdir=${DESTDIR}${PREFIX}/lib/gigatron-lcc
 INSTALL=${TOP}/gigatron/install-sh
 LN_S=ln -s
 B=${TOP}${BUILDDIR}/
+BL=${TOP}${BUILDDIR}/libc/
 G=${TOP}gigatron/
 
+SFILES=$(wildcard *.s)
+CFILES=$(wildcard *.c)
+OFILES=${patsubst %.c,${BL}%_4.o,${CFILES}} ${patsubst %.c,${BL}%_5.o,${CFILES}}
+RFILES=$(wildcard ../runtime/*.s)
 
-FROMCFILES=_init1_4.s _init1_5.s
+all: ${B}libc.a
 
-all: ${FROMCFILES}
-	cat *.s ../runtime/*.s > ${B}libc.a
+${B}libc.a: dirs ${SFILES} ${OFILES} ${RFILES}
+	cat ${SFILES} ${OFILES} ${RFILES} > ${B}libc.a
 
-%_4.s: %.c
-	${B}glcc -S -cpu=4 -o $@ $*.c
+dirs: FORCE
+	-mkdir -p ${BL}
 
-%_5.s: %.c
-	${B}glcc -S -cpu=5 -o $@  $*.c
+${BL}%_4.o: %.c
+	${B}glcc -c -cpu=4 -o $@ $<
 
-%_6.s: %.c
-	${B}glcc -S -cpu=6 -o $@  $*.c
+${BL}%_5.o: %.c
+	${B}glcc -c -cpu=4 -o $@ $<
+
+${BL}%_6.o: %.c
+	${B}glcc -c -cpu=6 -o $@  $<
 
 clean: FORCE
 	-rm ${B}libc.a
-	-rm ${FROMCFILES}
+	-rm ${OFILES}
+	-rmdir ${BL}
 
 install: FORCE
 	${INSTALL} -m 644 ${B}libc.a ${libdir}/libc.a
@@ -35,3 +46,5 @@ install: FORCE
 FORCE: .PHONY
 
 .PHONY: 
+
+.SUFFIXES: .c .s .4s .5s .6s

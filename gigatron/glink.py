@@ -244,7 +244,13 @@ def emitjcc(BCC, BNCC, d, saveAC=False):
         BNCC(lbl);
         emitjmp(int(d), saveAC=saveAC)
         label(lbl)
-    
+
+def extern(sym):
+    if the_pass == 0 and sym not in the_module.imports:
+        the_module.imports.append(sym)
+
+def tryhop(jump=True):
+    the_module.tryhop(jump)
         
 # ------------- usable vocabulary for .s/.o/.a files
 
@@ -291,10 +297,7 @@ def fatal(s, exc=False):
     w = "" if w == None else w + ": "
     print(f"glink: {w}fatal error: {s}", file=sys.stderr)
     sys.exit(1)
-@vasm
-def extern(sym):
-    ### TODO
-    pass
+
 @vasm
 def module(code=None,name=None,cpu=None):
     if not name:
@@ -343,9 +346,6 @@ def space(d):
 def label(sym, val=None):
     if the_pass > 0:
         the_module.label(sym, v(val) if val else the_pc)
-@vasm
-def tryhop(jump=True):
-    the_module.tryhop(jump)
 
 @vasm
 def ST(d):
@@ -657,8 +657,8 @@ def _CMPWU(d):
 def _BMOV(s,d,n):
     '''Move memory block of size n from addr s to d.
        Also accepts [AC] as s and [AC] or [T2] as d.'''
-    dr = v(dr)
-    sr = v(sr)
+    d = v(d)
+    s = v(s)
     n = v(n)
     if s != d:
         if d == [AC]:
@@ -840,28 +840,20 @@ def _FCMP():
     _CALLI('_@_fcmp', storeAC=T3)   # SGN(FAC-[AC/T3]) --> AC
 @vasm
 def _FTOU():
-    # TODO
-    pass
+    extern('_@_ftou')
+    _CALLI('_@_ftou')
 @vasm
 def _FTOI():
-    # TODO
-    pass
+    extern('_@_ftoi')
+    _CALLI('_@_ftoi')
 @vasm
-def _FCVI2():
-    # TODO
-    pass
+def _FCVI():
+    extern('_@_fcvi')
+    _CALLI('_@_fcvi')
 @vasm
-def _FCVI4():
-    # TODO
-    pass
-@vasm
-def _FCVU2():
-    # TODO
-    pass
-@vasm
-def _FCVU4():
-    # TODO
-    pass
+def _FCVU():
+    extern('_@_fcvu')
+    _CALLI('_@_fcvu')
 @vasm
 def _CALLI(d, saveAC=False, storeAC=None):
     '''Call subroutine at far location d.
@@ -979,6 +971,43 @@ def find_exporters(sym):
             elist.append(m)
     return elist
 
+def measure_data_fragment(m, frag):
+    global the_module, the_fragment, the_pc
+    the_module = m
+    the_fragment = frag
+    the_pc = 0
+    try:
+        frag[2]()
+    except Exception as err:
+        fatal(str(err), exc=True)
+    return frag[0:3] + (the_pc,) + frag[4:]
+
+def measure_code_fragment(m, frag):
+    global the_module, the_fragment, the_pc, lbranch_counter, hops
+    hops = []
+    the_module = m
+    the_fragment = frag
+    the_pc = 0
+    lbranch_counter = 0
+    try:
+        frag[2]()
+    except Exception as err:
+        fatal(str(err), exc=True)
+    nhops = len(hops)
+    for i in range(0, nhops):
+        next = hops[i+1] if i+1 < nhops else the_pc
+        hops[i] = next - hops[i]
+    debug(f"Function '{frag[1]}' is {the_pc}-{lbranch_counter} bytes long")
+    return frag + (the_pc, lbranch_counter, hops)
+
+def measure_fragments(m):
+    for (i,frag) in enumerate(m.code):
+        fragtype = frag[0]
+        if fragtype in ('DATA', 'BSS') and frag[3] == 0:
+            m.code[i] = measure_data_fragment(m, frag)
+        elif fragtype in ('CODE'):
+            m.code[i] = measure_code_fragment(m, frag)
+
 def compute_closure():
     global module_list, exporters
     # compute closure from start symbol
@@ -1006,14 +1035,15 @@ def compute_closure():
             if e:
                 debug(f"Including module '{e.fname}' for symbol '{sym}'")
                 e.used = True
-                for sym in e.imports:
-                    implist.append(sym)
                 for sym in e.exports:
                     if sym in exporters:
                         error(f"Symbol '{sym}' is exported by both '{e.fname}' and '{exporters[sym].fname}'")
                     if sym not in exporters or exporters[sym].library:
                         exporters[sym] = e
-    # only keep used modules
+                measure_fragments(e)
+                for sym in e.imports:
+                    implist.append(sym)
+    # compute list of used modules
     nml = []
     for m in module_list:
         if m.used:
@@ -1048,43 +1078,6 @@ def check_undefined_symbols():
     for s in und:
         error(f"Undefined symbol '{s}' imported by {comma.join(und[s])}")
 
-def measure_data_fragment(m, frag):
-    global the_module, the_fragment, the_pc
-    the_module = m
-    the_fragment = frag
-    the_pc = 0
-    try:
-        frag[2]()
-    except Exception as err:
-        fatal(str(err), exc=True)
-    return frag[0:3] + (the_pc,) + frag[4:]
-
-def measure_code_fragment(m, frag):
-    global the_module, the_fragment, the_pc, lbranch_counter, hops
-    hops = []
-    the_module = m
-    the_fragment = frag
-    the_pc = 0
-    lbranch_counter = 0
-    try:
-        frag[2]()
-    except Exception as err:
-        fatal(str(err), exc=True)
-    nhops = len(hops)
-    for i in range(0, nhops):
-        next = hops[i+1] if i+1 < nhops else the_pc
-        hops[i] = next - hops[i]
-    debug(f"Function '{frag[1]}' is {the_pc}-{lbranch_counter} bytes long")
-    return frag + (the_pc, lbranch_counter, hops)
-
-def measure_fragments():
-    for m in module_list:
-        for (i,frag) in enumerate(m.code):
-            fragtype = frag[0]
-            if fragtype in ('DATA', 'BSS') and frag[3] == 0:
-                m.code[i] = measure_data_fragment(m, frag)
-            elif fragtype in ('CODE'):
-                m.code[i] = measure_code_fragment(m, frag)
 
 
                 
@@ -1207,9 +1200,6 @@ def main(argv):
         if error_counter > 0:
             return 1
 
-        # measure fragments whose length is unknown
-        measure_fragments()
-        
         return 0
     
     except FileNotFoundError as err:

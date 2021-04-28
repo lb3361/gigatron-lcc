@@ -717,12 +717,12 @@ lac: CVUI4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);"
 # 3) floating point conversions
 ac: CVFU2(fac)  "%0_FTOU();LDW(LAC);" 200
 lac: CVFU4(fac) "%0_FTOU();" 200
-fac: CVUF5(ac)  "%0_FCVU2();" if_cv_from(a,2,180)
-fac: CVUF5(lac) "%0_FCVU4();" if_cv_from(a,4,200)
+fac: CVUF5(ac)  "%0STW(LAC);LDI(0);STW(LAC+2);_FCVU();" if_cv_from(a,2,180)
+fac: CVUF5(lac) "%0_FCVU();" if_cv_from(a,4,200)
 ac: CVFI2(fac)  "%0_FTOI();LDW(LAC);" 200
 lac: CVFI4(fac) "%0_FTOI();" 200
-fac: CVIF5(ac)  "%0_FCVI2();" if_cv_from(a,2,180)
-fac: CVIF5(lac) "%0_FCVI4();" if_cv_from(a,4,200)
+fac: CVIF5(ac)  "%0STW(LAC);LDI(0);STW(LAC+2);_FCVI();" if_cv_from(a,2,180)
+fac: CVIF5(lac) "%0_FCVI();" if_cv_from(a,4,200)
 
 # Labels and jumps
 stmt: LABELV       "\tlabel(%a);\n"

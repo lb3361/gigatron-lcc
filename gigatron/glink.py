@@ -149,7 +149,7 @@ class Module:
         self.cpu = cpu if cpu != None else args.cpu
         self.code = code
         self.name = name
-        self.fname = None
+        self.fname = name
         self.exports = []
         self.imports = []
         self.library = library
@@ -287,6 +287,11 @@ def fatal(s):
 
 @vasm
 def module(code=None,name=None,cpu=None):
+    if not name:
+        name = "[unknown]"
+        tb = traceback.extract_stack(limit=2)
+        if len(tb) > 1 and isinstance(tb[0][0], str):
+            name = os.path.basename(tb[0][0])
     global new_modules
     if the_module or the_fragment:
         warning("module() should not be called from a code fragment")
@@ -871,8 +876,12 @@ def read_file(f):
     '''Safely read a .s/.o/.a file.'''
     global the_module, the_fragment, new_modules, module_list
     debug(f"reading '{f}'")
-    with open(f, 'r') as fd: 
-        c = compile(fd.read(), f, 'exec')
+    with open(f, 'r') as fd:
+        s = fd.read()
+        try: 
+            c = compile(s, f, 'exec')
+        except SyntaxError as err:
+            fatal(str(err))
     the_module = None
     the_fragment = None
     new_modules = []
@@ -952,6 +961,7 @@ def compute_closure():
         else:
             e = None
             elist = find_exporters(sym)
+            debug(f"exporters for {sym}: {elist}")
             for m in elist:
                 if m.library:
                     if e and not e.library:
@@ -965,7 +975,7 @@ def compute_closure():
                         error(f"Symbol {sym} is exported by both {e.fname} and {m.fname}")
                     e = m
             if e:
-                debug(f"Including module {e.fname or e.name} for symbol {sym}")
+                debug(f"Including module '{e.fname}' for symbol '{sym}'")
                 e.used = True
                 for sym in e.exports:
                     exporters[sym] = e
@@ -980,6 +990,17 @@ def compute_closure():
             warning(f"File '{m.fname}' was not used")
     return nml
 
+def convert_common_symbols():
+    for m in module_list:
+        for (i,decl) in enumerate(m.code):
+            if decl[0] == 'COMMON':
+                sym = decl[1]
+                if sym in exporters:
+                    pass
+                else:
+                    debug(f"Instatiating common '{sym}' in '{m.fname}'")
+                    m.code[i] = ('BSS', sym) + decl[2:]
+                    exporters[sym] = m
 
 def check_undefined_symbols():
     und = {}
@@ -1110,6 +1131,7 @@ def main(argv):
 
         # resolve import/exports/common and prune unused modules
         module_list = compute_closure()
+        convert_common_symbols()
         check_undefined_symbols()
         if error_counter > 0:
             fatal(f"{error_counter} errors")

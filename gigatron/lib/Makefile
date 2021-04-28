@@ -20,19 +20,21 @@ RFILES=$(wildcard ../runtime/*.s)
 
 all: ${B}libc.a
 
-${B}libc.a: dirs ${SFILES} ${OFILES} ${RFILES}
+${B}libc.a: ${SFILES} ${OFILES} ${RFILES}
+	-@mkdir -p ${BL}
 	cat ${SFILES} ${OFILES} ${RFILES} > ${B}libc.a
 
-dirs: FORCE
-	-mkdir -p ${BL}
 
 ${BL}%_4.o: %.c
+	-@mkdir -p ${BL}
 	${B}glcc -c -cpu=4 -o $@ $<
 
 ${BL}%_5.o: %.c
+	-@mkdir -p ${BL}
 	${B}glcc -c -cpu=4 -o $@ $<
 
 ${BL}%_6.o: %.c
+	-@mkdir -p ${BL}
 	${B}glcc -c -cpu=6 -o $@  $<
 
 clean: FORCE

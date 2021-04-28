@@ -251,8 +251,7 @@ def emitjcc(BCC, BNCC, d, saveAC=False):
 def register_names():
     d = { "vPC":  0x0016, "vAC":  0x0018, "vACL": 0x0018, "vACH": 0x0019,
           "vLR":  0x001a, "vSP":  0x001c, 
-          "AC":   0x0018, "LAC":  0x0084, "FAC":  0x0081,
-          "FACS": 0x0081, "FACE": 0x0082, "FACX": 0x0083, "FACM": 0x0084 }
+          "AC":   0x0018, "LAC":  0x0084, "FAC":  0x0081 }
     for i in range(0,4): d[f'T{i}'] = 0x88+i+i
     for i in range(8,32): d[f'R{i}'] = 0x80+i+i
     for i in range(8,29): d[f'L{i}'] = d[f'R{i}']
@@ -487,12 +486,8 @@ def _SP(n):
     n = v(n)
     if is_zero(n):
         LDW(SP);
-    elif is_zeropage(n):
-        LDW(SP); ADDI(n)
-    elif is_zeropage(-n):
-        LDW(SP); SUBI(n)
     else:
-        LDWI(n); ADDW(SP)
+        _LDI(n); ADDW(SP)
 @vasm
 def _LDI(d):
     '''Emit LDI or LDWI depending on the size of d. No hops.'''
@@ -844,6 +839,30 @@ def _FCMP():
     extern('_@_fcmp')
     _CALLI('_@_fcmp', storeAC=T3)   # SGN(FAC-[AC/T3]) --> AC
 @vasm
+def _FTOU():
+    # TODO
+    pass
+@vasm
+def _FTOI():
+    # TODO
+    pass
+@vasm
+def _FCVI2():
+    # TODO
+    pass
+@vasm
+def _FCVI4():
+    # TODO
+    pass
+@vasm
+def _FCVU2():
+    # TODO
+    pass
+@vasm
+def _FCVU4():
+    # TODO
+    pass
+@vasm
 def _CALLI(d, saveAC=False, storeAC=None):
     '''Call subroutine at far location d.
        When cpu<5, option saveAC=True ensures AC is preserved, 
@@ -1047,10 +1066,10 @@ def measure_code_fragment(m, frag):
     the_fragment = frag
     the_pc = 0
     lbranch_counter = 0
-#    try:
-    frag[2]()
-#    except Exception as err:
-#        fatal(str(err), exc=True)
+    try:
+        frag[2]()
+    except Exception as err:
+        fatal(str(err), exc=True)
     nhops = len(hops)
     for i in range(0, nhops):
         next = hops[i+1] if i+1 < nhops else the_pc

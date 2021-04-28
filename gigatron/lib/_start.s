@@ -64,6 +64,11 @@ def code1():
     label('_atexit')
     word(0)
 
+def code2():
+    align(2)
+    label('_init2')
+    word(0)
+
 # ======== (epilog)
 code=[
     ('EXPORT', '_start'),
@@ -71,9 +76,9 @@ code=[
     ('EXPORT', 'exit'),
     ('CODE', '_start', code0),
     ('COMMON', '_atexit', code1, 2, 2),
+    ('COMMON', '_init2', code2, 2, 2),
     ('IMPORT', 'main'),
     ('IMPORT', '_init1'),
-    ('IMPORT', '_init2'),
     ('IMPORT', '_initsp'),
     ('IMPORT', '_minrom'),
     ('IMPORT', '_minram'),

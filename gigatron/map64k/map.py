@@ -35,19 +35,28 @@ def map_extra_modules():
           to help '_init1' which clears the BSS and initializes
           the malloc heap. '''
     def code0():
-        align(2);
-        label('_init2');
-        words(0); 
-    def code1():
-        align(2);
         label('_segments');
-        for tp in segments:
-            words(tp[0], tp[1], tp[2] or 1, tp[3] or tp[1] + 1)
-        words(0)
-    code=[ ('EXPORT', '_init2'),
-           ('DATA', '_init2', code0, 2, 2),
-           ('EXPORT', '_segments'),
-           ('DATA', '_segments', code1, 0, 2) ]
+        #| void _segments(void(**cbptr)(/*s,e,cbptr*/)
+        LDW(vLR);STW(LR);_SP(-10);STW(SP);
+        _SP(6);_MOV(R28,[AC]);_SP(8);_MOV(R29,[AC])
+        LDW(R8); STW(R28)
+        for (i,tp) in enumerate(segments):
+            if tp[2] == None:
+                LDWI(tp[0]);STW(R9)
+                LDWI(tp[1]);STW(R8);ADDW(R9);STW(R9)
+                LDW(R28);STW(R10);DEEK();STW(T3);CALL(T3)
+            else:
+                LDWI(tp[1]);STW(R29)
+                label(f".L{i}")
+                LDWI(tp[0]);STW(R9)
+                LDW(R29);STW(R8);ADDW(R9);STW(R9)
+                LDW(R28);STW(R10);DEEK();STW(T3);CALL(T3)
+                LDWI(tp[2]);ADDW(R29);STW(R29)
+                LDWI(tp[3]);XORW(R29);BNE(f".L{i}")
+        _SP(6);_MOV([AC],R28);_SP(8);_MOV([AC],R29)
+        _SP(10);STW(SP);LDW(LR);STW(vLR);RET();
+    code=[ ('EXPORT', '_segments'),
+           ('CODE', '_segments', code0) ]
     name='_map64k.s'
     debug(f"synthetizing module '{name}'")
     module(code=code, name=name);

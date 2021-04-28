@@ -1,36 +1,24 @@
 
 #include <string.h>
-
 #include "_malloc.h"
-
-typedef char *ptr;
-
-typedef struct s_segment_desc segment_desc_t;
-
-typedef struct s_segment_desc {
-  unsigned int size;
-  ptr addr;
-  unsigned int step;
-  ptr end;
-};
-
-extern segment_desc_t _segments[];
 
 extern char _etext, _edata, _ebss;
 
+#define etext       ((unsigned)(&_etext))
+#define edata       ((unsigned)(&_edata))
+#define ebss        ((unsigned)(&_ebss))
+
+#define minheap 20
+
 free_header_t _heap = { &_heap, &_heap, 0 };
 
-#define nexteven(p) ((ptr)((((unsigned)p)+1u) & ~1u))
-
-#define preveven(p) ((ptr)(((unsigned)p) & ~1u))
-
-static void
-add_heap(ptr s, ptr e)
+static void initf2(unsigned s, unsigned e, void(**cbptr)())
 {
-  s = nexteven(s);
-  e = preveven(e);
-  if (e - s > 20) {
+  s = (s + 1) & (~1u);
+  e = e & (~1u);
+  if (e - s > minheap) {
     free_header_t *h = (free_header_t*)s;
+    h->size = e - s;
     h->next = &_heap;
     h->prev = _heap.prev;
     h->next->prev = h;
@@ -38,42 +26,31 @@ add_heap(ptr s, ptr e)
   }
 }
 
-static void
-clear_bss(ptr s, ptr e)
+static void initf1(unsigned s, unsigned e, void (**cbptr)())
 {
-  memset(s, 0, e - s);
+  if (s <= ebss && ebss < e) {
+    initf1(s, ebss, cbptr);
+    *cbptr = initf2;
+    initf2(ebss, e, cbptr);
+  } else {
+    memset((char*)s, 0, e-s);
+  }
 }
 
-void _init1()
+static void initf0(unsigned s, unsigned e, void (**cbptr)())
 {
-  int state = 0;
-  segment_desc_t *p;
-  ptr x, y, s, e;
-  
-  for (p = _segments; p->size; p += 4)
-    for (x = p->addr; x < p->end; x += p->step) {
-      s = x;
-      y = x + p->size;
-      
-      if (state == 0) {
-        if (&_edata >= s && y > &_edata) {
-          s = &_edata;
-          state = 1;
-        }
-      }
-      if (state == 1) {
-        if (&_ebss >= s && y > &_ebss) {
-          clear_bss(s, &_ebss);
-          state = 2;
-          s = &_ebss;
-        } else {
-          clear_bss(s, y);
-        }
-      }
-      if (state == 3)
-        add_heap(s, y);
-    }
+  if (s <= edata && edata < e) {
+    *cbptr = initf1;
+    initf1(edata, e, cbptr);
+  }
 }
+
+void _init1(void)
+{
+  void (*cbptr)() = initf1;
+  extern void _segments(void (**cbptr)());
+  _segments(&cbptr);
+}  
 
 
 /* Local Variables: */

@@ -33,7 +33,19 @@ static void initf1(unsigned s, unsigned e, void (**cbptr)())
     *cbptr = initf2;
     initf2(ebss, e, cbptr);
   } else {
-    memset((char*)s, 0, e-s);
+    /* inline memset (for now) */
+    if (s & 1) {
+      *(char*)s = 0;
+      s += 1;
+    }
+    if (e & 1) {
+      e -= 1;
+      *(char*)e = 0;
+    }
+    while (s != e) {
+      *(unsigned*)s = 0;
+      s += 2;
+    }
   }
 }
 

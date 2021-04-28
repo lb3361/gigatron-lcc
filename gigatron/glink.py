@@ -66,19 +66,21 @@ def debug(s, level=1):
     if args.d and args.d >= level:
         print("(glink debug) " + s, file=sys.stderr)
         
-def where(tb=None):
+def where(exc=False):
     '''Locate error in a .s/.o/.a file'''
-    stb = traceback.extract_tb(tb, limit=8) if tb else \
-          traceback.extract_stack(limit=8)
+    if exc:
+        stb = traceback.extract_tb(sys.exc_info()[2], limit=8)
+    else:
+        stb = traceback.extract_stack(limit=8)
     for s in stb:
         if (s[2].startswith('code')):
-            return "{0}:{1}".format(s[0],s[1])
+            return f"{s[0]}:{s[1]}"
     return None
 
 class __metaUnk(type):
     wrapped = ''' 
-      __abs__ __add__ __and__ __eq__ __floordiv__ __ge__ __gt__ __invert__
-      __le__ __le__ __lshift__ __lt__ __mod__ __mul__ __neg__ __or__ 
+      __abs__ __add__ __and__ __floordiv__ __ge__ __gt__ __invert__
+      __le__  __lshift__ __lt__ __mod__ __mul__ __neg__ __or__ 
       __pos__ __pow__ __radd__ __rand__ __rfloordiv__ __rlshift__ __rmod__
       __rmul__ __ror__ __rpow__ __rrshift__ __rshift__ __rsub__ 
       __rtruediv__ __rxor__ __sub__ __truediv__  __xor__
@@ -100,6 +102,10 @@ class Unk(int, metaclass=__metaUnk):
         return int.__new__(cls,val)
     def __repr__(self):
         return f"Unk({hex(int(self))})"
+    def __eq__(self, other):
+        return False
+    def __ne__(self, other):
+        return True
 
 def is_zero(x):
     if isinstance(x,int) and not isinstance(x,Unk):
@@ -281,12 +287,15 @@ def warning(s):
         w = "" if w == None else w + ": "
         print(f"glink: {w}warning: {s}", file=sys.stderr)
 @vasm
-def fatal(s):
-    w = where()
+def fatal(s, exc=False):
+    w = where(exc)
     w = "" if w == None else w + ": "
     print(f"glink: {w}fatal error: {s}", file=sys.stderr)
     sys.exit(1)
-
+@vasm
+def extern(sym):
+    ### TODO
+    pass
 @vasm
 def module(code=None,name=None,cpu=None):
     if not name:
@@ -733,15 +742,15 @@ def _LMODU():
     extern('_@_lmodu')
     _CALLI('_@_lmodu', storeAC=T3)  # LAC%[AC/T3] --> LAC
 @vasm
-def _LSHL(d):
+def _LSHL():
     extern('_@_lshl')
     _CALLI('_@_lshl', storeAC=T3)  # LAC<<[AC/T3] --> LAC
 @vasm
-def _LSHRS(d):
+def _LSHRS():
     extern('_@_lshrs')
     _CALLI('_@_lshrs', storeAC=T3)  # LAC>>[AC/T3] --> LAC
 @vasm
-def _LSHRU(d):
+def _LSHRU():
     extern('_@_lshru')
     _CALLI('_@_lshru', storeAC=T3)  # LAC>>[AC/T3] --> LAC
 @vasm
@@ -1025,21 +1034,29 @@ def measure_data_fragment(m, frag):
     the_module = m
     the_fragment = frag
     the_pc = 0
-    frag[2]()
+    try:
+        frag[2]()
+    except Exception as err:
+        fatal(str(err), exc=True)
     return frag[0:3] + (the_pc,) + frag[4:]
 
 def measure_code_fragment(m, frag):
-    global the_module, the_fragment, the_pc, hops
+    global the_module, the_fragment, the_pc, lbranch_counter, hops
     hops = []
     the_module = m
     the_fragment = frag
     the_pc = 0
+    lbranch_counter = 0
+#    try:
     frag[2]()
+#    except Exception as err:
+#        fatal(str(err), exc=True)
     nhops = len(hops)
     for i in range(0, nhops):
         next = hops[i+1] if i+1 < nhops else the_pc
         hops[i] = next - hops[i]
-    return frag + (the_pc, hops)
+    debug(f"Function '{frag[1]}' is {the_pc}-{lbranch_counter} bytes long")
+    return frag + (the_pc, lbranch_counter, hops)
 
 def measure_fragments():
     for m in module_list:
@@ -1177,7 +1194,7 @@ def main(argv):
         return 0
     
     except FileNotFoundError as err:
-        fatal(str(err))
+        fatal(str(err), exc=True)
 
 
 if __name__ == '__main__':

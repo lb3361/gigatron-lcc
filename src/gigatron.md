@@ -587,7 +587,7 @@ lac: DIVI4(lac,larg) "%0%1_LDIVS();" 200
 lac: DIVU4(lac,larg) "%0%1_LDIVU();" 200
 lac: MODI4(lac,larg) "%0%1_LMODS();" 200
 lac: MODU4(lac,larg) "%0%1_LMODU();" 200
-lac: LSHI4(lac,reg)  "%0LDW(reg);_LSHL();" 200
+lac: LSHI4(lac,reg)  "%0LDW(%1);_LSHL();" 200
 lac: LSHI4(lac,con8) "%0LDI(%1);_LSHL();"  200
 lac: LSHU4(lac,reg)  "%0LDW(%1);_LSHL();"  200
 lac: LSHU4(lac,con8) "%0LDI(%1);_LSHL();"  200
@@ -885,7 +885,8 @@ static void progend(void)
   print("# ======== (epilog)\n");
   print("code=[\n");
   for (s = lhead.next; s != &lhead; s = s->next)
-    print("\t%s%s", s->s, (s->next == &lhead) ? " ]\n" : ",\n");
+    print("\t%s%s", s->s, (s->next == &lhead) ? "" : ",\n");
+  print(" ]\n");
   print("module(code=code, ");
   if (firstfile)
     print("name='%s', ", firstfile);

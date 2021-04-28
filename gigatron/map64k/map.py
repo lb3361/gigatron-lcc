@@ -47,7 +47,7 @@ def map_extra_modules():
     code=[ ('EXPORT', '_init2'),
            ('DATA', '_init2', code0, 2, 2),
            ('EXPORT', '_segments'),
-           ('DATA', '_segments', code1, 8*len(segments)+2, 2) ]
+           ('DATA', '_segments', code1, 0, 2) ]
     name='_map64k.s'
     debug(f"synthetizing module '{name}'")
     module(code=code, name=name);

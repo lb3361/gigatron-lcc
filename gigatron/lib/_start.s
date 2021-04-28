@@ -7,11 +7,11 @@ def code0():
     STW(SP)
     # check rom
     label('.checkrom')
-    LD('romType')
-    ANDI(0xfc)
-    SUBI('_minrom')
+    LD('romType');
+    ANDI(0xfc);
+    SUBI('_minrom');
     BGE('.checkram')
-    LDI(10)
+    LDI(10); 
     BRA('.exit')
     # check ramsize
     label('.checkram')
@@ -34,20 +34,43 @@ def code0():
     STW(R8)
     STW(R9)
     _CALLI('main')
+    STW(R8)
+    # exit
+    label('exit')
+    # call atexit handlers
+    LDW(R8)
+    STW(R28)
+    LDW('_atexit')
+    BRA('.atexittst')
+    label('.atexitloop')
+    DEEK(); STW(T3); CALL(T3)
+    LDI(2); ADDW(R29); DEEK()
+    label('.atexittest')
+    STW(R29)
+    BNE('.atexitloop')
+    LDW(R28)
     # call exit in vcpu4 compatible way
     label('.exit')
     STW(R8)
+    label('_exit')
     LDWI('_@_exit')
     STW(T3)
     LDW(R8)
     CALL(T3)
     HALT()
 
+def code1():
+    align(2)
+    label('_atexit')
+    word(0)
 
 # ======== (epilog)
 code=[
     ('EXPORT', '_start'),
+    ('EXPORT', '_exit'),
+    ('EXPORT', 'exit'),
     ('CODE', '_start', code0),
+    ('COMMON', '_atexit', code1, 2, 2),
     ('IMPORT', 'main'),
     ('IMPORT', '_init1'),
     ('IMPORT', '_init2'),

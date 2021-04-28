@@ -498,19 +498,19 @@ stmt: ASGNI1(ac,iarg)  "\t%0%[1b]POKEA(%1);\n" mincpu6(28)
 
 # Conditional branches
 stmt: EQI2(ac,con0)  "\t%0_BEQ(%a);\n" 28
-stmt: EQI2(ac,con8)  "\t%0XORI(con8);_BEQ(%a);\n" 42
+stmt: EQI2(ac,con8)  "\t%0XORI(%1);_BEQ(%a);\n" 42
 stmt: EQI2(ac,iarg)  "\t%0%[1b]XORW(%1);_BEQ(%a);\n" 54
 stmt: EQI2(iarg,ac)  "\t%1%[0b]XORW(%0);_BEQ(%a);\n" 54
 stmt: NEI2(ac,con0)  "\t%0_BNE(%a);\n" 28
-stmt: NEI2(ac,con8)  "\t%0XORI(con8);_BNE(%a);\n" 42
+stmt: NEI2(ac,con8)  "\t%0XORI(%1);_BNE(%a);\n" 42
 stmt: NEI2(ac,iarg)  "\t%0%[1b]XORW(%1);_BNE(%a);\n" 54
 stmt: NEI2(iarg,ac)  "\t%1%[0b]XORW(%0);_BNE(%a);\n" 54
 stmt: EQU2(ac,con0)  "\t%0_BEQ(%a);\n" 28
-stmt: EQU2(ac,con8)  "\t%0XORI(con8);_BEQ(%a);\n" 42
+stmt: EQU2(ac,con8)  "\t%0XORI(%1);_BEQ(%a);\n" 42
 stmt: EQU2(ac,iarg)  "\t%0%[1b]XORW(%1);_BEQ(%a);\n" 54
 stmt: EQU2(iarg,ac)  "\t%1%[0b]XORW(%0);_BEQ(%a);\n" 54
 stmt: NEU2(ac,con0)  "\t%0_BNE(%a);\n" 28
-stmt: NEU2(ac,con8)  "\t%0XORI(con8);_BNE(%a);\n" 42
+stmt: NEU2(ac,con8)  "\t%0XORI(%1);_BNE(%a);\n" 42
 stmt: NEU2(ac,iarg)  "\t%0%[1b]XORW(%1);_BNE(%a);\n" 54
 stmt: NEU2(iarg,ac)  "\t%1%[0b]XORW(%0);_BNE(%a);\n" 54
 stmt: LTI2(ac,con0) "\t%0_BLT(%a);\n" 28

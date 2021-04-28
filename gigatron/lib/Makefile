@@ -25,15 +25,15 @@ ${B}libc.a: ${SFILES} ${OFILES} ${RFILES}
 	cat ${SFILES} ${OFILES} ${RFILES} > ${B}libc.a
 
 
-${BL}%_4.o: %.c
+${BL}%_4.o: %.c ${B}rcc
 	-@mkdir -p ${BL}
 	${B}glcc -c -cpu=4 -o $@ $<
 
-${BL}%_5.o: %.c
+${BL}%_5.o: %.c ${B}rcc
 	-@mkdir -p ${BL}
 	${B}glcc -c -cpu=4 -o $@ $<
 
-${BL}%_6.o: %.c
+${BL}%_6.o: %.c ${B}rcc
 	-@mkdir -p ${BL}
 	${B}glcc -c -cpu=6 -o $@  $<
 

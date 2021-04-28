@@ -52,6 +52,7 @@ final_pass = False
 lbranch_counter = 0
 error_counter = 0
 warning_counter = 0
+genlabel_counter = 0
 labelchange_counter = 0
 
 map_extra_modules = None
@@ -126,21 +127,26 @@ def is_not_pcpage(x):
         return int(x) & 0xff00 == pc() & 0xff00
     return False
 
+def genlabel():
+    global genlabel_counter
+    genlabel_counter += 1
+    return f".LL{genlabel_counter}"
+
 def check_zp(x):
     x = v(x)
-    if is_not_zeropage(x):
+    if is_not_zeropage(x) and final_pass:
         warning(f"zero page argument overflow")
     return x
 
 def check_br(x):
     x = v(x)
-    if is_not_pcpage(x):
+    if is_not_pcpage(x) and final_pass:
         warning(f"short branch overflow")
     return (int(x)-2) & 0xff
 
 def check_cpu(op, v):
-    if args.cpu < v:
-        warning(f"opcode not implemented for cpu={arg.cpu}")
+    if args.cpu < v and final_pass:
+        warning(f"opcode '{op}' not implemented by cpu={arg.cpu}")
 
 class Module:
     '''Class for assembly modules read from .s/.o/.a files.'''
@@ -153,11 +159,9 @@ class Module:
         self.exports = []
         self.imports = []
         self.library = library
-        self.genlabelcounter = 0
         self.symdefs = {}
         self.sympass = {}
         self.used = False
-        self.hops = []
         for tp in self.code:
             if tp[0] == 'EXPORT':
                 self.exports.append(tp[1])
@@ -165,12 +169,9 @@ class Module:
                 self.imports.append(tp[1])
     def __repr__(self):
         return f"Module('{self.fname or self.name}',...)"
-    def genlabel():
-        self.genlabelcounter += 1
-        return f".LL{self.genlabelcounter}"
-    def v(s):
+    def v(self, s):
         global exporters
-        if not isintance(s, str):
+        if not isinstance(s, str):
             return s
         elif s in self.symdefs:
             return self.symdefs[s]
@@ -180,8 +181,8 @@ class Module:
                 return exporter.v(s)
         elif s in symdefs:
             return symdefs[s]
-        return Unk()
-    def label(sym, val):
+        return Unk(0x1234)
+    def label(self, sym, val):
         if the_pass > 0:
             if sym in self.symdefs:
                 if val != self.symdefs[sym]:
@@ -190,9 +191,10 @@ class Module:
                         error(f"Multiple definitions of label '{sym}'")
                 self.symdefs[sym] = v
                 self.sympass[sym] = the_pass
-    def tryhop(jump=True):
-        if the_pass == 0:
-            self.hops.append(the_pc)
+    def tryhop(self, jump=True):
+        global hops
+        if the_pass == 0 and isinstance(hops,list):
+            hops.append(the_pc)
         else:
             pass ## TODO: check segment, hop if necessary
 
@@ -200,7 +202,7 @@ def final_emit(*args):
     fatal("not yet implemented")
         
 def emit(*args):
-    global final_pass
+    global final_pass, the_pc
     if final_pass:
         final_emit(*args)
     else:
@@ -227,7 +229,7 @@ def emitjmp(d, saveAC=False):
         RET()
     
 def emitjcc(BCC, BNCC, d, saveAC=False):
-    lbl = current_module.genlabel()
+    lbl = genlabel()
     if is_pcpage(d):
         BCC(d)
     elif args.cpu > 5:
@@ -463,13 +465,13 @@ def DEF(d):
     emit(0xcd, check_br(d))
 @vasm
 def CALLI(d):
-    check_cpu(5); d=int(v(d)); emit(0x85, lo(d-2), hi(d))
+    check_cpu('CALLI', 5); d=int(v(d)); emit(0x85, lo(d-2), hi(d))
 @vasm
 def CMPHS(d):
-    check_cpu(5); emit(0x1f, check_zp(d))
+    check_cpu('CMPHS', 5); emit(0x1f, check_zp(d))
 @vasm
 def CMPHU(d):
-    check_cpu(5); emit(0x97, check_zp(d))
+    check_cpu('CMPHU', 5); emit(0x97, check_zp(d))
 
 @vasm
 def _SP(n):
@@ -605,7 +607,7 @@ def _CMPIS(d):
     if args.cpu >= 5:
         CMPHS(0); SUBI(d)
     else:
-        lbl = current_module.genlabel()
+        lbl = genlabel()
         BLT(lbl)
         SUBI(d)
         label(lbl)
@@ -614,7 +616,7 @@ def _CMPIU(d):
     if args.cpu >= 5:
         CMPHU(0); SUBI(d)
     else:
-        lbl = current_module.genlabel()
+        lbl = genlabel()
         BGE(lbl)
         LDWI(0x100)
         label(lbl)
@@ -624,8 +626,8 @@ def _CMPWS(d):
     if args.cpu >= 5:
         CMPHS(d+1); SUBW(d)
     else:
-        lbl1 = current_module.genlabel()
-        lbl2 = current_module.genlabel()
+        lbl1 = genlabel()
+        lbl2 = genlabel()
         STW(T3); XORW(d)
         BGE(lbl1)
         LDW(T3); ORI(1)
@@ -638,8 +640,8 @@ def _CMPWU(d):
     if args.cpu >= 5:
         CMPHU(d+1); SUBW(d)
     else:
-        lbl1 = current_module.genlabel()
-        lbl2 = current_module.genlabel()
+        lbl1 = genlabel()
+        lbl2 = genlabel()
         STW(T3); XORW(d)
         BGE(lbl1)
         LDW(d); ORI(1)
@@ -940,7 +942,7 @@ def read_rominfo(rom):
 
 
 
-# ------------- closure
+# ------------- prepare link
 
 def find_exporters(sym):
     elist = []
@@ -961,7 +963,6 @@ def compute_closure():
         else:
             e = None
             elist = find_exporters(sym)
-            debug(f"exporters for {sym}: {elist}")
             for m in elist:
                 if m.library:
                     if e and not e.library:
@@ -1019,7 +1020,38 @@ def check_undefined_symbols():
     for s in und:
         error(f"Undefined symbol '{s}' imported by {comma.join(und[s])}")
 
+def measure_data_fragment(m, frag):
+    global the_module, the_fragment, the_pc
+    the_module = m
+    the_fragment = frag
+    the_pc = 0
+    frag[2]()
+    return frag[0:3] + (the_pc,) + frag[4:]
 
+def measure_code_fragment(m, frag):
+    global the_module, the_fragment, the_pc, hops
+    hops = []
+    the_module = m
+    the_fragment = frag
+    the_pc = 0
+    frag[2]()
+    nhops = len(hops)
+    for i in range(0, nhops):
+        next = hops[i+1] if i+1 < nhops else the_pc
+        hops[i] = next - hops[i]
+    return frag + (the_pc, hops)
+
+def measure_fragments():
+    for m in module_list:
+        for (i,frag) in enumerate(m.code):
+            fragtype = frag[0]
+            if fragtype in ('DATA', 'BSS') and frag[3] == 0:
+                m.code[i] = measure_data_fragment(m, frag)
+            elif fragtype in ('CODE'):
+                m.code[i] = measure_code_fragment(m, frag)
+
+
+                
 # ------------- main function
 
 
@@ -1139,6 +1171,8 @@ def main(argv):
         if error_counter > 0:
             return 1
 
+        # measure fragments whose length is unknown
+        measure_fragments()
         
         return 0
     

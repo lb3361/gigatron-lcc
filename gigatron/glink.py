@@ -62,7 +62,7 @@ map_ram = None
 # --------------- utils
 
 def debug(s, level=1):
-    if args.v and args.v >= level:
+    if args.d and args.d >= level:
         print("(glink debug) " + s, file=sys.stderr)
         
 def where(tb=None):
@@ -972,15 +972,18 @@ def compute_closure():
                         e = m
                 else:
                     if e and not e.library:
-                        error(f"Symbol {sym} is exported by both {e.fname} and {m.fname}")
+                        error(f"Symbol '{sym}' is exported by both '{e.fname}' and '{m.fname}'")
                     e = m
             if e:
                 debug(f"Including module '{e.fname}' for symbol '{sym}'")
                 e.used = True
-                for sym in e.exports:
-                    exporters[sym] = e
                 for sym in e.imports:
                     implist.append(sym)
+                for sym in e.exports:
+                    if sym in exporters:
+                        error(f"Symbol '{sym}' is exported by both '{e.fname}' and '{exporters[sym].fname}'")
+                    if sym not in exporters or exporters[sym].library:
+                        exporters[sym] = e
     # only keep used modules
     nml = []
     for m in module_list:
@@ -1063,7 +1066,7 @@ def main(argv):
                             help='select the target rom version')
         parser.add_argument('-map', type=str, action='store',
                             help='select a linker map')
-        parser.add_argument('-v', action='count',
+        parser.add_argument('-d', action='count',
                             help='enable verbose output')
         parser.add_argument('-e', type=str, action='store', default='_start',
                             help='select the entry point symbol (default _start)')
@@ -1134,7 +1137,7 @@ def main(argv):
         convert_common_symbols()
         check_undefined_symbols()
         if error_counter > 0:
-            fatal(f"{error_counter} errors")
+            return 1
 
         
         return 0

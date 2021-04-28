@@ -1112,16 +1112,16 @@ static int bitcount(unsigned mask) {
 
 static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
 {
-  int i, roffset, soffset, sizesave, varargs, ty;
+  int i, roffset, soffset, sizesave, varargs, callvarargs, ty;
   Symbol r, argregs[8];
   usedmask[0] = usedmask[1] = 0;
   freemask[0] = freemask[1] = ~(unsigned)0;
   offset = maxoffset = maxargoffset = 0;
   assert(f->type && f->type->type);
   ty = ttob(f->type->type);
-  /* is it variadic? */
-  for (i = 0; callee[i]; i++) {}
-  varargs = variadic(f->type) || i > 0 && strcmp(callee[i-1]->name, "va_alist") == 0;
+  /* is it variadic? does it call variadics? */
+  varargs = variadic(f->type);
+  callvarargs = f->u.f.nvariadics;
   /* locate incoming arguments */
   roffset = 0;
   for (i = 0; callee[i]; i++) {
@@ -1165,7 +1165,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   if (ncalls)
     usedmask[IREG] |= REGMASK_LR;
   i = bitcount(REGMASK_ARGS) * 2;
-  if (ncalls & maxargoffset < i)
+  if (ncalls && callvarargs && maxargoffset < i)
     maxargoffset = i;
   usedmask[IREG] &= REGMASK_VARS;
   sizesave = 2 * bitcount(usedmask[IREG]);
@@ -1215,7 +1215,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
     }
   }
   /* for variadic functions, save remaining registers */
-  if (varargs)
+  if (varargs) 
     while (! ((r=ireg[roffset])->x.regnode->mask & ~REGMASK_ARGS)) {
       print("_SP(%d+%d);_MOV(%s,[AC]);", soffset, framesize, r->x.name);
       roffset += 1;

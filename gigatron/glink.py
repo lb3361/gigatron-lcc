@@ -200,7 +200,7 @@ class Module:
     def tryhop(self, jump=True):
         global hops
         if the_pass == 0 and isinstance(hops,list):
-            hops.append(the_pc)
+            hops.append(the_pc if jump else (the_pc,jump))
         else:
             pass ## TODO: check segment, hop if necessary
 
@@ -238,8 +238,8 @@ def emitjcc(BCC, BNCC, d, saveAC=False):
     lbl = genlabel()
     if is_pcpage(d):
         BCC(d)
-    elif args.cpu > 5:
-        JCC(d)
+    #elif args.cpu > 5:
+    #    JCC(d)
     else:
         BNCC(lbl);
         emitjmp(int(d), saveAC=saveAC)
@@ -484,8 +484,9 @@ def CMPHU(d):
 @vasm
 def _SP(n):
     n = v(n)
+    tryhop()
     if is_zero(n):
-        LDW(SP);
+        _LDW(SP);
     else:
         _LDI(n); ADDW(SP)
 @vasm
@@ -994,11 +995,17 @@ def measure_code_fragment(m, frag):
     except Exception as err:
         fatal(str(err), exc=True)
     nhops = len(hops)
-    for i in range(0, nhops):
-        next = hops[i+1] if i+1 < nhops else the_pc
-        hops[i] = next - hops[i]
-    debug(f"Function '{frag[1]}' is {the_pc}-{lbranch_counter} bytes long")
-    return frag + (the_pc, lbranch_counter, hops)
+    for i in range(1, nhops):
+        pc = hops[i]
+        jump = pc[1] if isinstance(pc,tuple) else True
+        pc = pc[0]if isinstance(pc,tuple) else pc
+        hops[i-1] = pc - hops[i-1] + (6 if jump else 0)
+        hops[i] = pc
+    hops[nhops-1] = 0
+    debug(f"Function '{frag[1]}' is {the_pc}(-{lbranch_counter}) bytes long")
+    frag = frag + (the_pc, lbranch_counter, hops)
+    hops = None
+    return frag
 
 def measure_fragments(m):
     for (i,frag) in enumerate(m.code):

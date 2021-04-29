@@ -229,8 +229,6 @@ Node listnodes(Tree tp, int tlab, int flab) {
 		      list(p);
 		      reset();
 		      cfunc->u.f.ncalls++;
-		      if(variadic(p->syms[0]->type))
-			      cfunc->u.f.nvariadics++;
 		      firstarg = save;
  } break;
 	case ARG:   { assert(tlab == 0 && flab == 0);

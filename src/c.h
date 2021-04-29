@@ -291,7 +291,6 @@ struct symbol {
 			Coordinate pt;
 			int label;
 			int ncalls;
-			int nvariadics;
 			Symbol *callee;
 		} f;
 		int seg;

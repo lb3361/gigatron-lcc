@@ -87,7 +87,7 @@ static int  if_rmw1(Node,int);
 static int  if_rmw2(Node,int);
 static int  if_vregp_not_temp(Node);
 static int  if_cv_from(Node,int,int);
-static int  if_arg_reg(Node);
+static int  if_arg_reg_only(Node);
 static int  if_arg_stk(Node);
  
 /* Registers */
@@ -99,7 +99,7 @@ static Symbol iregw, lregw, fregw;
 #define REGMASK_TEMPS           0x000fff00
 #define REGMASK_LR              0x40000000
 
-/* Misc */ 
+/* Misc */
 static int codenum = 0;
 static int cseg = 0;
 static int cpu = 5;
@@ -676,12 +676,12 @@ stmt: ARGU4(vsrc) "\t%[0b]_SP(%c);_LMOV(%0,[AC]);\n"  if_arg_stk(a)
 stmt: ARGI2(reg)  "\t_SP(%c);_MOV(%0,[AC]);\n"        if_arg_stk(a)
 stmt: ARGU2(reg)  "\t_SP(%c);_MOV(%0,[AC]);\n"        if_arg_stk(a)
 stmt: ARGP2(reg)  "\t_SP(%c);_MOV(%0,[AC]);\n"        if_arg_stk(a)
-stmt: ARGF5(reg)  "# arg\n"  if_arg_reg(a)
-stmt: ARGI4(reg)  "# arg\n"  if_arg_reg(a)
-stmt: ARGU4(reg)  "# arg\n"  if_arg_reg(a)
-stmt: ARGI2(reg)  "# arg\n"  if_arg_reg(a)
-stmt: ARGU2(reg)  "# arg\n"  if_arg_reg(a)
-stmt: ARGP2(reg)  "# arg\n"  if_arg_reg(a)
+stmt: ARGF5(reg)  "# arg\n"  if_arg_reg_only(a)
+stmt: ARGI4(reg)  "# arg\n"  if_arg_reg_only(a)
+stmt: ARGU4(reg)  "# arg\n"  if_arg_reg_only(a)
+stmt: ARGI2(reg)  "# arg\n"  if_arg_reg_only(a)
+stmt: ARGU2(reg)  "# arg\n"  if_arg_reg_only(a)
+stmt: ARGP2(reg)  "# arg\n"  if_arg_reg_only(a)
 stmt: RETF5(fac)  "\t%0\n"  1
 stmt: RETI4(lac)  "\t%0\n"  1
 stmt: RETU4(lac)  "\t%0\n"  1
@@ -805,14 +805,14 @@ static void xprint_finish(void)
   in_function = 0;
 }
 
-static int if_arg_reg(Node p)
+static int if_arg_reg_only(Node p)
 {
-  return p->syms[1] ? 1 : LBURG_MAX;
+  return p->syms[2] ? LBURG_MAX : 1;
 }
 
 static int if_arg_stk(Node p)
 {
-  return p->syms[1] ? LBURG_MAX : 1;
+  return p->syms[2] ? 1 : LBURG_MAX;
 }
 
 static int if_zpconst(Node p)
@@ -1083,16 +1083,41 @@ static void emit3(const char *fmt, Node p, Node *kids, short *nts)
 
 static void doarg(Node p)
 {
+  /* Important change in arg passing:
+     - When calling a function, all arguments beyond
+       those specified in the prototype are written to the stack 
+       in addition to being possibly passed in registers.
+       In particular this happens for all arguments
+       when calling a non prototyped function,
+       and this happens for all supplementary arguments
+       when the function has a variadic prototype.
+     - When defining a function, prototyped or not,
+       arguments are read from registers whenever possible.
+     - The stdarg macros always read arguments from the stack.
+  */
   static int argno;
+  static int argmaxno;
   static int roffset;
   int offset;
   Symbol r;
-  if (argoffset == 0)
+  Node c;
+  if (argoffset == 0) {
     argno = 0;
+    argmaxno = 0;
+    for (c=p; c; c=c->link)
+      if (generic(c->op) == CALL ||
+          (generic(c->op) == ASGN && generic(c->kids[1]->op) == CALL &&
+           (c = c->kids[1]) ) )
+        break;
+    if (c && c->syms[0]->type->u.f.proto)
+      while (c->syms[0]->type->u.f.proto[argmaxno] &&
+             c->syms[0]->type->u.f.proto[argmaxno] != voidtype)
+        argmaxno += 1;
+  }
   r  = argreg(argno, optype(p->op), opsize(p->op), &roffset);
   offset = mkactual(p->syms[1]->u.c.v.i, p->syms[0]->u.c.v.i);
   p->x.argno = argno++;
-  p->syms[2] = intconst(offset);
+  p->syms[2] = (r && p->x.argno < argmaxno) ? 0 : intconst(offset);
   p->syms[1] = r;
 }
 
@@ -1112,17 +1137,15 @@ static int bitcount(unsigned mask) {
 
 static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
 {
-  int i, roffset, soffset, sizesave, varargs, callvarargs, ty;
+  int i, roffset, soffset, sizesave, argstk, ty;
   Symbol r, argregs[8];
   usedmask[0] = usedmask[1] = 0;
   freemask[0] = freemask[1] = ~(unsigned)0;
   offset = maxoffset = maxargoffset = 0;
   assert(f->type && f->type->type);
   ty = ttob(f->type->type);
-  /* is it variadic? does it call variadics? */
-  varargs = variadic(f->type);
-  callvarargs = f->u.f.nvariadics;
   /* locate incoming arguments */
+  argstk = 0;
   roffset = 0;
   for (i = 0; callee[i]; i++) {
     Symbol p = callee[i];
@@ -1135,7 +1158,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
     if (i < 8)
       argregs[i] = r;
     offset += q->type->size;
-    if (varargs) {
+    if (argstk) {
       p->sclass = AUTO;
     } else if (r && ncalls == 0 && !p->addressed) {
       p->sclass = q->sclass = REGISTER;
@@ -1151,8 +1174,8 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   }
   /* gen code */
   assert(!caller[i]);
-  soffset = roundup(offset,2);
   offset = 0;
+  assignargs = 0; /* Try this */
   gencode(caller, callee);
   /* prologue */
   xprint_init();
@@ -1166,9 +1189,6 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   if (ncalls)
     usedmask[IREG] |= REGMASK_LR;
   sizesave = 2 * bitcount(usedmask[IREG]);
-  i = 2 * bitcount(REGMASK_ARGS);
-  if (ncalls && callvarargs && maxargoffset < i)
-    maxargoffset = i;
   framesize = maxargoffset + sizesave + maxoffset;
   if (framesize > 0)
     print("_SP(%d);STW(SP);",-framesize);
@@ -1214,16 +1234,8 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
       }
     }
   }
-  /* for variadic functions, save remaining registers */
-  if (varargs) 
-    while (! ((r=ireg[roffset])->x.regnode->mask & ~REGMASK_ARGS)) {
-      print("_SP(%d+%d);_MOV(%s,[AC]);", soffset, framesize, r->x.name);
-      roffset += 1;
-      soffset += 2;
-    }
   print("\n");
   /* Emit actual code */
-  assignargs = 0; /* ????? */
   emitcode();
   /* Restore callee saved registers */
   print("\t");

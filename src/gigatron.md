@@ -1162,13 +1162,13 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   print("def code%d():\n", codenum++);
   print("\tlabel(%s);\n", f->x.name);
   print("\tLDW(vLR);STW(LR);");
+  usedmask[IREG] &= REGMASK_VARS;
   if (ncalls)
     usedmask[IREG] |= REGMASK_LR;
-  i = bitcount(REGMASK_ARGS) * 2;
+  sizesave = 2 * bitcount(usedmask[IREG]);
+  i = 2 * bitcount(REGMASK_ARGS);
   if (ncalls && callvarargs && maxargoffset < i)
     maxargoffset = i;
-  usedmask[IREG] &= REGMASK_VARS;
-  sizesave = 2 * bitcount(usedmask[IREG]);
   framesize = maxargoffset + sizesave + maxoffset;
   if (framesize > 0)
     print("_SP(%d);STW(SP);",-framesize);

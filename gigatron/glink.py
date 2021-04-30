@@ -140,8 +140,22 @@ def genlabel():
 
 def check_zp(x):
     x = v(x)
-    if is_not_zeropage(x) and final_pass:
-        warning(f"zero page argument overflow")
+    if final_pass and is_not_zeropage(x):
+        warning(f"zero page address overflow")
+    return x
+
+def check_imm8(x):
+    x = v(x)
+    if final_pass and isinstance(x,int):
+        if x < 0 or x > 255:
+            warning(f"immediate byte argument overflow")
+    return x
+
+def check_ims8(x):
+    x = v(x)
+    if final_pass and isinstance(x,int):
+        if x < -128 or x > 255:
+            warning(f"immediate byte argument overflow")
     return x
 
 def check_br(x):
@@ -361,7 +375,7 @@ def LD(d):
     tryhop(); emit(0x1a, check_zp(d))
 @vasm
 def LDI(d, hop=True):
-    tryhop(); emit(0x59, check_zp(d))
+    tryhop(); emit(0x59, check_im8s(d))
 @vasm
 def LDWI(d):
     tryhop(); d=int(v(d)); emit(0x11, lo(d), hi(d))
@@ -379,10 +393,10 @@ def SUBW(d):
     emit(0xb8, check_zp(d))
 @vasm
 def ADDI(d):
-    emit(0xe3, check_zp(d))
+    emit(0xe3, check_imm8(d))
 @vasm
 def SUBI(d):
-    emit(0x36, check_zp(d))
+    emit(0x36, check_imm8(d))
 @vasm
 def LSLW():
     emit(0xe9)
@@ -391,19 +405,19 @@ def INC(d):
     emit(0x93, check_zp(d))
 @vasm
 def ANDI(d):
-    emit(0x82, check_zp(d))
+    emit(0x82, check_imm8(d))
 @vasm
 def ANDW(d):
     emit(0xf8, check_zp(d))
 @vasm
 def ORI(d):
-    emit(0x88, check_zp(d))
+    emit(0x88, check_imm8(d))
 @vasm
 def ORW(d):
     emit(0xfa, check_zp(d))
 @vasm
 def XORI(d):
-    emit(0x8c, check_zp(d))
+    emit(0x8c, check_imm8(d))
 @vasm
 def XORW(d):
     emit(0xfc, check_zp(d))
@@ -481,6 +495,60 @@ def CMPHS(d):
 def CMPHU(d):
     check_cpu('CMPHU', 5); emit(0x97, check_zp(d))
 
+# some experimental instructions for cpu6 (opcodes to be checked)
+@vasm
+def DOKEA(d):
+    check_cpu('DOKEA', 6); emit(0x7d, check_zp(d))
+@vasm
+def POKEA(d):
+    check_cpu('POKEA', 6); emit(0x69, check_zp(d))
+@vasm
+def DOKEI(d):
+    check_cpu('DOKEI', 6); d=int(v(d)); emit(0x37, lo(d), hi(d))
+@vasm
+def POKEI(d):
+    check_cpu('POKEI', 6); emit(0x25, check_im8s(d))
+@vasm
+def DEEKA(d):
+    check_cpu('DEEKA', 6); emit(0x6f, check_zp(d))
+@vasm
+def PEEKA(d):
+    check_cpu('PEEKA', 6); emit(0x67, check_zp(d))
+@vasm
+def DEC(d):
+    check_cpu('DEC', 6); emit(0x14, check_zp(d))
+@vasm
+def INCW(d):
+    check_cpu('INCW', 6); emit(0x79, check_zp(d))
+@vasm
+def DECW(d):
+    check_cpu('DECW', 6); emit(0x7b, check_zp(d))
+@vasm
+def NEGW(d):
+    check_cpu('NEGW', 6); emit(0xd3, check_zp(d))
+@vasm
+def NOTB(d):
+    check_cpu('NOTB', 6); emit(0x48, check_zp(d))
+@vasm
+def NOTW(d):
+    check_cpu('NOTW', 6); emit(0x8a, check_zp(d))
+@vasm
+def LSLV(d):
+    check_cpu('LSLV', 6); emit(0x27, check_zp(d))
+@vasm
+def ADDBA(d):
+    check_cpu('ADDBA', 6); emit(0x29, check_zp(d))
+@vasm
+def SUBBA(d):
+    check_cpu('SUBBA', 6); emit(0x77, check_zp(d))
+@vasm
+def PEEKV(d):
+    check_cpu('PEEKV', 6); emit(0x39, check_zp(d))
+@vasm
+def DEEKV(d):
+    check_cpu('DEEKV', 6); emit(0x3b, check_zp(d))
+
+    
 @vasm
 def _SP(n):
     n = v(n)

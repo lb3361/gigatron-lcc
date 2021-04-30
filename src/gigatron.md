@@ -300,6 +300,7 @@ con0: CNSTI1  "%a"  range(a,0,0)
 con0: CNSTU1  "%a"  range(a,0,0)
 con0: CNSTI2  "%a"  range(a,0,0)
 con0: CNSTU2  "%a"  range(a,0,0)
+con0: CNSTP2  "%a"  range(a,0,0)
 con1: CNSTI1  "%a"  range(a,1,1)
 con1: CNSTU1  "%a"  range(a,1,1)
 con1: CNSTI2  "%a"  range(a,1,1)
@@ -309,6 +310,7 @@ con8: CNSTU1  "%a"  range(a,0,255)
 con8: CNSTI2  "%a"  range(a,0,255)
 con8: CNSTU2  "%a"  range(a,0,255)
 con8: CNSTP2  "%a"  if_zpconst(a)
+co8n: CNSTI1  "%a"  range(a,-255,-1)
 co8n: CNSTI2  "%a"  range(a,-255,-1)
 con: CNSTI1  "%a"
 con: CNSTU1  "%a"
@@ -353,16 +355,16 @@ zddr: con8 "%0"
 
 stmt: reg ""
 stmt: ac1 "\t%0\n"
-reg: ac "\t%0STW(%c);\n" 20
-ac: reg "LDW(%0);" 20
-ac: con8 "LDI(%0);" 16
-ac: con "LDWI(%0);" 20
-ac: zddr "LDI(%0);" 16
-ac: addr "LDWI(%0);" 20
-ac: eac "%0" 
-ac1: ac "%0"
-ac: ac1 "%0LD(vACL);" 16
-eac: reg "LDW(%0);" 20
+reg: ac   "\t%0STW(%c);\n" 20
+ac: reg   "LDW(%0);" 20
+ac: con8  "LDI(%0);" 16
+ac: con   "LDWI(%0);" 20
+ac: zddr  "LDI(%0);" 16
+ac: addr  "LDWI(%0);" 20
+ac: eac   "%0" 
+ac1: ac   "%0"
+ac: ac1   "%0LD(vACL);" 16
+eac: reg  "LDW(%0);" 20
 eac: zddr "LDI(%0);" 16
 eac: addr "LDWI(%0);" 20
 eac: lddr "_SP(%0);"  40
@@ -422,7 +424,7 @@ ac: SUBI2(ac,co8n) "%0ADDI(-(%1));" 28
 ac: SUBU2(ac,co8n) "%0ADDI(-(%1));" 28
 ac: SUBP2(ac,co8n) "%0ADDI(-(%1));" 28
 ac: NEGI2(ac)   "%0STW(T3);LDI(0);SUBW(T3);" 68
-ac: NEGI2(iarg) "LDI(0);%[0b]SUBW(%0);" 48
+ac: NEGI2(reg ) "LDI(0);SUBW(%0);" 48
 ac: LSHI2(ac, con8) "%0%{shl1}" 100
 ac: LSHI2(ac, iarg) "%0%[1b]_SHL(%1);" 200
 ac: RSHI2(ac, iarg) "%0%[1b]_SHRS(%1);" 200
@@ -482,19 +484,14 @@ eac: LSHU2(eac, con8) "%0%{shl1}" 100
 # Assignments
 stmt: ASGNP2(zddr,ac)  "\t%1STW(%0);\n" 20
 stmt: ASGNP2(iarg,ac)  "\t%1%[0b]DOKE(%0);\n" 28
-stmt: ASGNP2(ac,iarg)  "\t%0%[1b]DOKEA(%1);\n" mincpu6(30)
 stmt: ASGNI2(zddr,ac)  "\t%1STW(%0);\n" 20
 stmt: ASGNI2(iarg,ac)  "\t%1%[0b]DOKE(%0);\n" 28
-stmt: ASGNI2(ac,iarg)  "\t%0%[1b]DOKEA(%1);\n" mincpu6(30)
 stmt: ASGNU2(zddr,ac)  "\t%1STW(%0);\n" 20
 stmt: ASGNU2(iarg,ac)  "\t%1%[0b]DOKE(%0);\n" 28
-stmt: ASGNU2(ac,iarg)  "\t%0%[1b]DOKEA(%1);\n" mincpu6(30)
 stmt: ASGNI1(zddr,ac1) "\t%1ST(%0);\n" 20
 stmt: ASGNI1(iarg,ac1) "\t%1%[0b]POKE(%0);\n" 26
-stmt: ASGNI1(ac,iarg)  "\t%0%[1b]POKEA(%1);\n" mincpu6(28)
 stmt: ASGNU1(zddr,ac1) "\t%1ST(%0);\n" 20
 stmt: ASGNU1(iarg,ac1) "\t%1%[0b]POKE(%0);\n" 26
-stmt: ASGNI1(ac,iarg)  "\t%0%[1b]POKEA(%1);\n" mincpu6(28)
 
 # Conditional branches
 stmt: EQI2(ac,con0)  "\t%0_BEQ(%a);\n" 28
@@ -735,12 +732,42 @@ stmt: ASGNU1(zddr, LOADU1(ADDI2(CVUI2(INDIRU1(zddr)), con1)))  "\tINC(%1);\n" if
 stmt: ASGNI1(zddr, LOADI1(ADDI2(CVII2(INDIRI1(zddr)), con1)))  "\tINC(%1);\n" if_rmw1(a,16)
 
 # More opcodes for cpu=6
+stmt: ASGNU1(zddr, LOADU1(SUBI2(CVUI2(INDIRU1(zddr)), con1)))  "\tDEC(%1);\n" mincpu6(if_rmw1(a,16))
+stmt: ASGNI1(zddr, LOADI1(SUBI2(CVII2(INDIRI1(zddr)), con1)))  "\tDEC(%1);\n" mincpu6(if_rmw1(a,16))
 stmt: ASGNP2(zddr, ADDP2(INDIRP2(zddr), con1)) "\tINCW(%1);\n" mincpu6(if_rmw2(a, 26))
 stmt: ASGNU2(zddr, ADDU2(INDIRU2(zddr), con1)) "\tINCW(%1);\n" mincpu6(if_rmw2(a, 26))
 stmt: ASGNI2(zddr, ADDI2(INDIRI2(zddr), con1)) "\tINCW(%1);\n" mincpu6(if_rmw2(a, 26))
-stmt: ASGNP2(zddr, ADDP2(INDIRP2(zddr), con1)) "\tINCW(%1);\n" mincpu6(if_rmw2(a, 26))
-stmt: ASGNU2(zddr, ADDU2(INDIRU2(zddr), con1)) "\tINCW(%1);\n" mincpu6(if_rmw2(a, 26))
-stmt: ASGNI2(zddr, ADDI2(INDIRI2(zddr), con1)) "\tINCW(%1);\n" mincpu6(if_rmw2(a, 26))
+stmt: ASGNP2(zddr, SUBP2(INDIRP2(zddr), con1)) "\tDECW(%1);\n" mincpu6(if_rmw2(a, 26))
+stmt: ASGNU2(zddr, SUBU2(INDIRU2(zddr), con1)) "\tDECW(%1);\n" mincpu6(if_rmw2(a, 26))
+stmt: ASGNI2(zddr, SUBI2(INDIRI2(zddr), con1)) "\tDECW(%1);\n" mincpu6(if_rmw2(a, 26))
+stmt: ASGNI2(zddr, NEGI2(INDIRI2(zddr))) "\tNEGW(%1);\n" mincpu6(if_rmw2(a, 26))
+stmt: ASGNI2(zddr, BCOMI2(INDIRI2(zddr))) "\tNOTW(%1);\n" mincpu6(if_rmw2(a, 26))
+stmt: ASGNU2(zddr, BCOMU2(INDIRU2(zddr))) "\tNOTW(%1);\n" mincpu6(if_rmw2(a, 26))
+stmt: ASGNI2(zddr, LSHI2(INDIRI2(zddr),con1)) "\tLSLV(%1);\n" mincpu6(if_rmw2(a, 28))
+stmt: ASGNU2(zddr, LSHU2(INDIRU2(zddr),con1)) "\tLSLV(%1);\n" mincpu6(if_rmw2(a, 28))
+stmt: ASGNP2(ac,iarg)  "\t%0%[1b]DOKEA(%1);\n" mincpu6(30)
+stmt: ASGNI2(ac,iarg)  "\t%0%[1b]DOKEA(%1);\n" mincpu6(30)
+stmt: ASGNU2(ac,iarg)  "\t%0%[1b]DOKEA(%1);\n" mincpu6(30)
+stmt: ASGNI1(ac,iarg)  "\t%0%[1b]POKEA(%1);\n" mincpu6(28)
+stmt: ASGNI1(ac,iarg)  "\t%0%[1b]POKEA(%1);\n" mincpu6(28)
+stmt: ASGNP2(ac,con)  "\t%0%[1b]DOKEI(%1);\n" mincpu6(30)
+stmt: ASGNI2(ac,con)  "\t%0%[1b]DOKEI(%1);\n" mincpu6(30)
+stmt: ASGNU2(ac,con)  "\t%0%[1b]DOKEI(%1);\n" mincpu6(30)
+stmt: ASGNI1(ac,con8) "\t%0%[1b]POKEI(%1);\n" mincpu6(28)
+stmt: ASGNI1(ac,co8n) "\t%0%[1b]POKEI(%1);\n" mincpu6(28)
+stmt: ASGNU1(ac,con8) "\t%0%[1b]POKEI(%1);\n" mincpu6(28)
+reg: INDIRI2(ac) "\t%0DEEKA(%c);\n" mincpu6(30)
+reg: INDIRU2(ac) "\t%0DEEKA(%c);\n" mincpu6(30)
+reg: INDIRP2(ac) "\t%0DEEKA(%c);\n" mincpu6(30)
+reg: INDIRI1(ac) "\t%0PEEKA(%c);\n" mincpu6(30)
+reg: INDIRU1(ac) "\t%0PEEKA(%c);\n" mincpu6(30)
+ac: INDIRI2(reg) "DEEKV(%0);" mincpu6(30)
+ac: INDIRU2(reg) "DEEKV(%0);" mincpu6(30)
+ac: INDIRP2(reg) "DEEKV(%0);" mincpu6(30)
+ac: INDIRI1(reg) "PEEKV(%0);" mincpu6(30)
+ac: INDIRU1(reg) "PEEKV(%0);" mincpu6(30)
+
+
 
 # /*-- END RULES --/
 %%

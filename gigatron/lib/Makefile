@@ -31,7 +31,7 @@ ${BL}%_4.o: %.c ${B}rcc
 
 ${BL}%_5.o: %.c ${B}rcc
 	-@mkdir -p ${BL}
-	${B}glcc -c -cpu=4 -o $@ $<
+	${B}glcc -c -cpu=5 -o $@ $<
 
 ${BL}%_6.o: %.c ${B}rcc
 	-@mkdir -p ${BL}

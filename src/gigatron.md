@@ -305,20 +305,21 @@ con1: CNSTI1  "%a"  range(a,1,1)
 con1: CNSTU1  "%a"  range(a,1,1)
 con1: CNSTI2  "%a"  range(a,1,1)
 con1: CNSTU2  "%a"  range(a,1,1)
-con8: CNSTI1  "%a"  range(a,0,255)
-con8: CNSTU1  "%a"  range(a,0,255)
 con8: CNSTI2  "%a"  range(a,0,255)
 con8: CNSTU2  "%a"  range(a,0,255)
 con8: CNSTP2  "%a"  if_zpconst(a)
-co8n: CNSTI1  "%a"  range(a,-255,-1)
+con8: CNSTI1  "%a"
+con8: CNSTU1  "%a"
+con8: zddr    "%0"
 co8n: CNSTI2  "%a"  range(a,-255,-1)
-con: CNSTI1  "%a"
-con: CNSTU1  "%a"
-con: CNSTI2  "%a"
-con: CNSTU2  "%a"
-con: CNSTP2  "%a"
-con8: zddr "%0"
-con: addr "%0"
+co8s: CNSTI2  "%a"  range(a,-128,127)
+co8s: CNSTI1  "%a"
+con: CNSTI1   "%a"
+con: CNSTU1   "%a"
+con: CNSTI2   "%a"
+con: CNSTU2   "%a"
+con: CNSTP2   "%a"
+con: addr     "%0"
 
 # -- addresses
 # These non terminals represent addresses in the tree grammar
@@ -754,7 +755,7 @@ stmt: ASGNP2(ac,con)  "\t%0%[1b]DOKEI(%1);\n" mincpu6(30)
 stmt: ASGNI2(ac,con)  "\t%0%[1b]DOKEI(%1);\n" mincpu6(30)
 stmt: ASGNU2(ac,con)  "\t%0%[1b]DOKEI(%1);\n" mincpu6(30)
 stmt: ASGNI1(ac,con8) "\t%0%[1b]POKEI(%1);\n" mincpu6(28)
-stmt: ASGNI1(ac,co8n) "\t%0%[1b]POKEI(%1);\n" mincpu6(28)
+stmt: ASGNI1(ac,co8s) "\t%0%[1b]POKEI(%1);\n" mincpu6(28)
 stmt: ASGNU1(ac,con8) "\t%0%[1b]POKEI(%1);\n" mincpu6(28)
 reg: INDIRI2(ac) "\t%0DEEKA(%c);\n" mincpu6(30)
 reg: INDIRU2(ac) "\t%0DEEKA(%c);\n" mincpu6(30)

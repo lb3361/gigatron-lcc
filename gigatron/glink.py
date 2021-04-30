@@ -151,7 +151,7 @@ def check_imm8(x):
             warning(f"immediate byte argument overflow")
     return x
 
-def check_ims8(x):
+def check_im8s(x):
     x = v(x)
     if final_pass and isinstance(x,int):
         if x < -128 or x > 255:

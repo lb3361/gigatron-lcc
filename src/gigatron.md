@@ -353,7 +353,7 @@ zddr: con8 "%0"
 
 stmt: reg ""
 stmt: ac1 "\t%0\n"
-reg: ac "\t%0STW(%c)\n" 20
+reg: ac "\t%0STW(%c);\n" 20
 ac: reg "LDW(%0);" 20
 ac: con8 "LDI(%0);" 16
 ac: con "LDWI(%0);" 20
@@ -1197,11 +1197,11 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   for (i=0; i<=31; i++)
     if (usedmask[IREG]&(1<<i)) {
       if (cpu > 5 && offset == maxargoffset) 
-        print("_SP(%d);DOKEA(R%d);", offset, i);
+        print("_SP(%d);DOKEA(%s);", offset, ireg[i]->x.name);
       else if (cpu > 5)
-        print("ADDI(2);DOKEA(R%d);", i);
+        print("ADDI(2);DOKEA(%s);", ireg[i]->x.name);
       else
-        print("_SP(%d);_MOV(R%d,[AC]);", offset, i);
+        print("_SP(%d);_MOV(%s,[AC]);", offset, ireg[i]->x.name);
       offset += 2;
     }
   /* save args into new registers or vars */
@@ -1245,11 +1245,11 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   for (i=0; i<=31; i++)
     if (usedmask[IREG]&(1<<i)) {
       if (cpu > 5 && offset == maxargoffset)
-        print("_SP(%d);PEEKA(R%d);", offset, i);
+        print("_SP(%d);PEEKA(%s);", offset, ireg[i]->x.name);
       else if (cpu > 5)
-        print("ADDI(2);PEEKA(R%d);", i);
+        print("ADDI(2);PEEKA(%s);", ireg[i]->x.name);
       else
-        print("_SP(%d);_MOV([AC],R%d);", offset, i);
+        print("_SP(%d);_MOV([AC],%s);", offset, ireg[i]->x.name);
       offset += 2;
     }
   if (framesize > 0)

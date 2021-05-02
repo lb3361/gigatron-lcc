@@ -262,13 +262,13 @@ static int cpu = 5;
 # of registers and the specialization of registers. When such problems
 # occur, the register allocator spills registers to memory as needed
 # for correctness, but without regard for optimality.  That does not
-# work well for a simplistic CPU like the Gigagron VCPU.  Once AC is
+# work well for a simplistic CPU like the Gigagron VCPU.  Once vAC is
 # allocated, there is nothing left one can do.  The following
 # repurposes the LCC mechanisms in the following way.  The LCC
 # register allocator no longer deals with actual registers but with a
 # piece of page zero memory that we call registers.  Instead of
 # computing a cover of the trees with instruction, we cover the trees
-# with sequences of instructions that use the accumulator AC (vAC) and
+# with sequences of instructions that use the accumulator vAC and
 # the scratch registers (T0..T3) as they see fit. The LBURG grammar 
 # is no longer a tree grammar, but a transducer that converts tree 
 # fragments into sequences. As a result, each nonterminal must be 
@@ -347,12 +347,12 @@ zddr: con8 "%0"
 #    When it appears on the right hand side of a rule, it represents the
 #    register name containing the value of the expression.
 # -- ac represents a sequence of instruction that places the expression value
-#    into register AC, potentially clobbeting LAC, FAC, and the scratch registers.
+#    into register vAC, potentially clobbeting LAC, FAC, and the scratch registers.
 # -- lac and fac are the same but respectively compute long results and fp results
-#    into registers LAC or FAC, potentially clobbering AC, LAC, FAC, and T0-T3.
+#    into registers LAC or FAC, potentially clobbering vAC, LAC, FAC, and T0-T3.
 # -- eac is like ac but cannot clobber LAC, FAC or T0-T3.
 # -- ac1 is like ac but signals that the result is contained in the low
-#    byte of AC and that the high byte is undertermined.
+#    byte of vAC and that the high byte is undertermined.
 
 stmt: reg ""
 stmt: ac1 "\t%0\n"
@@ -541,9 +541,9 @@ vsrc: reg "%0"
 vsrc: fac "FAC|%0"
 vsrc: lac "LAC|%0"
 vdst: addr "%0"
-vdst: eac "[AC]|%0"
+vdst: eac "[vAC]|%0"
 psrc: addr "%0"
-psrc: eac "[AC]|%0" 20
+psrc: eac "[vAC]|%0" 20
 pdst: addr "%0"
 pdst: ac "[T2]|%0STW(T2);" 20
 
@@ -560,15 +560,15 @@ larg: reg "LDI(%0);"
 larg: INDIRI4(eac) "%0" 
 larg: INDIRU4(eac) "%0" 
 reg: lac "\t%0_LMOV(LAC,%c);\n" 80
-reg: INDIRI4(ac) "\t%0_LMOV([AC],%c);\n" 150
-reg: INDIRU4(ac) "\t%0_LMOV([AC],%c);\n" 150
+reg: INDIRI4(ac) "\t%0_LMOV([vAC],%c);\n" 150
+reg: INDIRU4(ac) "\t%0_LMOV([vAC],%c);\n" 150
 reg: INDIRI4(addr) "\t_LMOV(%0,%c);\n" 100
 reg: INDIRU4(addr) "\t_LMOV(%0,%c);\n" 100
 reg: LOADI4(reg) "\t_LMOV(%0,%c)\n" 100
 reg: LOADU4(reg) "\t_LMOV(%0,%c)\n" 100
 lac: reg "_LMOV(%0,LAC);" 80
-lac: INDIRI4(ac) "%0_LMOV([AC],LAC);" 150
-lac: INDIRU4(ac) "%0_LMOV([AC],LAC);" 150
+lac: INDIRI4(ac) "%0_LMOV([vAC],LAC);" 150
+lac: INDIRU4(ac) "%0_LMOV([vAC],LAC);" 150
 lac: INDIRI4(addr) "_LMOV(%0,LAC);" 150
 lac: INDIRU4(addr) "_LMOV(%0,LAC);" 150
 lac: ADDI4(lac,larg) "%0%1_LADD();" 200
@@ -630,11 +630,11 @@ stmt: fac "\t%0\n"
 farg: reg "LDI(%0);"
 farg: INDIRF5(eac) "%0"
 reg: fac "\t%0_FMOV(FAC,%c);\n" 200
-reg: INDIRF5(ac)   "\t%0_FMOV([AC],%c);\n" 150
+reg: INDIRF5(ac)   "\t%0_FMOV([vAC],%c);\n" 150
 reg: INDIRF5(addr) "\t_FMOV(%0,%c);\n" 150
 reg: LOADF5(reg) "\t_FMOV(%0,%c)\n" 150
 fac: reg "_FMOV(%0,FAC);" 100
-fac: INDIRF5(ac)    "%0_FMOV([AC],FAC);" 200
+fac: INDIRF5(ac)    "%0_FMOV([vAC],FAC);" 200
 fac: INDIRF5(addr)  "_FMOV(%0,FAC);" 200
 fac: ADDF5(fac,farg) "%0%1_FADD();" 200
 fac: ADDF5(farg,fac) "%1%0_FADD();" 200
@@ -668,12 +668,12 @@ ac: CALLP2(addr)  "CALLI(%0);" mincpu5(28)
 ac: CALLP2(reg)   "CALL(%0);" 26
 stmt: CALLV(addr) "\tCALLI(%0);\n" mincpu5(28)
 stmt: CALLV(reg)  "\tCALL(%0);\n" 26
-stmt: ARGF5(vsrc) "\t%[0b]_SP(%c);_FMOV(%0,[AC]);\n"  if_arg_stk(a)
-stmt: ARGI4(vsrc) "\t%[0b]_SP(%c);_LMOV(%0,[AC]);\n"  if_arg_stk(a)
-stmt: ARGU4(vsrc) "\t%[0b]_SP(%c);_LMOV(%0,[AC]);\n"  if_arg_stk(a)
-stmt: ARGI2(reg)  "\t_SP(%c);_MOV(%0,[AC]);\n"        if_arg_stk(a)
-stmt: ARGU2(reg)  "\t_SP(%c);_MOV(%0,[AC]);\n"        if_arg_stk(a)
-stmt: ARGP2(reg)  "\t_SP(%c);_MOV(%0,[AC]);\n"        if_arg_stk(a)
+stmt: ARGF5(vsrc) "\t%[0b]_SP(%c);_FMOV(%0,[vAC]);\n"  if_arg_stk(a)
+stmt: ARGI4(vsrc) "\t%[0b]_SP(%c);_LMOV(%0,[vAC]);\n"  if_arg_stk(a)
+stmt: ARGU4(vsrc) "\t%[0b]_SP(%c);_LMOV(%0,[vAC]);\n"  if_arg_stk(a)
+stmt: ARGI2(reg)  "\t_SP(%c);_MOV(%0,[vAC]);\n"        if_arg_stk(a)
+stmt: ARGU2(reg)  "\t_SP(%c);_MOV(%0,[vAC]);\n"        if_arg_stk(a)
+stmt: ARGP2(reg)  "\t_SP(%c);_MOV(%0,[vAC]);\n"        if_arg_stk(a)
 stmt: ARGF5(reg)  "# arg\n"  if_arg_reg_only(a)
 stmt: ARGI4(reg)  "# arg\n"  if_arg_reg_only(a)
 stmt: ARGU4(reg)  "# arg\n"  if_arg_reg_only(a)
@@ -1051,7 +1051,7 @@ static void clobber(Node p)
 
 static void emit3(const char *fmt, Node p, Node *kids, short *nts)
 {
-  /* %{shlC} -- left shift AC by a constant */
+  /* %{shlC} -- left shift vAC by a constant */
   if (!strncmp(fmt,"shl", 3) && fmt[3] >= '0' && fmt[3] <= '9' && ! fmt[4])
     {
       int i,c,m;
@@ -1246,7 +1246,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
       else if (cpu > 5)
         print("ADDI(2);DOKEA(%s);", ireg[i]->x.name);
       else
-        print("_SP(%d);_MOV(%s,[AC]);", offset, ireg[i]->x.name);
+        print("_SP(%d);_MOV(%s,[vAC]);", offset, ireg[i]->x.name);
       offset += 2;
     }
   /* save args into new registers or vars */
@@ -1267,11 +1267,11 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
           print("_MOV(%s,%s);", rn, out->x.name);
       } else {
         if (isfloat(in->type))
-          print("_SP(%s+%d);_FMOV(%s,[AC]);", out->x.name, framesize, rn);
+          print("_SP(%s+%d);_FMOV(%s,[vAC]);", out->x.name, framesize, rn);
         else if (in->type->size == 4)
-          print("_SP(%s+%d);_LMOV(%s,[AC]);", out->x.name, framesize, rn);
+          print("_SP(%s+%d);_LMOV(%s,[vAC]);", out->x.name, framesize, rn);
         else if (in->type->size == 2)
-          print("_SP(%s+%d);_MOV(%s,[AC]);", out->x.name, framesize, rn); 
+          print("_SP(%s+%d);_MOV(%s,[vAC]);", out->x.name, framesize, rn); 
         else if (in->type->size == 1 && cpu > 5)
           print("_SP(%s+%d);POKEA(%s);", out->x.name, framesize, rn); 
         else if (in->type->size == 1 && cpu <= 5)
@@ -1294,7 +1294,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
       else if (cpu > 5)
         print("ADDI(2);PEEKA(%s);", ireg[i]->x.name);
       else
-        print("_SP(%d);_MOV([AC],%s);", offset, ireg[i]->x.name);
+        print("_SP(%d);_MOV([vAC],%s);", offset, ireg[i]->x.name);
       offset += 2;
     }
   if (framesize > 0)

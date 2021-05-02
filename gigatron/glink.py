@@ -271,7 +271,7 @@ def tryhop(jump=True):
 def register_names():
     d = { "vPC":  0x0016, "vAC":  0x0018, "vACL": 0x0018, "vACH": 0x0019,
           "vLR":  0x001a, "vSP":  0x001c, 
-          "AC":   0x0018, "LAC":  0x0084, "FAC":  0x0081 }
+          "LAC":  0x0084, "FAC":  0x0081 }
     for i in range(0,4): d[f'T{i}'] = 0x88+i+i
     for i in range(8,32): d[f'R{i}'] = 0x80+i+i
     for i in range(8,29): d[f'L{i}'] = d[f'R{i}']
@@ -585,67 +585,67 @@ def _LD(d):
 def _SHL(d):
     STW(T3); LDW(d); STW(T2)
     extern('_@_shl16')
-    _CALLI('_@_shl')            # T3<<T2 -> AC
+    _CALLI('_@_shl')            # T3<<T2 -> vAC
 @vasm
 def _SHRS(d):
     STW(T3); LDW(d); STW(T2)
     extern('_@_shrs16')
-    _CALLI('_@_shrs16')         # T3>>T2 --> AC
+    _CALLI('_@_shrs16')         # T3>>T2 --> vAC
 @vasm
 def _SHRU(d):
     STW(T3); LDW(d); STW(T2)
     extern('_@_shru16')
-    _CALLI('_@_shru16')         # T3>>T2 --> AC
+    _CALLI('_@_shru16')         # T3>>T2 --> vAC
 @vasm
 def _MUL(d):
     STW(T3); LDW(d); STW(T2)
     extern('_@_mul16')
-    _CALLI('_@_mul16')          # T3*T2 --> AC
+    _CALLI('_@_mul16')          # T3*T2 --> vAC
 @vasm
 def _DIVS(d):
     STW(T3); LDW(d); STW(T2)
     extern('_@_divs16')
-    _CALLI('_@_divs16')         # T3/T2 --> AC
+    _CALLI('_@_divs16')         # T3/T2 --> vAC
 @vasm
 def _DIVU(d):
     STW(T3); LDW(d); STW(T2)
     extern('_@_divu16')
-    _CALLI('_@_divu16')         # T3/T2 --> AC
+    _CALLI('_@_divu16')         # T3/T2 --> vAC
 @vasm
 def _MODS(d):
     STW(T3); LDW(d); STW(T2)
     extern('_@_mods16')
-    _CALLI('_@_mods16')         # T3%T2 --> AC
+    _CALLI('_@_mods16')         # T3%T2 --> vAC
 @vasm
 def _MODU(d):
     STW(T3); LDW(d); STW(T2)
     extern('_@_modu16')
-    _CALLI('_@_modu16')         # T3%T2 --> AC
+    _CALLI('_@_modu16')         # T3%T2 --> vAC
 @vasm
 def _MOV(s,d):
     '''Move word from reg/addr s to d.
-       Also accepts [AC] for s or d.'''
+       Also accepts [vAC] for s or d.'''
     s = v(s)
     d = v(d)
     if s != d:
-        if args.cpu > 5 and s == [AC] and is_zeropage(d):
+        if args.cpu > 5 and s == [vAC] and is_zeropage(d):
             DEEKA(d)
-        elif args.cpu > 5 and is_zeropage(s) and d == [AC]:
+        elif args.cpu > 5 and is_zeropage(s) and d == [vAC]:
             DOKEA(s)
-        elif d == [AC]:
+        elif d == [vAC]:
             STW(T3)
-            if s != AC:
+            if s != vAC:
                 _LDW(s)
             DOKE(T3)
         elif is_zeropage(d):
-            if s == [AC]:
+            if s == [vAC]:
                 DEEK()
-            elif s != AC:
+            elif s != vAC:
                 _LDW(s)
-            if d != AC:
+            if d != vAC:
                 STW(d)
-        elif s == AC or s == [AC]:
-            if s == [AC]:
+        elif s == vAC or s == [vAC]:
+            if s == [vAC]:
                 DEEK()
             STW(T3); _LDI(d)
             if args.cpu > 5:
@@ -725,18 +725,18 @@ def _CMPWU(d):
 @vasm
 def _BMOV(s,d,n):
     '''Move memory block of size n from addr s to d.
-       Also accepts [AC] as s and [AC] or [T2] as d.'''
+       Also accepts [vAC] as s and [vAC] or [T2] as d.'''
     d = v(d)
     s = v(s)
     n = v(n)
     if s != d:
-        if d == [AC]:
+        if d == [vAC]:
             STW(T2)
-        if s == [AC]:
+        if s == [vAC]:
             STW(T3)
-        if d != [AC] and d != [T2]:
+        if d != [vAC] and d != [T2]:
             _LDI(d); STW(T2)
-        if s != [AC] and s != [T3]:
+        if s != [vAC] and s != [T3]:
             _LDI(s); STW(T3)
         _LDI(n);
         extern('_@_memcpy')
@@ -744,7 +744,7 @@ def _BMOV(s,d,n):
 @vasm
 def _LMOV(s,d):
     '''Move long from reg/addr s to d.
-       Also accepts [AC] as s, and [AC] or [T2] as d.'''
+       Also accepts [vAC] as s, and [vAC] or [T2] as d.'''
     s = v(s)
     d = v(d)
     if s != d:
@@ -752,10 +752,10 @@ def _LMOV(s,d):
             if is_zeropage(s, 3):
                 _LDW(s); STW(d); _LDW(s+2); STW(d+2)      # 8 bytes
             elif args.cpu > 5:
-                if s != [AC]:
+                if s != [vAC]:
                     _LDI(s)
                 DEEKA(d); ADDI(2); DEEKA(d+2)             # 6-9 bytes
-            elif s != [AC]:
+            elif s != [vAC]:
                 _LDW(s); STW(d); _LDW(s+2); STW(d+2)      # 12 bytes
             else:
                 STW(T3); DEEK(); STW(d)
@@ -763,60 +763,60 @@ def _LMOV(s,d):
         elif is_zeropage(s, 3) and args.cpu > 5:
             if d == [T2]:
                 _LDW(T2)
-            elif s != [AC]:
+            elif s != [vAC]:
                 _LDI(s)
             DOKEA(s); ADDI(2); DOKEA(s+2)                 # 6-9 bytes
         else:
-            if d == [AC]:
+            if d == [vAC]:
                 STW(T2)
-            if s == [AC]:
+            if s == [vAC]:
                 STW(T3)
-            if d != [AC] and d != [T2]:
+            if d != [vAC] and d != [T2]:
                 _LDI(d); STW(T2)
-            if s != [AC] and s != [T3]:               # call sequence
+            if s != [vAC] and s != [T3]:               # call sequence
                 _LDI(s); STW(T3)                      # 5-13 bytes
             extern('_@_lcopy')
             _CALLI('_@_lcopy')  #   [T3..T3+4) --> [T2..T2+4)
 @vasm
 def _LADD():
-    extern('_@_ladd')              # [AC/T3] means [AC] for cpu>=5, [T3] for cpu<5
-    _CALLI('_@_ladd', storeAC=T3)  # LAC+[AC/T3] --> LAC
+    extern('_@_ladd')              # [vAC/T3] means [vAC] for cpu>=5, [T3] for cpu<5
+    _CALLI('_@_ladd', storeAC=T3)  # LAC+[vAC/T3] --> LAC
 @vasm
 def _LSUB():
     extern('_@_lsub') 
-    _CALLI('_@_lsub', storeAC=T3)  # LAC-[AC/T3] --> LAC
+    _CALLI('_@_lsub', storeAC=T3)  # LAC-[vAC/T3] --> LAC
 @vasm
 def _LMUL():
     extern('_@_lmul')
-    _CALLI('_@_lmul', storeAC=T3)  # LAC*[AC/T3] --> LAC
+    _CALLI('_@_lmul', storeAC=T3)  # LAC*[vAC/T3] --> LAC
 @vasm
 def _LDIVS():
     extern('_@_ldivs')
-    _CALLI('_@_ldivs', storeAC=T3)  # LAC/[AC/T3] --> LAC
+    _CALLI('_@_ldivs', storeAC=T3)  # LAC/[vAC/T3] --> LAC
 @vasm
 def _LDIVU():
     extern('_@_ldivu')
-    _CALLI('_@_ldivu', storeAC=T3)  # LAC/[AC/T3] --> LAC
+    _CALLI('_@_ldivu', storeAC=T3)  # LAC/[vAC/T3] --> LAC
 @vasm
 def _LMODS():
     extern('_@_lmods')
-    _CALLI('_@_lmods', storeAC=T3)  # LAC%[AC/T3] --> LAC
+    _CALLI('_@_lmods', storeAC=T3)  # LAC%[vAC/T3] --> LAC
 @vasm
 def _LMODU():
     extern('_@_lmodu')
-    _CALLI('_@_lmodu', storeAC=T3)  # LAC%[AC/T3] --> LAC
+    _CALLI('_@_lmodu', storeAC=T3)  # LAC%[vAC/T3] --> LAC
 @vasm
 def _LSHL():
     extern('_@_lshl')
-    _CALLI('_@_lshl', storeAC=T3)  # LAC<<[AC/T3] --> LAC
+    _CALLI('_@_lshl', storeAC=T3)  # LAC<<[vAC/T3] --> LAC
 @vasm
 def _LSHRS():
     extern('_@_lshrs')
-    _CALLI('_@_lshrs', storeAC=T3)  # LAC>>[AC/T3] --> LAC
+    _CALLI('_@_lshrs', storeAC=T3)  # LAC>>[vAC/T3] --> LAC
 @vasm
 def _LSHRU():
     extern('_@_lshru')
-    _CALLI('_@_lshru', storeAC=T3)  # LAC>>[AC/T3] --> LAC
+    _CALLI('_@_lshru', storeAC=T3)  # LAC>>[vAC/T3] --> LAC
 @vasm
 def _LNEG():
     extern('_@_lneg')
@@ -828,43 +828,43 @@ def _LCOM():
 @vasm
 def _LAND():
     extern('_@_land')
-    _CALLI('_@_land', storeAC=T3)   # LAC&[AC/T3] --> LAC
+    _CALLI('_@_land', storeAC=T3)   # LAC&[vAC/T3] --> LAC
 @vasm
 def _LOR():
     extern('_@_lor')
-    _CALLI('_@_lor', storeAC=T3)    # LAC|[AC/T3] --> LAC
+    _CALLI('_@_lor', storeAC=T3)    # LAC|[vAC/T3] --> LAC
 @vasm
 def _LXOR():
     extern('_@_lxor')
-    _CALLI('_@_lxor', storeAC=T3)   # LAC^[AC/T3] --> LAC
+    _CALLI('_@_lxor', storeAC=T3)   # LAC^[vAC/T3] --> LAC
 @vasm
 def _LCMPS():
     extern('_@_lcmps')
-    _CALLI('_@_lcmps', storeAC=T3)  # SGN(LAC-[AC/T3]) --> AC
+    _CALLI('_@_lcmps', storeAC=T3)  # SGN(LAC-[vAC/T3]) --> vAC
 @vasm
 def _LCMPU():
     extern('_@_lcmpu')
-    _CALLI('_@_lcmpu', storeAC=T3)  # SGN(LAC-[AC/T3]) --> AC
+    _CALLI('_@_lcmpu', storeAC=T3)  # SGN(LAC-[vAC/T3]) --> vAC
 @vasm
 def _LCMPX():
     extern('_@_lcmpx')
-    _CALLI('_@_lcmpx', storeAC=T3)  # TST(LAC-[AC/T3]) --> AC
+    _CALLI('_@_lcmpx', storeAC=T3)  # TST(LAC-[vAC/T3]) --> vAC
 @vasm
 def _FMOV(s,d):
     '''Move float from reg s to d with special cases when s or d is FAC.
-       Also accepts [AC] or [T3] for s and [AC] or [T2] for d.'''
+       Also accepts [vAC] or [T3] for s and [vAC] or [T2] for d.'''
     s = v(s)
     d = v(d)
     if s != d:
         if d == FAC:
-            if s == [AC]:
+            if s == [vAC]:
                 STW(T3)
             elif s != [T3]:
                 _LDI(s); STW(T3)
             extern('_@_fstorefac') 
             _CALLI('_@_fstorefac')   # [T3..T3+5) --> FAC
         elif s == FAC:
-            if d == [AC]:
+            if d == [vAC]:
                 STW(T2)
             elif d != [T2]:
                 _LDI(d); STW(T2)
@@ -873,32 +873,32 @@ def _FMOV(s,d):
         elif is_zeropage(d, 4) and is_zeropage(s, 4):
             _LDW(s); STW(d); _LDW(s+2); STW(d+2); _LD(s+4); ST(d+4)
         else:
-            if d == [AC]:
+            if d == [vAC]:
                 STW(T2)
-            if s == [AC]:
+            if s == [vAC]:
                 STW(T3)
-            if d != [AC] and d != [T2]:
+            if d != [vAC] and d != [T2]:
                 _LDI(d); STW(T2)
-            if s != [AC] and s != [T3]:
+            if s != [vAC] and s != [T3]:
                 _LDI(s); STW(T3)
             extern('_@_fcopy')       # [T3..T3+5) --> [T2..T2+5)
             _CALLI('_@_fcopy')
 @vasm
 def _FADD():
     extern('_@_fadd')
-    _CALLI('_@_fadd', storeAC=T3)   # FAC+[AC/T3] --> FAC
+    _CALLI('_@_fadd', storeAC=T3)   # FAC+[vAC/T3] --> FAC
 @vasm
 def _FSUB():
     extern('_@_fsub')
-    _CALLI('_@_fsub', storeAC=T3)   # FAC-[AC/T3] --> FAC
+    _CALLI('_@_fsub', storeAC=T3)   # FAC-[vAC/T3] --> FAC
 @vasm
 def _FMUL():
     extern('_@_fmul')
-    _CALLI('_@_fmul', storeAC=T3)   # FAC*[AC/T3] --> FAC
+    _CALLI('_@_fmul', storeAC=T3)   # FAC*[vAC/T3] --> FAC
 @vasm
 def _FDIV():
     extern('_@_fdiv')
-    _CALLI('_@_fdiv', storeAC=T3)   # FAC/[AC/T3] --> FAC
+    _CALLI('_@_fdiv', storeAC=T3)   # FAC/[vAC/T3] --> FAC
 @vasm
 def _FNEG():
     extern('_@_fneg')
@@ -906,7 +906,7 @@ def _FNEG():
 @vasm
 def _FCMP():
     extern('_@_fcmp')
-    _CALLI('_@_fcmp', storeAC=T3)   # SGN(FAC-[AC/T3]) --> AC
+    _CALLI('_@_fcmp', storeAC=T3)   # SGN(FAC-[vAC/T3]) --> vAC
 @vasm
 def _FTOU():
     extern('_@_ftou')
@@ -926,8 +926,8 @@ def _FCVU():
 @vasm
 def _CALLI(d, saveAC=False, storeAC=None):
     '''Call subroutine at far location d.
-       When cpu<5, option saveAC=True ensures AC is preserved, 
-       and option storeAC=reg stores AC into a register before jumping.
+       When cpu<5, option saveAC=True ensures vAC is preserved, 
+       and option storeAC=reg stores vAC into a register before jumping.
        When cpu>=5, this just calls CALLI. '''
     if args.cpu >= 5:
         CALLI(d)

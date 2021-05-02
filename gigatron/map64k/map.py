@@ -48,7 +48,7 @@ def map_extra_modules():
     def code1():
         label('_segments')
         LDW(vLR);STW(LR);_SP(-12);STW(SP);
-        _SP(6);_MOV(R28,[AC]);_SP(8);_MOV(R29,[AC]);_SP(10);_MOV(LR,[AC])
+        _SP(6);_MOV(R28,[vAC]);_SP(8);_MOV(R29,[vAC]);_SP(10);_MOV(LR,[vAC])
         LDW(R8); STW(R28)
         for (i,tp) in enumerate(segments):
             if tp[2] == None:
@@ -58,7 +58,7 @@ def map_extra_modules():
                 label(f".L{i}")
                 LDWI(tp[0]);STW(R9);LDW(R29);CALLI('.callcb')
                 LDWI(tp[2]);ADDW(R29);STW(R29);LDWI(tp[3]);XORW(R29);BNE(f".L{i}")
-        _SP(6);_MOV([AC],R28);_SP(8);_MOV([AC],R29);_SP(10);_MOV([AC],LR)
+        _SP(6);_MOV([vAC],R28);_SP(8);_MOV([vAC],R29);_SP(10);_MOV([vAC],LR)
         _SP(10);STW(SP);LDW(LR);STW(vLR);RET();
     code=[ ('EXPORT', '_segments'),
            ('CODE', '_prep', code0),

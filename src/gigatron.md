@@ -94,7 +94,7 @@ static int  if_arg_stk(Node);
 static Symbol ireg[32], lreg[32], freg[32];
 static Symbol iregw, lregw, fregw;
 
-#define REGMASK_VARS            0x3ff00000
+#define REGMASK_SAVED           0x3ff00000
 #define REGMASK_ARGS            0x00003f00
 #define REGMASK_TEMPS           0x000fff00
 #define REGMASK_LR              0x40000000
@@ -955,7 +955,7 @@ static void progbeg(int argc, char *argv[])
   lregw = mkwildcard(lreg);
   fregw = mkwildcard(freg);
   tmask[IREG] = REGMASK_TEMPS;
-  vmask[IREG] = REGMASK_VARS;
+  vmask[IREG] = REGMASK_SAVED;
   tmask[FREG] = vmask[FREG] = 0;
   /* No segment */
   cseg = -1;
@@ -1007,29 +1007,46 @@ static void target(Node p)
     }
 }
 
-static void clobber_helper(Node p, unsigned *pmask)
+static int inst_contains_call(Node p)
 {
-  int ty = optype(p->op);
-  int sz = opsize(p->op);
-  if (generic(p->op) == CALL)
-    *pmask |= (REGMASK_TEMPS & ~REGMASK_VARS);
-  if (p->kids[0] && ! p->kids[0]->x.inst)
-    clobber_helper(p->kids[0], pmask);
-  if (p->kids[1] && ! p->kids[1]->x.inst)
-    clobber_helper(p->kids[1], pmask);
+  if ((generic(p->op) == CALL) ||
+      (p->kids[0] && !p->kids[0]->x.inst && inst_contains_call(p->kids[0])) ||
+      (p->kids[1] && !p->kids[1]->x.inst && inst_contains_call(p->kids[1])) )
+    return 1;
+  return 0;
 }
 
 static void clobber(Node p)
 {
-  int mask = 0;
+  static unsigned argmask = 0;
   assert(p);
-  clobber_helper(p, &mask);
-  if (p->x.registered && p->syms[2])
-    if (p->syms[2]->x.regnode && p->syms[2]->x.regnode->set == IREG)
+  if (generic(p->op) == ARG) {
+    /* Mark argument register as used so that it is not allocated as a
+       temporary while preparing the remaining args. */
+    Symbol r = p->syms[1];
+    if (p->x.argno == 0)
+      argmask = 0;
+    if (r) {
+      assert(r->x.regnode && r->x.regnode->set == 0);
+      argmask |= r->x.regnode->mask;
+      freemask[0] &= ~r->x.regnode->mask;
+    }
+  }
+  if (inst_contains_call(p)) {
+    /* Clobber all caller-saved registers before a call. */
+    unsigned mask =  REGMASK_TEMPS & ~REGMASK_SAVED;
+    if (p->x.registered && p->syms[2] && p->syms[2]->x.regnode->set == IREG)
       mask &= ~p->syms[2]->x.regnode->mask;
-  if (mask)
-    spill(mask, IREG, p);
+    if (mask)
+      spill(mask, IREG, p);
+  }
+  if (argmask && p->x.next && inst_contains_call(p->x.next)) {
+    /* Free all argument registers before the call */
+    freemask[0] |= argmask;
+    argmask = 0;
+  }
 }
+  
 
 
 static void emit3(const char *fmt, Node p, Node *kids, short *nts)
@@ -1213,7 +1230,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   print("def code%d():\n", codenum++);
   print("\tlabel(%s);\n", f->x.name);
   print("\tLDW(vLR);STW(LR);");
-  usedmask[IREG] &= REGMASK_VARS;
+  usedmask[IREG] &= REGMASK_SAVED;
   if (ncalls)
     usedmask[IREG] |= REGMASK_LR;
   sizesave = 2 * bitcount(usedmask[IREG]);

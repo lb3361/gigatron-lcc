@@ -8,6 +8,7 @@
 # TODO: optimize
 
 def code0():
+        tryhop(29)
         label('_@_memcpy');
         label('.loop')
         STW(T1)

@@ -1,6 +1,6 @@
 
 # ------------size----addr----step----end---- dataonly
-segments = [ (0x0060, 0x08a0, 0x0100, 0x8000, 0),
+segments = [ (0x0060, 0x08a0, 0x0100, 0x80a0, 0),
 	     (0x00f4, 0x0206, None,   None,   1),
 	     (0x00fa, 0x0300, 0x0100, 0x0500, 1),
 	     (0x0200, 0x0500, None,   None,   1),
@@ -51,12 +51,12 @@ def map_extra_modules():
         LDW(R8); STW(R6)
         for (i,tp) in enumerate(segments):
             if tp[2] == None:
-                LDWI(tp[0]);STW(R9);LDW(tp[1]);CALLI('.callcb')
+                _LDI(tp[0]);STW(R9);_LDI(tp[1]);CALLI('.callcb')
             else:
-                LDWI(tp[1]);STW(R7)
+                _LDI(tp[1]);STW(R7)
                 label(f".L{i}")
-                LDWI(tp[0]);STW(R9);LDW(R7);CALLI('.callcb')
-                LDWI(tp[2]);ADDW(R7);STW(R7);LDWI(tp[3]);XORW(R7);BNE(f".L{i}")
+                _LDI(tp[0]);STW(R9);LDW(R7);CALLI('.callcb')
+                _LDI(tp[2]);ADDW(R7);STW(R7);_LDI(tp[3]);XORW(R7);_BNE(f".L{i}")
         _RESTORE(6,0x4000c0);_SP(12);STW(SP);LDW(R22);tryhop(3);STW(vLR);RET();
     code=[ ('EXPORT', '_segments'),
            ('CODE', '.callcb', code0),

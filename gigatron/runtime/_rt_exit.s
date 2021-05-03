@@ -8,6 +8,7 @@
 # TODO: optimize
 
 def code0():
+    tryhop(15)
     label('_@_exit');
     # Just flashes a pixel on the first line
     # at a position indicative of the return code

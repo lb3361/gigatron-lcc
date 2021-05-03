@@ -224,7 +224,7 @@ def emit(*args):
         for s in stb:
             if s.name.startswith('code'):
                 inst = s.line
-        print(f"{hex(the_pc)}: {list(map(hex,args))} {inst}")
+        print(f"{hex(the_pc)}: {list(map(hex,args))} {inst}", file=sys.stderr)
     ### ---- end of listing code for debugging
     if final_pass:
         final_emit(*args)

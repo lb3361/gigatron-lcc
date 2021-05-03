@@ -10,17 +10,17 @@ def code0():
     LD('romType');
     ANDI(0xfc);
     SUBI('_minrom');
-    BGE('.checkram')
+    _BGE('.checkram')
     LDI(10); 
-    BRA('.exit')
+    _BRA('.exit')
     # check ramsize
     label('.checkram')
     LD('memSize')
-    BEQ('.init')
+    _BEQ('.init')
     SUBI('_minram')
-    BGE('.init')
+    _BGE('.init')
     LDI(11)
-    BRA('.exit')
+    _BRA('.exit')
     # call _init functions
     _CALLI('_init1')
     _CALLI('_init2')
@@ -36,13 +36,13 @@ def code0():
     LDW(R8)
     STW(R0)
     LDW('_atexit')
-    BRA('.atexittst')
+    _BRA('.atexittst')
     label('.atexitloop')
     DEEK(); STW(T3); CALL(T3)
     LDI(2); ADDW(R1); DEEK()
     label('.atexittst')
     STW(R1)
-    BNE('.atexitloop')
+    _BNE('.atexitloop')
     LDW(R0)
     # call exit in vcpu4 compatible way
     label('.exit')

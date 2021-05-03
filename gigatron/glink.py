@@ -217,6 +217,15 @@ def final_emit(*args):
         
 def emit(*args):
     global final_pass, the_pc
+    #### ---- listing code for debugging
+    if False:
+        inst = ""
+        stb = traceback.extract_stack(limit=6)
+        for s in stb:
+            if s.name.startswith('code'):
+                inst = s.line
+        print(f"{hex(the_pc)}: {list(map(hex,args))} {inst}")
+    ### ---- end of listing code for debugging
     if final_pass:
         final_emit(*args)
     else:
@@ -950,54 +959,70 @@ def _CALLI(d, saveAC=False, storeAC=None):
         LDWI(d)
         STW('sysFn')
         CALL('sysFn')
-
-
-
 @vasm
 def _SAVE(offset, mask):
-    if mask & ~0x4000ff:
-        error("Only registers R0-7,22 are supported for now")
-    rt = None
-    for i in range(0,8):
-        if mask & 0xff == (0xff << i) & 0xff:
-            rt = "_@_saveR%dto7" % i
-    if rt:
-        extern(rt)
-        if args.cpu < 5:
-            _LDI(rt);STW('sysFn');_SP(offset);CALL('sysFn')
+    '''Save all registers specified by mask at [SP+offset]'''
+    def save1(r, postincr=False):
+        '''Save one register'''
+        if (args.cpu < 6):
+            STW(T3);LDW(r);DOKE(T3)
+            if (postincr):
+                LDW(T3);ADDI(2)
         else:
-            _SP(offset);CALLI(rt)
-    elif mask & 0x400000:
-        _SP(offset)
-    if mask & 0x400000:
-        if args.cpu < 6:
-            STW(T3);LDW(R22);DOKE(T3)
-        else:
-            DOKEA(R22)
+            DOKEA(r)
+            if (postincr):
+                ADDI(2)
+    i = 0
+    while i < 32:
+        m = 1 << i
+        if mask & m:
+            if i < 8 and ((0xff << i) & 0xff) == (mask & 0xff):
+                # we can call a runtime helper
+                rt = "_@_saveR%dto7" % i
+                extern(rt)
+                if args.cpu < 5:
+                    _LDI(rt);STW('sysFn');_SP(offset);CALL('sysFn')
+                else:
+                    _SP(offset);CALLI(rt)
+                i = 7
+            else:
+                if not mask & (m-1): _SP(offset)
+                save1(R0+i+i, postincr=(mask & ~(m+m-1)))
+        i += 1
+        
 @vasm
 def _RESTORE(offset, mask):
-    if mask & ~0x4000ff:
-        error("Only registers R0-7,22 are supported for now")
-    rt = None
-    for i in range(0,8):
-        if mask & 0xff == (0xff << i) & 0xff:
-            rt = "_@_restoreR%dto7" % i
-    if rt:
-        extern(rt)
-        if args.cpu < 5:
-            _LDI(rt);STW('sysFn');_SP(offset);CALL('sysFn')
+    '''Restore all registers specified by mask from [SP+offset]'''
+    def restore1(r,postincr=False):
+        '''Restore one register'''
+        if (args.cpu < 6):
+            if (postincr):
+                STW(T3)
+            DEEK();STW(r)
+            if (postincr):
+                LDW(T3);ADDI(2)
         else:
-            _SP(offset);CALLI(rt)
-    elif mask & 0x400000:
-        _SP(offset)
-    if mask & 0x400000:
-        if args.cpu < 6:
-            DEEK();STW(R22)
-        else:
-            DEEKA(R22)
-
-
-
+            DEEKA(r)
+            if (postincr):
+                ADDI(2)
+    i = 0
+    while i < 32:
+        m = 1 << i
+        if mask & m:
+            if i < 8 and ((0xff << i) & 0xff) == (mask & 0xff):
+                # we can call a runtime helper
+                rt = "_@_restoreR%dto7" % i
+                extern(rt)
+                if args.cpu < 5:
+                    _LDI(rt);STW('sysFn');_SP(offset);CALL('sysFn')
+                else:
+                    _SP(offset);CALLI(rt)
+                i = 7
+            else:
+                if not mask & (m-1): _SP(offset)
+                restore1(R0+i+i, postincr=(mask & ~(m+m-1)))
+            first = False
+        i += 1
 
     
         

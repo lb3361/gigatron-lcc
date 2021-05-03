@@ -47,7 +47,7 @@ def map_extra_modules():
         
     def code1():
         label('_segments')
-        tryhop(16);LDW(vLR);STW(R22);_SP(-12);STW(SP);_SAVE(6,0x4000c0); # R6-7,22
+        tryhop(4);LDW(vLR);STW(R22);_SP(-12);STW(SP);_SAVE(6,0x4000c0); # R6-7,22
         LDW(R8); STW(R6)
         for (i,tp) in enumerate(segments):
             if tp[2] == None:

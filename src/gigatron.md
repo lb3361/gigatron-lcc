@@ -291,6 +291,14 @@ stmt: ASGNP2(VREGP,reg)  "# write register\n"
 stmt: ASGNI4(VREGP,reg)  "# write register\n"
 stmt: ASGNU4(VREGP,reg)  "# write register\n"
 stmt: ASGNF5(VREGP,reg)  "# write register\n"
+reg: LOADI1(reg)  "\tLD(%0);ST(%c);\n"    move(a)
+reg: LOADU1(reg)  "\tLD(%0);ST(%c);\n"    move(a)
+reg: LOADI2(reg)  "\tLDW(%0);STW(%c);\n"  move(a)
+reg: LOADU2(reg)  "\tLDW(%0);STW(%c);\n"  move(a)
+reg: LOADP2(reg)  "\tLDW(%0);STW(%c);\n"  move(a)
+reg: LOADI4(reg)  "\t_LMOV(%0,%c);\n"     move(a)
+reg: LOADU4(reg)  "\t_LMOV(%0,%c);\n"     move(a)
+reg: LOADF5(reg)  "\t_FMOV(%0,%c);\n"     move(a)
 
 # -- constants
 # These non terminal represent constants in the tree grammar
@@ -385,16 +393,6 @@ ac: INDIRU2(ac) "%0DEEK();" 21
 ac: INDIRP2(ac) "%0DEEK();" 21
 ac: INDIRI1(ac) "%0PEEK();" 17
 ac: INDIRU1(ac) "%0PEEK();" 17
-
-# Reg to reg
-reg: LOADI1(reg)  "\tLD(%0);ST(%c);\n"  move(a)
-reg: LOADU1(reg)  "\tLD(%0);ST(%c);\n"  move(a)
-reg: LOADI2(reg)  "\tLDW(%0);STW(%c);\n"  move(a)
-reg: LOADU2(reg)  "\tLDW(%0);STW(%c);\n"  move(a)
-reg: LOADP2(reg)  "\tLDW(%0);STW(%c);\n"  move(a)
-reg: LOADI4(reg)  "\t_LMOV(%0,%c);\n"  move(a)
-reg: LOADU4(reg)  "\t_LMOV(%0,%c);\n"  move(a)
-reg: LOADF5(reg)  "\t_FMOV(%0,%c);\n"  move(a)
 
 # -- iarg represents the argument of binary integer operations that
 #    map to zero page locations in assembly instructions.  However the
@@ -573,8 +571,6 @@ reg: INDIRI4(ac) "\t%0_LMOV([vAC],%c);\n" 150
 reg: INDIRU4(ac) "\t%0_LMOV([vAC],%c);\n" 150
 reg: INDIRI4(addr) "\t_LMOV(%0,%c);\n" 100
 reg: INDIRU4(addr) "\t_LMOV(%0,%c);\n" 100
-reg: LOADI4(reg) "\t_LMOV(%0,%c)\n" 100
-reg: LOADU4(reg) "\t_LMOV(%0,%c)\n" 100
 lac: reg "_LMOV(%0,LAC);" 80
 lac: INDIRI4(ac) "%0_LMOV([vAC],LAC);" 150
 lac: INDIRU4(ac) "%0_LMOV([vAC],LAC);" 150
@@ -641,7 +637,6 @@ farg: INDIRF5(eac) "%0"
 reg: fac "\t%0_FMOV(FAC,%c);\n" 200
 reg: INDIRF5(ac)   "\t%0_FMOV([vAC],%c);\n" 150
 reg: INDIRF5(addr) "\t_FMOV(%0,%c);\n" 150
-reg: LOADF5(reg) "\t_FMOV(%0,%c)\n" 150
 fac: reg "_FMOV(%0,FAC);" 100
 fac: INDIRF5(ac)    "%0_FMOV([vAC],FAC);" 200
 fac: INDIRF5(addr)  "_FMOV(%0,FAC);" 200
@@ -1268,7 +1263,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   print("# ======== %s\n", lhead.prev->s);
   print("def code%d():\n", codenum++);
   print("\tlabel(%s);\n", f->x.name);
-  print("\ttryhop(16);LDW(vLR);STW(%s);", ireg[tmpr]->x.name);
+  print("\ttryhop(4);LDW(vLR);STW(%s);", ireg[tmpr]->x.name);
   usedmask[IREG] &= REGMASK_SAVED;
   if (ncalls) usedmask[IREG] |= (1<<tmpr);
   sizesave = 2 * bitcount(usedmask[IREG]);

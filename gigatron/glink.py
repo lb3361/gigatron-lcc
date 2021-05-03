@@ -164,9 +164,9 @@ def check_br(x):
         warning(f"short branch overflow")
     return (int(x)-2) & 0xff
 
-def check_cpu(op, v):
+def check_cpu(v):
     if args.cpu < v and final_pass:
-        warning(f"opcode '{op}' not implemented by cpu={arg.cpu}")
+        warning(f"opcode not implemented by cpu={arg.cpu}")
 
 class Module:
     '''Class for assembly modules read from .s/.o/.a files.'''
@@ -211,12 +211,6 @@ class Module:
                         error(f"Multiple definitions of label '{sym}'")
                 self.symdefs[sym] = v
                 self.sympass[sym] = the_pass
-    def tryhop(self, jump=True):
-        global hops
-        if the_pass == 0 and isinstance(hops,list):
-            hops.append(the_pc if jump else (the_pc,jump))
-        else:
-            pass ## TODO: check segment, hop if necessary
 
 def final_emit(*args):
     fatal("not yet implemented")
@@ -252,9 +246,8 @@ def emitjcc(BCC, BNCC, d, saveAC=False):
     lbl = genlabel()
     if is_pcpage(d):
         BCC(d)
-    #elif args.cpu > 5:
-    #    JCC(d)
     else:
+        tryhop(10 if args.cpu < 5 else 3)
         BNCC(lbl);
         emitjmp(int(d), saveAC=saveAC)
         label(lbl)
@@ -263,9 +256,6 @@ def extern(sym):
     if the_pass == 0 and sym not in the_module.imports:
         the_module.imports.append(sym)
 
-def tryhop(jump=True):
-    the_module.tryhop(jump)
-        
 # ------------- usable vocabulary for .s/.o/.a files
 
 def register_names():
@@ -341,6 +331,17 @@ def hi(x):
     return (v(x) >> 8) & 0xff
 
 @vasm
+def tryhop(sz = 0):
+    '''Hops to a new page if the current page cannot hold a long jump
+       plus sz bytes. This also ensures that no hop will occur during
+       the next sz bytes.'''
+    if the_pass > 0 and the_fragment[0] == 'CODE':
+        sz += 10 if args.cpu < 5 else 3
+        # TODO
+        # if remaining_space less than sz
+        #   allocated a new page and jump with emitjmp(saveAC=true)
+
+@vasm
 def align(d):
     while the_pc & (d-1):
         emit(0)
@@ -358,18 +359,19 @@ def space(d):
         emit(0)
 @vasm
 def label(sym, val=None):
+    tryhop(16) # Non zero argument improves tight loops
     if the_pass > 0:
         the_module.label(sym, v(val) if val else the_pc)
 
 @vasm
 def ST(d):
-    emit(0x5e, check_zp(d))
+    tryhop(); emit(0x5e, check_zp(d))
 @vasm
 def STW(d):
-    emit(0x2b, check_zp(d))
+    tryhop(); emit(0x2b, check_zp(d))
 @vasm
 def STLW(d):
-    emit(0xec, check_zp(d))
+    tryhop(); emit(0xec, check_zp(d))
 @vasm
 def LD(d):
     tryhop(); emit(0x1a, check_zp(d))
@@ -384,182 +386,182 @@ def LDW(d):
     tryhop(); emit(0x21, check_zp(d))
 @vasm
 def LDLW(d):
-    emit(0xee, check_zp(d))
+    tryhop(); emit(0xee, check_zp(d))
 @vasm
 def ADDW(d):
-    emit(0x99, check_zp(d))
+    tryhop(); emit(0x99, check_zp(d))
 @vasm
 def SUBW(d):
-    emit(0xb8, check_zp(d))
+    tryhop(); emit(0xb8, check_zp(d))
 @vasm
 def ADDI(d):
-    emit(0xe3, check_imm8(d))
+    tryhop(); emit(0xe3, check_imm8(d))
 @vasm
 def SUBI(d):
-    emit(0x36, check_imm8(d))
+    tryhop(); emit(0x36, check_imm8(d))
 @vasm
 def LSLW():
-    emit(0xe9)
+    tryhop(); emit(0xe9)
 @vasm
 def INC(d):
-    emit(0x93, check_zp(d))
+    tryhop(); emit(0x93, check_zp(d))
 @vasm
 def ANDI(d):
-    emit(0x82, check_imm8(d))
+    tryhop(); emit(0x82, check_imm8(d))
 @vasm
 def ANDW(d):
-    emit(0xf8, check_zp(d))
+    tryhop(); emit(0xf8, check_zp(d))
 @vasm
 def ORI(d):
-    emit(0x88, check_imm8(d))
+    tryhop(); emit(0x88, check_imm8(d))
 @vasm
 def ORW(d):
-    emit(0xfa, check_zp(d))
+    tryhop(); emit(0xfa, check_zp(d))
 @vasm
 def XORI(d):
-    emit(0x8c, check_imm8(d))
+    tryhop(); emit(0x8c, check_imm8(d))
 @vasm
 def XORW(d):
-    emit(0xfc, check_zp(d))
+    tryhop(); emit(0xfc, check_zp(d))
 @vasm
 def PEEK():
-    emit(0xad)
+    tryhop(); emit(0xad)
 @vasm
 def DEEK():
-    emit(0xf6)
+    tryhop(); emit(0xf6)
 @vasm
 def POKE(d):
-    emit(0xf0, check_zp(d))
+    tryhop(); emit(0xf0, check_zp(d))
 @vasm
 def DOKE(d):
-    emit(0xf3, check_zp(d))
+    tryhop(); emit(0xf3, check_zp(d))
 @vasm
 def LUP(d):
-    emit(0x7f, check_zp(d))
+    tryhop(); emit(0x7f, check_zp(d))
 @vasm
 def BRA(d):
-    emit(0x90, check_br(d)); tryhop(jump=False);
+    tryhop(); emit(0x90, check_br(d))
 @vasm
 def BEQ(d):
-    emit(0x35, 0x3f, check_br(d))
+    tryhop(); emit(0x35, 0x3f, check_br(d))
 @vasm
 def BNE(d):
-    emit(0x35, 0x72, check_br(d))
+    tryhop(); emit(0x35, 0x72, check_br(d))
 @vasm
 def BLT(d):
-    emit(0x35, 0x50, check_br(d))
+    tryhop(); emit(0x35, 0x50, check_br(d))
 @vasm
 def BGT(d):
-    emit(0x35, 0x4d, check_br(d))
+    tryhop(); emit(0x35, 0x4d, check_br(d))
 @vasm
 def BLE(d):
-    emit(0x35, 0x56, check_br(d))
+    tryhop(); emit(0x35, 0x56, check_br(d))
 @vasm
 def BGE(d):
-    emit(0x35, 0x53, check_br(d))
+    tryhop(); emit(0x35, 0x53, check_br(d))
 @vasm
 def CALL(d):
-    emit(0xcf, check_zp(d))
+    tryhop(); emit(0xcf, check_zp(d))
 @vasm
 def RET():
-    emit(0xff); tryhop(jump=False)
+    tryhop(); emit(0xff)
 @vasm
 def PUSH():
-    emit(0x75)
+    tryhop(); emit(0x75)
 @vasm
 def POP():
-    emit(0x63)
+    tryhop(); emit(0x63)
 @vasm
 def ALLOC(d):
-    emit(0xdf, check_zp(d))
+    tryhop(); emit(0xdf, check_zp(d))
 @vasm
 def SYS(op):
     t = 270-op//2 if op>28 else 0
     if not isinstance(t,Unk):
         if t <= 128 or t > 255:
             error(f"argument overflow in SYS opcode");
-    emit(0xb4, t)
+    tryhop(); emit(0xb4, t)
 @vasm
 def HALT():
-    emit(0xb4, 0x80); tryhop(jump=False)
+    tryhop(); emit(0xb4, 0x80)
 @vasm
 def DEF(d):
-    emit(0xcd, check_br(d))
+    tryhop(); emit(0xcd, check_br(d))
 @vasm
 def CALLI(d):
-    check_cpu('CALLI', 5); d=int(v(d)); emit(0x85, lo(d-2), hi(d))
+    check_cpu(5); tryhop(); d=int(v(d)); emit(0x85, lo(d-2), hi(d))
 @vasm
 def CMPHS(d):
-    check_cpu('CMPHS', 5); emit(0x1f, check_zp(d))
+    check_cpu(5); tryhop(); emit(0x1f, check_zp(d))
 @vasm
 def CMPHU(d):
-    check_cpu('CMPHU', 5); emit(0x97, check_zp(d))
+    check_cpu(5); tryhop(); emit(0x97, check_zp(d))
 
 # some experimental instructions for cpu6 (opcodes to be checked)
 @vasm
 def DOKEA(d):
-    check_cpu('DOKEA', 6); emit(0x7d, check_zp(d))
+    check_cpu(6); tryhop(); emit(0x7d, check_zp(d))
 @vasm
 def POKEA(d):
-    check_cpu('POKEA', 6); emit(0x69, check_zp(d))
+    check_cpu(6); tryhop(); emit(0x69, check_zp(d))
 @vasm
 def DOKEI(d):
-    check_cpu('DOKEI', 6); d=int(v(d)); emit(0x37, lo(d), hi(d))
+    check_cpu(6); tryhop(); d=int(v(d)); emit(0x37, lo(d), hi(d))
 @vasm
 def POKEI(d):
-    check_cpu('POKEI', 6); emit(0x25, check_im8s(d))
+    check_cpu(6); tryhop(); emit(0x25, check_im8s(d))
 @vasm
 def DEEKA(d):
-    check_cpu('DEEKA', 6); emit(0x6f, check_zp(d))
+    check_cpu(6); tryhop(); emit(0x6f, check_zp(d))
 @vasm
 def PEEKA(d):
-    check_cpu('PEEKA', 6); emit(0x67, check_zp(d))
+    check_cpu(6); tryhop(); emit(0x67, check_zp(d))
 @vasm
 def DEC(d):
-    check_cpu('DEC', 6); emit(0x14, check_zp(d))
+    check_cpu(6); tryhop(); emit(0x14, check_zp(d))
 @vasm
 def INCW(d):
-    check_cpu('INCW', 6); emit(0x79, check_zp(d))
+    check_cpu(6); tryhop(); emit(0x79, check_zp(d))
 @vasm
 def DECW(d):
-    check_cpu('DECW', 6); emit(0x7b, check_zp(d))
+    check_cpu(6); tryhop(); emit(0x7b, check_zp(d))
 @vasm
 def NEGW(d):
-    check_cpu('NEGW', 6); emit(0xd3, check_zp(d))
+    check_cpu(6); tryhop(); emit(0xd3, check_zp(d))
 @vasm
 def NOTB(d):
-    check_cpu('NOTB', 6); emit(0x48, check_zp(d))
+    check_cpu(6); tryhop(); emit(0x48, check_zp(d))
 @vasm
 def NOTW(d):
-    check_cpu('NOTW', 6); emit(0x8a, check_zp(d))
+    check_cpu(6); tryhop(); emit(0x8a, check_zp(d))
 @vasm
 def LSLV(d):
-    check_cpu('LSLV', 6); emit(0x27, check_zp(d))
+    check_cpu(6); tryhop();  emit(0x27, check_zp(d))
 @vasm
 def ADDBA(d):
-    check_cpu('ADDBA', 6); emit(0x29, check_zp(d))
+    check_cpu(6); tryhop(); emit(0x29, check_zp(d))
 @vasm
 def SUBBA(d):
-    check_cpu('SUBBA', 6); emit(0x77, check_zp(d))
+    check_cpu(6); tryhop(); emit(0x77, check_zp(d))
 @vasm
 def PEEKV(d):
-    check_cpu('PEEKV', 6); emit(0x39, check_zp(d))
+    check_cpu(6); tryhop(); emit(0x39, check_zp(d))
 @vasm
 def DEEKV(d):
-    check_cpu('DEEKV', 6); emit(0x3b, check_zp(d))
+    check_cpu(6); tryhop(); emit(0x3b, check_zp(d))
 
     
 @vasm
 def _SP(n):
     n = v(n)
-    tryhop()
     if is_zero(n):
         _LDW(SP);
     else:
         _LDI(n); ADDW(SP)
 @vasm
 def _LDI(d):
-    '''Emit LDI or LDWI depending on the size of d. No hops.'''
+    '''Emit LDI or LDWI depending on the size of d.'''
+    tryhop()
     d = v(d)
     if is_zeropage(d):
         emit(0x59, d)
@@ -567,7 +569,8 @@ def _LDI(d):
         emit(0x11, lo(d), hi(d))
 @vasm
 def _LDW(d):
-    '''Emit LDW or LDWI+DEEK depending on the size of d. No hops.'''
+    '''Emit LDW or LDWI+DEEK depending on the size of d.'''
+    tryhop()
     d = v(d)
     if is_zeropage(d):
         emit(0x21, d)
@@ -575,7 +578,8 @@ def _LDW(d):
         _LDI(d); DEEK()
 @vasm
 def _LD(d):
-    '''Emit LD or LDWI+PEEK depending on the size of d. No hops.'''
+    '''Emit LD or LDWI+PEEK depending on the size of d.'''
+    tryhop()
     d = v(d)
     if is_zeropage(d):
         emit(0x21, d)
@@ -946,6 +950,12 @@ def _CALLI(d, saveAC=False, storeAC=None):
         LDWI(d)
         STW('sysFn')
         CALL('sysFn')
+@vasm
+def _SAVE(mask):
+    pass
+@vasm
+def _RESTORE(mask):
+    pass
 
 
 
@@ -1052,8 +1062,7 @@ def measure_data_fragment(m, frag):
     return frag[0:3] + (the_pc,) + frag[4:]
 
 def measure_code_fragment(m, frag):
-    global the_module, the_fragment, the_pc, lbranch_counter, hops
-    hops = []
+    global the_module, the_fragment, the_pc, lbranch_counter
     the_module = m
     the_fragment = frag
     the_pc = 0
@@ -1062,17 +1071,8 @@ def measure_code_fragment(m, frag):
         frag[2]()
     except Exception as err:
         fatal(str(err), exc=True)
-    nhops = len(hops)
-    for i in range(1, nhops):
-        pc = hops[i]
-        jump = pc[1] if isinstance(pc,tuple) else True
-        pc = pc[0]if isinstance(pc,tuple) else pc
-        hops[i-1] = pc - hops[i-1] + (6 if jump else 0)
-        hops[i] = pc
-    hops[nhops-1] = 0
     debug(f"Function '{frag[1]}' is {the_pc}(-{lbranch_counter}) bytes long")
-    frag = frag + (the_pc, lbranch_counter, hops)
-    hops = None
+    frag = frag + (the_pc, lbranch_counter)
     return frag
 
 def measure_fragments(m):
@@ -1152,8 +1152,6 @@ def check_undefined_symbols():
                     und[s] = [mn]
     for s in und:
         error(f"Undefined symbol '{s}' imported by {comma.join(und[s])}")
-
-
 
                 
 # ------------- main function

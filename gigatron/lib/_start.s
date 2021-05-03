@@ -21,11 +21,9 @@ def code0():
     BGE('.init')
     LDI(11)
     BRA('.exit')
-    # call init1 and init2
-    label('.init')
+    # call _init1()
     _CALLI('_init1')
-    _CALLI('_init2')
-    # call main(argc,argv)
+    # call main(argc,argv)    
     LDI(0)
     STW(R8)
     STW(R9)
@@ -72,7 +70,6 @@ code=[
     ('EXPORT', 'exit'),
     ('CODE', '_start', code0),
     ('COMMON', '_atexit', code1, 2, 2),
-    ('COMMON', '_init2', code2, 2, 2),
     ('IMPORT', 'main'),
     ('IMPORT', '_init1'),
     ('IMPORT', '_initsp'),

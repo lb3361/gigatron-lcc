@@ -256,6 +256,7 @@ def extern(sym):
     if the_pass == 0 and sym not in the_module.imports:
         the_module.imports.append(sym)
 
+        
 # ------------- usable vocabulary for .s/.o/.a files
 
 def register_names():
@@ -949,12 +950,51 @@ def _CALLI(d, saveAC=False, storeAC=None):
         LDWI(d)
         STW('sysFn')
         CALL('sysFn')
+
+
+
 @vasm
 def _SAVE(offset, mask):
-    pass
+    if mask & ~0x4000ff:
+        error("Only registers R0-7,22 are supported for now")
+    rt = None
+    for i in range(0,8):
+        if mask & 0xff == (0xff << i) & 0xff:
+            rt = "_@_saveR%dto7" % i
+    if rt:
+        extern(rt)
+        if args.cpu < 5:
+            _LDI(rt);STW('sysFn');_SP(offset);CALL('sysFn')
+        else:
+            _SP(offset);CALLI(rt)
+    elif mask & 0x400000:
+        _SP(offset)
+    if mask & 0x400000:
+        if args.cpu < 6:
+            STW(T3);LDW(R22);DOKE(T3)
+        else:
+            DOKEA(R22)
 @vasm
 def _RESTORE(offset, mask):
-    pass
+    if mask & ~0x4000ff:
+        error("Only registers R0-7,22 are supported for now")
+    rt = None
+    for i in range(0,8):
+        if mask & 0xff == (0xff << i) & 0xff:
+            rt = "_@_restoreR%dto7" % i
+    if rt:
+        extern(rt)
+        if args.cpu < 5:
+            _LDI(rt);STW('sysFn');_SP(offset);CALL('sysFn')
+        else:
+            _SP(offset);CALLI(rt)
+    elif mask & 0x400000:
+        _SP(offset)
+    if mask & 0x400000:
+        if args.cpu < 6:
+            DEEK();STW(R22)
+        else:
+            DEEKA(R22)
 
 
 
@@ -964,15 +1004,16 @@ def _RESTORE(offset, mask):
 # ------------- reading .s/.o/.a files
         
               
-def new_globals():
+def new_globals(safe=False):
     '''Return a pristine global symbol table to read .s/.o/.a files.'''
     global safe_dict
     g = safe_dict.copy()
     g['args'] = { k:vars(args)[k] for k in ('cpu','rom','map') }
-    g['__builtins__'] = None
+    if not safe:
+        g['__builtins__'] = None
     return g
 
-def read_file(f):
+def read_file(f, safe=False):
     '''Safely read a .s/.o/.a file.'''
     global the_module, the_fragment, new_modules, module_list
     debug(f"reading '{f}'")
@@ -985,7 +1026,7 @@ def read_file(f):
     the_module = None
     the_fragment = None
     new_modules = []
-    exec(c, new_globals())
+    exec(c, new_globals(safe))
     if len(new_modules) == 0:
         warning(f"File {f} did not define any module")
     if len(new_modules) == 1 and not f.endswith(".a"):
@@ -1011,7 +1052,7 @@ def read_lib(l):
     f = search_file(f"lib{l}.a", args.L)
     if not f:
         fatal(f"library -l{l} not found!")
-    return read_file(f)
+    return read_file(f, safe=f.startswith(lccdir))
 
 def read_map(m):
     dn = os.path.dirname(__file__)

@@ -59,7 +59,7 @@ def map_extra_modules():
                 LDWI(tp[2]);ADDW(R7);STW(R7);LDWI(tp[3]);XORW(R7);BNE(f".L{i}")
         _RESTORE(2, 0x4000c0);_SP(12);STW(SP);LDW(R22);tryhop(3);STW(vLR);RET();
     code=[ ('EXPORT', '_segments'),
-           ('CODE', '_prep', code0),
+           ('CODE', '.callcb', code0),
            ('CODE', '_segments', code1) ]
     name='_map.s'
     debug(f"synthetizing module '{name}'")

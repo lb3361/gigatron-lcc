@@ -15,7 +15,7 @@ G=${TOP}gigatron/
 
 SFILES=$(wildcard *.s)
 CFILES=$(wildcard *.c)
-OFILES=${patsubst %.c,${BL}%_4.o,${CFILES}} ${patsubst %.c,${BL}%_5.o,${CFILES}}
+OFILES=${patsubst %.c,${BL}%_4.o,${CFILES}} ${patsubst %.c,${BL}%_5.o,${CFILES}} ${patsubst %.c,${BL}%_6.o,${CFILES}}
 RFILES=$(wildcard ../runtime/*.s)
 
 all: ${B}libc.a

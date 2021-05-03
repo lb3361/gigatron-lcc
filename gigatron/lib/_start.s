@@ -21,8 +21,9 @@ def code0():
     BGE('.init')
     LDI(11)
     BRA('.exit')
-    # call _init1()
+    # call _init functions
     _CALLI('_init1')
+    _CALLI('_init2')
     # call main(argc,argv)    
     LDI(0)
     STW(R8)
@@ -72,6 +73,7 @@ code=[
     ('COMMON', '_atexit', code1, 2, 2),
     ('IMPORT', 'main'),
     ('IMPORT', '_init1'),
+    ('IMPORT', '_init2'),
     ('IMPORT', '_initsp'),
     ('IMPORT', '_minrom'),
     ('IMPORT', '_minram'),

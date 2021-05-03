@@ -263,11 +263,10 @@ def register_names():
           "vLR":  0x001a, "vSP":  0x001c, 
           "LAC":  0x0084, "FAC":  0x0081 }
     for i in range(0,4): d[f'T{i}'] = 0x88+i+i
-    for i in range(8,32): d[f'R{i}'] = 0x80+i+i
-    for i in range(8,29): d[f'L{i}'] = d[f'R{i}']
-    for i in range(8,28): d[f'F{i}'] = d[f'R{i}']
-    d['SP'] = d['R31']
-    d['LR'] = d['R30']
+    for i in range(0,23): d[f'R{i}'] = 0x90+i+i
+    for i in range(0,22): d[f'L{i}'] = d[f'R{i}']
+    for i in range(0,21): d[f'F{i}'] = d[f'R{i}']
+    d['SP'] = 0xbe
     return d
 
 for (k,v) in register_names().items():
@@ -951,10 +950,10 @@ def _CALLI(d, saveAC=False, storeAC=None):
         STW('sysFn')
         CALL('sysFn')
 @vasm
-def _SAVE(mask):
+def _SAVE(offset, mask):
     pass
 @vasm
-def _RESTORE(mask):
+def _RESTORE(offset, mask):
     pass
 
 

@@ -94,10 +94,9 @@ static int  if_arg_stk(Node);
 static Symbol ireg[32], lreg[32], freg[32];
 static Symbol iregw, lregw, fregw;
 
-#define REGMASK_SAVED           0x3ff00000
-#define REGMASK_ARGS            0x00003f00
-#define REGMASK_TEMPS           0x000fff00
-#define REGMASK_LR              0x40000000
+#define REGMASK_SAVED           0x000000ff
+#define REGMASK_ARGS            0x0000ff00
+#define REGMASK_TEMPS           0x007fff00
 
 /* Misc */
 static int codenum = 0;
@@ -368,7 +367,7 @@ ac: ac1   "%0LD(vACL);" 16
 eac: reg  "LDW(%0);" 20
 eac: zddr "LDI(%0);" 16
 eac: addr "LDWI(%0);" 20
-eac: lddr "_SP(%0);"  40
+eac: lddr "_SP(%0);"  50
 
 # Loads
 eac: INDIRI2(eac) "%0DEEK();" 21
@@ -386,6 +385,16 @@ ac: INDIRU2(ac) "%0DEEK();" 21
 ac: INDIRP2(ac) "%0DEEK();" 21
 ac: INDIRI1(ac) "%0PEEK();" 17
 ac: INDIRU1(ac) "%0PEEK();" 17
+
+# Reg to reg
+reg: LOADI1(reg)  "\tLD(%0);ST(%c);\n"  move(a)
+reg: LOADU1(reg)  "\tLD(%0);ST(%c);\n"  move(a)
+reg: LOADI2(reg)  "\tLDW(%0);STW(%c);\n"  move(a)
+reg: LOADU2(reg)  "\tLDW(%0);STW(%c);\n"  move(a)
+reg: LOADP2(reg)  "\tLDW(%0);STW(%c);\n"  move(a)
+reg: LOADI4(reg)  "\t_LMOV(%0,%c);\n"  move(a)
+reg: LOADU4(reg)  "\t_LMOV(%0,%c);\n"  move(a)
+reg: LOADF5(reg)  "\t_FMOV(%0,%c);\n"  move(a)
 
 # -- iarg represents the argument of binary integer operations that
 #    map to zero page locations in assembly instructions.  However the
@@ -750,7 +759,7 @@ stmt: ASGNP2(ac,iarg)  "\t%0%[1b]DOKEA(%1);\n" mincpu6(30)
 stmt: ASGNI2(ac,iarg)  "\t%0%[1b]DOKEA(%1);\n" mincpu6(30)
 stmt: ASGNU2(ac,iarg)  "\t%0%[1b]DOKEA(%1);\n" mincpu6(30)
 stmt: ASGNI1(ac,iarg)  "\t%0%[1b]POKEA(%1);\n" mincpu6(28)
-stmt: ASGNI1(ac,iarg)  "\t%0%[1b]POKEA(%1);\n" mincpu6(28)
+stmt: ASGNU1(ac,iarg)  "\t%0%[1b]POKEA(%1);\n" mincpu6(28)
 stmt: ASGNP2(ac,con)  "\t%0%[1b]DOKEI(%1);\n" mincpu6(30)
 stmt: ASGNI2(ac,con)  "\t%0%[1b]DOKEI(%1);\n" mincpu6(30)
 stmt: ASGNU2(ac,con)  "\t%0%[1b]DOKEI(%1);\n" mincpu6(30)
@@ -942,20 +951,19 @@ static void progbeg(int argc, char *argv[])
   /* Print header */
   print("#VCPUv%d\n\n",cpu);
   /* Prepare registers */
-  ireg[30] = mkreg("LR", 30, 1, IREG);
   ireg[31] = mkreg("SP", 31, 1, IREG);
-  for (i=8; i<30; i++)
+  for (i=0; i<31; i++)
     ireg[i] = mkreg("R%d", i, 1, IREG);
-  for (i=8; i+1<30; i++)
+  for (i=0; i+1<31; i++)
     lreg[i] = mkreg("L%d", i, 3, IREG);
-  for (i=8; i+2<30; i++)
+  for (i=0; i+2<31; i++)
     freg[i] = mkreg("F%d", i, 7, IREG);
   /* Prepare wildcards */
   iregw = mkwildcard(ireg);
   lregw = mkwildcard(lreg);
   fregw = mkwildcard(freg);
-  tmask[IREG] = REGMASK_TEMPS;
-  vmask[IREG] = REGMASK_SAVED;
+  tmask[IREG] = REGMASK_TEMPS; /* nonleaf */
+  vmask[IREG] = REGMASK_SAVED; /* nonleaf */
   tmask[FREG] = vmask[FREG] = 0;
   /* No segment */
   cseg = -1;
@@ -1172,6 +1180,14 @@ static void local(Symbol p)
     mkauto(p);
 }
 
+static int topbit(unsigned mask) {
+  unsigned i, n = 0, r = -1;
+  for (i = 1; i; i<<=1, n++)
+    if (mask & i)
+      r = n;
+  return r;
+}
+
 static int bitcount(unsigned mask) {
   unsigned i, n = 0;
   for (i = 1; i; i <<= 1)
@@ -1180,17 +1196,38 @@ static int bitcount(unsigned mask) {
   return n;
 }
 
+static void printregmask(unsigned mask) {
+  unsigned i, m;
+  char *prefix = "R";
+  for (i=0, m=1; i<31; i++, m<<=1)
+    if (mask & m) {
+      print("%s%d", prefix, i);
+      prefix = ",";
+      if (i<30 && (mask & (m+m))) {
+        for (; i<30 && (mask & (m+m)); i++, m<<=1) {}
+        print("-%d", i);
+      }
+    }
+}
+
 static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
 {
-  int i, roffset, soffset, sizesave, argstk, ty;
-  Symbol r, argregs[8];
+  int i, tmpr, roffset, sizesave, ty;
+  Symbol r;
   usedmask[0] = usedmask[1] = 0;
   freemask[0] = freemask[1] = ~(unsigned)0;
   offset = maxoffset = maxargoffset = 0;
   assert(f->type && f->type->type);
   ty = ttob(f->type->type);
+  tmpr = topbit(REGMASK_TEMPS);
+  if (ncalls) {
+    tmask[IREG] = REGMASK_TEMPS;
+    vmask[IREG] = REGMASK_SAVED;
+  } else {
+    tmask[IREG] = REGMASK_TEMPS & ~(1<<tmpr);
+    vmask[IREG] = REGMASK_SAVED | tmask[IREG];
+  }
   /* locate incoming arguments */
-  argstk = 0;
   roffset = 0;
   for (i = 0; callee[i]; i++) {
     Symbol p = callee[i];
@@ -1200,27 +1237,29 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
     p->x.offset = q->x.offset = offset;
     p->x.name = q->x.name = stringd(offset);
     r = argreg(i, optype(ttob(q->type)), q->type->size, &roffset);
-    if (i < 8)
-      argregs[i] = r;
     offset += q->type->size;
-    if (argstk) {
-      p->sclass = AUTO;
-    } else if (r && ncalls == 0 && !p->addressed) {
-      p->sclass = q->sclass = REGISTER;
-      askregvar(p, r);
-      assert(p->x.regnode && p->x.regnode->vbl == p);
-      q->x = p->x;
-      q->type = p->type;
-    } else if (askregvar(p, rmap(ttob(p->type))) && r) {
-      assert(q->sclass != REGISTER);
-      p->sclass = q->sclass = REGISTER;
-      q->type = p->type;
+    if (r) {
+      if (ncalls == 0 && !p->addressed) {
+        /* Leaf function: leave register arguments in place */
+        p->sclass = q->sclass = REGISTER;
+        askregvar(p, r);
+        assert(p->x.regnode && p->x.regnode->vbl == p);
+        q->x = p->x;
+        q->type = p->type;
+      } else {
+        /* Let gencode know about args passed in register */
+        q->sclass = REGISTER;
+        q->x = r->x;
+      }
+    }
+    if (p->sclass == REGISTER && ! p->x.regnode) {
+      /* Allocate register argument. Gencode does the rest. */
+      askregvar(p, rmap(ttob(p->type)));
     }
   }
   /* gen code */
   assert(!caller[i]);
   offset = 0;
-  assignargs = 0; /* Try this */
   gencode(caller, callee);
   /* prologue */
   xprint_init();
@@ -1229,80 +1268,32 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   print("# ======== %s\n", lhead.prev->s);
   print("def code%d():\n", codenum++);
   print("\tlabel(%s);\n", f->x.name);
-  print("\tLDW(vLR);STW(LR);");
+  print("\ttryhop(16);LDW(vLR);STW(%s);", ireg[tmpr]->x.name);
   usedmask[IREG] &= REGMASK_SAVED;
-  if (ncalls)
-    usedmask[IREG] |= REGMASK_LR;
+  if (ncalls) usedmask[IREG] |= (1<<tmpr);
   sizesave = 2 * bitcount(usedmask[IREG]);
   framesize = maxargoffset + sizesave + maxoffset;
   if (framesize > 0)
     print("_SP(%d);STW(SP);",-framesize);
-  /* save callee saved registers */
-  offset = maxargoffset;
-  for (i=0; i<=31; i++)
-    if (usedmask[IREG]&(1<<i)) {
-      if (cpu > 5 && offset == maxargoffset) 
-        print("_SP(%d);DOKEA(%s);", offset, ireg[i]->x.name);
-      else if (cpu > 5)
-        print("ADDI(2);DOKEA(%s);", ireg[i]->x.name);
-      else
-        print("_SP(%d);_MOV(%s,[vAC]);", offset, ireg[i]->x.name);
-      offset += 2;
-    }
-  /* save args into new registers or vars */
-  for (i = 0; i < 8 && callee[i]; i++) {
-    r = argregs[i];
-    if (r && r->x.regnode != callee[i]->x.regnode) {
-      Symbol out = callee[i];
-      Symbol in  = caller[i];
-      const char *rn = r->x.name;
-      assert(out && in && r && r->x.regnode);
-      assert(out->sclass != REGISTER || out->x.regnode);
-      if (out->sclass == REGISTER) {
-        if (isfloat(in->type))
-          print("_FMOV(%s,%s);", rn, out->x.name);
-        else if (in->type->size > 2)
-          print("_LMOV(%s,%s);", rn, out->x.name);
-        else 
-          print("_MOV(%s,%s);", rn, out->x.name);
-      } else {
-        if (isfloat(in->type))
-          print("_SP(%s+%d);_FMOV(%s,[vAC]);", out->x.name, framesize, rn);
-        else if (in->type->size == 4)
-          print("_SP(%s+%d);_LMOV(%s,[vAC]);", out->x.name, framesize, rn);
-        else if (in->type->size == 2)
-          print("_SP(%s+%d);_MOV(%s,[vAC]);", out->x.name, framesize, rn); 
-        else if (in->type->size == 1 && cpu > 5)
-          print("_SP(%s+%d);POKEA(%s);", out->x.name, framesize, rn); 
-        else if (in->type->size == 1 && cpu <= 5)
-          print("_SP(%s+%d);STW(T2);LD(%s);POKE(T2);", out->x.name, framesize, rn); 
-      }
-    }
+  if (sizesave) {
+    print("_SAVE(%d, 0x%x); # ", maxargoffset, usedmask[IREG]);
+    printregmask(usedmask[IREG]);
   }
   print("\n");
   /* Emit actual code */
   emitcode();
-  /* Restore callee saved registers */
+  /* Epilogue */
   print("\t");
   if (opsize(ty) <= 2 && (optype(ty) == I || optype(ty) == U || optype(ty) == P))
-    print("STW(T2);");
-  offset = maxargoffset;
-  for (i=0; i<=31; i++)
-    if (usedmask[IREG]&(1<<i)) {
-      if (cpu > 5 && offset == maxargoffset)
-        print("_SP(%d);PEEKA(%s);", offset, ireg[i]->x.name);
-      else if (cpu > 5)
-        print("ADDI(2);PEEKA(%s);", ireg[i]->x.name);
-      else
-        print("_SP(%d);_MOV([vAC],%s);", offset, ireg[i]->x.name);
-      offset += 2;
-    }
-  if (framesize > 0)
+    print("STW(R8);");
+  if (sizesave)
+    print("_RESTORE(%d, 0x%x);", maxargoffset, usedmask[IREG]);
+  if (framesize)
     print("_SP(%d);STW(SP);", framesize);
-  print("LDW(LR);STW(vLR);");
   if (opsize(ty) <= 2 && (optype(ty) == I || optype(ty) == U || optype(ty) == P))
-    print("_LDW(T2);");      /* no hops */
-  print("RET();\n");
+    print("LDW(%s);tryhop(5);STW(vLR);LDW(R8);RET();\n", ireg[tmpr]->x.name);
+  else
+    print("LDW(%s);tryhop(3);STW(vLR);RET();\n", ireg[tmpr]->x.name);
   /* print delayed data */
   xprint_finish();
 }
@@ -1426,7 +1417,7 @@ Interface gigatronIR = {
         5, 1, 1,  /* long double */
         2, 2, 0,  /* pointer */
         0, 1, 0,  /* struct */
-        0,        /* little_endian */
+        1,        /* little_endian */
         0,        /* mulops_calls */
         0,        /* wants_callb */
         1,        /* wants_argb */

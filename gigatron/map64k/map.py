@@ -41,25 +41,23 @@ def map_extra_modules():
         PUSH()
         STW(R8)
         ADDW(R9);STW(R9)
-        LDW(R28);STW(R10)
+        LDW(R6);STW(R7)
         DEEK();STW(T3);CALL(T3)
         POP();RET()
         
     def code1():
         label('_segments')
-        LDW(vLR);STW(LR);_SP(-12);STW(SP);
-        _SP(6);_MOV(R28,[vAC]);_SP(8);_MOV(R29,[vAC]);_SP(10);_MOV(LR,[vAC])
-        LDW(R8); STW(R28)
+        tryhop(16);LDW(vLR);STW(R22);_SP(-12);STW(SP);_SAVE(2, 0x4000c0); # R6-7,22
+        LDW(R8); STW(R6)
         for (i,tp) in enumerate(segments):
             if tp[2] == None:
                 LDWI(tp[0]);STW(R9);LDW(tp[1]);CALLI('.callcb')
             else:
-                LDWI(tp[1]);STW(R29)
+                LDWI(tp[1]);STW(R7)
                 label(f".L{i}")
-                LDWI(tp[0]);STW(R9);LDW(R29);CALLI('.callcb')
-                LDWI(tp[2]);ADDW(R29);STW(R29);LDWI(tp[3]);XORW(R29);BNE(f".L{i}")
-        _SP(6);_MOV([vAC],R28);_SP(8);_MOV([vAC],R29);_SP(10);_MOV([vAC],LR)
-        _SP(10);STW(SP);LDW(LR);STW(vLR);RET();
+                LDWI(tp[0]);STW(R9);LDW(R7);CALLI('.callcb')
+                LDWI(tp[2]);ADDW(R7);STW(R7);LDWI(tp[3]);XORW(R7);BNE(f".L{i}")
+        _RESTORE(2, 0x4000c0);_SP(12);STW(SP);LDW(R22);tryhop(3);STW(vLR);RET();
     code=[ ('EXPORT', '_segments'),
            ('CODE', '_prep', code0),
            ('CODE', '_segments', code1) ]

@@ -30,10 +30,11 @@
 # -------------- glink proper
 
 import argparse, json, string
-import os, sys, traceback, functools
+import os, sys, traceback, functools, copy
 
 args = None
 rominfo = None
+romtype = None
 lccdir = '/usr/local/lib/gigatron-lcc'
 safe_dict = {}
 module_list = []
@@ -57,8 +58,7 @@ labelchange_counter = 0
 
 map_extra_modules = None
 map_extra_libs = None
-map_sp = None
-map_ram = None
+map_segments = None
 
 # --------------- utils
 
@@ -1033,7 +1033,7 @@ def new_globals(safe=False):
     '''Return a pristine global symbol table to read .s/.o/.a files.'''
     global safe_dict
     g = safe_dict.copy()
-    g['args'] = { k:vars(args)[k] for k in ('cpu','rom','map') }
+    g['args'] = copy.copy(args)
     if not safe:
         g['__builtins__'] = None
     return g
@@ -1086,8 +1086,8 @@ def read_map(m):
         fatal(f"Cannot find linker map '{m}'")
     with open(fn, 'r') as fd:
         exec(compile(fd.read(), fn, 'exec'), globals())
-    if not map_sp:
-        fatal(f"Map '{m}' does not define 'map_sp'")
+    if not map_segments:
+        fatal(f"Map '{m}' does not define 'map_segments'")
 
 def read_interface():
     global symdefs
@@ -1101,8 +1101,11 @@ def read_rominfo(rom):
         d = json.load(file)
         if rom in d:
             rominfo = d[args.rom]
-    if not rominfo:
+    if rominfo:
+        romtype = rominfo['romType']
+    else:
         print(f"glink: warning: rom '{args.rom}' is not recognized", file=sys.stderr)
+    
 
 
 
@@ -1297,6 +1300,7 @@ def main(argv):
         # process map
         read_map(args.map)
         args.L.append(os.path.join(lccdir,f"map{args.map}"))
+        args.L.append(os.path.join(lccdir,f"cpu{args.cpu}"))
         args.L.append(lccdir)
 
         # load all .s/.o/.a files
@@ -1310,16 +1314,16 @@ def main(argv):
         if map_extra_modules:
             global new_modules
             new_modules = []
-            map_extra_modules()
+            map_extra_modules(romtype)
             module_list += new_modules
 
         # load libraries requested by the map
         global map_extra_libs
         if map_extra_libs:
-            for n in map_extra_libs():
+            for n in map_extra_libs(romtype):
                 read_lib(n)
 
-        # load libraries
+        # load user-specified libraries
         for f in args.l:
             read_lib(f)
 
@@ -1327,9 +1331,6 @@ def main(argv):
         symdefs['_etext'] = 0x0
         symdefs['_edata'] = 0x0
         symdefs['_ebss'] = 0x0
-        symdefs['_initsp'] = map_sp()
-        symdefs['_minrom'] = rominfo['romType'] if rominfo else 0
-        symdefs['_minram'] = map_ram() if map_ram else 1
 
         # resolve import/exports/common and prune unused modules
         module_list = compute_closure()

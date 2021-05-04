@@ -15,15 +15,25 @@ G=${TOP}gigatron/
 
 SFILES=$(wildcard *.s)
 CFILES=$(wildcard *.c)
-OFILES=${patsubst %.c,${BL}%_4.o,${CFILES}} ${patsubst %.c,${BL}%_5.o,${CFILES}} ${patsubst %.c,${BL}%_6.o,${CFILES}}
+O4FILES=${patsubst %.c,${BL}%_4.o,${CFILES}}
+O5FILES=${patsubst %.c,${BL}%_5.o,${CFILES}}
+O6FILES=${patsubst %.c,${BL}%_6.o,${CFILES}}
+OFILES=${O4FILES} ${O5FILES} ${O6FILES}
 RFILES=$(wildcard ../runtime/*.s)
 
-all: ${B}libc.a
+all: ${B}cpu4/libc.a ${B}cpu5/libc.a ${B}cpu6/libc.a
 
-${B}libc.a: ${SFILES} ${OFILES} ${RFILES}
-	-@mkdir -p ${BL}
-	cat ${SFILES} ${OFILES} ${RFILES} > ${B}libc.a
+${B}cpu4/libc.a: ${SFILES} ${O4FILES} ${RFILES}
+	-@mkdir -p ${B}cpu4
+	cat ${SFILES} ${O4FILES} ${RFILES} > ${B}/cpu4/libc.a
 
+${B}cpu5/libc.a: ${SFILES} ${O5FILES} ${RFILES}
+	-@mkdir -p ${B}cpu5
+	cat ${SFILES} ${O5FILES} ${RFILES} > ${B}/cpu5/libc.a
+
+${B}cpu6/libc.a: ${SFILES} ${O6FILES} ${RFILES}
+	-@mkdir -p ${B}cpu6
+	cat ${SFILES} ${O6FILES} ${RFILES} > ${B}/cpu6/libc.a
 
 ${BL}%_4.o: %.c ${B}rcc
 	-@mkdir -p ${BL}
@@ -38,15 +48,20 @@ ${BL}%_6.o: %.c ${B}rcc
 	${B}glcc -c -cpu=6 -o $@  $<
 
 clean: FORCE
-	-rm ${B}libc.a
 	-rm ${OFILES}
+	-for cpu in 4 5 6; do \
+	   rm ${B}cpu$$cpu/libc.a ; \
+	   rmdir ${B}cpu$$cpu ; \
+	 done
 	-rmdir ${BL}
 
 install: FORCE
-	${INSTALL} -m 644 ${B}libc.a ${libdir}/libc.a
+	for cpu in 4 5 6; do \
+	  ${INSTALL} -d ${libdir}/cpu$$cpu/ ; \
+	  ${INSTALL} -m 644 ${B}cpu$$cpu/libc.a ${libdir}/cpu$$cpu/libc.a ; \
+	done
 
 FORCE: .PHONY
 
 .PHONY: 
 
-.SUFFIXES: .c .s .4s .5s .6s

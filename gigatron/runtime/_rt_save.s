@@ -8,7 +8,7 @@
 # TODO: optimize
 
 def code0():
-   if args['cpu'] < 6:
+   if args.cpu < 6:
       tryhop(81)
       for i in range(0,8):
          label("_@_saveR%dto7" % i);
@@ -22,7 +22,7 @@ def code0():
       RET()
 
 def code1():
-   if args['cpu'] < 6:
+   if args.cpu < 6:
       tryhop(73)
       for i in range(0,8):
          label("_@_restoreR%dto7" % i);

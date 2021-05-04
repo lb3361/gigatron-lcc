@@ -38,6 +38,7 @@ romtype = None
 lccdir = '/usr/local/lib/gigatron-lcc'
 safe_dict = {}
 module_list = []
+segment_list = []
 new_modules = []
 
 symdefs = {}
@@ -50,11 +51,12 @@ the_pc = 0
 the_pass = 0
 
 final_pass = False
+hops_enabled = False
 lbranch_counter = 0
 error_counter = 0
 warning_counter = 0
 genlabel_counter = 0
-labelchange_counter = 0
+labelchange_counter = 1
 
 map_extra_modules = None
 map_extra_libs = None
@@ -204,14 +206,28 @@ class Module:
         return Unk(0x1234)
     def label(self, sym, val):
         if the_pass > 0:
-            if sym in self.symdefs:
-                if val != self.symdefs[sym]:
-                    labelchange_counter += 1
-                    if self.sympass[sym] == the_pass:
-                        error(f"Multiple definitions of label '{sym}'")
-                self.symdefs[sym] = v
+            if sym in self.symdefs and val == self.symdefs[sym]:
+                if self.sympass[sym] == the_pass:
+                    error(f"Multiple definitions of label '{sym}'")
+                self.sympass[sym] = the_pass
+            else:
+                global labelchange_counter
+                labelchange_counter += 1
+                self.symdefs[sym] = val
                 self.sympass[sym] = the_pass
 
+class Segment:
+    '''Represent memory segments to be populated with code/data'''
+    __slots__ = ('saddr', 'eaddr', 'pc', 'dataonly')
+    def __init__(self, saddr, eaddr, dataonly=False):
+        self.saddr = saddr
+        self.eaddr = eaddr;
+        self.pc = saddr
+        self.dataonly = dataonly or False
+    def __repr__(self):
+        d = ',dataonly=True' if self.dataonly else ''
+        return f"Segment(0x{hex(self.saddr)},0x{hex(self.eaddr)}{d})"
+                
 def final_emit(*args):
     fatal("not yet implemented")
         
@@ -344,11 +360,25 @@ def tryhop(sz = 0):
     '''Hops to a new page if the current page cannot hold a long jump
        plus sz bytes. This also ensures that no hop will occur during
        the next sz bytes.'''
-    if the_pass > 0 and the_fragment[0] == 'CODE':
-        sz += 10 if args.cpu < 5 else 3
-        # TODO
-        # if remaining_space less than sz
-        #   allocated a new page and jump with emitjmp(saveAC=true)
+    global the_pass, the_fragment, hops_enabled, the_segment, the_pc
+    if hops_enabled:
+        sz = 4 if sz < 4 else sz           # enough space for one instruction
+        sz += 10 if args.cpu < 5 else 3    # enough space for the jump
+        if the_pc + sz >= the_segment.eaddr:
+            hops_enabled = False                       # avoid infinite recursion
+            the_segment.pc = the_pc
+            ns = find_code_segment(max(args.lfss, sz)) # give at least what was requested
+            if not ns:
+                fatal(f"Map memory exhausted while fitting function `{the_fragment[1]}'.")
+            emitjmp(ns.pc, saveAC=True)
+            hops_enabled = True            
+            the_segment.pc = the_pc
+            if the_pc > the_segment.eaddr:
+                fatal(f"Internal error: insufficient memory left to insert a hop")
+            the_segment = ns
+            the_pc = ns.pc
+            if args.d >= 2:
+                debug(f"Pass {the_pass}: Continuing '{the_fragment[1]}' at 0x{hex(the_pc)} in {ns}")
 
 @vasm
 def align(d):
@@ -368,7 +398,7 @@ def space(d):
         emit(0)
 @vasm
 def label(sym, val=None):
-    tryhop(16) # Non zero argument improves tight loops
+    tryhop(16) # Non zero to improve tight loops
     if the_pass > 0:
         the_module.label(sym, v(val) if val else the_pc)
 
@@ -573,16 +603,16 @@ def _LDI(d):
     tryhop()
     d = v(d)
     if is_zeropage(d):
-        emit(0x59, d)
+        LDI(d)
     else:
-        emit(0x11, lo(d), hi(d))
+        LDWI(d)
 @vasm
 def _LDW(d):
     '''Emit LDW or LDWI+DEEK depending on the size of d.'''
     tryhop()
     d = v(d)
     if is_zeropage(d):
-        emit(0x21, d)
+        LDW(d)
     else:
         _LDI(d); DEEK()
 @vasm
@@ -591,7 +621,7 @@ def _LD(d):
     tryhop()
     d = v(d)
     if is_zeropage(d):
-        emit(0x21, d)
+        LD(d)
     else:
         _LDI(d); PEEK()
 @vasm
@@ -1221,7 +1251,119 @@ def check_undefined_symbols():
     for s in und:
         error(f"Undefined symbol '{s}' imported by {comma.join(und[s])}")
 
-                
+
+
+# ------------- relax
+
+def find_last_used_address():
+    last = None
+    for s in segment_list:
+        if s.pc > s.saddr or not last:
+            last = s.pc if s.pc < s.eaddr else None
+    if not last:
+        last = segment_list[-1].eaddr
+    return last
+
+def find_data_segment(size, align=None):
+    for s in segment_list:
+        pc = s.pc
+        if align and align > 1:
+            pc = align * ((pc + align - 1) // align)
+        if s.eaddr - pc > size:
+            return s
+
+def find_code_segment(size):
+    for (i,s) in enumerate(segment_list):
+        if s.dataonly:
+            continue
+        if s.eaddr - s.pc > size:
+            if s.eaddr - s.pc >= 0x100:
+                # carve a page segment out of a long segment
+                assert(s.pc == s.saddr)
+                ns = Segment(s.saddr, s.saddr+0x100)
+                s.saddr = s.pc = ns.eaddr
+                segment_list.insert(i, ns)
+                if (args.d >= 2):
+                    debug(f"Splitting large segment {segment_list[i:i+2]}")
+                s = ns
+            return s
+    return None
+    
+def assemble_code_fragments(m):
+    global the_module, the_fragment, the_segment, hops_enabled, the_pc
+    the_module = m
+    for frag in m.code:
+        the_fragment = frag
+        if frag[0] == 'CODE':
+            shortsize = frag[3] - frag[4]
+            the_segment = None
+            if shortsize < args.sfst:
+                hops_enabled = False
+                the_segment = find_code_segment(shortsize)
+                if the_segment and args.d >= 2:
+                    debug(f"Pass {the_pass}: Assembling short function '{frag[1]}' at 0x{hex(the_segment.pc)} in {the_segment} .")
+            if not the_segment:
+                hops_enabled = True
+                the_segment = find_code_segment(args.lfss)
+                if not the_segment:
+                    fatal(f"Map memory exhausted while fitting function '{frag[1]}'.")
+                if the_segment and args.d >= 2:
+                    debug(f"Pass {the_pass}: Assembling function '{frag[1]}' at 0x{hex(the_segment.pc)} in {the_segment}")
+            the_pc = the_segment.pc
+            try:
+                frag[2]()
+            except Exception as err:
+                fatal(str(err), exc=True)
+            the_segment.pc = the_pc
+
+def assemble_data_fragments(m, cseg):
+    global the_module, the_fragment, the_segment, hops_enabled, the_pc
+    the_module = m
+    for frag in m.code:
+        the_fragment = frag
+        if frag[0] == cseg:
+            hops_enabled = False
+            the_segment = find_data_segment(frag[3], align=frag[4])
+            if not the_segment:
+                fatal(f"Map memory exhausted while fitting datum '{frag[1]}'.")
+            elif args.d >= 2:
+                debug(f"Pass {the_pass}: Assembling {cseg} item '{frag[1]}' at 0x{hex(the_segment.pc)} in {the_segment}")
+            the_pc = the_segment.pc
+            try:
+                frag[2]()
+            except Exception as err:
+                fatal(str(err), exc=True)
+            the_segment.pc = the_pc
+            
+def run_pass():
+    global the_pass, labelchange_counter, genlabel_counter, segment_list, symdefs
+    # initialize
+    the_pass += 1
+    labelchange_counter = 0
+    genlabel_counter = 0
+    segment_list = []
+    for (s,e,d) in map_segments():
+        segment_list.append(Segment(s,e,d))
+    debug(f"Pass {the_pass}.")
+    # code segments
+    for m in module_list:
+        assemble_code_fragments(m)
+    etext = find_last_used_address();
+    symdefs['_etext'] = etext
+    # data segment
+    for m in module_list:
+        assemble_data_fragments(m, 'DATA')
+    edata = find_last_used_address();
+    symdefs['_edata'] = edata
+    for m in module_list:
+        assemble_data_fragments(m, 'BSS')
+    ebss = find_last_used_address();
+    symdefs['_ebss'] = ebss
+    if args.d >= 2:
+        debug(f"Pass {the_pass}: _etext=0x{hex(etext)}, _edata=0x{hex(edata)}, _ebss=0x{hex(ebss)}")
+    
+    
+        
 # ------------- main function
 
 
@@ -1270,6 +1412,10 @@ def main(argv):
                             help='select a linker map')
         parser.add_argument('-d', action='count',
                             help='enable verbose output')
+        parser.add_argument('-sfst', type=int, action='store',
+                            help='attempts to fit functions smaller than this threshold into a single page')
+        parser.add_argument('-lfss', type=int, action='store',
+                            help='minimal segment size for functions split across segments')
         parser.add_argument('-e', type=str, action='store', default='_start',
                             help='select the entry point symbol (default _start)')
         parser.add_argument('files', type=str, nargs='+',
@@ -1295,6 +1441,8 @@ def main(argv):
         args.e = args.e or "_start"
         args.l = args.l or []
         args.L = args.L or []
+        args.sfst = args.sfst or 64
+        args.lfss = args.lfss or 16
         read_interface()
 
         # process map
@@ -1338,6 +1486,10 @@ def main(argv):
         check_undefined_symbols()
         if error_counter > 0:
             return 1
+
+        # run passes
+        while labelchange_counter:
+            run_pass()
 
         return 0
     

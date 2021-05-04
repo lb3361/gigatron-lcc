@@ -36,7 +36,7 @@ def code0():
 def code1():
     align(2)
     label('_atexit')
-    word(0)
+    words(0)
 
 # ======== (epilog)
 code=[

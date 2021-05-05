@@ -9,6 +9,18 @@ Python and it features a linker writen in Python that can directly
 ready these files. It also differs in important ways. For instance the
 code generator is fundamentally different.
 
+## Status
+
+What works:
+* The compiler compiles, the linker/assembler assembles and links.
+
+What remains to be done:
+* Complete the runtime.
+* Complete the library to loosely match ANSI C.
+* Write a simulator to automate testing.
+* Debug.
+
+
 ## Compiling and installing
 
 Building under Linux should just be a matter of typing

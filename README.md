@@ -46,23 +46,28 @@ Besides the options listed in the [lcc manual page](doc/lcc.1),
 the compiler driver recognizes a few Gigatron-specific options.
 Additional options recognized by the assembler/linker `glink'
 are documented by typing `glink -h`
-
-  * Option `-cpu=[456]` indicates which VCPU version should be
-	targeted.  Version 5 adds the instructions `CALLI`, `CMPHS` and
-	`CMPHU` that came with ROMv5a. Version 6 will support AT67's new
-	instruction once finalized. 
-	
+ 	
   * Option `-rom=<romversion>` is passed to the linked and
 	helps selecting runtime code that uses the SYS functions
 	implemented by the indicated rom version. The default is `v5a`
 	which does not provide much support at this point.
 	
+ * Option `-cpu=[456]` indicates which VCPU version should be
+	targeted.  Version 5 adds the instructions `CALLI`, `CMPHS` and
+	`CMPHU` that came with ROMv5a. Version 6 will support AT67's new
+	instruction once finalized. The default CPU is the one
+	implemented by the selected ROM.
+
   * Option `-map=<memorymap>` is also passed to the linker and specify
-	the memory layout of the code. The default map, `64k`, places 
-	code, data, heap, and stack into the conveniently contiguous upper
-	memory region `[0x8100,0xffff]`. An alternate map, `32k`, places
-	data and stack in region `[0x200-0x7ff]` and spreads the code and
-	the heap in the video holes `[0xPPa0,0xPPff]`.
+	the memory layout for the generated code. The default map, `64k` 
+	uses all little bits of memory available on a 64KB Gigatron,
+	starting with the video memory holes `[0x?a0-0x?ff]`, 
+	the low memory `[0x200-0x6ff]`, and finally the 32KB of high 
+	memory `[0x8000-0xffff]`.  Maps can also manipulate
+	the linker arguments, insert libraries, and define
+	the initialization function that checks the rom type
+	and the ram configuration.
+	
 	
 ## Basic types
 

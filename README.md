@@ -82,12 +82,12 @@ are documented by typing `glink -h`
 
 ## Internals
 
-The code generator uses two blocks of zero page locations:
+The code generator uses two consecutive blocks of zero page locations:
   *  The first block, located at addresses `0x81-0x8f`, is dedicated to
      the routines that implement long and float arithmetic. The long accumulator `LAC`
      uses locations `0x84-0x87`. The floating point accumulator `FAC` uses location `0x81-0x87`.
      The remaining locations `0x88-0x8f` are working space for these routines.
-     They are also known as scratch registers `R4` to `R7` which are
+     They are also known as scratch registers `T0` to `T3` which are
      occasionally used as scratch registers by the code generator.
   *  The second block, located at addresses `0x90-0xbf`, contains 24 general 
      purpose sixteen bits registers named `R0` to `R23`. 

@@ -1,8 +1,7 @@
 
 # ------------size----addr----step----end---- dataonly
 segments = [ (0x0060, 0x08a0, 0x0100, 0x80a0, 0),
-	     (0x00f4, 0x0206, None,   None,   1),
-	     (0x00fa, 0x0300, 0x0100, 0x0500, 1),
+	     (0x00fa, 0x0200, 0x0100, 0x0500, 1),
 	     (0x0200, 0x0500, None,   None,   1),
 	     (0x8000, 0x8000, None,   None,   0)   ]
 
@@ -41,8 +40,7 @@ def map_extra_modules(romtype):
         LDI(0);RET()
         label('.err')
         LDI(1);RET()
-    code=[ ('EXPORT', '_init0'),
-           ('CODE', '_init0', code0) ]
+    code=[ ('EXPORT', '_init0'), ('CODE', '_init0', code0) ]
     name='_map.s'
     debug(f"synthetizing module '{name}'")
     module(code=code, name=name);

@@ -102,7 +102,7 @@ class __metaUnk(type):
         return type(name, bases, namespace)
     
 class Unk(int, metaclass=__metaUnk):
-    '''Class to flag unknow integers'''
+    '''Class to represent unknown symbol values'''
     __slots__= ()
     def __new__(cls,val):
         return int.__new__(cls,val)
@@ -207,9 +207,9 @@ class Module:
     def label(self, sym, val):
         if the_pass > 0:
             if sym in self.symdefs and val == self.symdefs[sym]:
-                if self.sympass[sym] == the_pass:
-                    error(f"Multiple definitions of label '{sym}'")
                 self.sympass[sym] = the_pass
+            elif sym in self.symdefs and self.sympass[sym] == the_pass:
+                error(f"Multiple definitions of label '{sym}'")
             else:
                 global labelchange_counter
                 labelchange_counter += 1
@@ -1350,6 +1350,8 @@ def run_pass():
     segment_list = []
     for (s,e,d) in map_segments():
         segment_list.append(Segment(s,e,d))
+    if args.start_from_0x200:
+        reserve_jump_in_0x200()
     debug(f"Pass {the_pass}.")
     # code segments
     for m in module_list:
@@ -1395,10 +1397,25 @@ def doke_gt1(addr, val):
     s.buffer[o] = val & 0xff
     s.buffer[o+1] = (val >> 8) & 0xff
 
+def reserve_jump_in_0x200():
+    if args.start_from_0x200:
+        for seg in segment_list:
+            if seg.saddr == 0x200:
+                seg.pc += 6
+                seg.buffer = bytearray(6)
+                return
+    error(f"cannot find a segment starting in 0x200 to insert a jump")
+
+def write_jump_in_0x200():
+    if args.start_from_0x200:
+        seg = find_segment_for_address(0x200)
+        start = resolve(args.e)
+        if start and seg and seg.saddr == 0x200:
+            seg.buffer[0:6] = builtins.bytes((0x11, lo(start), hi(start), # LDWI(start)
+                                              0x2b, 0x1a, 0xff))          # STW(vLR); RET()
 
 def process_magic_bss(s, head_module, head_addr):
-    '''Construct a linked list of sizeable bss segments to be cleared at runtime. 
-       Head '__glink_magic_bss' points to struct{unsigned size, next;}.'''
+    '''Construct a linked list of sizeable bss segments to be cleared at runtime.'''
     for s in segment_list:
         if s.pc > s.saddr + 4 and not s.nbss:
             debug(f"BSS segment {hex(s.saddr)}-{hex(s.pc)} will be cleared at runtime")
@@ -1410,8 +1427,7 @@ def process_magic_bss(s, head_module, head_addr):
             doke_gt1(head_addr, s.saddr)
 
 def process_magic_heap(s, head_module, head_addr):
-    '''Construct a linked list of heap segments.
-       Head '__glink_magic_heap' points to struct{unsigned size, next;}.'''
+    '''Construct a linked list of heap segments.'''
     for s in segment_list:
         a0 = (s.pc + 1) & ~0x1
         a1 = s.eaddr &  ~0x1
@@ -1422,6 +1438,7 @@ def process_magic_heap(s, head_module, head_addr):
             doke_gt1(head_addr, a0)
 
 def process_magic_list(s, head_module, head_addr):
+    '''Constructs a linked list of structures defined in modules.'''
     for m in module_list:
         if m != head_module:
             if s in m.symdefs:
@@ -1435,6 +1452,34 @@ def process_magic_list(s, head_module, head_addr):
                 doke_gt1(head_addr, cons_addr)
 
 def process_magic_symbols():
+    '''
+    Magic symbols have names like '__glink_magic_xxx' and cause glink
+    to construct a linked list of arbitrary data entries. The head of
+    the list must be an *exported* pointer named '__glink_magic_xxx'
+    and initialized to the value 0xBEEF. When this happens, glink
+    searches each module for a *static* data item named
+    '__glink_magic_xxx' large enough to contain at least two
+    pointers. The first pointer (car) is left untouched.  The second
+    pointer (cdr) is used to construct a linked list.
+
+    The library uses two magic lists for which the
+    first pointer is a function pointer:
+     * '__glink_magic_init' is a list of initialization
+       functions called before main().
+     * '__glink_magic_init' is a list of finalization
+       functions called by exit().
+
+    In addition, there are two magic lists whose aa
+    records are not found in modules but crafted by the linker.
+     * '__glink_magic_bss' is a linked list of BSS segments
+       that must be cleared at runtime. Each list record occupies
+       the first 4 bytes of a segment. The first pointer contains
+       the segment size. This is used by '_init1.c'.
+     * '__glink_magic_heap' is a linked list of heap segments
+       for the malloc() function. Each list record occupies
+       the first 4 bytes of a segment. The first pointer contains
+       the segment size.
+    '''
     for s in exporters:
         if s.startswith("__glink_magic_"):
             head_module = exporters[s]
@@ -1454,7 +1499,9 @@ def process_magic_symbols():
 
 def save_gt1(fname, start):
     with open(fname,"wb") as fd:
-        for s in segment_list:
+        seglist = segment_list.copy()
+        seglist.sort(key = lambda x : x.saddr)
+        for s in seglist:
             if not s.buffer:
                 continue
             a0 = s.saddr
@@ -1481,6 +1528,7 @@ def print_symbols():
 
 
 def main(argv):
+
     '''Main entry point'''
     global lccdir, args, symdefs, module_list
     try:
@@ -1496,8 +1544,8 @@ def main(argv):
             epilog=''' 
             	This program accepts the modules generated by
                 gigatron-lcc/rcc (suffix .s or .o). These files are
-                text files with a python syntax. They contain a single
-                function that defines all the VCPU instructions,
+                text files with a python syntax that construct functions 
+                and data structures that defines all the VCPU instructions,
                 labels and data for this module.  Glink also accepts
                 concatenation of such files forming a library (suffix
                 .a).  The -cpu, -rom, and -map options provide values
@@ -1515,30 +1563,37 @@ def main(argv):
                 the symbols that it imports, then recursively all the
                 modules that are needed to resolve imported
                 symbols.''')
-        parser.add_argument('-o', type=str, default='a.gt1', metavar='file.gt1',
-                            help='select the output filename (default: a.gt1)')
-        parser.add_argument('-cpu', type=int, action='store',
-                            help='select the target cpu version')
-        parser.add_argument('-rom', type=str, action='store', default='v5a',
-                            help='select the target rom version')
-        parser.add_argument('-map', type=str, action='store', default='64k',
-                            help='select a linker map')
-        parser.add_argument('-d', action='count', default=0,
-                            help='enable verbose output')
-        parser.add_argument('-symbols', action='store_true',
-                            help='outputs a sorted list of symbols')
-        parser.add_argument('-sfst', type=int, action='store', default=64,
-                            help='attempts to fit functions smaller than this threshold into a single page')
-        parser.add_argument('-lfss', type=int, action='store', default=16,
-                            help='minimal segment size for functions split across segments')
-        parser.add_argument('-e', type=str, action='store', default='_start',
-                            help='select the entry point symbol (default _start)')
         parser.add_argument('files', type=str, nargs='+',
                             help='input files')
-        parser.add_argument('-l', type=str, action='append',
+        parser.add_argument('-o', type=str, default='a.gt1', metavar='GT1FILE',
+                            help='select the output filename (default: a.gt1)')
+        parser.add_argument('-cpu', "--cpu", type=int, action='store',
+                            help='select the target cpu version: 4, 5, 6 (default: 5).')
+        parser.add_argument('-rom', "--rom", type=str, action='store', default='v5a',
+                            help='select the target rom version: v4, v5a (default: v5a).')
+        parser.add_argument('-map', "--map", type=str, action='store', default='64k',
+                            help='select a linker map (default: 64k)')
+        parser.add_argument('-l', type=str, action='append', metavar='LIB',
                             help='library files. -lxxx searches for libxxx.a')
-        parser.add_argument('-L', type=str, action='append',
-                            help='additional library directories')
+        parser.add_argument('-L', type=str, action='append', metavar='LIBDIR',
+                            help='specify an additional directory to search for libraries')
+        parser.add_argument('--symbols', action='store_true',
+                            help='outputs a sorted list of symbols')
+        parser.add_argument('--entry', '-e', dest='e', metavar='START',
+                            type=str, action='store', default='_start',
+                            help='select the entry point symbol (default _start)')
+        parser.add_argument('--start-from-0x200', action='store_true',
+                            help='writes a jump to the entry point at address 0x200.')
+        parser.add_argument('--short-function-size-threshold', dest='sfst',
+                            metavar='SIZE', type=int, action='store', default=64,
+                            help='attempts to fit functions smaller than this threshold into a single page (default: 64).')
+        parser.add_argument('--long-functions-segment-size', dest='lfss',
+                            metavar='SIZE', type=int, action='store', default=16,
+                            help='minimal segment size for functions split across segments (default: 16).')
+        parser.add_argument('--no-runtime-bss-initialization', action='store_true',
+                            help='cause all bss segments to go as zeroes in the gt1 file')
+        parser.add_argument('--debug-messages', '-d', dest='d', action='count', default=0,
+                            help='enable debugging output. repeat for more.')
         args = parser.parse_args(argv)
 
         # set defaults
@@ -1603,6 +1658,8 @@ def main(argv):
 
         # magic happens here
         process_magic_symbols()
+        if args.start_from_0x200:
+            write_jump_in_0x200()
 
         # output
         save_gt1(args.o, v(args.e))

@@ -16,7 +16,7 @@ def code0():
     label('exit')
     LDW(R8); STW(R0)
     # call fini chain
-    LDWI('__glink_magic_init'); _CALLI('.callchain')
+    LDWI('__glink_magic_fini'); _CALLI('.callchain')
     LDW(R0)
     label('.exit')
     STW(R8)
@@ -59,9 +59,10 @@ code=[
     ('DATA', '__glink_magic_fini', code2, 2, 2),
     ('IMPORT', 'main'),
     ('IMPORT', '_init0'),
-    ('IMPORT', '__glink_magic_bss'), # causes _init1.c to be included
     ('IMPORT', '_@_exit') ]
-    
+
+if not args.no_runtime_bss_initialization:
+    code.append(('IMPORT', '__glink_magic_bss')) # causes _init1.c to be included
 
 module(code=code, name='_start.s');
 

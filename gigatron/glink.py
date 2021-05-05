@@ -226,7 +226,7 @@ class Segment:
         self.dataonly = dataonly or False
     def __repr__(self):
         d = ',dataonly=True' if self.dataonly else ''
-        return f"Segment(0x{hex(self.saddr)},0x{hex(self.eaddr)}{d})"
+        return f"Segment({hex(self.saddr)},{hex(self.eaddr)}{d})"
                 
 def final_emit(*args):
     fatal("not yet implemented")
@@ -378,7 +378,7 @@ def tryhop(sz = 0):
             the_segment = ns
             the_pc = ns.pc
             if args.d >= 2:
-                debug(f"Pass {the_pass}: Continuing '{the_fragment[1]}' at 0x{hex(the_pc)} in {ns}")
+                debug(f"Pass {the_pass}: Continuing '{the_fragment[1]}' at {hex(the_pc)} in {ns}")
 
 @vasm
 def align(d):
@@ -1255,15 +1255,21 @@ def check_undefined_symbols():
 
 # ------------- relax
 
-def find_last_used_address():
+def round_used_segments():
     last = None
-    for s in segment_list:
-        if s.pc > s.saddr or not last:
-            last = s.pc if s.pc < s.eaddr else None
-    if not last:
-        last = segment_list[-1].eaddr
-    return last
-
+    for (i,s) in enumerate(segment_list):
+        epage = (s.pc + 0xff) & ~0xff
+        if s.pc > s.saddr and s.eaddr > epage:
+            segment_list.insert(i+1, Segment(epage, s.eaddr, s.dataonly))
+            s.eaddr = epage
+            if args.d >= 2:
+                debug(f"Rounding {segment_list[i:i+2]}")
+        if s.pc > s.saddr:
+            last = None
+        elif not last:
+            last = s
+    return last.saddr if last else segment_list[-1].eaddr
+ 
 def find_data_segment(size, align=None):
     for s in segment_list:
         pc = s.pc
@@ -1276,16 +1282,15 @@ def find_code_segment(size):
     for (i,s) in enumerate(segment_list):
         if s.dataonly:
             continue
-        if s.eaddr - s.pc > size:
-            if s.eaddr - s.pc >= 0x100:
-                # carve a page segment out of a long segment
-                assert(s.pc == s.saddr)
-                ns = Segment(s.saddr, s.saddr+0x100)
-                s.saddr = s.pc = ns.eaddr
-                segment_list.insert(i, ns)
-                if (args.d >= 2):
-                    debug(f"Splitting large segment {segment_list[i:i+2]}")
-                s = ns
+        if s.pc > s.saddr and s.pc + size <= s.eaddr:
+            return s    
+        if (s.saddr ^ (s.eaddr-1)) & 0xff00:
+            epage = (s.saddr | 0xff) + 1
+            ns = Segment(s.saddr, epage)
+            s.saddr = epage
+            segment_list.insert(i, ns)
+            s = ns
+        if s.pc + size <= s.eaddr:
             return s
     return None
     
@@ -1301,14 +1306,14 @@ def assemble_code_fragments(m):
                 hops_enabled = False
                 the_segment = find_code_segment(shortsize)
                 if the_segment and args.d >= 2:
-                    debug(f"Pass {the_pass}: Assembling short function '{frag[1]}' at 0x{hex(the_segment.pc)} in {the_segment} .")
+                    debug(f"Pass {the_pass}: Assembling short function '{frag[1]}' at {hex(the_segment.pc)} in {the_segment} .")
             if not the_segment:
                 hops_enabled = True
                 the_segment = find_code_segment(args.lfss)
                 if not the_segment:
                     fatal(f"Map memory exhausted while fitting function '{frag[1]}'.")
                 if the_segment and args.d >= 2:
-                    debug(f"Pass {the_pass}: Assembling function '{frag[1]}' at 0x{hex(the_segment.pc)} in {the_segment}")
+                    debug(f"Pass {the_pass}: Assembling function '{frag[1]}' at {hex(the_segment.pc)} in {the_segment}")
             the_pc = the_segment.pc
             try:
                 frag[2]()
@@ -1327,7 +1332,7 @@ def assemble_data_fragments(m, cseg):
             if not the_segment:
                 fatal(f"Map memory exhausted while fitting datum '{frag[1]}'.")
             elif args.d >= 2:
-                debug(f"Pass {the_pass}: Assembling {cseg} item '{frag[1]}' at 0x{hex(the_segment.pc)} in {the_segment}")
+                debug(f"Pass {the_pass}: Assembling {cseg} item '{frag[1]}' at {hex(the_segment.pc)} in {the_segment}")
             the_pc = the_segment.pc
             try:
                 frag[2]()
@@ -1348,19 +1353,17 @@ def run_pass():
     # code segments
     for m in module_list:
         assemble_code_fragments(m)
-    etext = find_last_used_address();
-    symdefs['_etext'] = etext
-    # data segment
+    # data segments
     for m in module_list:
         assemble_data_fragments(m, 'DATA')
-    edata = find_last_used_address();
-    symdefs['_edata'] = edata
+    sbss = round_used_segments()
     for m in module_list:
         assemble_data_fragments(m, 'BSS')
-    ebss = find_last_used_address();
-    symdefs['_ebss'] = ebss
+    ebss = round_used_segments();
+    symdefs['_sbss'] = sbss
+    symdefs['_ebss'] = ebss    
     if args.d >= 2:
-        debug(f"Pass {the_pass}: _etext=0x{hex(etext)}, _edata=0x{hex(edata)}, _ebss=0x{hex(ebss)}")
+        debug(f"Pass {the_pass}: _sbss={hex(sbss)}, _ebss={hex(ebss)}")
     
     
         
@@ -1475,12 +1478,9 @@ def main(argv):
         for f in args.l:
             read_lib(f)
 
-        # symdefs
-        symdefs['_etext'] = 0x0
-        symdefs['_edata'] = 0x0
-        symdefs['_ebss'] = 0x0
-
         # resolve import/exports/common and prune unused modules
+        symdefs['_sbss'] = 0x0
+        symdefs['_ebss'] = 0x0
         module_list = compute_closure()
         convert_common_symbols()
         check_undefined_symbols()

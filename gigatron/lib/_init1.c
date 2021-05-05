@@ -2,66 +2,43 @@
 #include <string.h>
 #include "_malloc.h"
 
-extern char _etext, _edata, _ebss;
-
-#define etext       ((unsigned)(&_etext))
-#define edata       ((unsigned)(&_edata))
-#define ebss        ((unsigned)(&_ebss))
-
-#define minheap 20
-
 free_header_t _heap = { &_heap, &_heap, 0 };
 
-static void initf2(unsigned s, unsigned e, void(**cbptr)())
+static void initcb(unsigned s, unsigned e)
 {
-  s = (s + 1) & (~1u);
-  e = e & (~1u);
-  if (e - s > minheap) {
-    free_header_t *h = (free_header_t*)s;
-    h->size = e - s;
-    h->next = &_heap;
-    h->prev = _heap.prev;
-    h->next->prev = h;
-    h->prev->next = h;
+  extern char _sbss, _ebss;
+  static int state = 0;
+  if (state == 0) {
+    if (s == (unsigned)&_sbss)
+      state = 1;
   }
-}
-
-static void initf1(unsigned s, unsigned e, void (**cbptr)())
-{
-  if (s <= ebss && ebss < e) {
-    initf1(s, ebss, cbptr);
-    *cbptr = initf2;
-    initf2(ebss, e, cbptr);
-  } else if (e > s) {
-    /* inline memset (for now) */
-    if (s & 1) {
-      *(char*)s = 0;
-      s += 1;
-    }
-    if (e & 1) {
-      e -= 1;
-      *(char*)e = 0;
-    }
-    while (s != e) {
-      *(unsigned*)s = 0;
-      s += 2;
+  if (state == 1) {
+    if (s == (unsigned)&_ebss)
+      state = 2;
+    else if (e > s) {
+      if (s & 1) { *(char*)s = 0; s+= 1; }
+      if (e & 1) { e -= 1; *(char*)e = 0; }
+      while (s != e) { *(int*)s = 0; s += 2; }
     }
   }
-}
-
-static void initf0(unsigned s, unsigned e, void (**cbptr)())
-{
-  if (s <= edata && edata < e) {
-    *cbptr = initf1;
-    initf1(edata, e, cbptr);
+  if (state == 2) {
+    if (s & 1) { s += 1; }
+    if (e & 1) { e -= 1; }
+    if (e - s > 24) {
+      free_header_t *h = (free_header_t*)s;
+      h->size = e - s;
+      h->next = &_heap;
+      h->prev = _heap.prev;
+      h->next->prev = h;
+      h->prev->next = h;
+    }
   }
-}
+}      
 
 void _init1(void)
 {
-  void (*cbptr)() = initf1;
-  extern void _segments(void (**cbptr)());
-  _segments(&cbptr);
+  extern void _segments(void(*)(unsigned,unsigned));
+  _segments(initcb);
 }  
 
 

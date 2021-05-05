@@ -96,6 +96,7 @@ static Symbol iregw, lregw, fregw;
 
 #define REGMASK_SAVED           0x000000ff
 #define REGMASK_ARGS            0x0000ff00
+#define REGMASK_MOREVARS        0x000fffff
 #define REGMASK_TEMPS           0x007fff00
 
 /* Misc */
@@ -105,6 +106,7 @@ static int cpu = 5;
 
 #define mincpu5(cost) ((cpu<5)?LBURG_MAX:(cost))
 #define mincpu6(cost) ((cpu<6)?LBURG_MAX:(cost))
+#define ifspill(cost) ((spilling)?cost:LBURG_MAX)
  
 /*---- END HEADER --*/
 %}
@@ -397,15 +399,20 @@ ac: INDIRU1(ac) "%0PEEK();" 17
 # -- iarg represents the argument of binary integer operations that
 #    map to zero page locations in assembly instructions.  However the
 #    spiller needs to be able to reload a register from an auto
-#    variable without allocating a register. This is achieved by the
-#    loadeac branch which defines two fragments using the ${alt} mechanism
-#    defined by emit3(). The two fragments are a register name (T3)
+#    variable without allocating a register. This is achieved by another
+#    branch which defines two fragments using the alternate expansion 
+#    mechanism defined by emitfmt. The two fragments are a register name (T3)
 #    and an instruction sequence.
 iarg: reg "%0"
 iarg: INDIRI2(zddr) "%0"
 iarg: INDIRU2(zddr) "%0"
 iarg: INDIRP2(zddr) "%0"
-iarg: eac "T3|STW(T2);%0STW(T3);LDW(T2);" 60
+
+spill: ADDRLP2 "_SP(%a+%F);" ifspill(50)
+spill: INDIRI2(spill) "%0DEEK();" 21
+spill: INDIRU2(spill) "%0DEEK();" 21
+spill: INDIRP2(spill) "%0DEEK();" 21
+iarg: spill "T3|STW(T2);%0STW(T3);LDW(T2);" 0
 
 # Integer operations. This is verbose because there are variants for
 # types I2, U2, P2, variants for argument ordering, and variants for
@@ -550,12 +557,12 @@ vsrc: lac "LAC|%0"
 vdst: addr "%0"
 vdst: eac "[vAC]|%0"
 psrc: addr "%0"
-psrc: eac "[vAC]|%0" 20
+psrc: eac "[vAC]|%0"
 pdst: addr "%0"
 pdst: ac "[T2]|%0STW(T2);" 20
 
 # Structs
-stmt: ARGB(INDIRB(psrc))        "\t_SP(%c);STW(T2);%[0b]_BMOV(%0,[T2],%a);\n"  220
+stmt: ARGB(INDIRB(psrc))        "\t_SP(%c);STW(T2);%[0b]_BMOV(%0,[T2],%a);\n"  200
 stmt: ASGNB(pdst,INDIRB(psrc)) "\t%[0b]%[1b]_BMOV(%1,%0,%a)\n" 200
 
 # Longs
@@ -569,8 +576,8 @@ larg: INDIRU4(eac) "%0"
 reg: lac "\t%0_LMOV(LAC,%c);\n" 80
 reg: INDIRI4(ac) "\t%0_LMOV([vAC],%c);\n" 150
 reg: INDIRU4(ac) "\t%0_LMOV([vAC],%c);\n" 150
-reg: INDIRI4(addr) "\t_LMOV(%0,%c);\n" 100
-reg: INDIRU4(addr) "\t_LMOV(%0,%c);\n" 100
+reg: INDIRI4(addr) "\t_LMOV(%0,%c);\n" 150
+reg: INDIRU4(addr) "\t_LMOV(%0,%c);\n" 150
 lac: reg "_LMOV(%0,LAC);" 80
 lac: INDIRI4(ac) "%0_LMOV([vAC],LAC);" 150
 lac: INDIRU4(ac) "%0_LMOV([vAC],LAC);" 150
@@ -637,9 +644,9 @@ farg: INDIRF5(eac) "%0"
 reg: fac "\t%0_FMOV(FAC,%c);\n" 200
 reg: INDIRF5(ac)   "\t%0_FMOV([vAC],%c);\n" 150
 reg: INDIRF5(addr) "\t_FMOV(%0,%c);\n" 150
-fac: reg "_FMOV(%0,FAC);" 100
-fac: INDIRF5(ac)    "%0_FMOV([vAC],FAC);" 200
-fac: INDIRF5(addr)  "_FMOV(%0,FAC);" 200
+fac: reg            "_FMOV(%0,FAC);" 150
+fac: INDIRF5(ac)    "%0_FMOV([vAC],FAC);" 150
+fac: INDIRF5(addr)  "_FMOV(%0,FAC);" 150
 fac: ADDF5(fac,farg) "%0%1_FADD();" 200
 fac: ADDF5(farg,fac) "%1%0_FADD();" 200
 fac: SUBF5(fac,farg) "%0%1_FSUB();" 200
@@ -654,8 +661,8 @@ stmt: LTF5(fac,farg) "\t%0%1_FCMP();_BLT(%a);\n" 200
 stmt: LEF5(fac,farg) "\t%0%1_FCMP();_BLE(%a);\n" 200
 stmt: GTF5(fac,farg) "\t%0%1_FCMP();_BGT(%a);\n" 200
 stmt: GEF5(fac,farg) "\t%0%1_FCMP();_BGE(%a);\n" 200
-stmt: ASGNF5(vdst,vsrc) "\t%[1b]%[0b]_FMOV(%1,%0);\n"
-stmt: ASGNF5(pdst,INDIRF5(psrc)) "\t%[0b]%[1b]_FMOV(%1,%0);\n"
+stmt: ASGNF5(vdst,vsrc) "\t%[1b]%[0b]_FMOV(%1,%0);\n" 160
+stmt: ASGNF5(pdst,INDIRF5(psrc)) "\t%[0b]%[1b]_FMOV(%1,%0);\n" 160
 
 # Calls
 fac: CALLF5(addr) "CALLI(%0);" mincpu5(28)
@@ -1220,7 +1227,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
     vmask[IREG] = REGMASK_SAVED;
   } else {
     tmask[IREG] = REGMASK_TEMPS & ~(1<<tmpr);
-    vmask[IREG] = REGMASK_SAVED | tmask[IREG];
+    vmask[IREG] = REGMASK_MOREVARS;
   }
   /* locate incoming arguments */
   roffset = 0;

@@ -349,6 +349,7 @@ struct field {
 extern int assignargs;
 extern int prunetemps;
 extern int nodecount;
+extern int spilling;
 extern Symbol cfunc;
 extern Symbol retv;
 extern Tree (*optree[])(int, Tree, Tree);

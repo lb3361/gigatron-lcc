@@ -35,9 +35,9 @@ def map_extra_modules(romtype):
          - call cb for all segments in the map
     '''
     def code0():
-        tryhop(25)
+        tryhop(25, jump=False)
         label('_init0')
-        LDWI(initsp);STW(SP);
+        _LDI(initsp);STW(SP);
         LD('romType');ANDI(0xfc);SUBI(romtype or 0);BLT('.err')
         LD('memSize');BNE('.err')
         LDI(1);RET()

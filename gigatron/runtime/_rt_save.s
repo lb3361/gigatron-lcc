@@ -9,13 +9,13 @@
 
 def code0():
    if args.cpu < 6:
-      tryhop(81)
+      tryhop(81, jump=False)
       for i in range(0,8):
          label("_@_saveR%dto7" % i);
          STW(T3);LDW(R0+i+i);DOKE(T3);LDI(2);ADDW(T3)
       RET()
    else:
-      tryhop(33)
+      tryhop(33, jump=False)
       for i in range(0,8):
          label("_@_saveR%dto7" % i);
          DOKEA(R0+i+i);ADDI(2)
@@ -23,13 +23,13 @@ def code0():
 
 def code1():
    if args.cpu < 6:
-      tryhop(73)
+      tryhop(73, jump=False)
       for i in range(0,8):
          label("_@_restoreR%dto7" % i);
          STW(T3);DEEK();STW(R0+i+i);LDI(2);ADDW(T3)
       RET()
    else:
-      tryhop(33)
+      tryhop(33, jump=False)
       for i in range(0,8):
          label("_@_restoreR%dto7" % i);
          DEEKA(R0+i+i);ADDI(2)

@@ -17,7 +17,7 @@ def code0():
     label('exit')
     # call atexit handlers
     LDW(R8); STW(R0)
-    LDW('_atexit')
+    _LDW('_atexit')
     _BRA('.atexittst')
     label('.atexitloop')
     DEEK(); STW(T3); CALL(T3)

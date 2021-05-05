@@ -33,8 +33,8 @@ import argparse, json, string
 import os, sys, traceback, functools, copy
 
 args = None
-rominfo = None
 romtype = None
+romcpu = None
 lccdir = '/usr/local/lib/gigatron-lcc'
 safe_dict = {}
 module_list = []
@@ -122,7 +122,7 @@ def is_zeropage(x, l = 0):
 
 def is_not_zeropage(x):
     if isinstance(x,int) and not isinstance(x,Unk):
-        return int(x) & 0xff00 == 0
+        return int(x) & 0xff00 != 0
     return False
 
 def is_pcpage(x):
@@ -132,7 +132,7 @@ def is_pcpage(x):
 
 def is_not_pcpage(x):
     if isinstance(x,int) and not isinstance(x,Unk):
-        return int(x) & 0xff00 == pc() & 0xff00
+        return int(x) & 0xff00 != pc() & 0xff00
     return False
 
 def genlabel():
@@ -163,12 +163,13 @@ def check_im8s(x):
 def check_br(x):
     x = v(x)
     if is_not_pcpage(x) and final_pass:
+        print(hex(x),hex(the_pc))
         warning(f"short branch overflow")
     return (int(x)-2) & 0xff
 
 def check_cpu(v):
     if args.cpu < v and final_pass:
-        warning(f"opcode not implemented by cpu={arg.cpu}")
+        warning(f"opcode not implemented by cpu={args.cpu}")
 
 class Module:
     '''Class for assembly modules read from .s/.o/.a files.'''
@@ -218,12 +219,13 @@ class Module:
 
 class Segment:
     '''Represent memory segments to be populated with code/data'''
-    __slots__ = ('saddr', 'eaddr', 'pc', 'dataonly')
+    __slots__ = ('saddr', 'eaddr', 'pc', 'dataonly', 'buffer')
     def __init__(self, saddr, eaddr, dataonly=False):
         self.saddr = saddr
-        self.eaddr = eaddr;
+        self.eaddr = eaddr
         self.pc = saddr
         self.dataonly = dataonly or False
+        self.buffer = None
     def __repr__(self):
         d = ',dataonly=True' if self.dataonly else ''
         return f"Segment({hex(self.saddr)},{hex(self.eaddr)}{d})"
@@ -232,20 +234,13 @@ def final_emit(*args):
     fatal("not yet implemented")
         
 def emit(*args):
-    global final_pass, the_pc
-    #### ---- listing code for debugging
-    if False:
-        inst = ""
-        stb = traceback.extract_stack(limit=6)
-        for s in stb:
-            if s.name.startswith('code'):
-                inst = s.line
-        print(f"{hex(the_pc)}: {list(map(hex,args))} {inst}", file=sys.stderr)
-    ### ---- end of listing code for debugging
+    global final_pass, the_pc, the_segment
     if final_pass:
-        final_emit(*args)
-    else:
-        the_pc += len(args)
+        if not the_segment.buffer:
+            the_segment.buffer = bytearray()
+        for b in args:
+            the_segment.buffer.append(b)
+    the_pc += len(args)
 
 def emitjmp(d, saveAC=False):
     if is_pcpage(d): # 2 bytes
@@ -272,10 +267,10 @@ def emitjcc(BCC, BNCC, d, saveAC=False):
     if is_pcpage(d):
         BCC(d)
     else:
-        tryhop(10 if args.cpu < 5 else 3)
+        tryhop(13 if args.cpu < 5 else 6)
         BNCC(lbl);
         emitjmp(int(d), saveAC=saveAC)
-        label(lbl)
+        label(lbl, hop=False)
 
 def extern(sym):
     if the_pass == 0 and sym not in the_module.imports:
@@ -356,7 +351,7 @@ def hi(x):
     return (v(x) >> 8) & 0xff
 
 @vasm
-def tryhop(sz = 0):
+def tryhop(sz = 0, jump=True):
     '''Hops to a new page if the current page cannot hold a long jump
        plus sz bytes. This also ensures that no hop will occur during
        the next sz bytes.'''
@@ -370,7 +365,8 @@ def tryhop(sz = 0):
             ns = find_code_segment(max(args.lfss, sz)) # give at least what was requested
             if not ns:
                 fatal(f"Map memory exhausted while fitting function `{the_fragment[1]}'.")
-            emitjmp(ns.pc, saveAC=True)
+            if jump:
+                emitjmp(ns.pc, saveAC=True)
             hops_enabled = True            
             the_segment.pc = the_pc
             if the_pc > the_segment.eaddr:
@@ -397,8 +393,9 @@ def space(d):
     for i in range(0,d):
         emit(0)
 @vasm
-def label(sym, val=None):
-    tryhop(16) # Non zero to improve tight loops
+def label(sym, val=None, hop=True):
+    if hop:
+        tryhop(16) # Non zero to improve tight loops
     if the_pass > 0:
         the_module.label(sym, v(val) if val else the_pc)
 
@@ -437,7 +434,7 @@ def ADDI(d):
     tryhop(); emit(0xe3, check_imm8(d))
 @vasm
 def SUBI(d):
-    tryhop(); emit(0x36, check_imm8(d))
+    tryhop(); emit(0xe6, check_imm8(d))
 @vasm
 def LSLW():
     tryhop(); emit(0xe9)
@@ -479,7 +476,7 @@ def LUP(d):
     tryhop(); emit(0x7f, check_zp(d))
 @vasm
 def BRA(d):
-    tryhop(); emit(0x90, check_br(d))
+    tryhop(); emit(0x90, check_br(d)); tryhop(jump=False)
 @vasm
 def BEQ(d):
     tryhop(); emit(0x35, 0x3f, check_br(d))
@@ -503,7 +500,7 @@ def CALL(d):
     tryhop(); emit(0xcf, check_zp(d))
 @vasm
 def RET():
-    tryhop(); emit(0xff)
+    tryhop(); emit(0xff); tryhop(jump=False)
 @vasm
 def PUSH():
     tryhop(); emit(0x75)
@@ -528,7 +525,7 @@ def DEF(d):
     tryhop(); emit(0xcd, check_br(d))
 @vasm
 def CALLI(d):
-    check_cpu(5); tryhop(); d=int(v(d)); emit(0x85, lo(d-2), hi(d))
+    check_cpu(5); tryhop(); d=int(v(d)); emit(0x85, lo(d), hi(d))
 @vasm
 def CMPHS(d):
     check_cpu(5); tryhop(); emit(0x1f, check_zp(d))
@@ -600,7 +597,6 @@ def _SP(n):
 @vasm
 def _LDI(d):
     '''Emit LDI or LDWI depending on the size of d.'''
-    tryhop()
     d = v(d)
     if is_zeropage(d):
         LDI(d)
@@ -609,7 +605,6 @@ def _LDI(d):
 @vasm
 def _LDW(d):
     '''Emit LDW or LDWI+DEEK depending on the size of d.'''
-    tryhop()
     d = v(d)
     if is_zeropage(d):
         LDW(d)
@@ -699,7 +694,7 @@ def _MOV(s,d):
             _LDI(d); STW(T2); _LDW(s); DOKE(T2)
 @vasm
 def _BRA(d, saveAC=False):
-    emitjmp(v(d), saveAC=saveAC)
+    emitjmp(v(d), saveAC=saveAC); tryhop(jump=False)
 @vasm
 def _BEQ(d, saveAC=False):
     emitjcc(BEQ, BNE, v(d), saveAC=saveAC)
@@ -1126,15 +1121,18 @@ def read_interface():
             symdefs[name] = value if isinstance(value, int) else int(value, base=0)
 
 def read_rominfo(rom):
-    global rominfo
+    global romtype, romcpu
     with open(os.path.join(lccdir,'roms.json')) as file:
         d = json.load(file)
         if rom in d:
             rominfo = d[args.rom]
     if rominfo:
         romtype = rominfo['romType']
-    else:
+        romcpu = rominfo['cpu']
+    if not rominfo:
         print(f"glink: warning: rom '{args.rom}' is not recognized", file=sys.stderr)
+    if romcpu and args.cpu and args.cpu > romcpu:
+        print(f"glink: warning: rom '{args.rom}' does not implement cpu{args.cpu}", file=sys.stderr)
     
 
 
@@ -1365,14 +1363,46 @@ def run_pass():
     if args.d >= 2:
         debug(f"Pass {the_pass}: _sbss={hex(sbss)}, _ebss={hex(ebss)}")
     
-    
+def run_passes():
+    global final_pass
+    final_pass = False
+    while labelchange_counter:
+        run_pass()
+    final_pass = True
+    run_pass()
+
+def save_gt1(fname, start):
+    bytes = __builtins__['bytes']
+    with open(fname,"wb") as fd:
+        for s in segment_list:
+            if not s.buffer:
+                continue
+            a0 = s.saddr
+            while a0 < s.pc:
+                a1 = min(s.eaddr, (a0 | 0xff) + 1)
+                buffer = s.buffer[(a0-s.saddr):(a1-s.saddr)]
+                fd.write(bytes((hi(a0),lo(a0),len(buffer)&0xff)))
+                fd.write(buffer)
+                a0 = a1
+        fd.write(bytes((0, hi(start), lo(start))))
         
+def print_symbols():
+    syms = []
+    for m in module_list:
+        for s in m.symdefs:
+            if not s.startswith('.'):
+                syms.append((m.symdefs[s], s, m.fname))
+    syms.sort(key = lambda x : x[0] )
+    for s in syms:
+        print(f"{s[0]:04x}\t{s[1]:<22s}\t{s[2]:<24s}")
+
+    
 # ------------- main function
 
 
 def main(argv):
     '''Main entry point'''
-    global lccdir, args, rominfo, symdefs, module_list
+    global lccdir, args, symdefs, module_list
     try:
         # Obtain LCCDIR
         lccdir = os.path.dirname(os.path.realpath(__file__))
@@ -1409,15 +1439,17 @@ def main(argv):
                             help='select the output filename (default: a.gt1)')
         parser.add_argument('-cpu', type=int, action='store',
                             help='select the target cpu version')
-        parser.add_argument('-rom', type=str, action='store',
+        parser.add_argument('-rom', type=str, action='store', default='v5a',
                             help='select the target rom version')
-        parser.add_argument('-map', type=str, action='store',
+        parser.add_argument('-map', type=str, action='store', default='64k',
                             help='select a linker map')
-        parser.add_argument('-d', action='count',
+        parser.add_argument('-d', action='count', default=0,
                             help='enable verbose output')
-        parser.add_argument('-sfst', type=int, action='store',
+        parser.add_argument('-symbols', action='store_true',
+                            help='outputs a sorted list of symbols')
+        parser.add_argument('-sfst', type=int, action='store', default=64,
                             help='attempts to fit functions smaller than this threshold into a single page')
-        parser.add_argument('-lfss', type=int, action='store',
+        parser.add_argument('-lfss', type=int, action='store', default=16,
                             help='minimal segment size for functions split across segments')
         parser.add_argument('-e', type=str, action='store', default='_start',
                             help='select the entry point symbol (default _start)')
@@ -1430,22 +1462,19 @@ def main(argv):
         args = parser.parse_args(argv)
 
         # set defaults
-        if args.map == None:
-            args.map = '64k'
-        if args.rom == None:
-            args.rom = 'v5a'
+        if False:
+            if args.map == None:
+                args.map = '64k'
+            if args.rom == None:
+                args.rom = 'v5a'
+                args.sfst = args.sfst or 64
+                args.lfss = args.lfss or 16
         read_rominfo(args.rom)
-        if rominfo and args.cpu and args.cpu > rominfo['cpu']:
-            print(f"glink: warning: rom '{args.rom}' does not implement cpu{args.cpu}", file=sys.stderr)
-        if rominfo and not args.cpu:
-            args.cpu = rominfo['cpu']
-        args.cpu = args.cpu or 5
+        args.cpu = args.cpu or romcpu or 5
         args.files = args.files or []
         args.e = args.e or "_start"
         args.l = args.l or []
         args.L = args.L or []
-        args.sfst = args.sfst or 64
-        args.lfss = args.lfss or 16
         read_interface()
 
         # process map
@@ -1485,12 +1514,19 @@ def main(argv):
         convert_common_symbols()
         check_undefined_symbols()
         if error_counter > 0:
+            printf(f"glink: {error_counter} error(s) {warning_counter} warning(s)")
             return 1
 
-        # run passes
-        while labelchange_counter:
-            run_pass()
+        # generate
+        run_passes()
+        if error_counter > 0:
+            printf(f"glink: {error_counter} error(s) {warning_counter} warning(s)")
+            return 1
 
+        # output
+        save_gt1(args.o, v(args.e))
+        if (args.symbols):
+            print_symbols()
         return 0
     
     except FileNotFoundError as err:

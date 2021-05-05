@@ -31,6 +31,7 @@
 
 import argparse, json, string
 import os, sys, traceback, functools, copy
+import builtins
 
 args = None
 romtype = None
@@ -76,7 +77,10 @@ def where(exc=False):
         stb = traceback.extract_stack(limit=8)
     for s in stb:
         if (s[2].startswith('code')):
-            return f"{s[0]}:{s[1]}"
+            fn = s[0] or "<unknown>"
+            if fn.startswith(lccdir):
+                fn = fn[len(lccdir):].lstrip('/')
+            return f"{fn}:{s[1]}"
     return None
 
 class __metaUnk(type):
@@ -163,7 +167,6 @@ def check_im8s(x):
 def check_br(x):
     x = v(x)
     if is_not_pcpage(x) and final_pass:
-        print(hex(x),hex(the_pc))
         warning(f"short branch overflow")
     return (int(x)-2) & 0xff
 
@@ -171,6 +174,15 @@ def check_cpu(v):
     if args.cpu < v and final_pass:
         warning(f"opcode not implemented by cpu={args.cpu}")
 
+def resolve(s, ignore=None):
+    if s in exporters:
+        exporter = exporters[s]
+        if exporter != ignore and s in exporter.symdefs:
+            return exporter.symdefs[s]
+    if s in symdefs:
+        return symdefs[s]
+    return None
+        
 class Module:
     '''Class for assembly modules read from .s/.o/.a files.'''
     def __init__(self, name=None, cpu=None, code=None, library=True):
@@ -192,19 +204,6 @@ class Module:
                 self.imports.append(tp[1])
     def __repr__(self):
         return f"Module('{self.fname or self.name}',...)"
-    def v(self, s):
-        global exporters
-        if not isinstance(s, str):
-            return s
-        elif s in self.symdefs:
-            return self.symdefs[s]
-        elif s in exporters:
-            exporter = exporters[s]
-            if exporter != self:
-                return exporter.v(s)
-        elif s in symdefs:
-            return symdefs[s]
-        return Unk(0x1234)
     def label(self, sym, val):
         if the_pass > 0:
             if sym in self.symdefs and val == self.symdefs[sym]:
@@ -219,13 +218,14 @@ class Module:
 
 class Segment:
     '''Represent memory segments to be populated with code/data'''
-    __slots__ = ('saddr', 'eaddr', 'pc', 'dataonly', 'buffer')
+    __slots__ = ('saddr', 'eaddr', 'pc', 'dataonly', 'buffer', 'nbss')
     def __init__(self, saddr, eaddr, dataonly=False):
         self.saddr = saddr
         self.eaddr = eaddr
         self.pc = saddr
         self.dataonly = dataonly or False
         self.buffer = None
+        self.nbss = None
     def __repr__(self):
         d = ',dataonly=True' if self.dataonly else ''
         return f"Segment({hex(self.saddr)},{hex(self.eaddr)}{d})"
@@ -264,6 +264,7 @@ def emitjmp(d, saveAC=False):
     
 def emitjcc(BCC, BNCC, d, saveAC=False):
     lbl = genlabel()
+    tryhop(3)
     if is_pcpage(d):
         BCC(d)
     else:
@@ -340,9 +341,14 @@ def pc():
     return the_pc
 @vasm
 def v(x):
-    if isinstance(x,str):
-        return the_module.v(x)
-    return x
+    if not isinstance(x,str):
+        return x
+    if the_module and x in the_module.symdefs:
+        return the_module.symdefs[x]
+    r = resolve(x)
+    if final_pass and not r:
+        error(f"Undefined symbol '{x}'")
+    return r or Unk(0xDEAD)
 @vasm
 def lo(x):
     return v(x) & 0xff
@@ -1102,7 +1108,8 @@ def read_lib(l):
     f = search_file(f"lib{l}.a", args.L)
     if not f:
         fatal(f"library -l{l} not found!")
-    return read_file(f, safe=f.startswith(lccdir))
+    safe = os.path.commonpath((lccdir, f)) == lccdir
+    return read_file(f, safe=safe)
 
 def read_map(m):
     dn = os.path.dirname(__file__)
@@ -1251,10 +1258,9 @@ def check_undefined_symbols():
 
 
 
-# ------------- relax
+# ------------- passes
 
 def round_used_segments():
-    last = None
     for (i,s) in enumerate(segment_list):
         epage = (s.pc + 0xff) & ~0xff
         if s.pc > s.saddr and s.eaddr > epage:
@@ -1263,10 +1269,7 @@ def round_used_segments():
             if args.d >= 2:
                 debug(f"Rounding {segment_list[i:i+2]}")
         if s.pc > s.saddr:
-            last = None
-        elif not last:
-            last = s
-    return last.saddr if last else segment_list[-1].eaddr
+            s.nbss = True
  
 def find_data_segment(size, align=None):
     for s in segment_list:
@@ -1354,14 +1357,10 @@ def run_pass():
     # data segments
     for m in module_list:
         assemble_data_fragments(m, 'DATA')
-    sbss = round_used_segments()
+    round_used_segments()
+    # bss segments
     for m in module_list:
         assemble_data_fragments(m, 'BSS')
-    ebss = round_used_segments();
-    symdefs['_sbss'] = sbss
-    symdefs['_ebss'] = ebss    
-    if args.d >= 2:
-        debug(f"Pass {the_pass}: _sbss={hex(sbss)}, _ebss={hex(ebss)}")
     
 def run_passes():
     global final_pass
@@ -1371,8 +1370,89 @@ def run_passes():
     final_pass = True
     run_pass()
 
+
+# ------------- final
+
+address_to_segment_cache = {}
+
+def find_segment_for_address(addr):
+    if addr in address_to_segment_cache:
+        return address_to_segment_cache[addr]
+    for s in segment_list:
+        if addr >= s.saddr and addr < s.pc:
+            address_to_segment_cache[addr] = s
+            return s
+    fatal(f"internal error: no segment for address {hex(addr)}")
+
+def deek_gt1(addr):
+    s = find_segment_for_address(addr)
+    o = addr - s.saddr
+    return s.buffer[o] + (s.buffer[o+1] << 8)
+
+def doke_gt1(addr, val):
+    s = find_segment_for_address(addr)
+    o = addr - s.saddr
+    s.buffer[o] = val & 0xff
+    s.buffer[o+1] = (val >> 8) & 0xff
+
+
+def process_magic_bss(s, head_module, head_addr):
+    '''Construct a linked list of sizeable bss segments to be cleared at runtime. 
+       Head '__glink_magic_bss' points to struct{unsigned size, next;}.'''
+    for s in segment_list:
+        if s.pc > s.saddr + 4 and not s.nbss:
+            debug(f"BSS segment {hex(s.saddr)}-{hex(s.pc)} will be cleared at runtime")
+            size = s.pc - s.saddr
+            s.pc = s.saddr + 4
+            s.buffer = bytearray(4)
+            doke_gt1(s.saddr, size)
+            doke_gt1(s.saddr + 2, deek_gt1(head_addr))
+            doke_gt1(head_addr, s.saddr)
+
+def process_magic_heap(s, head_module, head_addr):
+    '''Construct a linked list of heap segments.
+       Head '__glink_magic_heap' points to struct{unsigned size, next;}.'''
+    for s in segment_list:
+        a0 = (s.pc + 1) & ~0x1
+        a1 = s.eaddr &  ~0x1
+        if a1 - a0 >= 24:
+            s.buffer.extend(builtins.bytes(4 + (s.pc & 1)))
+            doke_gt1(a0, a1 - a0)
+            doke_gt1(a0 + 2, deek_gt1(head_addr))
+            doke_gt1(head_addr, a0)
+
+def process_magic_list(s, head_module, head_addr):
+    for m in module_list:
+        if m != head_module:
+            if s in m.symdefs:
+                cons_addr = m.symdefs[s]
+                for frag in m.code:
+                    if frag[1] == s:
+                        break
+                if not frag or frag[3] < 4 or frag[4] < 2:
+                    return warning(f"Ignoring magic symbol '{s}' in {m.fname} (wrong type)")
+                doke_gt1(cons_addr + 2, deek_gt1(head_addr))
+                doke_gt1(head_addr, cons_addr)
+
+def process_magic_symbols():
+    for s in exporters:
+        if s.startswith("__glink_magic_"):
+            head_module = exporters[s]
+            head_addr = head_module.symdefs[s]
+            for frag in head_module.code:
+                if frag[0] == 'DATA' and frag[1] == s and frag[3:] != (2,2):
+                    return warning(f"Ignoring magic symbol '{s}' (list head not a pointer)")
+                if deek_gt1(head_addr) != 0xBEEF:
+                    return warning(f"Ignoring magic symbol '{s}' (list head not 0xBEEF)")
+            doke_gt1(head_addr, 0)
+            if s == '__glink_magic_bss':
+                process_magic_bss(s, head_module, head_addr)
+            elif s == '__glink_magic_heap':
+                process_magic_heap(s, head_module, head_addr)
+            else:
+                process_magic_list(s, head_module, head_addr)
+
 def save_gt1(fname, start):
-    bytes = __builtins__['bytes']
     with open(fname,"wb") as fd:
         for s in segment_list:
             if not s.buffer:
@@ -1381,10 +1461,10 @@ def save_gt1(fname, start):
             while a0 < s.pc:
                 a1 = min(s.eaddr, (a0 | 0xff) + 1)
                 buffer = s.buffer[(a0-s.saddr):(a1-s.saddr)]
-                fd.write(bytes((hi(a0),lo(a0),len(buffer)&0xff)))
+                fd.write(builtins.bytes((hi(a0),lo(a0),len(buffer)&0xff)))
                 fd.write(buffer)
                 a0 = a1
-        fd.write(bytes((0, hi(start), lo(start))))
+        fd.write(builtins.bytes((0, hi(start), lo(start))))
         
 def print_symbols():
     syms = []
@@ -1508,20 +1588,21 @@ def main(argv):
             read_lib(f)
 
         # resolve import/exports/common and prune unused modules
-        symdefs['_sbss'] = 0x0
-        symdefs['_ebss'] = 0x0
         module_list = compute_closure()
         convert_common_symbols()
         check_undefined_symbols()
         if error_counter > 0:
-            printf(f"glink: {error_counter} error(s) {warning_counter} warning(s)")
+            print(f"glink: {error_counter} error(s) {warning_counter} warning(s)")
             return 1
 
         # generate
         run_passes()
         if error_counter > 0:
-            printf(f"glink: {error_counter} error(s) {warning_counter} warning(s)")
+            print(f"glink: {error_counter} error(s) {warning_counter} warning(s)")
             return 1
+
+        # magic happens here
+        process_magic_symbols()
 
         # output
         save_gt1(args.o, v(args.e))

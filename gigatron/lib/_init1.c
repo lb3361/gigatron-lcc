@@ -1,45 +1,29 @@
 
-#include <string.h>
-#include "_malloc.h"
 
-free_header_t _heap = { &_heap, &_heap, 0 };
+/* Initializer for bss segments */
 
-static void initcb(unsigned s, unsigned e)
-{
-  extern char _sbss, _ebss;
-  static int state = 0;
-  if (state == 0) {
-    if (s == (unsigned)&_sbss)
-      state = 1;
-  }
-  if (state == 1) {
-    if (s == (unsigned)&_ebss)
-      state = 2;
-    else if (e > s) {
-      if (s & 1) { *(char*)s = 0; s+= 1; }
-      if (e & 1) { e -= 1; *(char*)e = 0; }
-      while (s != e) { *(int*)s = 0; s += 2; }
-    }
-  }
-  if (state == 2) {
-    if (s & 1) { s += 1; }
-    if (e & 1) { e -= 1; }
-    if (e - s > 24) {
-      free_header_t *h = (free_header_t*)s;
-      h->size = e - s;
-      h->next = &_heap;
-      h->prev = _heap.prev;
-      h->next->prev = h;
-      h->prev->next = h;
-    }
-  }
-}      
+/* This is magically populated by glink */
+struct bsschain {
+  unsigned size;
+  struct bsschain *next;
+} *__glink_magic_bss = (void*)0xBEEF;
 
-void _init1(void)
-{
-  extern void _segments(void(*)(unsigned,unsigned));
-  _segments(initcb);
-}  
+static void _init_bss(void) {
+  struct bsschain *r = __glink_magic_bss;
+  while (r && r != (void*)0xBEEF) {
+    unsigned s = (unsigned)r;
+    unsigned e = s + r->size;
+    if (s & 1) { *(char*)s = 0; s+= 1; }
+    if (e & 1) { e -= 1; *(char*)e = 0; }
+    while (s != e) { *(int*)s = 0; s += 2; }
+  }
+}
+
+/* This is magically chained by glink */
+static struct initchain {
+  void(*f)(void);
+  struct initchain *next;
+} __glink_magic_init = { _init_bss, 0 };
 
 
 /* Local Variables: */

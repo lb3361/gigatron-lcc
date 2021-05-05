@@ -28,11 +28,9 @@ def map_extra_libs(romtype):
 
 def map_extra_modules(romtype):
     '''
-    Generate extra modules for this map with functions:
-      int _init0(void); 
-         - init stack pointer; check rom and ram; return 0 on error.
-      void _segments(void ((*cb)(unsigned,unsigned)) 
-         - call cb for all segments in the map
+    Generate an extra modules for this map with at least a function
+    _init0() that initializes the stack pointer, checks the rom
+    version, checks the ram configuration, and returns 0 if all goes well.
     '''
     def code0():
         tryhop(25, jump=False)
@@ -40,28 +38,11 @@ def map_extra_modules(romtype):
         _LDI(initsp);STW(SP);
         LD('romType');ANDI(0xfc);SUBI(romtype or 0);BLT('.err')
         LD('memSize');BNE('.err')
-        LDI(1);RET()
-        label('.err')
         LDI(0);RET()
-    def code1():
-        label('_segments')
-        tryhop(4);LDW(vLR);STW(R22);_SP(-10);STW(SP);_SAVE(4,0x4000c0); # R6-7,22
-        LDW(R8); STW(R6)
-        for (i,tp) in enumerate(segments):
-            if tp[2] == None:
-                _LDI(tp[0]);STW(R9);_LDI(tp[1]);ADDW(R9);STW(R8);CALL(R6)
-            else:
-                _LDI(tp[1]);STW(R7)
-                label(f".L{i}")
-                _LDI(tp[0]);STW(R9);LDW(R7);ADDW(R9);STW(R8);CALL(R6)
-                _LDI(tp[2]);ADDW(R7);STW(R7);_LDI(tp[3]);XORW(R7);_BNE(f".L{i}")
-        _RESTORE(4,0x4000c0);_SP(10);STW(SP);LDW(R22);tryhop(3);STW(vLR);RET();
-        
+        label('.err')
+        LDI(1);RET()
     code=[ ('EXPORT', '_init0'),
-           ('CODE', '_init0', code0),
-           ('EXPORT', '_segments'),
-           ('CODE', '_segments', code1) ]
-           
+           ('CODE', '_init0', code0) ]
     name='_map.s'
     debug(f"synthetizing module '{name}'")
     module(code=code, name=name);

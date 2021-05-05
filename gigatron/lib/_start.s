@@ -2,53 +2,64 @@
 ### The rom/ram checking code must work on all cpu
 
 def code0():
+    ### _start()
     label('_start');
     # calls init0 in cpu4 compatible way
-    LDWI('_init0'); STW(T3); CALL(T3); _BNE('.main')
+    LDWI('_init0'); STW(T3); CALL(T3); _BEQ('.init')
     LDI(10); _BRA('.exit')
-    # calls init1/init2/main
-    label('.main')
-    _CALLI('_init1')
-    _CALLI('_init2')
-    LDI(0); STW(R8); STW(R9)
-    _CALLI('main')
-    STW(R8)
-    # exit
+    label('.init')
+    # call init chain
+    LDWI('__glink_magic_init'); _CALLI('.callchain')
+    # call main
+    LDI(0); STW(R8); STW(R9); _CALLI('main'); STW(R8)
+    ### exit()
     label('exit')
-    # call atexit handlers
     LDW(R8); STW(R0)
-    _LDW('_atexit')
-    _BRA('.atexittst')
-    label('.atexitloop')
-    DEEK(); STW(T3); CALL(T3)
-    LDI(2); ADDW(R1); DEEK()
-    label('.atexittst')
-    STW(R1)
-    _BNE('.atexitloop')
+    # call fini chain
+    LDWI('__glink_magic_init'); _CALLI('.callchain')
     LDW(R0)
-    # call _@_exit in vcpu4 compatible way
     label('.exit')
     STW(R8)
+    ### _exit()
     label('_exit')
+    # call _@_exit
     LDWI('_@_exit'); STW(T3); LDW(R8); CALL(T3)
     HALT()
+    # subroutine to call a chain of init/fini functions
+    label('.callchain')
+    tryhop(32)
+    DEEK(); STW(R7); LDW(vLR); STW(R6)
+    LDW(R7); BRA('.callchaintst')
+    label('.callchainloop')
+    DEEK();STW(T3);CALL(T3)
+    LDI(2);ADDW(R7);DEEK();STW(R7)
+    label('.callchaintst')
+    BNE('.callchainloop')
+    LDW(R6); STW(vLR); RET()
 
 def code1():
     align(2)
-    label('_atexit')
-    words(0)
+    label('__glink_magic_init')
+    words(0xBEEF)
 
+def code2():
+    align(2)
+    label('__glink_magic_fini')
+    words(0xBEEF)
+    
 # ======== (epilog)
 code=[
     ('EXPORT', '_start'),
     ('EXPORT', '_exit'),
     ('EXPORT', 'exit'),
+    ('EXPORT', '__glink_magic_init'),
+    ('EXPORT', '__glink_magic_fini'),
     ('CODE', '_start', code0),
-    ('COMMON', '_atexit', code1, 2, 2),
+    ('DATA', '__glink_magic_init', code1, 2, 2),
+    ('DATA', '__glink_magic_fini', code2, 2, 2),
     ('IMPORT', 'main'),
     ('IMPORT', '_init0'),
-    ('IMPORT', '_init1'),
-    ('IMPORT', '_init2'),
+    ('IMPORT', '__glink_magic_bss'), # causes _init1.c to be included
     ('IMPORT', '_@_exit') ]
     
 

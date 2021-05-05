@@ -3,10 +3,10 @@
 # Gigatron LCC
 
 This version of LCC targets the [Gigatron](http://gigatron.io) VCPU.
-It keeps some of the ideas of the previous attempt to port LCC to the
+It keeps many of the ideas of the previous attempt to port LCC to the
 Gigatron.  For instance it outputs assembly code that can be parsed by
 Python and it features a linker writen in Python that can directly
-ready these files. It also differs in critical ways. For instance the
+ready these files. It also differs in important ways. For instance the
 code generator is fundamentally different.
 
 ## Compiling and installing
@@ -16,21 +16,24 @@ Building under Linux should just be a matter of typing
 $ make PREFIX=/usr/local
 ```
 where variable `PREFIX` indicates where the compiler should be installed.
-The installation command
+You can either invoke from its build location `./build/glcc` or
+install it into your system with command
 ```
 $ make PREFIX=/usr/local install
 ```
-copies the compiler files into `${PREFIX}/lib/gigatron-lcc/` and
-symlinks the compiler driver `glcc` into `${PREFIX}/bin`.
-A minimal set of include files are copied 
-into `${PREFIX}/lib/gigatron-lcc/include`
-but very few of what they define is currently implemented.
+This command copies the compiler files into `${PREFIX}/lib/gigatron-lcc/` 
+and symlinks the compiler driver `glcc` and linker driver `glink` 
+into `${PREFIX}/bin`. A minimal set of include files are copied 
+into `${PREFIX}/lib/gigatron-lcc/include` but very little of what 
+they define is currently implemented.
 
 
 ## Compiler invocation
 
 Besides the options listed in the [lcc manual page](doc/lcc.1),
 the compiler driver recognizes a few Gigatron-specific options.
+Additional options recognized by the assembler/linker `glink'
+are documented by typing `glink -h`
 
   * Option `-cpu=[456]` indicates which VCPU version should be
 	targeted.  Version 5 adds the instructions `CALLI`, `CMPHS` and
@@ -77,7 +80,7 @@ The code generator uses two blocks of zero page locations:
   *  The second block, located at addresses `0x90-0xbf`, contains 24 general 
      purpose sixteen bits registers named `R8` to `R31`. 
      Register pairs named can hold longs. Register triplets named
-     can hold floats.
+     can hold floats
      
 Register `R31`, also named `SP`, is a stack pointer whose value is
 adjusted only twice by each function, once in the prologue to

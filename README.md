@@ -78,33 +78,34 @@ The code generator uses two blocks of zero page locations:
      They are also known as scratch registers `R4` to `R7` which are
      occasionally used as scratch registers by the code generator.
   *  The second block, located at addresses `0x90-0xbf`, contains 24 general 
-     purpose sixteen bits registers named `R8` to `R31`. 
+     purpose sixteen bits registers named `R0` to `R23`. 
      Register pairs named can hold longs. Register triplets named
-     can hold floats
+     can hold floats. Registers `R0` to `R7` are called-saved
+     registers. Registers `R8` to `R15` can be used to pass
+     arguments to functions. Registers `R15` to `R22` are used
+     for temporaries. Register `R23` or `SP` is the stack pointer.
      
-Register `R31`, also named `SP`, is a stack pointer whose value is
-adjusted only twice by each function, once in the prologue to
-construct a stack frame, and once in the epilogue to return to the
-caller's frame. In addition the prologue saves the link register a`vLR`
-into register `R30` and the epilogue restores it just before the `RET`
-instruction. Saving `vLR` allows us to use `CALLI` as a long jump
+The function prologue first saves `vLR` and constructs a stack frame
+by adjusting `SP`. It then saves the callee-saved registers onto the stack.
+Nonleaf functions also save 'vLR' in the stack frame and copy the argument 
+passed in a registers to their final location. In contrast, leaf functions
+keep the saved `vLR` in a register and keep arguments passed in registers
+where they are because these registers are no longer needed for further calls.
+In the same vein, nonleaf functions allocate callee-saved registers
+for local variables, whereas leaf functions use callee-saved registers
+in last resord and often avoid having to construct a stack-frame alltogether. 
+
+Saving `vLR` allows us to use `CALLI` as a long jump
 without fearing to erase the function return address.
-Registers `R8` to `R13` are used to pass arguments to functions.
-Registers `R14` to `R23` contain local variables and must be saved and
-restored by all functions. Temporaries are first allocated in
-registers `R24` to `R29`, then in other free registers as needed.  The
-stack frames are close to MIPS stack frame with an argument building
-zone where a function stores arguments for the function it calls, a
-local variable zone for the local variables that didn't fit in
-registers, and a saved register area for the callee-saved registers.
+This is especially useful when one needs to hop over page boundaries.
 
 The VCPU accumulator `AC` is not treated by the compiler as a normal 
 register because there is essentially nothing the VCPU can do once the 
 accumulator is allocated to represent a particular variable or a temporary.
-The compiler generic code then must spill its content to a stack location
+This would force the compiler to spill its content to a stack location
 in ways that not only produce less efficient code, but often result
 in an infinite loop because the spilling code must itself use `AC`.
-Instead, the code generator produces VCPU instructions in bursts 
+Instead, the GLCC code generator produces VCPU instructions in bursts 
 that are packed on a single line of the generated assembly code. 
 Each burst is in fact what LCC calls an instruction. Bursts are
 produced by subverting the mechanisms defined by LCC to construct 
@@ -117,19 +118,21 @@ of what data is left on the accumulator after each burst.
 This could be improved by adding a peephole optimization pass
 at some point.
 
-The compiler produces python files that define a single function whose
-argument is an object `x`. This function calls methods that emit the
-bytes representing each instruction. Most of these methods are named
-in uppercase after the VCPU instruction they represent. Additional
-methods, always starting with an underscore, implement synthetic
-instructions that can either call a runtime routine or emit a short
-sequence of instructions inline.  Finally a couple methods, named in
-lowercase, manipulate labels, switches segment, declare imports and
-exports for each module, etc.
+The compiler produces a python file that first define a function for each
+code or data fragment. The file then constructs a module that
+holds a list of all the fragments, as well as all the imported and
+exported symbols. The linker/assembler `glink` can read such files
+or can read a library file that is merely the concatenation
+of individual modules.  Each fragment is represented as a function
+that calls predefined functions whose uppercase name mirrors the name
+of the instruction they emit. Additional functions implement synthetic
+opcodes that can be implemented differently by different VCPU versions.
+More predefined functions are used to define labels or control
+when to check for a page boundary. The source of truth for 
+all this is the file `glink.py`.
 
-The linker collects all the python functions generated by the compiler
-and all the python functions representing the runtime code.  It
-analyzes import and exports to determine which ones should be
+The linker collects all the code and data fragments generated by the compiler.
+It then analyzes import and exports to determine which ones should be
 kept. Then it repeatedly calls them until all symbols are resolved and
-all symbol value dependent code is stabilized. Then it produces a
+all symbol value dependent code is stabilized. Finally it produces a
 familar `GT1` file.

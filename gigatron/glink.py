@@ -37,7 +37,8 @@ args = None
 romtype = None
 romcpu = None
 lccdir = '/usr/local/lib/gigatron-lcc'
-safe_dict = {}
+module_dict = {}
+module_builtins = {}
 module_list = []
 segment_list = []
 new_modules = []
@@ -58,6 +59,7 @@ error_counter = 0
 warning_counter = 0
 genlabel_counter = 0
 labelchange_counter = 1
+dedup_errors = set()
 
 map_extra_modules = None
 map_extra_libs = None
@@ -84,13 +86,11 @@ def where(exc=False):
     return None
 
 class __metaUnk(type):
-    wrapped = ''' 
-      __abs__ __add__ __and__ __floordiv__ __ge__ __gt__ __invert__
-      __le__  __lshift__ __lt__ __mod__ __mul__ __neg__ __or__ 
-      __pos__ __pow__ __radd__ __rand__ __rfloordiv__ __rlshift__ __rmod__
-      __rmul__ __ror__ __rpow__ __rrshift__ __rshift__ __rsub__ 
-      __rtruediv__ __rxor__ __sub__ __truediv__  __xor__
-    '''
+    wrapped = ''' __abs__ __add__ __and__ __floordiv__ __ge__ __gt__ __invert__
+    __le__ __lshift__ __lt__ __mod__ __mul__ __neg__ __or__ __pos__
+    __pow__ __radd__ __rand__ __rfloordiv__ __rlshift__ __rmod__
+    __rmul__ __ror__ __rpow__ __rrshift__ __rshift__ __rsub__
+    __rtruediv__ __rxor__ __sub__ __truediv__ __xor__'''
     def __new__(cls, name, bases, namespace, **kwargs):
         def wrap(f):
             @functools.wraps(f)
@@ -140,6 +140,9 @@ def is_not_pcpage(x):
     return False
 
 def genlabel():
+    '''Generate a label for use in a pseudo-instruction.
+       One should make sure to request the same number
+       of labels regardless of the code path.'''
     global genlabel_counter
     genlabel_counter += 1
     return f".LL{genlabel_counter}"
@@ -172,13 +175,18 @@ def check_br(x):
 
 def check_cpu(v):
     if args.cpu < v and final_pass:
-        warning(f"opcode not implemented by cpu={args.cpu}")
+        stb = traceback.extract_stack(limit=2)
+        warning(f"opcode {stb[0].name} not implemented by cpu={args.cpu}", dedup=True)
 
 def resolve(s, ignore=None):
+    '''Resolve a global symbol and return its value or None'''
     if s in exporters:
         exporter = exporters[s]
-        if exporter != ignore and s in exporter.symdefs:
-            return exporter.symdefs[s]
+        if exporter != ignore:
+            if s in exporter.symdefs:
+                return exporter.symdefs[s]
+            elif final_pass:
+                error(f"Module {exporter.fname} exports '{s}' but does not define it", dedup=True)
     if s in symdefs:
         return symdefs[s]
     return None
@@ -205,12 +213,16 @@ class Module:
     def __repr__(self):
         return f"Module('{self.fname or self.name}',...)"
     def label(self, sym, val):
+        '''Define a label within a module.
+           Increment counter when label value has changed relative to the previous pass.'''
         if the_pass > 0:
             if sym in self.symdefs and val == self.symdefs[sym]:
                 self.sympass[sym] = the_pass
             elif sym in self.symdefs and self.sympass[sym] == the_pass:
-                error(f"Multiple definitions of label '{sym}'")
+                error(f"Multiple definitions of label '{sym}'", dedup=True)
             else:
+                if sym in self.symdefs and args.d >= 3:
+                    debug(f"Pass {the_pass}: symbol '{sym}' when from {hex(self.symdefs[sym])} to {hex(val)}")
                 global labelchange_counter
                 labelchange_counter += 1
                 self.symdefs[sym] = val
@@ -230,9 +242,6 @@ class Segment:
         d = ',dataonly=True' if self.dataonly else ''
         return f"Segment({hex(self.saddr)},{hex(self.eaddr)}{d})"
                 
-def final_emit(*args):
-    fatal("not yet implemented")
-        
 def emit(*args):
     global final_pass, the_pc, the_segment
     if final_pass:
@@ -243,6 +252,10 @@ def emit(*args):
     the_pc += len(args)
 
 def emitjmp(d, saveAC=False):
+    '''Emit code to jump to address d.  This can use a short BRA or use
+       CALLI because vLR has been saved.  Without CALLI, long jumps
+       needs to use vAC. Argument `saveAC' says whether one should
+       preserve vAC by saving and restoring its value. '''
     if is_pcpage(d): # 2 bytes
         BRA(d)
         return
@@ -263,55 +276,89 @@ def emitjmp(d, saveAC=False):
         RET()
     
 def emitjcc(BCC, BNCC, d, saveAC=False):
+    '''Emits a conditional jump, either using a short BCC, 
+       or using its converse BNCC to skip a long jump.'''
     lbl = genlabel()
-    tryhop(3)
+    tryhop(3)           # make sure there is no hop before the short jump
     if is_pcpage(d):
         BCC(d)
-    else:
+    else:               # than make sure there is no hop during the long jump
         tryhop(13 if args.cpu < 5 else 6)
         BNCC(lbl);
         emitjmp(int(d), saveAC=saveAC)
         label(lbl, hop=False)
 
 def extern(sym):
+    '''Adds a symbol to the import list of a module. 
+       This happens when `measure_code_fragment' is called.
+       Pseudo-instructons need this to make sure the linker
+       inserts the appropriate runtime routines.'''
     if the_pass == 0 and sym not in the_module.imports:
         the_module.imports.append(sym)
 
         
 # ------------- usable vocabulary for .s/.o/.a files
 
+# Each .s/.o/.a files is exec with a fresh global dictionary and a
+# restricted set of builtins.  This prevents a module from
+# accidentally changing the global state in other ways than defining
+# new modules.  Note that this is not expected to protect against
+# malicious modules, just prevent accidental corruption.
+
+module_builtins_okay = '''None True False abs all any ascii bin bool chr
+dict divmod enumerate filter float format frozenset getattr hasattr hash
+hex id int isinstance issubclass iter len list map max min next oct ord 
+pow print property range repr reversed set setattr slice sorted str sum
+tuple type zip'''
+module_builtins = {}
+for s in module_builtins_okay.split():
+    if isinstance(__builtins__, dict) and s in __builtins__:
+        module_builtins[s] = __builtins__[s]
+    elif hasattr(__builtins__,s):
+        module_builtins[s] = getattr(__builtins__, s)
+
 def register_names():
     d = { "vPC":  0x0016, "vAC":  0x0018, "vACL": 0x0018, "vACH": 0x0019,
-          "vLR":  0x001a, "vSP":  0x001c, 
-          "LAC":  0x0084, "FAC":  0x0081 }
-    for i in range(0,4): d[f'T{i}'] = 0x88+i+i
-    for i in range(0,23): d[f'R{i}'] = 0x90+i+i
+          "vLR":  0x001a, "vSP":  0x001c, "LAC":  0x0084, "FAC":  0x0081 }
+    for i in range(0,4):  d[f'T{i}'] = 0x88+i+i
+    for i in range(0,24): d[f'R{i}'] = 0x90+i+i
     for i in range(0,22): d[f'L{i}'] = d[f'R{i}']
     for i in range(0,21): d[f'F{i}'] = d[f'R{i}']
-    d['SP'] = 0xbe
+    d['SP'] = d['R23']
     return d
-
 for (k,v) in register_names().items():
-    safe_dict[k] = v
+    module_dict[k] = v
     globals()[k] = v
+
+def new_globals():
+    '''Return a pristine global symbol table to read .s/.o/.a files.'''
+    global module_dict
+    g = module_dict.copy()
+    g['args'] = copy.copy(args)
+    g['__builtins__'] = module_builtins.copy()
+    return g
 
 def vasm(func):
     '''Decorator to mark functions usable in .s/.o/.a files'''
-    safe_dict[func.__name__] = func
+    module_dict[func.__name__] = func
     return func
 
 @vasm
-def error(s):
+def error(s, dedup=False):
     global the_pass, final_pass, error_counter
     if the_pass == 0 or final_pass:
+        if dedup and s in dedup_errors: return
+        dedup_errors.add(s)
         error_counter += 1
         w = where()
         w = "" if w == None else w + ": "
         print(f"glink: {w}error: {s}", file=sys.stderr)
 @vasm
-def warning(s):
+def warning(s, dedup=False):
     global the_pass, final_pass, warning_counter
     if the_pass == 0 or final_pass:
+        if dedup and s in dedup_errors: return
+        dedup_errors.add(s)
         warning_counter += 1
         w = where()
         w = "" if w == None else w + ": "
@@ -325,6 +372,9 @@ def fatal(s, exc=False):
 
 @vasm
 def module(code=None,name=None,cpu=None):
+    '''Called from .s/.o/.a files to declare a module.
+       This should be the only way for a .s/.o/.a file
+       to change the linker state.'''
     if not name:
         name = "[unknown]"
         tb = traceback.extract_stack(limit=2)
@@ -341,13 +391,14 @@ def pc():
     return the_pc
 @vasm
 def v(x):
+    '''Possible resolve symbol `x'.'''
     if not isinstance(x,str):
         return x
     if the_module and x in the_module.symdefs:
         return the_module.symdefs[x]
     r = resolve(x)
     if final_pass and not r:
-        error(f"Undefined symbol '{x}'")
+        error(f"Undefined symbol '{x}'", dedup=True)
     return r or Unk(0xDEAD)
 @vasm
 def lo(x):
@@ -359,8 +410,8 @@ def hi(x):
 @vasm
 def tryhop(sz = 0, jump=True):
     '''Hops to a new page if the current page cannot hold a long jump
-       plus sz bytes. This also ensures that no hop will occur during
-       the next sz bytes.'''
+       plus `sz' bytes. This also ensures that no hop will occur during
+       the next `sz' bytes. A long jump is generated when `jump' is True.'''
     global the_pass, the_fragment, hops_enabled, the_segment, the_pc
     if hops_enabled:
         sz = 4 if sz < 4 else sz           # enough space for one instruction
@@ -400,7 +451,10 @@ def space(d):
         emit(0)
 @vasm
 def label(sym, val=None, hop=True):
-    if hop:
+    '''Define label `sym' to the value of PC or to `val'.
+       Unless `hop` is False, this function checks whether 
+       one needs to hop to a new page before defining the label.'''
+    if hop: 
         tryhop(16) # Non zero to improve tight loops
     if the_pass > 0:
         the_module.label(sym, v(val) if val else the_pc)
@@ -592,9 +646,9 @@ def PEEKV(d):
 def DEEKV(d):
     check_cpu(6); tryhop(); emit(0x3b, check_zp(d))
 
-    
 @vasm
 def _SP(n):
+    '''Pseudo-instruction to compute SP relative addresses'''
     n = v(n)
     if is_zero(n):
         _LDW(SP);
@@ -721,6 +775,7 @@ def _BGE(d, saveAC=False):
     emitjcc(BGE, BLT, v(d), saveAC=saveAC)
 @vasm
 def _CMPIS(d):
+    '''Compare vAC (signed) with immediate in range 0..255'''
     if args.cpu >= 5:
         CMPHS(0); SUBI(d)
     else:
@@ -730,6 +785,7 @@ def _CMPIS(d):
         label(lbl)
 @vasm
 def _CMPIU(d):
+    '''Compare vAC (unsigned) with immediate in range 0..255'''
     if args.cpu >= 5:
         CMPHU(0); SUBI(d)
     else:
@@ -740,6 +796,7 @@ def _CMPIU(d):
         SUBI(d)
 @vasm
 def _CMPWS(d):
+    '''Compare vAC (signed) with register.'''
     if args.cpu >= 5:
         CMPHS(d+1); SUBW(d)
     else:
@@ -754,6 +811,7 @@ def _CMPWS(d):
         label(lbl2)
 @vasm
 def _CMPWU(d):
+    '''Compare vAC (unsigned) with register.'''
     if args.cpu >= 5:
         CMPHU(d+1); SUBW(d)
     else:
@@ -992,7 +1050,8 @@ def _CALLI(d, saveAC=False, storeAC=None):
         CALL('sysFn')
 @vasm
 def _SAVE(offset, mask):
-    '''Save all registers specified by mask at [SP+offset]'''
+    '''Save all registers specified by mask at [SP+offset],
+       Use runtime helpers to save code bytes.'''
     def save1(r, postincr=False):
         '''Save one register'''
         if (args.cpu < 6):
@@ -1023,7 +1082,8 @@ def _SAVE(offset, mask):
         
 @vasm
 def _RESTORE(offset, mask):
-    '''Restore all registers specified by mask from [SP+offset]'''
+    '''Restore all registers specified by mask from [SP+offset}
+       Use runtime helpers to save code bytes.'''
     def restore1(r,postincr=False):
         '''Restore one register'''
         if (args.cpu < 6):
@@ -1060,17 +1120,8 @@ def _RESTORE(offset, mask):
 # ------------- reading .s/.o/.a files
         
               
-def new_globals(safe=False):
-    '''Return a pristine global symbol table to read .s/.o/.a files.'''
-    global safe_dict
-    g = safe_dict.copy()
-    g['args'] = copy.copy(args)
-    if not safe:
-        g['__builtins__'] = None
-    return g
-
-def read_file(f, safe=False):
-    '''Safely read a .s/.o/.a file.'''
+def read_file(f):
+    '''Reads a .s/.o/.a file in a pristine environment'''
     global the_module, the_fragment, new_modules, module_list
     debug(f"reading '{f}'")
     with open(f, 'r') as fd:
@@ -1082,7 +1133,7 @@ def read_file(f, safe=False):
     the_module = None
     the_fragment = None
     new_modules = []
-    exec(c, new_globals(safe))
+    exec(c, new_globals())
     if len(new_modules) == 0:
         warning(f"File {f} did not define any module")
     if len(new_modules) == 1 and not f.endswith(".a"):
@@ -1108,10 +1159,10 @@ def read_lib(l):
     f = search_file(f"lib{l}.a", args.L)
     if not f:
         fatal(f"library -l{l} not found!")
-    safe = os.path.commonpath((lccdir, f)) == lccdir
-    return read_file(f, safe=safe)
+    return read_file(f)
 
 def read_map(m):
+    '''Read a linker map file.'''
     dn = os.path.dirname(__file__)
     fn = os.path.join(dn, f"map{m}", "map.py")
     if not os.access(fn, os.R_OK):
@@ -1122,12 +1173,14 @@ def read_map(m):
         fatal(f"Map '{m}' does not define 'map_segments'")
 
 def read_interface():
+    '''Read `interface.json' as known symbols.'''
     global symdefs
     with open(os.path.join(lccdir,'interface.json')) as file:
         for (name, value) in json.load(file).items():
             symdefs[name] = value if isinstance(value, int) else int(value, base=0)
 
 def read_rominfo(rom):
+    '''Read `rom.jsom' to translate rom names into romType byte and cpu version.'''
     global romtype, romcpu
     with open(os.path.join(lccdir,'roms.json')) as file:
         d = json.load(file)
@@ -1143,8 +1196,7 @@ def read_rominfo(rom):
     
 
 
-
-# ------------- prepare link
+# ------------- compute code closure from import/export information
 
 def find_exporters(sym):
     elist = []
@@ -1165,7 +1217,8 @@ def measure_data_fragment(m, frag):
     return frag[0:3] + (the_pc,) + frag[4:]
 
 def measure_code_fragment(m, frag):
-    global the_module, the_fragment, the_pc, lbranch_counter
+    global the_module, the_fragment, the_pc
+    global lbranch_counter
     the_module = m
     the_fragment = frag
     the_pc = 0
@@ -1185,6 +1238,8 @@ def measure_fragments(m):
             m.code[i] = measure_data_fragment(m, frag)
         elif fragtype in ('CODE'):
             m.code[i] = measure_code_fragment(m, frag)
+    the_module = None
+    the_fragment = None
 
 def compute_closure():
     global module_list, exporters
@@ -1199,29 +1254,29 @@ def compute_closure():
             e = None
             elist = find_exporters(sym)
             for m in elist:
-                if m.library:
-                    if e and not e.library:
-                        pass
-                    elif m.cpu > args.cpu:
-                        pass
+                if m.library:                      # rules for selecting one of the library modules 
+                    if e and not e.library:        # that export a required symbol:
+                        pass                       # -- cannot override a non-library module
+                    elif m.cpu > args.cpu:         # -- ignore exports when module targets too high a cpu.
+                        pass                       # -- prefer exports from module targeting a higher cpu. 
                     elif not e or m.cpu > e.cpu:
                         e = m
-                else:
-                    if e and not e.library:
-                        error(f"Symbol '{sym}' is exported by both '{e.fname}' and '{m.fname}'")
+                else:                              # complain when a required symbol is exported
+                    if e and not e.library:        # by multiple non-library files.
+                        error(f"Symbol '{sym}' is exported by both '{e.fname}' and '{m.fname}'", dedup=True)
                     e = m
             if e:
                 debug(f"Including module '{e.fname}' for symbol '{sym}'")
                 e.used = True
-                for sym in e.exports:
-                    if sym in exporters:
-                        error(f"Symbol '{sym}' is exported by both '{e.fname}' and '{exporters[sym].fname}'")
+                for sym in e.exports:              # register all symbols exported by the selected module
+                    if sym in exporters:           # -- warn about possible conflicts
+                        error(f"Symbol '{sym}' is exported by both '{e.fname}' and '{exporters[sym].fname}'", dedup=True)
                     if sym not in exporters or exporters[sym].library:
                         exporters[sym] = e
-                measure_fragments(e)
+                measure_fragments(e)               # -- check all fragment code, compute missing lengths or exports
                 for sym in e.imports:
-                    implist.append(sym)
-    # compute list of used modules
+                    implist.append(sym)            # -- add all its imports to the list of required imports
+    # recompute module_list
     nml = []
     for m in module_list:
         if m.used:
@@ -1231,6 +1286,8 @@ def compute_closure():
     return nml
 
 def convert_common_symbols():
+    '''Common symbols are instanciated in one of the module
+       and referenced by the other modules.'''
     for m in module_list:
         for (i,decl) in enumerate(m.code):
             if decl[0] == 'COMMON':
@@ -1254,13 +1311,16 @@ def check_undefined_symbols():
                 else:
                     und[s] = [mn]
     for s in und:
-        error(f"Undefined symbol '{s}' imported by {comma.join(und[s])}")
+        error(f"Undefined symbol '{s}' imported by {comma.join(und[s])}", dedup=True)
 
 
 
 # ------------- passes
 
 def round_used_segments():
+    '''Split all segments containing code or data into 
+       a used segment and a free segment starting on 
+       a page boundary. Marks used segment as non-BSS.'''
     for (i,s) in enumerate(segment_list):
         epage = (s.pc + 0xff) & ~0xff
         if s.pc > s.saddr and s.eaddr > epage:
@@ -1280,18 +1340,21 @@ def find_data_segment(size, align=None):
             return s
 
 def find_code_segment(size):
+    # Since code segments cannot cross page boundaries
+    # it is sometimes necessary to carve a code segment from a larger one
+    size = min(256, size)
     for (i,s) in enumerate(segment_list):
         if s.dataonly:
             continue
-        if s.pc > s.saddr and s.pc + size <= s.eaddr:
-            return s    
+        if s.pc > s.saddr and s.pc + size <= s.eaddr:  # segment has enough free size and does not cross
+            return s                                   # a page boundary because it already contains code
         if (s.saddr ^ (s.eaddr-1)) & 0xff00:
-            epage = (s.saddr | 0xff) + 1
-            ns = Segment(s.saddr, epage)
+            epage = (s.saddr | 0xff) + 1               # segment crosses a page boundary:
+            ns = Segment(s.saddr, epage)               # carve a non-crossing one and insert it in the list
             s.saddr = epage
             segment_list.insert(i, ns)
             s = ns
-        if s.pc + size <= s.eaddr:
+        if s.pc + size <= s.eaddr:                     # is it large enough?
             return s
     return None
     
@@ -1303,14 +1366,14 @@ def assemble_code_fragments(m):
         if frag[0] == 'CODE':
             shortsize = frag[3] - frag[4]
             the_segment = None
-            if shortsize < args.sfst:
+            if shortsize < args.sfst and shortsize < 256:
                 hops_enabled = False
                 the_segment = find_code_segment(shortsize)
                 if the_segment and args.d >= 2:
                     debug(f"Pass {the_pass}: Assembling short function '{frag[1]}' at {hex(the_segment.pc)} in {the_segment} .")
             if not the_segment:
                 hops_enabled = True
-                the_segment = find_code_segment(args.lfss)
+                the_segment = find_code_segment(min(args.lfss, 256))
                 if not the_segment:
                     fatal(f"Map memory exhausted while fitting function '{frag[1]}'.")
                 if the_segment and args.d >= 2:
@@ -1342,7 +1405,9 @@ def assemble_data_fragments(m, cseg):
             the_segment.pc = the_pc
             
 def run_pass():
-    global the_pass, labelchange_counter, genlabel_counter, segment_list, symdefs
+    global the_pass, the_module, the_fragment
+    global labelchange_counter, genlabel_counter
+    global segment_list, symdefs
     # initialize
     the_pass += 1
     labelchange_counter = 0
@@ -1363,6 +1428,10 @@ def run_pass():
     # bss segments
     for m in module_list:
         assemble_data_fragments(m, 'BSS')
+    # cleanup
+    the_module = None
+    the_fragment = None
+
     
 def run_passes():
     global final_pass
@@ -1469,8 +1538,8 @@ def process_magic_symbols():
      * '__glink_magic_init' is a list of finalization
        functions called by exit().
 
-    In addition, there are two magic lists whose aa
-    records are not found in modules but crafted by the linker.
+    In addition, there are two magic lists whose records are 
+    not found in modules but allocated by the linker.
      * '__glink_magic_bss' is a linked list of BSS segments
        that must be cleared at runtime. Each list record occupies
        the first 4 bytes of a segment. The first pointer contains
@@ -1513,15 +1582,17 @@ def save_gt1(fname, start):
                 a0 = a1
         fd.write(builtins.bytes((0, hi(start), lo(start))))
         
-def print_symbols():
+def print_symbols(allsymbols=False):
     syms = []
     for m in module_list:
         for s in m.symdefs:
-            if not s.startswith('.'):
-                syms.append((m.symdefs[s], s, m.fname))
+            if allsymbols or not s.startswith('.'):
+                exported = (s in exporters) and (exporters[s] == m)
+                syms.append((m.symdefs[s], s, exported, m.fname))
     syms.sort(key = lambda x : x[0] )
     for s in syms:
-        print(f"{s[0]:04x}\t{s[1]:<22s}\t{s[2]:<24s}")
+        pp="public " if s[2] else "private"
+        print(f"{s[0]:04x}\t{s[1]:<22s}\t{pp}\t{s[3]:<24s}")
 
     
 # ------------- main function
@@ -1577,8 +1648,10 @@ def main(argv):
                             help='library files. -lxxx searches for libxxx.a')
         parser.add_argument('-L', type=str, action='append', metavar='LIBDIR',
                             help='specify an additional directory to search for libraries')
-        parser.add_argument('--symbols', action='store_true',
+        parser.add_argument('--symbols', action='store_const', dest='symbols', const=1,
                             help='outputs a sorted list of symbols')
+        parser.add_argument('--all-symbols', action='store_const', dest='symbols', const=2,
+                            help='outputs a sorted list of all symbols, including generated ones')
         parser.add_argument('--entry', '-e', dest='e', metavar='START',
                             type=str, action='store', default='_start',
                             help='select the entry point symbol (default _start)')
@@ -1664,7 +1737,7 @@ def main(argv):
         # output
         save_gt1(args.o, v(args.e))
         if (args.symbols):
-            print_symbols()
+            print_symbols(allsymbols=args.symbols>1)
         return 0
     
     except FileNotFoundError as err:

@@ -1,11 +1,3 @@
-#VCPUv4
-
-
-# ======== ('CODE', 'memcpy', code1)
-#
-# Copy [T3..T3+AC) --> [T2..T2+AC)
-#
-# TODO: optimize
 
 def code0():
    if args.cpu < 6:
@@ -36,7 +28,6 @@ def code1():
       RET()
 
       
-# ======== (epilog)
 code= [ ('EXPORT', '_@_saveR%dto7' % i) for i in range(0,8) ] + \
       [ ('CODE', '_@_saveR0to7', code0) ] + \
       [ ('EXPORT', '_@_restoreR%dto7' % i) for i in range(0,8) ] + \

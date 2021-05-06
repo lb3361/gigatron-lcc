@@ -1,10 +1,5 @@
-#VCPUv4
 
-
-# ======== ('CODE', 'memcpy', code1)
-#
 # Copy [T3..T3+AC) --> [T2..T2+AC)
-#
 # TODO: optimize
 
 def code0():
@@ -28,7 +23,6 @@ def code0():
         label('.ret')
         RET()
 
-# ======== (epilog)
 code=[
         ('EXPORT', '_@_memcpy'),
         ('CODE', '_@_memcpy', code0) ]

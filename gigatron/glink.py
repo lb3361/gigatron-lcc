@@ -170,7 +170,7 @@ def check_im8s(x):
 def check_br(x):
     x = v(x)
     if is_not_pcpage(x) and final_pass:
-        warning(f"short branch overflow")
+        error(f"short branch overflow")
     return (int(x)-2) & 0xff
 
 def check_cpu(v):
@@ -572,11 +572,12 @@ def ALLOC(d):
     tryhop(); emit(0xdf, check_zp(d))
 @vasm
 def SYS(op):
-    t = 270-op//2 if op>28 else 0
-    if not isinstance(t,Unk):
-        if t <= 128 or t > 255:
-            error(f"argument overflow in SYS opcode");
-    tryhop(); emit(0xb4, t)
+    op = v(op)
+    if not isinstance(op ,Unk):
+        if op & 1 != 0 or op < 0 or op >= 284:
+            error(f"illegal argument {op} for SYS opcode")
+        op = min(0, 14 - op // 2) & 0xff
+    tryhop(); emit(0xb4, op)
 @vasm
 def HALT():
     tryhop(); emit(0xb4, 0x80)

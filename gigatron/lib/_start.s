@@ -25,24 +25,26 @@ def code0():
     # call _@_exit
     LDWI('_@_exit'); STW(T3); LDW(R8); CALL(T3)
     HALT()
+
+def code1():
     # subroutine to call a chain of init/fini functions
     label('.callchain')
     tryhop(32)
     DEEK(); STW(R7); LDW(vLR); STW(R6)
-    LDW(R7); BRA('.callchaintst')
+    LDW(R7); _BRA('.callchaintst')
     label('.callchainloop')
     DEEK();STW(T3);CALL(T3)
     LDI(2);ADDW(R7);DEEK();STW(R7)
     label('.callchaintst')
-    BNE('.callchainloop')
+    _BNE('.callchainloop')
     LDW(R6); STW(vLR); RET()
 
-def code1():
+def code2():
     align(2)
     label('__glink_magic_init')
     words(0xBEEF)
 
-def code2():
+def code3():
     align(2)
     label('__glink_magic_fini')
     words(0xBEEF)
@@ -55,8 +57,9 @@ code=[
     ('EXPORT', '__glink_magic_init'),
     ('EXPORT', '__glink_magic_fini'),
     ('CODE', '_start', code0),
-    ('DATA', '__glink_magic_init', code1, 2, 2),
-    ('DATA', '__glink_magic_fini', code2, 2, 2),
+    ('CODE', '.callchain', code1),
+    ('DATA', '__glink_magic_init', code2, 2, 2),
+    ('DATA', '__glink_magic_fini', code3, 2, 2),
     ('IMPORT', 'main'),
     ('IMPORT', '_init0'),
     ('IMPORT', '_@_exit') ]

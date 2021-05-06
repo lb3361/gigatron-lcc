@@ -16,11 +16,11 @@ LDFLAGS=-g
 HOSTFILE=${TOP}etc/gigatron-lcc.c
 
 
-SUBDIRS=${G}runtime ${G}lib 
+SUBDIRS=${G}runtime ${G}lib ${G}sim
 
 FILES=${B}glcc ${B}glink ${B}glink.py ${B}interface.json ${B}roms.json
 
-MAPS=64k 32k sim
+MAPS=64k 32k
 
 default: all
 

@@ -1274,6 +1274,8 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   usedmask[IREG] &= REGMASK_SAVED;
   if (ncalls) usedmask[IREG] |= (1<<tmpr);
   sizesave = 2 * bitcount(usedmask[IREG]);
+  maxargoffset = (maxargoffset + 1) & ~0x1;
+  maxoffset = (maxoffset + 1) & ~0x1;
   framesize = maxargoffset + sizesave + maxoffset;
   if (framesize > 0)
     print("_SP(%d);STW(SP);",-framesize);

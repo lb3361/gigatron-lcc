@@ -16,6 +16,7 @@ char *gt1 = 0;
 int nogt1 = 0;
 int trace = 0;
 int verbose = 0;
+int vmode = 1975;
 
 void debug(const char *fmt, ...)
 {
@@ -230,7 +231,9 @@ double feek(word a) {
 /* CAPTURING SYS CALLS                             */
 /* ----------------------------------------------- */
 
-#define SYS_Exec 0x00ad
+#define SYS_Exec_88       0x00ad
+#define SYS_SetMode_v2_80 0x0b00
+          
 
 void debugSysFn(void)
 {
@@ -375,10 +378,10 @@ void sys_0x3b4(CpuState *S)
       S->PC = 0x300;             /* NEXTY */
     }
 
-  if (deek(sysFn) == SYS_Exec)
+  if (deek(sysFn) == SYS_Exec_88)
     {
       static int exec_count = 0;
-      debug("vPC=%#x SYS(%d) [EXEC]", deek(vPC), S->AC); debugSysFn(); debug("\n");
+      debug("vPC=%#x SYS(%d) [EXEC] ", deek(vPC), S->AC); debugSysFn(); debug("\n");
       if (++exec_count == 2 && gt1)
         {
           // First exec is Reset.
@@ -393,6 +396,13 @@ void sys_0x3b4(CpuState *S)
           S->PC = 0x3cb;             /* REENTER */
           nogt1 = 1;
         }
+    }
+
+  if (deek(sysFn) == SYS_SetMode_v2_80)
+    {
+      debug("vPC=%04x SYS(%d) [SETMODE] vAC=%04x\n", deek(vPC), S->AC, deek(vAC));
+      if (vmode >= 0 && !nogt1)
+        poke(vAC, vmode);
     }
 }
 
@@ -549,7 +559,9 @@ void usage(int exitcode)
             "Options:\n"
             "  -v: print debug messages\n"
             "  -t: trace VCPU execution\n"
-            "  -nogt1: do not override main menu and run forever\n" );
+            "  -nogt1: do not override main menu and run forever\n"
+            "  -vmode vv: set video mode 0,1,2,3,1975\n");
+    
   }
   exit(exitcode);
 }
@@ -586,6 +598,17 @@ int main(int argc, char *argv[])
           if (rom)
             fatal("Duplicate option -rom\n");
           rom = argv[++i];
+        }
+      else if (! strcmp(argv[i],"-vmode"))
+        {
+          if (i+1 >= argc)
+            fatal("Missing argument for option -vmode\n");
+          char *s = argv[++i], *e = 0;
+          vmode = strtol(s, &e, 0);
+          if (e == s || *e)
+            fatal("Invalid value '%s' for option -vmode\n", s);
+          if (vmode!= 1975 && (vmode < 0 || vmode > 3))
+            fatal("Invalid value '%s' for option -vmode\n", s);
         }
       else if (argv[i][0] == '-')
         {

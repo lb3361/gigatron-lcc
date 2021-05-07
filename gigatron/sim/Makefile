@@ -15,7 +15,7 @@ LIBSIMFILES= printf.s _rt_exit.s
 all: ${B}gtsim ${B}mapsim/map.py ${B}mapsim/libsim.a
 
 ${B}gtsim: gtsim.c
-	${CC} -o $@ -g gtsim.c
+	${CC} -o $@ -g gtsim.c -lm
 
 ${B}mapsim/map.py: map.py
 	-mkdir -p ${B}mapsim

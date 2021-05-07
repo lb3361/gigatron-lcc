@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <time.h>
+#include <math.h>
 
 typedef struct cpustate_s CpuState;
 
@@ -168,37 +169,61 @@ typedef int16_t   sword;
 typedef int8_t    sbyte;
 typedef int32_t   squad;
 
-#define PEEK(a)     (RAM[a])
-#define POKE(a,v)   (RAM[a]=v)
-#define DEEK(a)     ((word)RAM[a]|(word)(RAM[(a)+1]<<8))
-#define DOKE(a,v)   (RAM[a]=((v)&0xff),RAM[(a)+1]=(((v)>>8)&0xff))
-#define QEEK(a)     ((quad)RAM[a]|((quad)RAM[(a)+1]<<8)|((quad)RAM[(a)+2]<<16)|((quad)RAM[(a)+3]<<24))
+word peek(word a) {
+  return RAM[a];
+}
+
+void poke(word a, quad x) {
+  RAM[a] = (x & 0xff);
+}
+
+word deek(word a) {
+  if (a & 0xff == 0xff)
+    fprintf(stderr, "(gtsim) deek crosses page boundary\n");
+  return (word)RAM[a]|(word)(RAM[a+1]<<8);
+}
+
+void doke(word a, quad x) {
+  if (a & 0xff == 0xff)
+    fprintf(stderr, "(gtsim) doke crosses page boundary\n");
+  RAM[a] = (x & 0xff);
+  RAM[a+1] = ((x >> 8) & 0xff);
+}
+
+quad leek(word a) {
+  if (a & 0xff == 0xff)
+    fprintf(stderr, "(gtsim) leek crosses page boundary\n");
+  return ((quad)RAM[a] | ((quad)RAM[a+1]<<8) |
+          ((quad)RAM[a+2]<<16) | ((quad)RAM[a+3]<<24) );
+}
+
+double feek(word a) {
+  int sign = RAM[a+1] & 0x80;
+  int exp = RAM[a];
+  quad mant = ((quad)RAM[a+4] | ((quad)RAM[a+3]<<8) |
+               ((quad)RAM[a+2]<<16) | ((quad)(RAM[a+1]|0x80)<<24) );
+  if (exp)
+    return scalb((double)mant/0x100000000UL, (double)(exp-128));
+  else
+    return 0;
+}
 
 
-#define vPC_a       (0x16)
-#define vAC_a       (0x18)
-#define vLR_a       (0x1a)
-#define vSP_a       (0x1b)
-#define sysFn_a     (0x22)
-#define sysArg_a(i) (0x24+(i))
-#define LAC_a       (0x84)
-#define T_a(i) 	    (0x88+2*(i))
-#define R_a(i) 	    (0x90+2*(i))
-#define SP_a        R_a(23)
-
-#define vPC         DEEK(vPC_a)
-#define vAC         DEEK(vAC_a)
-#define vLR         DEEK(vLR_a)
-#define vSP         PEEK(vSP_a)
-#define sysFn       DEEK(sysFn_a)
-#define sysArg(i)   PEEK(sysArg_a(i))
-#define LAC         QEEK(LAC_a)
-#define T(i)        DEEK(T_a(i))
-#define R(i) 	    DEEK(R_a(i))
-#define SP          R(23)
+#define vPC       (0x16)
+#define vAC       (0x18)
+#define vLR       (0x1a)
+#define vSP       (0x1b)
+#define sysFn     (0x22)
+#define sysArg0   (0x24+0)
+#define LAC       (0x84)
+#define T0        (0x88+0)
+#define R0        (0x90+0)
+#define R8        (0x90+16)
+#define R9        (0x90+18)
+#define R10       (0x90+20)
+#define SP        (0x90+46)
 
 #define addlo(a,i)  (((a)&0xff00)|(((a)+i)&0xff))
-
 
 
 /* ----------------------------------------------- */
@@ -207,13 +232,12 @@ typedef int32_t   squad;
 
 #define SYS_Exec 0x00ad
 
-char *sysArgs(void)
+void debugSysFn(void)
 {
-  static char buffer[128];
-  sprintf(buffer,"%02x %02x %02x %02x %02x %02x %02x %02x",
-          sysArg(0),sysArg(1),sysArg(2),sysArg(3),
-          sysArg(4),sysArg(5),sysArg(6),sysArg(7));
-  return buffer;
+  debug("SysFn=$%04x SysArgs=", deek(sysFn));
+  for (int i=0,c='['; i<8; i++, c=' ')
+    debug("%c%02x", c, peek(sysArg0+i));
+  debug("]");
 }
 
 word loadGt1(const char *gt1)
@@ -244,7 +268,7 @@ word loadGt1(const char *gt1)
         {
           if ((c = getc(fp)) < 0)
             goto eof;
-          POKE(addr, c&0xff);
+          poke(addr, c&0xff);
           addr = (addr & 0xff00) | ((addr+1) & 0xff);
         }
       // next high address byte
@@ -275,22 +299,72 @@ word loadGt1(const char *gt1)
 
 void sys_exit(void)
 {
-  exit((sword)R(8));
+  exit((sword)peek(R8));
 }
 
 void sys_printf(void)
 {
-  printf("%s", (char*)&RAM[R(8)]);
+  const char *fmt = (char*)&RAM[deek(R8)];
+  word ap = deek(SP) + 2;
+  int n = 0;
+  while(fmt && *fmt)
+    {
+      if (fmt[0] == '%')
+        {
+          if (fmt[1] == '%')
+            {
+              fmt += 1;
+            }
+          else
+            {
+              int i = 0;
+              char conv = 0;
+              char lng = 0;
+              char spec[64];
+              spec[0] = fmt[0];
+              while(fmt[++i])
+                {
+                  if (i + 1 > sizeof(spec))
+                    break;
+                  else if (strchr("lLq", fmt[i]))
+                    lng = spec[i] = fmt[i];
+                  else if (strchr("#0- +0123456789.hlLjzZtq", fmt[i]))
+                    spec[i] = fmt[i];
+                  else 
+                    { conv = spec[i] = fmt[i]; break; }
+                }
+              if (i+1 < sizeof(spec))
+                {
+                  spec[i+1] = 0;
+                  if (strchr("eEfFgG", conv)) 
+                    { n += printf(spec, feek(ap)); ap += 5; }
+                  else if (strchr("sS", conv))
+                    { ap = (ap+1)&~1; n += printf(spec, &RAM[deek(ap)]); ap += 2; }
+                  else if (lng)
+                    { ap = (ap+1)&~1; n += printf(spec, (squad)leek(ap)); ap += 2; }
+                  else
+                    { ap = (ap+1)&~1; n += printf(spec, (sword)deek(ap)); ap += 2; }
+                  fmt += i+1;
+                  continue;
+                }
+            }
+        }
+      putchar(fmt[0]);
+      fmt += 1;
+      n += 1;
+    }
+  // return value
+  doke(vAC, n);
 }
 
 
 void sys_0x3b4(CpuState *S)
 {
-  if ((sysFn & 0xff00) == 0xff00)
+  if ((deek(sysFn) & 0xff00) == 0xff00)
     {
-      debug("vPC=%#x SYS(%d) sysFn=%#x sysArgs=%s\n", vPC, S->AC, sysFn, sysArgs()); 
+      debug("vPC=%#x SYS(%d) ", deek(vPC), S->AC); debugSysFn(); debug("\n");
       /* Pseudo SYS calls are captured here */
-      switch(sysFn)
+      switch(deek(sysFn))
         {
         case 0xff00: sys_exit(); break;
         case 0xff01: sys_printf(); break;
@@ -301,13 +375,10 @@ void sys_0x3b4(CpuState *S)
       S->PC = 0x300;             /* NEXTY */
     }
 
-  if (sysFn == SYS_Exec)
+  if (deek(sysFn) == SYS_Exec)
     {
       static int exec_count = 0;
-      
-      debug("vPC=%#x SYS(%d) sysFn=%#x (sys_Exec) sysArgs=%s\n",
-            vPC, S->AC, sysFn, sysArgs());
-
+      debug("vPC=%#x SYS(%d) [EXEC]", deek(vPC), S->AC); debugSysFn(); debug("\n");
       if (++exec_count == 2 && gt1)
         {
           // First exec is Reset.
@@ -315,8 +386,8 @@ void sys_0x3b4(CpuState *S)
           // Load GT1 instead
           int execaddr = loadGt1(gt1);
           debug("Loading file '%s' with start address %#x\n", gt1, execaddr);
-          POKE(vPC_a, ((execaddr-2)) & 0xff);
-          POKE(vPC_a+1, ((execaddr>>8) & 0xff));
+          doke(vPC, addlo(execaddr,-2));
+          doke(vLR, execaddr);
           // And return from SYS_Exec
           S->IR = 0x00; S->D = 0xf8; /* LD(-16/2) */
           S->PC = 0x3cb;             /* REENTER */
@@ -335,19 +406,19 @@ void sys_0x3b4(CpuState *S)
 
 int oper8(word addr, int i, char *operand)
 {
-  sprintf(operand, "$%02x", PEEK(addlo(addr,i)));
+  sprintf(operand, "$%02x", peek(addlo(addr,i)));
   return i+1;
 }
 
 int oper16(word addr, int i, char *operand)
 {
-  sprintf(operand, "$%04x", DEEK(addlo(addr,i)));
+  sprintf(operand, "$%04x", deek(addlo(addr,i)));
   return i+2;
 }
 
 int disasbcc(word addr, char **pm, char *operand)
 {
-  switch(PEEK(addlo(addr,1)))
+  switch(peek(addlo(addr,1)))
     {
     case 0x3f:  *pm = "BEQ"; break;
     case 0x72:  *pm = "BNE"; break;
@@ -357,14 +428,14 @@ int disasbcc(word addr, char **pm, char *operand)
     case 0x53:  *pm = "BGE"; break;
     default:    *pm = "B??"; break;
     }
-  sprintf(operand, "$%04x", (addr&0xff00)|((PEEK(addlo(addr,2))+2)&0xff));
+  sprintf(operand, "$%04x", (addr&0xff00)|((peek(addlo(addr,2))+2)&0xff));
   return 3;
 }
 
 
 int disassemble(word addr, char **pm, char *operand)
 {
-  switch(PEEK(addr))
+  switch(peek(addr))
     {
     case 0x5e:  *pm = "ST"; goto oper8;  
     case 0x2b:  *pm = "STW"; goto oper8;
@@ -386,8 +457,8 @@ int disassemble(word addr, char **pm, char *operand)
     case 0xfa:  *pm = "ORW"; goto oper8;
     case 0x8c:  *pm = "XORI"; goto oper8;
     case 0xfc:  *pm = "XORW"; goto oper8;
-    case 0xad:  *pm = "PEEK"; return 1;
-    case 0xf6:  *pm = "DEEK"; return 1;
+    case 0xad:  *pm = "peek"; return 1;
+    case 0xf6:  *pm = "deek"; return 1;
     case 0xf0:  *pm = "POKE"; goto oper8;
     case 0xf3:  *pm = "DOKE"; goto oper8;
     case 0x7f:  *pm = "LUP"; goto oper8;
@@ -402,7 +473,7 @@ int disassemble(word addr, char **pm, char *operand)
     case 0x1f:  *pm = "CMPHS"; goto oper8;
     case 0x97:  *pm = "CMPHU"; goto oper8;
     case 0x35: {
-      switch(PEEK(addlo(addr,1)))
+      switch(peek(addlo(addr,1)))
         {
         case 0x3f:  *pm = "BEQ"; break;
         case 0x72:  *pm = "BNE"; break;
@@ -412,11 +483,11 @@ int disassemble(word addr, char **pm, char *operand)
         case 0x53:  *pm = "BGE"; break;
         default:    *pm = "B??"; break;
         }
-      sprintf(operand, "$%04x", (addr&0xff00)|((PEEK(addlo(addr,2))+2)&0xff));
+      sprintf(operand, "$%04x", (addr&0xff00)|((peek(addlo(addr,2))+2)&0xff));
       return 3;
     }
     case 0xb4: {
-      sbyte b = PEEK(addlo(addr,1));
+      sbyte b = peek(addlo(addr,1));
       if (b > -128 && b <= 0) {
         *pm = "SYS"; sprintf(operand, "%d", 2*(14-b));
       } else 
@@ -426,13 +497,13 @@ int disassemble(word addr, char **pm, char *operand)
     default:
       return 2;
     oper8:
-      sprintf(operand, "$%02x", PEEK(addlo(addr,1)));
+      sprintf(operand, "$%02x", peek(addlo(addr,1)));
       return 2;
     oper16:
-      sprintf(operand, "$%04x", DEEK(addlo(addr,1)));
+      sprintf(operand, "$%04x", deek(addlo(addr,1)));
       return 3;
     operbr:
-      sprintf(operand, "$%04x", (addr&0xff00)|((PEEK(addlo(addr,1))+2)&0xff));
+      sprintf(operand, "$%04x", (addr&0xff00)|((peek(addlo(addr,1))+2)&0xff));
       return 2;
     }
 }
@@ -441,11 +512,11 @@ void print_trace(void)
 {
   char operand[32];
   char *mnemonic = "???";
-  word addr = addlo(vPC,2);
+  word addr = addlo(deek(vPC),2);
   operand[0] = 0;
   disassemble(addr, &mnemonic, operand);
   fprintf(stderr, "%04x:  [ vAC=$%04x vLR=$%04x ]  %-5s %-18s\n",
-          addr, vAC, vLR, mnemonic, operand);
+          addr, deek(vAC), deek(vLR), mnemonic, operand);
 }
 
 void next_0x301(CpuState *S)
@@ -544,3 +615,12 @@ int main(int argc, char *argv[])
   sim();
   return 0;
 }
+
+
+/*---- END CODE --*/
+
+/* Local Variables: */
+/* mode: c */
+/* c-basic-offset: 2 */
+/* indent-tabs-mode: () */
+/* End: */

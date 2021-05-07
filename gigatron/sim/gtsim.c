@@ -14,7 +14,7 @@ void next_0x301(CpuState*);
 char *rom = 0;
 char *gt1 = 0;
 int nogt1 = 0;
-int trace = 0;
+const char *trace = 0;
 int verbose = 0;
 int vmode = 1975;
 
@@ -179,20 +179,20 @@ void poke(word a, quad x) {
 }
 
 word deek(word a) {
-  if (a & 0xff == 0xff)
+  if ((a & 0xff) == 0xff)
     fprintf(stderr, "(gtsim) deek crosses page boundary\n");
   return (word)RAM[a]|(word)(RAM[a+1]<<8);
 }
 
 void doke(word a, quad x) {
-  if (a & 0xff == 0xff)
+  if ((a & 0xff) == 0xff)
     fprintf(stderr, "(gtsim) doke crosses page boundary\n");
   RAM[a] = (x & 0xff);
   RAM[a+1] = ((x >> 8) & 0xff);
 }
 
 quad leek(word a) {
-  if (a & 0xff == 0xff)
+  if ((a & 0xff) == 0xff)
     fprintf(stderr, "(gtsim) leek crosses page boundary\n");
   return ((quad)RAM[a] | ((quad)RAM[a+1]<<8) |
           ((quad)RAM[a+2]<<16) | ((quad)RAM[a+3]<<24) );
@@ -467,8 +467,8 @@ int disassemble(word addr, char **pm, char *operand)
     case 0xfa:  *pm = "ORW"; goto oper8;
     case 0x8c:  *pm = "XORI"; goto oper8;
     case 0xfc:  *pm = "XORW"; goto oper8;
-    case 0xad:  *pm = "peek"; return 1;
-    case 0xf6:  *pm = "deek"; return 1;
+    case 0xad:  *pm = "PEEK"; return 1;
+    case 0xf6:  *pm = "DEEK"; return 1;
     case 0xf0:  *pm = "POKE"; goto oper8;
     case 0xf3:  *pm = "DOKE"; goto oper8;
     case 0x7f:  *pm = "LUP"; goto oper8;
@@ -525,8 +525,12 @@ void print_trace(void)
   word addr = addlo(deek(vPC),2);
   operand[0] = 0;
   disassemble(addr, &mnemonic, operand);
-  fprintf(stderr, "%04x:  [ vAC=$%04x vLR=$%04x ]  %-5s %-18s\n",
-          addr, deek(vAC), deek(vLR), mnemonic, operand);
+  fprintf(stderr, "%04x:  [", addr);
+  fprintf(stderr, " vAC=%04x vLR=%04x", deek(vAC), deek(vLR));
+  if (strchr(trace, 't'))
+    fprintf(stderr, " T[0-3]=%04x %04x %04x %04x",
+            deek(T0), deek(T0+2), deek(T0+4), deek(T0+6));
+  fprintf(stderr, " ]  %-5s %-18s\n",  mnemonic, operand);
 }
 
 void next_0x301(CpuState *S)
@@ -587,9 +591,9 @@ int main(int argc, char *argv[])
         {
           verbose = 1;
         }
-      else if (! strcmp(argv[i],"-t"))
+      else if (! strncmp(argv[i],"-t", 2))
         {
-          trace = 1;
+          trace = argv[i]+2;
         }
       else if (! strcmp(argv[i],"-rom"))
         {

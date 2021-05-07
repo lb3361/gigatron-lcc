@@ -688,43 +688,43 @@ def _LD(d):
 @vasm
 def _SHL(d):
     STW(T3); LDW(d); STW(T2)
-    extern('_@_shl16')
+    extern('_@_shl') 
     _CALLI('_@_shl')            # T3<<T2 -> vAC
 @vasm
 def _SHRS(d):
     STW(T3); LDW(d); STW(T2)
-    extern('_@_shrs16')
-    _CALLI('_@_shrs16')         # T3>>T2 --> vAC
+    extern('_@_shrs')
+    _CALLI('_@_shrs')           # T3>>T2 --> vAC
 @vasm
 def _SHRU(d):
     STW(T3); LDW(d); STW(T2)
-    extern('_@_shru16')
-    _CALLI('_@_shru16')         # T3>>T2 --> vAC
+    extern('_@_shru')
+    _CALLI('_@_shru')           # T3>>T2 --> vAC
 @vasm
 def _MUL(d):
     STW(T3); LDW(d); STW(T2)
-    extern('_@_mul16')
-    _CALLI('_@_mul16')          # T3*T2 --> vAC
+    extern('_@_mul')
+    _CALLI('_@_mul')            # T3*T2 --> vAC
 @vasm
 def _DIVS(d):
     STW(T3); LDW(d); STW(T2)
-    extern('_@_divs16')
-    _CALLI('_@_divs16')         # T3/T2 --> vAC
+    extern('_@_divs')
+    _CALLI('_@_divs')           # T3/T2 --> vAC
 @vasm
 def _DIVU(d):
     STW(T3); LDW(d); STW(T2)
-    extern('_@_divu16')
-    _CALLI('_@_divu16')         # T3/T2 --> vAC
+    extern('_@_divu')
+    _CALLI('_@_divu')           # T3/T2 --> vAC
 @vasm
 def _MODS(d):
     STW(T3); LDW(d); STW(T2)
-    extern('_@_mods16')
-    _CALLI('_@_mods16')         # T3%T2 --> vAC
+    extern('_@_mods')
+    _CALLI('_@_mods')           # T3%T2 --> vAC
 @vasm
 def _MODU(d):
     STW(T3); LDW(d); STW(T2)
-    extern('_@_modu16')
-    _CALLI('_@_modu16')         # T3%T2 --> vAC
+    extern('_@_modu')
+    _CALLI('_@_modu')           # T3%T2 --> vAC
 @vasm
 def _MOV(s,d):
     '''Move word from reg/addr s to d.

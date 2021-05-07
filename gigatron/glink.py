@@ -204,6 +204,7 @@ class Module:
         self.library = library
         self.symdefs = {}
         self.sympass = {}
+        self.symrefs = {}
         self.used = False
         for tp in self.code:
             if tp[0] == 'EXPORT':
@@ -394,8 +395,10 @@ def v(x):
     '''Possible resolve symbol `x'.'''
     if not isinstance(x,str):
         return x
-    if the_module and x in the_module.symdefs:
-        return the_module.symdefs[x]
+    if the_module:
+        the_module.symrefs[x] = the_pass
+        if x in the_module.symdefs:
+            return the_module.symdefs[x]
     r = resolve(x)
     if final_pass and not r:
         error(f"Undefined symbol '{x}'", dedup=True)
@@ -455,8 +458,9 @@ def label(sym, val=None, hop=True):
     '''Define label `sym' to the value of PC or to `val'.
        Unless `hop` is False, this function checks whether 
        one needs to hop to a new page before defining the label.'''
-    if hop: 
-        tryhop(16) # Non zero to improve tight loops
+    refd = sym in the_module.symrefs and the_module.symrefs[sym] == the_pass
+    if hop:  # alternate: hop and not refd:
+        tryhop(0 if refd else 16)
     if the_pass > 0:
         the_module.label(sym, v(val) if val else the_pc)
 

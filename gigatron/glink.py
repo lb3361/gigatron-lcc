@@ -419,7 +419,8 @@ def tryhop(sz = 0, jump=True):
         if the_pc + sz >= the_segment.eaddr:
             hops_enabled = False                       # avoid infinite recursion
             the_segment.pc = the_pc
-            ns = find_code_segment(max(args.lfss, sz)) # give at least what was requested
+            lfss = args.lfss or 16
+            ns = find_code_segment(max(lfss, sz)) # give at least what was requested
             if not ns:
                 fatal(f"Map memory exhausted while fitting function `{the_fragment[1]}'.")
             if jump:
@@ -1367,14 +1368,16 @@ def assemble_code_fragments(m):
         if frag[0] == 'CODE':
             shortsize = frag[3] - frag[4]
             the_segment = None
-            if shortsize < args.sfst and shortsize < 256:
+            sfst = args.sfst or 92
+            if shortsize < sfst and shortsize < 256:
                 hops_enabled = False
                 the_segment = find_code_segment(shortsize)
                 if the_segment and args.d >= 2:
                     debug(f"Pass {the_pass}: Assembling short function '{frag[1]}' at {hex(the_segment.pc)} in {the_segment} .")
             if not the_segment:
                 hops_enabled = True
-                the_segment = find_code_segment(min(args.lfss, 256))
+                lfss = args.lfss or 16
+                the_segment = find_code_segment(min(lfss, 256))
                 if not the_segment:
                     fatal(f"Map memory exhausted while fitting function '{frag[1]}'.")
                 if the_segment and args.d >= 2:
@@ -1643,7 +1646,7 @@ def main(argv):
                             help='select the target cpu version: 4, 5, 6 (default: 5).')
         parser.add_argument('-rom', "--rom", type=str, action='store', default='v5a',
                             help='select the target rom version: v4, v5a (default: v5a).')
-        parser.add_argument('-map', "--map", type=str, action='store', default='64k',
+        parser.add_argument('-map', "--map", type=str, action='store', 
                             help='select a linker map (default: 64k)')
         parser.add_argument('-l', type=str, action='append', metavar='LIB',
                             help='library files. -lxxx searches for libxxx.a')
@@ -1659,11 +1662,11 @@ def main(argv):
         parser.add_argument('--start-from-0x200', action='store_true',
                             help='writes a jump to the entry point at address 0x200.')
         parser.add_argument('--short-function-size-threshold', dest='sfst',
-                            metavar='SIZE', type=int, action='store', default=64,
-                            help='attempts to fit functions smaller than this threshold into a single page (default: 64).')
+                            metavar='SIZE', type=int, action='store',
+                            help='attempts to fit functions smaller than this threshold into a single page.')
         parser.add_argument('--long-functions-segment-size', dest='lfss',
-                            metavar='SIZE', type=int, action='store', default=16,
-                            help='minimal segment size for functions split across segments (default: 16).')
+                            metavar='SIZE', type=int, action='store',
+                            help='minimal segment size for functions split across segments.')
         parser.add_argument('--no-runtime-bss-initialization', action='store_true',
                             help='cause all bss segments to go as zeroes in the gt1 file')
         parser.add_argument('--debug-messages', '-d', dest='d', action='count', default=0,
@@ -1676,8 +1679,6 @@ def main(argv):
                 args.map = '64k'
             if args.rom == None:
                 args.rom = 'v5a'
-                args.sfst = args.sfst or 64
-                args.lfss = args.lfss or 16
         read_rominfo(args.rom)
         args.cpu = args.cpu or romcpu or 5
         args.files = args.files or []

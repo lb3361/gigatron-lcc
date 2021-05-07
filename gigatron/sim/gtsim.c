@@ -297,8 +297,8 @@ void sys_0x3b4(CpuState *S)
         default: fprintf(stderr,"(gtsim) unimplemented SysFn=%#x\n", sysFn); break;
         }
       /* Return with no action and proper timing */
-      S->IR = 0x00; S->D = 0xf8; /* LD(-16/2) */
-      S->PC = 0x3cb;             /* REENTER */
+      S->IR = 0x00; S->D = 0xfa; /* LD(-12/2) */
+      S->PC = 0x300;             /* NEXTY */
     }
 
   if (sysFn == SYS_Exec)

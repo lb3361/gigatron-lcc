@@ -2,10 +2,14 @@
 # T3<<T2 -> vAC
 
 def code0():
-   label('_@_shrs')
-   LDW(T3);_BGE('_@_shru')
-   LDWI(0xffff);STW(T1);XORW(T3);STW(T3);_BRA('.1')
    label('_@_shru')
+   PUSH()
+   _BRA('.shru')
+   label('_@_shrs')
+   PUSH();
+   LDW(T3);_BGE('.shru')
+   LDWI(0xffff);STW(T1);XORW(T3);STW(T3);_BRA('.1')
+   label('.shru')
    LDI(0);STW(T1)
    label('.1')
    LDWI(0xfff0);ANDW(T2);_BEQ('.try8')
@@ -23,7 +27,8 @@ def code0():
    label('.ret')
    LDW(T3)
    label('.ret2')
-   XORW(T1);RET()
+   XORW(T1)
+   tryhop(2);POP();RET()
 
 def code1():
    label(".systable")

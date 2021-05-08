@@ -143,8 +143,13 @@ void chk_divs(sword a, sword b)
 int main()
 {
 	int i;
+
+	chk_divu(0x8100, 0x0820);
 	for (i=0; i<1000000; i++)
 		chk_divu((word)rand(), (word)rand());
+	chk_divs(-32768,234);
+	chk_divs(234,-32768);
+	chk_divs(-32768,-32768);
 	for (i=0; i<1000000; i++)
 		chk_divs((word)rand(), (word)rand());
 }

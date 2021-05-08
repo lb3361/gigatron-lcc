@@ -3,7 +3,7 @@
 # TODO: optimize
 
 def code0():
-        tryhop(29, jump=False)
+        tryhop(29, jump=False) # Force same segment
         label('_@_memcpy');
         label('.loop')
         STW(T1)

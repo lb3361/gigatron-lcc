@@ -4,6 +4,7 @@
 def code0():
    label('_@_mul')
    # T3: a, T2: b, T1: mask, T0: res
+   PUSH()
    LDI(0);STW(T0)
    LDW(T2);_BEQ('.ret');_BGE('.go')
    STW(T1);LDW(T3);STW(T2);LDW(T1);STW(T3)
@@ -17,8 +18,7 @@ def code0():
    LDW(T1);LSLW();STW(T1)
    LDI(0);SUBW(T1);ANDW(T2);_BNE('.loop')
    label('.ret')
-   LDW(T0)
-   RET()
+   LDW(T0);tryhop(2);POP();RET()
       
 code= [ ('EXPORT', '_@_mul'),
         ('CODE', '_@_mul', code0) ]

@@ -1,5 +1,6 @@
 
 # Copy [T3..T3+AC) --> [T2..T2+AC)
+# Clobbers T1
 # TODO: optimize
 
 def code0():

@@ -1401,7 +1401,7 @@ def assemble_code_fragments(m):
         if frag[0] == 'CODE':
             shortsize = frag[3] - frag[4]
             the_segment = None
-            sfst = args.sfst or 92
+            sfst = args.sfst or 96
             if shortsize < sfst and shortsize < 256:
                 short_function = True
                 hops_enabled = False

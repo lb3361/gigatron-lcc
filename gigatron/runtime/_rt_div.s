@@ -21,7 +21,7 @@ def code0():
    STW(T3);INC(T1)
    label('.w3')
    LD(T0);XORI(128);SUBI(129);_BLT('.w4')
-   STW(T0);
+   ST(T0);
    LDW(T3);LSLW();STW(T3)
    LDW(T1);LSLW();STW(T1)
    _BRA('.w2loop')
@@ -81,12 +81,13 @@ def code4():
    PUSH()
    LDI(0);STW(T1);STW(T0);ST(LACx)
    LDW(T2);_BGE('.divs2');_BNE('.divs1')
-   _CALLJ('_@_divbyzero')     # case d == 0
-   label('.divs1')          # case d >= 0x8000
-   LDI(0);SUBW(T2);STW(T2);INC(LACx)
+   _CALLJ('_@_divbyzero')               # case d == 0
+   label('.divs1')
+   LDI(0);SUBW(T2);STW(T2);INC(LACx)    # case d < 0
    label('.divs2')
    LDW(T3);_BGE('.divs3')
-   LDI(0);SUBW(T3);STW(T3);INC(LACx)
+   LDI(0);SUBW(T3);STW(T3)              # case a < 0
+   LD(LACx);XORI(3);ST(LACx)
    label('.divs3')
    _CALLJ('_@_divworker')
    LD(LACx)
@@ -94,10 +95,10 @@ def code4():
    _BEQ('.divs4')
    LDI(0);
    SUBW(T1);
-   _BRA('.divsret')
+   _BRA('.divs5')
    label('.divs4')
    LDW(T1)
-   label('.divsret')
+   label('.divs5')
    tryhop(2);POP();RET()
    
    

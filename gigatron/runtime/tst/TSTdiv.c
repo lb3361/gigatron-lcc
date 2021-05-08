@@ -19,6 +19,8 @@ void chk(int i, int j)
 	if (j != 0) {
 		printf("divu: %u/%u = %u\t", ui, uj, (unsigned int)(ui/uj));
 		printf("divs: %d/%d = %d\n", i, j, (int)(i/j));
+		printf("modu: %u%%%u = %u\t", ui, uj, (unsigned int)(ui%uj));
+		printf("mods: %d%%%d = %d\n", i, j, (int)(i%j));
 	}
 }
 

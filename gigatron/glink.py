@@ -54,6 +54,7 @@ the_pass = 0
 
 final_pass = False
 hops_enabled = False
+short_function = False
 lbranch_counter = 0
 error_counter = 0
 warning_counter = 0
@@ -74,9 +75,9 @@ def debug(s, level=1):
 def where(exc=False):
     '''Locate error in a .s/.o/.a file'''
     if exc:
-        stb = traceback.extract_tb(sys.exc_info()[2], limit=8)
+        stb = traceback.extract_tb(sys.exc_info()[2], limit=10)
     else:
-        stb = traceback.extract_stack(limit=8)
+        stb = traceback.extract_stack(limit=10)
     for s in stb:
         if (s[2].startswith('code')):
             fn = s[0] or "<unknown>"
@@ -151,21 +152,21 @@ def check_zp(x):
     x = v(x)
     if final_pass and is_not_zeropage(x):
         warning(f"zero page address overflow")
-    return x
+    return x & 0xff
 
 def check_imm8(x):
     x = v(x)
     if final_pass and isinstance(x,int):
         if x < 0 or x > 255:
             warning(f"immediate byte argument overflow")
-    return x
+    return x & 0xff
 
 def check_im8s(x):
     x = v(x)
     if final_pass and isinstance(x,int):
         if x < -128 or x > 255:
             warning(f"immediate byte argument overflow")
-    return x
+    return x & 0xff
 
 def check_br(x):
     x = v(x)
@@ -204,7 +205,6 @@ class Module:
         self.library = library
         self.symdefs = {}
         self.sympass = {}
-        self.symrefs = {}
         self.used = False
         for tp in self.code:
             if tp[0] == 'EXPORT':
@@ -252,43 +252,6 @@ def emit(*args):
             the_segment.buffer.append(b)
     the_pc += len(args)
 
-def emitjmp(d, saveAC=False):
-    '''Emit code to jump to address d.  This can use a short BRA or use
-       CALLI because vLR has been saved.  Without CALLI, long jumps
-       needs to use vAC. Argument `saveAC' says whether one should
-       preserve vAC by saving and restoring its value. '''
-    if is_pcpage(d): # 2 bytes
-        BRA(d)
-        return
-    global lbranch_counter
-    if args.cpu >= 5: # 3 bytes
-        lbranch_counter += 3
-        CALLI(d)
-    elif not saveAC:  # 5 bytes
-        lbranch_counter += 5
-        emit(0x11, lo(int(d)-2), hi(int(d))) # LDWI (nohop)
-        STW(vPC)
-    else:             # 10 bytes (sigh!)
-        lbranch_counter += 10
-        STLW(-2)
-        emit(0x11, lo(int(d)), hi(int(d)))   # LDWI (nohop)
-        STW(vLR)
-        LDLW(-2)
-        RET()
-    
-def emitjcc(BCC, BNCC, d, saveAC=False):
-    '''Emits a conditional jump, either using a short BCC, 
-       or using its converse BNCC to skip a long jump.'''
-    lbl = genlabel()
-    tryhop(3)           # make sure there is no hop before the short jump
-    if is_pcpage(d):
-        BCC(d)
-    else:               # than make sure there is no hop during the long jump
-        tryhop(13 if args.cpu < 5 else 6)
-        BNCC(lbl);
-        emitjmp(int(d), saveAC=saveAC)
-        label(lbl, hop=False)
-
 def extern(sym):
     '''Adds a symbol to the import list of a module. 
        This happens when `measure_code_fragment' is called.
@@ -296,6 +259,90 @@ def extern(sym):
        inserts the appropriate runtime routines.'''
     if the_pass == 0 and sym not in the_module.imports:
         the_module.imports.append(sym)
+
+
+# ------------- jumps and hops
+
+def bytes_left():
+    '''Tells how many bytes are left in the current segment'''
+    if the_pass > 0:
+        return the_segment.eaddr - the_pc
+    return 256
+
+def size_long_jump():
+    return 3 if args.cpu >= 5 else 10
+
+def emit_long_jump(d):
+    if args.cpu >= 5:
+        CALLI(d)          # 3 bytes
+    else:
+        STLW(-2); LDWI(d); STW(vLR);
+        LDLW(-2); RET()   # 10 bytes
+
+def hop(sz, jump):
+    '''Ensure, possibly with a hop, that there are at 
+       least sz bytes left in the segment. '''
+    if bytes_left() < sz:
+        global hops_enabled
+        if not hops_enabled:
+            error(f"internal error: cannot honor hop({sz}) because hops are disabled")
+        elif jump and bytes_left() < size_long_jump():
+            error(f"internal error: cannot hop because there is no space for a jump")
+        else:
+            global the_segment, the_pc
+            hops_enabled = False
+            the_segment.pc = the_pc
+            lfss = args.lfss or 16
+            ns = find_code_segment(max(lfss, sz))
+            if not ns:
+                fatal(f"Map memory exhausted while fitting function `{the_fragment[1]}'.")
+            if jump:
+                emit_long_jump(ns.pc)
+            hops_enabled = True            
+            the_segment.pc = the_pc
+            the_segment = ns
+            the_pc = ns.pc
+            if args.d >= 2:
+                debug(f"Pass {the_pass}: Continuing '{the_fragment[1]}' at {hex(the_pc)} in {ns}")
+
+def emitjump(d):
+    global hops_enabled, lbranch_counter
+    save_hops_enabled = hops_enabled
+    hops_enabled = False
+    if short_function or is_pcpage(d):
+        BRA(d)
+    else:
+        lbranch_counter += size_long_jump() - 2
+        emit_long_jump(d)
+    hops_enabled = save_hops_enabled
+    tryhop(jump=False)
+    
+def emitjcc(BCC, BNCC, d):
+    global hops_enabled, lbranch_counter
+    save_hops_enabled = hops_enabled
+    hops_enabled = False
+    short_ok = bytes_left() >= 3 + size_long_jump()
+    long_ok = bytes_left() >= 3 + 2 * size_long_jump()
+    lbl = genlabel()
+    while True:
+        if short_function:
+            BCC(d)
+            break;
+        elif is_pcpage(d) and short_ok:
+            BCC(d)
+            break;
+        elif not is_pcpage(d) and long_ok:
+            BNCC(lbl)
+            emit_long_jump(d)
+            label(lbl)
+            lbranch_counter += size_long_jump()
+            break;
+        else:
+            hops_enabled = True
+            hop(3 + 2 * size_long_jump(), jump=True)
+            short_ok = long_ok = True
+            hops_enabled = False
+    hops_enabled = save_hops_enabled
 
         
 # ------------- usable vocabulary for .s/.o/.a files
@@ -396,7 +443,6 @@ def v(x):
     if not isinstance(x,str):
         return x
     if the_module:
-        the_module.symrefs[x] = the_pass
         if x in the_module.symdefs:
             return the_module.symdefs[x]
     r = resolve(x)
@@ -411,32 +457,15 @@ def hi(x):
     return (v(x) >> 8) & 0xff
 
 @vasm
-def tryhop(sz = 0, jump=True):
+def tryhop(sz=None, jump=True):
     '''Hops to a new page if the current page cannot hold a long jump
        plus `sz' bytes. This also ensures that no hop will occur during
        the next `sz' bytes. A long jump is generated when `jump' is True.'''
-    global the_pass, the_fragment, hops_enabled, the_segment, the_pc
     if hops_enabled:
-        sz = 4 if sz < 4 else sz           # enough space for one instruction
-        sz += 10 if args.cpu < 5 else 3    # enough space for the jump
-        if the_pc + sz >= the_segment.eaddr:
-            hops_enabled = False                       # avoid infinite recursion
-            the_segment.pc = the_pc
-            lfss = args.lfss or 16
-            ns = find_code_segment(max(lfss, sz)) # give at least what was requested
-            if not ns:
-                fatal(f"Map memory exhausted while fitting function `{the_fragment[1]}'.")
-            if jump:
-                emitjmp(ns.pc, saveAC=True)
-            hops_enabled = True            
-            the_segment.pc = the_pc
-            if the_pc > the_segment.eaddr:
-                fatal(f"Internal error: insufficient memory left to insert a hop")
-            the_segment = ns
-            the_pc = ns.pc
-            if args.d >= 2:
-                debug(f"Pass {the_pass}: Continuing '{the_fragment[1]}' at {hex(the_pc)} in {ns}")
-
+        sz = sz or 4 ### max size of an instruction
+        sz = sz + size_long_jump()
+        if bytes_left() < sz:
+            hop(sz, jump=jump)
 @vasm
 def align(d):
     while the_pc & (d-1):
@@ -454,127 +483,125 @@ def space(d):
     for i in range(0,d):
         emit(0)
 @vasm
-def label(sym, val=None, hop=True):
+def label(sym, val=None):
     '''Define label `sym' to the value of PC or to `val'.
        Unless `hop` is False, this function checks whether 
        one needs to hop to a new page before defining the label.'''
-    refd = sym in the_module.symrefs and the_module.symrefs[sym] == the_pass
-    if hop:  # alternate: hop and not refd:
-        tryhop(0 if refd else 16)
+    tryhop()
     if the_pass > 0:
         the_module.label(sym, v(val) if val else the_pc)
 
 @vasm
 def ST(d):
-    tryhop(); emit(0x5e, check_zp(d))
+    tryhop(2); emit(0x5e, check_zp(d))
 @vasm
 def STW(d):
-    tryhop(); emit(0x2b, check_zp(d))
+    tryhop(2); emit(0x2b, check_zp(d))
 @vasm
 def STLW(d):
-    tryhop(); emit(0xec, check_zp(d))
+    tryhop(2); emit(0xec, check_im8s(d))
 @vasm
 def LD(d):
-    tryhop(); emit(0x1a, check_zp(d))
+    tryhop(2); emit(0x1a, check_zp(d))
 @vasm
 def LDI(d, hop=True):
-    tryhop(); emit(0x59, check_im8s(d))
+    tryhop(2); emit(0x59, check_im8s(d))
 @vasm
 def LDWI(d):
-    tryhop(); d=int(v(d)); emit(0x11, lo(d), hi(d))
+    tryhop(3); d=int(v(d)); emit(0x11, lo(d), hi(d))
 @vasm
 def LDW(d):
-    tryhop(); emit(0x21, check_zp(d))
+    tryhop(2); emit(0x21, check_zp(d))
 @vasm
 def LDLW(d):
-    tryhop(); emit(0xee, check_zp(d))
+    tryhop(2); emit(0xee, check_im8s(d))
 @vasm
 def ADDW(d):
-    tryhop(); emit(0x99, check_zp(d))
+    tryhop(2); emit(0x99, check_zp(d))
 @vasm
 def SUBW(d):
-    tryhop(); emit(0xb8, check_zp(d))
+    tryhop(2); emit(0xb8, check_zp(d))
 @vasm
 def ADDI(d):
-    tryhop(); emit(0xe3, check_imm8(d))
+    tryhop(2); emit(0xe3, check_imm8(d))
 @vasm
 def SUBI(d):
-    tryhop(); emit(0xe6, check_imm8(d))
+    tryhop(2); emit(0xe6, check_imm8(d))
 @vasm
 def LSLW():
-    tryhop(); emit(0xe9)
+    tryhop(1); emit(0xe9)
 @vasm
 def INC(d):
-    tryhop(); emit(0x93, check_zp(d))
+    tryhop(2); emit(0x93, check_zp(d))
 @vasm
 def ANDI(d):
-    tryhop(); emit(0x82, check_imm8(d))
+    tryhop(2); emit(0x82, check_imm8(d))
 @vasm
 def ANDW(d):
-    tryhop(); emit(0xf8, check_zp(d))
+    tryhop(2); emit(0xf8, check_zp(d))
 @vasm
 def ORI(d):
-    tryhop(); emit(0x88, check_imm8(d))
+    tryhop(2); emit(0x88, check_imm8(d))
 @vasm
 def ORW(d):
-    tryhop(); emit(0xfa, check_zp(d))
+    tryhop(2); emit(0xfa, check_zp(d))
 @vasm
 def XORI(d):
-    tryhop(); emit(0x8c, check_imm8(d))
+    tryhop(2); emit(0x8c, check_imm8(d))
 @vasm
 def XORW(d):
-    tryhop(); emit(0xfc, check_zp(d))
+    tryhop(2); emit(0xfc, check_zp(d))
 @vasm
 def PEEK():
-    tryhop(); emit(0xad)
+    tryhop(1); emit(0xad)
 @vasm
 def DEEK():
-    tryhop(); emit(0xf6)
+    tryhop(1); emit(0xf6)
 @vasm
 def POKE(d):
-    tryhop(); emit(0xf0, check_zp(d))
+    tryhop(2); emit(0xf0, check_zp(d))
 @vasm
 def DOKE(d):
-    tryhop(); emit(0xf3, check_zp(d))
+    tryhop(2); emit(0xf3, check_zp(d))
 @vasm
 def LUP(d):
-    tryhop(); emit(0x7f, check_zp(d))
+    tryhop(2); emit(0x7f, check_zp(d))
 @vasm
 def BRA(d):
-    tryhop(); emit(0x90, check_br(d)); tryhop(jump=False)
+    emit(0x90, check_br(d)); tryhop(jump=False)
 @vasm
 def BEQ(d):
-    tryhop(); emit(0x35, 0x3f, check_br(d))
+    tryhop(3); emit(0x35, 0x3f, check_br(d))
 @vasm
 def BNE(d):
-    tryhop(); emit(0x35, 0x72, check_br(d))
+    tryhop(3); emit(0x35, 0x72, check_br(d))
 @vasm
 def BLT(d):
-    tryhop(); emit(0x35, 0x50, check_br(d))
+    tryhop(3); emit(0x35, 0x50, check_br(d))
 @vasm
 def BGT(d):
-    tryhop(); emit(0x35, 0x4d, check_br(d))
+    tryhop(3); emit(0x35, 0x4d, check_br(d))
 @vasm
 def BLE(d):
-    tryhop(); emit(0x35, 0x56, check_br(d))
+    tryhop(3); emit(0x35, 0x56, check_br(d))
 @vasm
 def BGE(d):
-    tryhop(); emit(0x35, 0x53, check_br(d))
+    tryhop(3); emit(0x35, 0x53, check_br(d))
 @vasm
 def CALL(d):
-    tryhop(); emit(0xcf, check_zp(d))
+    tryhop(3); emit(0xcf, check_zp(d))
 @vasm
 def RET():
-    tryhop(); emit(0xff); tryhop(jump=False)
+    emit(0xff); tryhop(jump=False)
 @vasm
 def PUSH():
-    tryhop(); emit(0x75)
+    tryhop(1); emit(0x75)
 @vasm
 def POP():
-    tryhop(); emit(0x63)
+    tryhop(1); emit(0x63)
 @vasm
 def ALLOC(d):
-    tryhop(); emit(0xdf, check_zp(d))
+    tryhop(2); emit(0xdf, check_zp(d))
 @vasm
 def SYS(op):
     op = v(op)
@@ -582,75 +609,75 @@ def SYS(op):
         if op & 1 != 0 or op < 0 or op >= 284:
             error(f"illegal argument {op} for SYS opcode")
         op = min(0, 14 - op // 2) & 0xff
-    tryhop(); emit(0xb4, op)
+    tryhop(2); emit(0xb4, op)
 @vasm
 def HALT():
-    tryhop(); emit(0xb4, 0x80)
+    emit(0xb4, 0x80); tryhop(jump = False)
 @vasm
 def DEF(d):
-    tryhop(); emit(0xcd, check_br(d))
+    tryhop(2); emit(0xcd, check_br(d))
 @vasm
 def CALLI(d):
-    check_cpu(5); tryhop(); d=int(v(d)); emit(0x85, lo(d), hi(d))
+    check_cpu(5); tryhop(3); d=int(v(d)); emit(0x85, lo(d), hi(d))
 @vasm
 def CMPHS(d):
-    check_cpu(5); tryhop(); emit(0x1f, check_zp(d))
+    check_cpu(5); tryhop(2); emit(0x1f, check_zp(d))
 @vasm
 def CMPHU(d):
-    check_cpu(5); tryhop(); emit(0x97, check_zp(d))
+    check_cpu(5); tryhop(2); emit(0x97, check_zp(d))
 
 # some experimental instructions for cpu6 (opcodes to be checked)
 @vasm
 def DOKEA(d):
-    check_cpu(6); tryhop(); emit(0x7d, check_zp(d))
+    check_cpu(6); tryhop(2); emit(0x7d, check_zp(d))
 @vasm
 def POKEA(d):
-    check_cpu(6); tryhop(); emit(0x69, check_zp(d))
+    check_cpu(6); tryhop(2); emit(0x69, check_zp(d))
 @vasm
 def DOKEI(d):
-    check_cpu(6); tryhop(); d=int(v(d)); emit(0x37, lo(d), hi(d))
+    check_cpu(6); tryhop(2); d=int(v(d)); emit(0x37, lo(d), hi(d))
 @vasm
 def POKEI(d):
-    check_cpu(6); tryhop(); emit(0x25, check_im8s(d))
+    check_cpu(6); tryhop(2); emit(0x25, check_im8s(d))
 @vasm
 def DEEKA(d):
-    check_cpu(6); tryhop(); emit(0x6f, check_zp(d))
+    check_cpu(6); tryhop(2); emit(0x6f, check_zp(d))
 @vasm
 def PEEKA(d):
-    check_cpu(6); tryhop(); emit(0x67, check_zp(d))
+    check_cpu(6); tryhop(2); emit(0x67, check_zp(d))
 @vasm
 def DEC(d):
-    check_cpu(6); tryhop(); emit(0x14, check_zp(d))
+    check_cpu(6); tryhop(2); emit(0x14, check_zp(d))
 @vasm
 def INCW(d):
-    check_cpu(6); tryhop(); emit(0x79, check_zp(d))
+    check_cpu(6); tryhop(2); emit(0x79, check_zp(d))
 @vasm
 def DECW(d):
-    check_cpu(6); tryhop(); emit(0x7b, check_zp(d))
+    check_cpu(6); tryhop(2); emit(0x7b, check_zp(d))
 @vasm
 def NEGW(d):
-    check_cpu(6); tryhop(); emit(0xd3, check_zp(d))
+    check_cpu(6); tryhop(2); emit(0xd3, check_zp(d))
 @vasm
 def NOTB(d):
-    check_cpu(6); tryhop(); emit(0x48, check_zp(d))
+    check_cpu(6); tryhop(2); emit(0x48, check_zp(d))
 @vasm
 def NOTW(d):
-    check_cpu(6); tryhop(); emit(0x8a, check_zp(d))
+    check_cpu(6); tryhop(2); emit(0x8a, check_zp(d))
 @vasm
 def LSLV(d):
-    check_cpu(6); tryhop();  emit(0x27, check_zp(d))
+    check_cpu(6); tryhop(2);  emit(0x27, check_zp(d))
 @vasm
 def ADDBA(d):
-    check_cpu(6); tryhop(); emit(0x29, check_zp(d))
+    check_cpu(6); tryhop(2); emit(0x29, check_zp(d))
 @vasm
 def SUBBA(d):
-    check_cpu(6); tryhop(); emit(0x77, check_zp(d))
+    check_cpu(6); tryhop(2); emit(0x77, check_zp(d))
 @vasm
 def PEEKV(d):
-    check_cpu(6); tryhop(); emit(0x39, check_zp(d))
+    check_cpu(6); tryhop(2); emit(0x39, check_zp(d))
 @vasm
 def DEEKV(d):
-    check_cpu(6); tryhop(); emit(0x3b, check_zp(d))
+    check_cpu(6); tryhop(2); emit(0x3b, check_zp(d))
 
 @vasm
 def _SP(n):
@@ -679,7 +706,6 @@ def _LDW(d):
 @vasm
 def _LD(d):
     '''Emit LD or LDWI+PEEK depending on the size of d.'''
-    tryhop()
     d = v(d)
     if is_zeropage(d):
         LD(d)
@@ -689,42 +715,42 @@ def _LD(d):
 def _SHL(d):
     STW(T3); LDW(d); STW(T2)
     extern('_@_shl') 
-    _CALLI('_@_shl')            # T3<<T2 -> vAC
+    _CALLJ('_@_shl')            # T3<<T2 -> vAC
 @vasm
 def _SHRS(d):
     STW(T3); LDW(d); STW(T2)
     extern('_@_shrs')
-    _CALLI('_@_shrs')           # T3>>T2 --> vAC
+    _CALLJ('_@_shrs')           # T3>>T2 --> vAC
 @vasm
 def _SHRU(d):
     STW(T3); LDW(d); STW(T2)
     extern('_@_shru')
-    _CALLI('_@_shru')           # T3>>T2 --> vAC
+    _CALLJ('_@_shru')           # T3>>T2 --> vAC
 @vasm
 def _MUL(d):
     STW(T3); LDW(d); STW(T2)
     extern('_@_mul')
-    _CALLI('_@_mul')            # T3*T2 --> vAC
+    _CALLJ('_@_mul')            # T3*T2 --> vAC
 @vasm
 def _DIVS(d):
     STW(T3); LDW(d); STW(T2)
     extern('_@_divs')
-    _CALLI('_@_divs')           # T3/T2 --> vAC
+    _CALLJ('_@_divs')           # T3/T2 --> vAC
 @vasm
 def _DIVU(d):
     STW(T3); LDW(d); STW(T2)
     extern('_@_divu')
-    _CALLI('_@_divu')           # T3/T2 --> vAC
+    _CALLJ('_@_divu')           # T3/T2 --> vAC
 @vasm
 def _MODS(d):
     STW(T3); LDW(d); STW(T2)
     extern('_@_mods')
-    _CALLI('_@_mods')           # T3%T2 --> vAC
+    _CALLJ('_@_mods')           # T3%T2 --> vAC
 @vasm
 def _MODU(d):
     STW(T3); LDW(d); STW(T2)
     extern('_@_modu')
-    _CALLI('_@_modu')           # T3%T2 --> vAC
+    _CALLJ('_@_modu')           # T3%T2 --> vAC
 @vasm
 def _MOV(s,d):
     '''Move word from reg/addr s to d.
@@ -759,26 +785,26 @@ def _MOV(s,d):
         else:
             _LDI(d); STW(T2); _LDW(s); DOKE(T2)
 @vasm
-def _BRA(d, saveAC=False):
-    emitjmp(v(d), saveAC=saveAC); tryhop(jump=False)
+def _BRA(d):
+    emitjump(v(d))
 @vasm
-def _BEQ(d, saveAC=False):
-    emitjcc(BEQ, BNE, v(d), saveAC=saveAC)
+def _BEQ(d):
+    emitjcc(BEQ, BNE, v(d))
 @vasm
-def _BNE(d, saveAC=False):
-    emitjcc(BNE, BEQ, v(d), saveAC=saveAC)
+def _BNE(d):
+    emitjcc(BNE, BEQ, v(d))
 @vasm
-def _BLT(d, saveAC=False):
-    emitjcc(BLT,_BGE, v(d), saveAC=saveAC)
+def _BLT(d):
+    emitjcc(BLT, BGE, v(d))
 @vasm
-def _BGT(d, saveAC=False):
-    emitjcc(BGT,_BLE, v(d), saveAC=saveAC)
+def _BGT(d):
+    emitjcc(BGT, BLE, v(d))
 @vasm
-def _BLE(d, saveAC=False):
-    emitjcc(BLE, BGT, v(d), saveAC=saveAC)
+def _BLE(d):
+    emitjcc(BLE, BGT, v(d))
 @vasm
-def _BGE(d, saveAC=False):
-    emitjcc(BGE, BLT, v(d), saveAC=saveAC)
+def _BGE(d):
+    emitjcc(BGE, BLT, v(d))
 @vasm
 def _CMPIS(d):
     '''Compare vAC (signed) with immediate in range 0..255'''
@@ -786,6 +812,7 @@ def _CMPIS(d):
         CMPHS(0); SUBI(d)
     else:
         lbl = genlabel()
+        tryhop(5)
         BLT(lbl)
         SUBI(d)
         label(lbl)
@@ -796,6 +823,7 @@ def _CMPIU(d):
         CMPHU(0); SUBI(d)
     else:
         lbl = genlabel()
+        tryhop(5)
         BGE(lbl)
         LDWI(0x100)
         label(lbl)
@@ -806,6 +834,7 @@ def _CMPWS(d):
     if args.cpu >= 5:
         CMPHS(d+1); SUBW(d)
     else:
+        tryhop(18)
         lbl1 = genlabel()
         lbl2 = genlabel()
         STW(T3); XORW(d)
@@ -821,6 +850,7 @@ def _CMPWU(d):
     if args.cpu >= 5:
         CMPHU(d+1); SUBW(d)
     else:
+        tryhop(18)
         lbl1 = genlabel()
         lbl2 = genlabel()
         STW(T3); XORW(d)
@@ -848,7 +878,7 @@ def _BMOV(s,d,n):
             _LDI(s); STW(T3)
         _LDI(n);
         extern('_@_memcpy')
-        _CALLI('_@_memcpy', storeAC=T1)         # [T3..T3+AC) --> [T2..T2+AC)
+        _CALLI('_@_memcpy')         # [T3..T3+AC) --> [T2..T2+AC)
 @vasm
 def _LMOV(s,d):
     '''Move long from reg/addr s to d.
@@ -884,79 +914,79 @@ def _LMOV(s,d):
             if s != [vAC] and s != [T3]:               # call sequence
                 _LDI(s); STW(T3)                      # 5-13 bytes
             extern('_@_lcopy')
-            _CALLI('_@_lcopy')  #   [T3..T3+4) --> [T2..T2+4)
+            _CALLJ('_@_lcopy')    # [T3..T3+4) --> [T2..T2+4)
 @vasm
 def _LADD():
-    extern('_@_ladd')              # [vAC/T3] means [vAC] for cpu>=5, [T3] for cpu<5
-    _CALLI('_@_ladd', storeAC=T3)  # LAC+[vAC/T3] --> LAC
+    extern('_@_ladd')              
+    _CALLI('_@_ladd')              # LAC+[vAC] --> LAC
 @vasm
 def _LSUB():
     extern('_@_lsub') 
-    _CALLI('_@_lsub', storeAC=T3)  # LAC-[vAC/T3] --> LAC
+    _CALLI('_@_lsub')              # LAC-[vAC] --> LAC
 @vasm
 def _LMUL():
     extern('_@_lmul')
-    _CALLI('_@_lmul', storeAC=T3)  # LAC*[vAC/T3] --> LAC
+    _CALLI('_@_lmul')              # LAC*[vAC] --> LAC
 @vasm
 def _LDIVS():
     extern('_@_ldivs')
-    _CALLI('_@_ldivs', storeAC=T3)  # LAC/[vAC/T3] --> LAC
+    _CALLI('_@_ldivs')              # LAC/[vAC] --> LAC
 @vasm
 def _LDIVU():
     extern('_@_ldivu')
-    _CALLI('_@_ldivu', storeAC=T3)  # LAC/[vAC/T3] --> LAC
+    _CALLI('_@_ldivu')              # LAC/[vAC] --> LAC
 @vasm
 def _LMODS():
     extern('_@_lmods')
-    _CALLI('_@_lmods', storeAC=T3)  # LAC%[vAC/T3] --> LAC
+    _CALLI('_@_lmods')              # LAC%[vAC] --> LAC
 @vasm
 def _LMODU():
     extern('_@_lmodu')
-    _CALLI('_@_lmodu', storeAC=T3)  # LAC%[vAC/T3] --> LAC
+    _CALLI('_@_lmodu')              # LAC%[vAC] --> LAC
 @vasm
 def _LSHL():
     extern('_@_lshl')
-    _CALLI('_@_lshl', storeAC=T3)  # LAC<<[vAC/T3] --> LAC
+    _CALLI('_@_lshl')               # LAC<<[vAC] --> LAC
 @vasm
 def _LSHRS():
     extern('_@_lshrs')
-    _CALLI('_@_lshrs', storeAC=T3)  # LAC>>[vAC/T3] --> LAC
+    _CALLI('_@_lshrs')              # LAC>>[vAC] --> LAC
 @vasm
 def _LSHRU():
     extern('_@_lshru')
-    _CALLI('_@_lshru', storeAC=T3)  # LAC>>[vAC/T3] --> LAC
+    _CALLI('_@_lshru')              # LAC>>[vAC] --> LAC
 @vasm
 def _LNEG():
     extern('_@_lneg')
-    _CALLI('_@_lneg')               # -LAC --> LAC
+    _CALLJ('_@_lneg')              # -LAC --> LAC
 @vasm
 def _LCOM():
     extern('_@_lcom')
-    _CALLI('_@_lcom')               # ~LAC --> LAC
+    _CALLJ('_@_lcom')               # ~LAC --> LAC
 @vasm
 def _LAND():
     extern('_@_land')
-    _CALLI('_@_land', storeAC=T3)   # LAC&[vAC/T3] --> LAC
+    _CALLI('_@_land')               # LAC&[vAC] --> LAC
 @vasm
 def _LOR():
     extern('_@_lor')
-    _CALLI('_@_lor', storeAC=T3)    # LAC|[vAC/T3] --> LAC
+    _CALLI('_@_lor')                # LAC|[vAC] --> LAC
 @vasm
 def _LXOR():
     extern('_@_lxor')
-    _CALLI('_@_lxor', storeAC=T3)   # LAC^[vAC/T3] --> LAC
+    _CALLI('_@_lxor')               # LAC^[vAC] --> LAC
 @vasm
 def _LCMPS():
     extern('_@_lcmps')
-    _CALLI('_@_lcmps', storeAC=T3)  # SGN(LAC-[vAC/T3]) --> vAC
+    _CALLI('_@_lcmps')              # SGN(LAC-[vAC]) --> vAC
 @vasm
 def _LCMPU():
     extern('_@_lcmpu')
-    _CALLI('_@_lcmpu', storeAC=T3)  # SGN(LAC-[vAC/T3]) --> vAC
+    _CALLI('_@_lcmpu')              # SGN(LAC-[vAC]) --> vAC
 @vasm
 def _LCMPX():
     extern('_@_lcmpx')
-    _CALLI('_@_lcmpx', storeAC=T3)  # TST(LAC-[vAC/T3]) --> vAC
+    _CALLI('_@_lcmpx')              # TST(LAC-[vAC]) --> vAC
 @vasm
 def _FMOV(s,d):
     '''Move float from reg s to d with special cases when s or d is FAC.
@@ -977,7 +1007,7 @@ def _FMOV(s,d):
             elif d != [T2]:
                 _LDI(d); STW(T2)
             extern('_@_floadfac') 
-            _CALLI('_@_floadfac')   # FAC --> [T2..T2+5)
+            _CALLJ('_@_floadfac')   # FAC --> [T2..T2+5)
         elif is_zeropage(d, 4) and is_zeropage(s, 4):
             _LDW(s); STW(d); _LDW(s+2); STW(d+2); _LD(s+4); ST(d+4)
         else:
@@ -990,70 +1020,66 @@ def _FMOV(s,d):
             if s != [vAC] and s != [T3]:
                 _LDI(s); STW(T3)
             extern('_@_fcopy')       # [T3..T3+5) --> [T2..T2+5)
-            _CALLI('_@_fcopy')
+            _CALLJ('_@_fcopy')
 @vasm
 def _FADD():
     extern('_@_fadd')
-    _CALLI('_@_fadd', storeAC=T3)   # FAC+[vAC/T3] --> FAC
+    _CALLI('_@_fadd')               # FAC+[vAC] --> FAC
 @vasm
 def _FSUB():
     extern('_@_fsub')
-    _CALLI('_@_fsub', storeAC=T3)   # FAC-[vAC/T3] --> FAC
+    _CALLI('_@_fsub')               # FAC-[vAC] --> FAC
 @vasm
 def _FMUL():
     extern('_@_fmul')
-    _CALLI('_@_fmul', storeAC=T3)   # FAC*[vAC/T3] --> FAC
+    _CALLI('_@_fmul')               # FAC*[vAC] --> FAC
 @vasm
 def _FDIV():
     extern('_@_fdiv')
-    _CALLI('_@_fdiv', storeAC=T3)   # FAC/[vAC/T3] --> FAC
+    _CALLI('_@_fdiv')               # FAC/[vAC] --> FAC
 @vasm
 def _FNEG():
     extern('_@_fneg')
-    _CALLI('_@_fneg')               # -FAC --> FAC
+    _CALLJ('_@_fneg')               # -FAC --> FAC
 @vasm
 def _FCMP():
     extern('_@_fcmp')
-    _CALLI('_@_fcmp', storeAC=T3)   # SGN(FAC-[vAC/T3]) --> vAC
+    _CALLI('_@_fcmp')               # SGN(FAC-[vAC]) --> vAC
 @vasm
 def _FTOU():
     extern('_@_ftou')
-    _CALLI('_@_ftou')
+    _CALLJ('_@_ftou')
 @vasm
 def _FTOI():
     extern('_@_ftoi')
-    _CALLI('_@_ftoi')
+    _CALLJ('_@_ftoi')
 @vasm
 def _FCVI():
     extern('_@_fcvi')
-    _CALLI('_@_fcvi')
+    _CALLJ('_@_fcvi')
 @vasm
 def _FCVU():
     extern('_@_fcvu')
-    _CALLI('_@_fcvu')
+    _CALLJ('_@_fcvu')
 @vasm
-def _CALLI(d, saveAC=False, storeAC=None):
+def _CALLI(d):
     '''Call subroutine at far location d.
-       When cpu<5, option saveAC=True ensures vAC is preserved, 
-       and option storeAC=reg stores vAC into a register before jumping.
-       When cpu>=5, this just calls CALLI. '''
+       - For cpu >= 5. this function just emits a CALLI instruction
+       - For cpu < 5, this function trashes 'sysFn'.'''
     if args.cpu >= 5:
         CALLI(d)
-    elif saveAC:
-        STSW(-2)
-        LDWI(d)
-        STW('sysFn')
-        LDSW(-2)
-        CALL('sysFn')
-    elif storeAC:
-        STW(storeAC)
-        LDWI(d)
-        STW('sysFn')
-        CALL('sysFn')
     else:
-        LDWI(d)
-        STW('sysFn')
-        CALL('sysFn')
+        STLW(-2);LDWI(d);STW('sysFn');LDLW(-2);CALL('sysFn')
+@vasm
+def _CALLJ(d):
+    '''Call subroutine at far location d. 
+       - For cpu >= 5. this function just emits a CALLI instruction
+       - For cpu < 5, this function trashes 'sysFn' and 'vAC' 
+         but generates a smaller code than _CALLI.'''
+    if args.cpu >= 5:
+        CALLI(d)
+    else:
+        LDWI(d);STW('sysFn');CALL('sysFn')
 @vasm
 def _SAVE(offset, mask):
     '''Save all registers specified by mask at [SP+offset],
@@ -1365,7 +1391,8 @@ def find_code_segment(size):
     return None
     
 def assemble_code_fragments(m):
-    global the_module, the_fragment, the_segment, hops_enabled, the_pc
+    global the_module, the_fragment, the_segment, the_pc
+    global hops_enabled, short_function
     the_module = m
     for frag in m.code:
         the_fragment = frag
@@ -1374,11 +1401,13 @@ def assemble_code_fragments(m):
             the_segment = None
             sfst = args.sfst or 92
             if shortsize < sfst and shortsize < 256:
+                short_function = True
                 hops_enabled = False
                 the_segment = find_code_segment(shortsize)
                 if the_segment and args.d >= 2:
                     debug(f"Pass {the_pass}: Assembling short function '{frag[1]}' at {hex(the_segment.pc)} in {the_segment} .")
             if not the_segment:
+                short_function = False
                 hops_enabled = True
                 lfss = args.lfss or 16
                 the_segment = find_code_segment(min(lfss, 256))
@@ -1740,6 +1769,11 @@ def main(argv):
         if args.start_from_0x200:
             write_jump_in_0x200()
 
+        # verification
+        for s in segment_list:
+            if s.pc > s.eaddr:
+                fatal(f"Internal error: segment overflow in {s}")
+        
         # output
         save_gt1(args.o, v(args.e))
         if (args.symbols):

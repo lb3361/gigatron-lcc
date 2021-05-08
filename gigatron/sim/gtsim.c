@@ -343,8 +343,12 @@ void sys_printf(void)
                     { n += printf(spec, feek(ap)); ap += 5; }
                   else if (strchr("sS", conv))
                     { ap = (ap+1)&~1; n += printf(spec, &RAM[deek(ap)]); ap += 2; }
+                  else if (lng && strchr("ouxX", conv))
+                    { ap = (ap+1)&~1; n += printf(spec, (long)(quad)leek(ap)); ap += 2; }
                   else if (lng)
-                    { ap = (ap+1)&~1; n += printf(spec, (squad)leek(ap)); ap += 2; }
+                    { ap = (ap+1)&~1; n += printf(spec, (long)(squad)leek(ap)); ap += 2; }
+                  else if (strchr("ouxX", conv))
+                    { ap = (ap+1)&~1; n += printf(spec, (word)deek(ap)); ap += 2; }
                   else
                     { ap = (ap+1)&~1; n += printf(spec, (sword)deek(ap)); ap += 2; }
                   fmt += i+1;

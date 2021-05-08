@@ -7,7 +7,7 @@ DESTDIR=
 BUILDDIR=build
 B=${TOP}${BUILDDIR}/
 GLCC=${B}glcc
-GTSIM=${B}gtsim -rom ${TOP}/../gigatron-rom/dev.rom
+GTSIM=${B}gtsim -rom ${TOP}../gigatron-rom/dev.rom
 
 CFILES=$(wildcard tst/TST*.c)
 O4FILES=${patsubst tst/%.c,tst4/%.out,${CFILES}}

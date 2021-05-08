@@ -57,7 +57,7 @@ def code3():
    SUBW(T2);_BLT('.divu2')
    STW(T3);LDI(1);_BRA('.divuret')
    label('.divu2')
-   LDI(0);_BRA('.djvuret')
+   LDI(0);_BRA('.divuret')
    label('.divuA')          # case 0 < d < 0x8000
    LDW(T3);_BGE('.divuB')
    label('.divu3')          # | a >= 0x8000
@@ -89,7 +89,7 @@ def code4():
    LDI(0);SUBW(T3);STW(T3);INC(LACx)
    label('.divs3')
    _CALLJ('_@_divworker')
-   LD('LACx')
+   LD(LACx)
    ANDI(1)
    _BEQ('.divs4')
    LDI(0);
@@ -107,7 +107,6 @@ code= [ ('CODE',   '_@_divworker', code0),
         ('CODE', '_@_divu', code3), 
         ('CODE', '_@_divs', code4), 
         ('IMPORT', '_@_exit'),
-        ('EXPORT', '_@_SIGdiv'),
         ('EXPORT', '_@_divu'),
         ('EXPORT', '_@_divs') ]
 

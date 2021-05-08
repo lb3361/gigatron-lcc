@@ -459,6 +459,14 @@ def hi(x):
     return (v(x) >> 8) & 0xff
 
 @vasm
+def nohop():
+    '''Force a code fragment to be fit in a single page.
+       An error will be signaled if no page can fit it.
+       Internal: information collected in measure_code_fragment.'''
+    global short_function
+    if the_pass == 0:
+        short_function = True
+@vasm
 def tryhop(sz=None, jump=True):
     '''Hops to a new page if the current page cannot hold a long jump
        plus `sz' bytes. This also ensures that no hop will occur during
@@ -1252,17 +1260,24 @@ def measure_data_fragment(m, frag):
 
 def measure_code_fragment(m, frag):
     global the_module, the_fragment, the_pc
-    global lbranch_counter
+    global lbranch_counter, short_function
     the_module = m
     the_fragment = frag
     the_pc = 0
     lbranch_counter = 0
+    short_function = False
     try:
         frag[2]()
     except Exception as err:
         fatal(str(err), exc=True)
-    debug(f"Function '{frag[1]}' is {the_pc}(-{lbranch_counter}) bytes long")
-    frag = frag + (the_pc, lbranch_counter)
+    if short_function:
+        debug(f"Nohop function '{frag[1]}' is {the_pc-lbranch_counter} bytes long")
+        frag = frag[0:3] + (the_pc - lbranch_counter, False)
+        if the_pc - lbranch_counter >= 256:
+            error("Function '{frag[1]}' is declared short but is too long for that")
+    else:
+        debug(f"Function '{frag[1]}' is {the_pc}(-{lbranch_counter}) bytes long")
+        frag = frag[0:3] + (the_pc, lbranch_counter)
     return frag
 
 def measure_fragments(m):
@@ -1399,13 +1414,16 @@ def assemble_code_fragments(m):
     for frag in m.code:
         the_fragment = frag
         if frag[0] == 'CODE':
-            shortsize = frag[3] - frag[4]
+            shortonly = not frag[4]
+            shortsize = frag[3] if shortonly else frag[3] - frag[4]
             the_segment = None
-            sfst = args.sfst or 96
-            if shortsize < sfst and shortsize < 256:
+            sfst = min(256, args.sfst or 96)
+            if shortonly or shortsize < sfst:
                 short_function = True
                 hops_enabled = False
                 the_segment = find_code_segment(shortsize)
+                if shortonly and not the_segment:
+                    error(f"Function '{frag[1]}' of length {shortsize} is declared short but does not fit")
                 if the_segment and args.d >= 2:
                     debug(f"Pass {the_pass}: Assembling short function '{frag[1]}' at {hex(the_segment.pc)} in {the_segment} .")
             if not the_segment:

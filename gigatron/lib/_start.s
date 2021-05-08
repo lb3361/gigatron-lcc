@@ -28,8 +28,8 @@ def code0():
 
 def code1():
     # subroutine to call a chain of init/fini functions
+    nohop()
     label('.callchain')
-    tryhop(32)
     DEEK(); STW(R7); LDW(vLR); STW(R6)
     LDW(R7); _BRA('.callchaintst')
     label('.callchainloop')

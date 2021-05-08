@@ -34,7 +34,7 @@ def code1():
    space(2)
 
 def code2():
-   tryhop(18, jump=False)
+   nohop()
    label('_@_divbyzero')
    _LDW('_@_SIGdiv');POP();BEQ('.z2')
    # call _@_SIGdiv if nonzero

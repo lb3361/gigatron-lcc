@@ -4,8 +4,8 @@
 #define CHAR_BIT	8
 #define MB_LEN_MAX	1
 
-#define UCHAR_MAX	0xff
-#define USHRT_MAX	0xffff
+#define UCHAR_MAX	0xffU
+#define USHRT_MAX	0xffffU
 #define UINT_MAX	(~0U)
 #define ULONG_MAX	(~0UL)
 

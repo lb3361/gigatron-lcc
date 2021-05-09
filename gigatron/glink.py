@@ -368,7 +368,7 @@ for s in module_builtins_okay.split():
 def register_names():
     d = { "vPC":  0x0016, "vAC":  0x0018, "vLR":  0x001a, "vSP":  0x001c,
           "vACL": 0x0018, "vACH": 0x0019,
-          "LACx": 0x0083, "LAC":  0x0084,
+          "LACx": 0x0083, "LAC":  0x0084, "FAC" : 0x0081,
           "FACs": 0x0081, "FACe": 0x0082, "FACx": 0x0083, "FACm": 0x0084 }
     for i in range(0,4):  d[f'T{i}'] = 0x88+i+i
     for i in range(0,24): d[f'R{i}'] = 0x90+i+i
@@ -886,9 +886,9 @@ def _BMOV(s,d,n):
             _LDI(d); STW(T2)
         if s != [vAC] and s != [T3]:
             _LDI(s); STW(T3)
-        _LDI(n);
-        extern('_@_memcpy')
-        _CALLI('_@_memcpy')         # [T3..T3+AC) --> [T2..T2+AC)
+        _LDI(n-1);ADDW(T3);STW(T1)
+        extern('_@_bcopy')
+        _CALLI('_@_bcopy')         # [T3..T1) --> [T2..]
 @vasm
 def _LMOV(s,d):
     '''Move long from reg/addr s to d.
@@ -1021,16 +1021,25 @@ def _FMOV(s,d):
         elif is_zeropage(d, 4) and is_zeropage(s, 4):
             _LDW(s); STW(d); _LDW(s+2); STW(d+2); _LD(s+4); ST(d+4)
         else:
+            maycross=False
             if d == [vAC]:
                 STW(T2)
+                maycross = True
             if s == [vAC]:
                 STW(T3)
+                maycross = True
             if d != [vAC] and d != [T2]:
                 _LDI(d); STW(T2)
+                maycross = maycross or (int(d) & 0xfc == 0xfc)
             if s != [vAC] and s != [T3]:
                 _LDI(s); STW(T3)
-            extern('_@_fcopy')       # [T3..T3+5) --> [T2..T2+5)
-            _CALLJ('_@_fcopy')
+                maycross = maycross or (int(s) & 0xfc == 0xfc)
+            if maycross:
+                extern('_@_fcopy')       # [T3..T3+5) --> [T2..]
+                _CALLJ('_@_fcopy')
+            else:
+                extern('_@_fcopy_nc')    # [T3..T3+5) --> [T2..]
+                _CALLJ('_@_fcopy_nc')    # without page crossing!
 @vasm
 def _FADD():
     extern('_@_fadd')
@@ -1270,14 +1279,14 @@ def measure_code_fragment(m, frag):
         frag[2]()
     except Exception as err:
         fatal(str(err), exc=True)
+    function_size = the_pc - lbranch_counter
     if short_function:
-        debug(f"Nohop function '{frag[1]}' is {the_pc-lbranch_counter} bytes long")
-        frag = frag[0:3] + (the_pc - lbranch_counter, False)
-        if the_pc - lbranch_counter >= 256:
+        debug(f"Nohop function '{frag[1]}' is {function_size} bytes long")
+        if function_size >= 256:
             error("Function '{frag[1]}' is declared short but is too long for that")
     else:
-        debug(f"Function '{frag[1]}' is {the_pc}(-{lbranch_counter}) bytes long")
-        frag = frag[0:3] + (the_pc, lbranch_counter)
+        debug(f"Function '{frag[1]}' is {function_size}+{lbranch_counter} bytes long")
+    frag = frag[0:3] + (the_pc - lbranch_counter, short_function)
     return frag
 
 def measure_fragments(m):
@@ -1414,16 +1423,16 @@ def assemble_code_fragments(m):
     for frag in m.code:
         the_fragment = frag
         if frag[0] == 'CODE':
-            shortonly = not frag[4]
-            shortsize = frag[3] if shortonly else frag[3] - frag[4]
+            shortonly = frag[4]
+            funcsize = frag[3]
             the_segment = None
             sfst = min(256, args.sfst or 96)
-            if shortonly or shortsize < sfst:
+            if shortonly or funcsize < sfst:
                 short_function = True
                 hops_enabled = False
-                the_segment = find_code_segment(shortsize)
+                the_segment = find_code_segment(funcsize)
                 if shortonly and not the_segment:
-                    error(f"Function '{frag[1]}' of length {shortsize} is declared short but does not fit")
+                    error(f"Cannot find a segment for short function '{frag[1]}' of length {funcsize}")
                 if the_segment and args.d >= 2:
                     debug(f"Pass {the_pass}: Assembling short function '{frag[1]}' at {hex(the_segment.pc)} in {the_segment} .")
             if not the_segment:

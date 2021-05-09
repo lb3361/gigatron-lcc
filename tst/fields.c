@@ -5,7 +5,7 @@ struct foo {
 	char c;
 } x = { 1, 2, 3, 4, 5, 6 };
 int i = 16;
-struct baz { unsigned int a:2, b:4, c:32;} y = { 7, 8, 9};
+struct baz { unsigned int a:2, b:4, c:8*sizeof(int);} y = { 7, 8, 9};
 
 main()
 {

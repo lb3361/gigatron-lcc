@@ -956,15 +956,15 @@ def _LMODU():
 @vasm
 def _LSHL():
     extern('_@_lshl')
-    _CALLI('_@_lshl')               # LAC<<[vAC] --> LAC
+    _CALLI('_@_lshl')               # LAC<<vAC --> LAC
 @vasm
 def _LSHRS():
     extern('_@_lshrs')
-    _CALLI('_@_lshrs')              # LAC>>[vAC] --> LAC
+    _CALLI('_@_lshrs')              # LAC>>vAC --> LAC
 @vasm
 def _LSHRU():
     extern('_@_lshru')
-    _CALLI('_@_lshru')              # LAC>>[vAC] --> LAC
+    _CALLI('_@_lshru')              # LAC>>vAC --> LAC
 @vasm
 def _LNEG():
     extern('_@_lneg')

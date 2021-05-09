@@ -187,7 +187,7 @@ def resolve(s, ignore=None):
             if s in exporter.symdefs:
                 return exporter.symdefs[s]
             elif final_pass:
-                error(f"Module {exporter.fname} exports '{s}' but does not define it", dedup=True)
+                error(f"module {exporter.fname} exports '{s}' but does not define it", dedup=True)
     if s in symdefs:
         return symdefs[s]
     return None
@@ -220,10 +220,10 @@ class Module:
             if sym in self.symdefs and val == self.symdefs[sym]:
                 self.sympass[sym] = the_pass
             elif sym in self.symdefs and self.sympass[sym] == the_pass:
-                error(f"Multiple definitions of label '{sym}'", dedup=True)
+                error(f"multiple definitions of label '{sym}'", dedup=True)
             else:
                 if sym in self.symdefs and args.d >= 3:
-                    debug(f"Pass {the_pass}: symbol '{sym}' when from {hex(self.symdefs[sym])} to {hex(val)}")
+                    debug(f"symbol '{sym}' went from {hex(self.symdefs[sym])} to {hex(val)}")
                 global labelchange_counter
                 labelchange_counter += 1
                 self.symdefs[sym] = val
@@ -295,15 +295,15 @@ def hop(sz, jump):
             lfss = args.lfss or 16
             ns = find_code_segment(max(lfss, sz))
             if not ns:
-                fatal(f"Map memory exhausted while fitting function `{the_fragment[1]}'.")
+                fatal(f"map memory exhausted while fitting function `{the_fragment[1]}'.")
             if jump:
                 emit_long_jump(ns.pc)
             hops_enabled = True            
             the_segment.pc = the_pc
             the_segment = ns
             the_pc = ns.pc
-            if args.d >= 2:
-                debug(f"Pass {the_pass}: Continuing '{the_fragment[1]}' at {hex(the_pc)} in {ns}")
+            if args.d >= 2 or final_pass:
+                debug(f"continuing '{the_fragment[1]}' at {hex(the_pc)} in {ns}")
 
 def emitjump(d):
     global hops_enabled, lbranch_counter
@@ -449,7 +449,7 @@ def v(x):
             return the_module.symdefs[x]
     r = resolve(x)
     if final_pass and not r:
-        error(f"Undefined symbol '{x}'", dedup=True)
+        error(f"undefined symbol '{x}'", dedup=True)
     return r or Unk(0xDEAD)
 @vasm
 def lo(x):
@@ -1186,7 +1186,7 @@ def read_file(f):
     new_modules = []
     exec(c, new_globals())
     if len(new_modules) == 0:
-        warning(f"File {f} did not define any module")
+        warning(f"file {f} did not define any module")
     if len(new_modules) == 1 and not f.endswith(".a"):
         new_modules[0].library = False
     for m in new_modules:
@@ -1217,11 +1217,11 @@ def read_map(m):
     dn = os.path.dirname(__file__)
     fn = os.path.join(dn, f"map{m}", "map.py")
     if not os.access(fn, os.R_OK):
-        fatal(f"Cannot find linker map '{m}'")
+        fatal(f"cannot find linker map '{m}'")
     with open(fn, 'r') as fd:
         exec(compile(fd.read(), fn, 'exec'), globals())
     if not map_segments:
-        fatal(f"Map '{m}' does not define 'map_segments'")
+        fatal(f"map '{m}' does not define 'map_segments'")
 
 def read_interface():
     '''Read `interface.json' as known symbols.'''
@@ -1281,11 +1281,11 @@ def measure_code_fragment(m, frag):
         fatal(str(err), exc=True)
     function_size = the_pc - lbranch_counter
     if short_function:
-        debug(f"Nohop function '{frag[1]}' is {function_size} bytes long")
+        debug(f"nohop function '{frag[1]}' is {function_size} bytes long")
         if function_size >= 256:
-            error("Function '{frag[1]}' is declared short but is too long for that")
+            error("function '{frag[1]}' is declared short but is too long for that")
     else:
-        debug(f"Function '{frag[1]}' is {function_size}+{lbranch_counter} bytes long")
+        debug(f"function '{frag[1]}' is {function_size}+{lbranch_counter} bytes long")
     frag = frag[0:3] + (the_pc - lbranch_counter, short_function)
     return frag
 
@@ -1321,14 +1321,14 @@ def compute_closure():
                         e = m
                 else:                              # complain when a required symbol is exported
                     if e and not e.library:        # by multiple non-library files.
-                        error(f"Symbol '{sym}' is exported by both '{e.fname}' and '{m.fname}'", dedup=True)
+                        error(f"symbol '{sym}' is exported by both '{e.fname}' and '{m.fname}'", dedup=True)
                     e = m
             if e:
-                debug(f"Including module '{e.fname}' for symbol '{sym}'")
+                debug(f"including module '{e.fname}' for symbol '{sym}'")
                 e.used = True
                 for sym in e.exports:              # register all symbols exported by the selected module
                     if sym in exporters:           # -- warn about possible conflicts
-                        error(f"Symbol '{sym}' is exported by both '{e.fname}' and '{exporters[sym].fname}'", dedup=True)
+                        error(f"symbol '{sym}' is exported by both '{e.fname}' and '{exporters[sym].fname}'", dedup=True)
                     if sym not in exporters or exporters[sym].library:
                         exporters[sym] = e
                 measure_fragments(e)               # -- check all fragment code, compute missing lengths or exports
@@ -1340,7 +1340,7 @@ def compute_closure():
         if m.used:
             nml.append(m)
         elif not m.library:
-            warning(f"File '{m.fname}' was not used")
+            warning(f"file '{m.fname}' was not used")
     return nml
 
 def convert_common_symbols():
@@ -1353,7 +1353,7 @@ def convert_common_symbols():
                 if sym in exporters:
                     pass
                 else:
-                    debug(f"Instatiating common '{sym}' in '{m.fname}'")
+                    debug(f"instantiating common '{sym}' in '{m.fname}'")
                     m.code[i] = ('BSS', sym) + decl[2:]
                     exporters[sym] = m
 
@@ -1369,7 +1369,7 @@ def check_undefined_symbols():
                 else:
                     und[s] = [mn]
     for s in und:
-        error(f"Undefined symbol '{s}' imported by {comma.join(und[s])}", dedup=True)
+        error(f"undefined symbol '{s}' imported by {comma.join(und[s])}", dedup=True)
 
 
 
@@ -1385,7 +1385,7 @@ def round_used_segments():
             segment_list.insert(i+1, Segment(epage, s.eaddr, s.dataonly))
             s.eaddr = epage
             if args.d >= 2:
-                debug(f"Rounding {segment_list[i:i+2]}")
+                debug(f"rounding {segment_list[i:i+2]}")
         if s.pc > s.saddr:
             s.nbss = True
  
@@ -1432,18 +1432,18 @@ def assemble_code_fragments(m):
                 hops_enabled = False
                 the_segment = find_code_segment(funcsize)
                 if shortonly and not the_segment:
-                    error(f"Cannot find a segment for short function '{frag[1]}' of length {funcsize}")
-                if the_segment and args.d >= 2:
-                    debug(f"Pass {the_pass}: Assembling short function '{frag[1]}' at {hex(the_segment.pc)} in {the_segment} .")
+                    error(f"cannot find a segment for short function '{frag[1]}' of length {funcsize}")
+                if the_segment and (args.d >= 2 or final_pass):
+                    debug(f"assembling short function '{frag[1]}' at {hex(the_segment.pc)} in {the_segment} .")
             if not the_segment:
                 short_function = False
                 hops_enabled = True
                 lfss = args.lfss or 16
                 the_segment = find_code_segment(min(lfss, 256))
                 if not the_segment:
-                    fatal(f"Map memory exhausted while fitting function '{frag[1]}'.")
-                if the_segment and args.d >= 2:
-                    debug(f"Pass {the_pass}: Assembling function '{frag[1]}' at {hex(the_segment.pc)} in {the_segment}")
+                    fatal(f"map memory exhausted while fitting function '{frag[1]}'.")
+                if the_segment and (args.d >= 2 or final_pass):
+                    debug(f"assembling function '{frag[1]}' at {hex(the_segment.pc)} in {the_segment}")
             the_pc = the_segment.pc
             try:
                 frag[2]()
@@ -1460,9 +1460,9 @@ def assemble_data_fragments(m, cseg):
             hops_enabled = False
             the_segment = find_data_segment(frag[3], align=frag[4])
             if not the_segment:
-                fatal(f"Map memory exhausted while fitting datum '{frag[1]}'.")
-            elif args.d >= 2:
-                debug(f"Pass {the_pass}: Assembling {cseg} item '{frag[1]}' at {hex(the_segment.pc)} in {the_segment}")
+                fatal(f"map memory exhausted while fitting datum '{frag[1]}'.")
+            elif args.d >= 2 or final_pass:
+                debug(f"assembling {cseg} item '{frag[1]}' at {hex(the_segment.pc)} in {the_segment}")
             the_pc = the_segment.pc
             try:
                 frag[2]()
@@ -1483,7 +1483,7 @@ def run_pass():
         segment_list.append(Segment(s,e,d))
     if args.start_from_0x200:
         reserve_jump_in_0x200()
-    debug(f"Pass {the_pass}.")
+    debug(f"pass {the_pass}")
     # code segments
     for m in module_list:
         assemble_code_fragments(m)
@@ -1582,7 +1582,7 @@ def process_magic_list(s, head_module, head_addr):
                     if frag[1] == s:
                         break
                 if not frag or frag[3] < 4 or frag[4] < 2:
-                    return warning(f"Ignoring magic symbol '{s}' in {m.fname} (wrong type)")
+                    return warning(f"ignoring magic symbol '{s}' in {m.fname} (wrong type)")
                 doke_gt1(cons_addr + 2, deek_gt1(head_addr))
                 doke_gt1(head_addr, cons_addr)
 
@@ -1621,9 +1621,9 @@ def process_magic_symbols():
             head_addr = head_module.symdefs[s]
             for frag in head_module.code:
                 if frag[0] == 'DATA' and frag[1] == s and frag[3:] != (2,2):
-                    return warning(f"Ignoring magic symbol '{s}' (list head not a pointer)")
+                    return warning(f"ignoring magic symbol '{s}' (list head not a pointer)")
                 if deek_gt1(head_addr) != 0xBEEF:
-                    return warning(f"Ignoring magic symbol '{s}' (list head not 0xBEEF)")
+                    return warning(f"ignoring magic symbol '{s}' (list head not 0xBEEF)")
             doke_gt1(head_addr, 0)
             if s == '__glink_magic_bss':
                 process_magic_bss(s, head_module, head_addr)
@@ -1760,7 +1760,7 @@ def main(argv):
             read_file(f)
         for m in module_list:
             if m.cpu > args.cpu:
-                warning(f"Module '{m.name}' was compiled for cpu {m.cpu} > {args.cpu}")
+                warning(f"module '{m.name}' was compiled for cpu {m.cpu} > {args.cpu}")
 
         # load modules synthetized by the map
         if map_extra_modules:
@@ -1801,7 +1801,7 @@ def main(argv):
         # verification
         for s in segment_list:
             if s.pc > s.eaddr:
-                fatal(f"Internal error: segment overflow in {s}")
+                fatal(f"internal error: segment overflow in {s}")
         
         # output
         save_gt1(args.o, v(args.e))

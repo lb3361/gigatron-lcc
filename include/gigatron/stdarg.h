@@ -19,16 +19,16 @@ typedef __va_list va_list;
 #define __va_alignof(mode)\
   ((size_t)&(((struct{char c; mode m;}*)(0))->m))
 
-#define __va_roundup(x,n)\
-  ((n==1)?x:(((x)+(n)-1)&(~((n)-1))))
+#define __va_arg_ptr(list, mode, n)\
+	&((list=(__va_list)(((size_t)list+sizeof(mode)+(n))&~(n)))[-(int)sizeof(mode)])
 
 #define va_start(list, start)\
   ((void)((list)=(__va_list)&((&start)[1])))
 
 #define va_arg(list, mode)\
-  (*(mode*)((list=(__va_list)__va_roundup((size_t)list,__va_alignof(mode))),\
-            (list=(__va_list)&(((mode*)list)[1])),\
-            ((__va_list)&(((mode*)list)[-1])) ))
+  (*(mode*)((__typecode(mode)==5 && sizeof(mode)==1) ? __va_arg_ptr(list,int,1U) : \
+            (__typecode(mode)==6 && sizeof(mode)==1) ? __va_arg_ptr(list,unsigned,1U) : \
+            (__va_arg_ptr(list,mode,__va_alignof(mode)-1)) ))
 
 #define va_end(list)\
   ((void) 0)

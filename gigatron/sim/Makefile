@@ -9,13 +9,14 @@ INSTALL=${TOP}/gigatron/install-sh
 LN_S=ln -s
 B=${TOP}${BUILDDIR}/
 G=${TOP}gigatron/
+CFLAGS=-O3 -g
 
 LIBSIMFILES= printf.s _rt_exit.s
 
 all: ${B}gtsim ${B}mapsim/map.py ${B}mapsim/libsim.a
 
 ${B}gtsim: gtsim.c
-	${CC} -o $@ -g gtsim.c -lm
+	${CC} ${CFLAGS} -o $@ gtsim.c -lm
 
 ${B}mapsim/map.py: map.py
 	-mkdir -p ${B}mapsim

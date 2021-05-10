@@ -213,7 +213,7 @@ double feek(word a) {
 #define vPC       (0x16)
 #define vAC       (0x18)
 #define vLR       (0x1a)
-#define vSP       (0x1b)
+#define vSP       (0x1c)
 #define sysFn     (0x22)
 #define sysArg0   (0x24+0)
 #define LAC       (0x84)
@@ -531,6 +531,8 @@ void print_trace(void)
   disassemble(addr, &mnemonic, operand);
   fprintf(stderr, "%04x:  [", addr);
   fprintf(stderr, " vAC=%04x vLR=%04x", deek(vAC), deek(vLR));
+  if (strchr(trace, 's'))
+    fprintf(stderr, " vSP=%02x", peek(vSP));
   if (strchr(trace, 'l'))
     fprintf(stderr, " LACt=%04x LACz=%02x LAC=%08x",
             deek(0x81), peek(0x83), leek(0x84));

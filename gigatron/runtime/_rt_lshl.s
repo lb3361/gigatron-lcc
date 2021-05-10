@@ -1,14 +1,4 @@
 
-# LSHL1 : LAC <-- LAC << 1
-def code0():
-    nohop()
-    label('_@_lshl1')
-    LDW(LAC);BLT('.l1')
-    LSLW();STW(LAC);LDW(LAC+2);LSLW();STW(LAC+2);RET()
-    label('.l1')
-    LSLW();STW(LAC);LDW(LAC+2);LSLW();ORI(1);STW(LAC+2);RET()
-
-
 # LSHL : LAC <-- LAC << AC
 def code1():
     label('_@_lshl')
@@ -30,10 +20,9 @@ def code1():
     tryhop(2);POP();RET()
 
 
-code= [ ('EXPORT', '_@_lshl1'),
-        ('EXPORT', '_@_lshl'),
+code= [ ('EXPORT', '_@_lshl'),
+        ('IMPORT', '_@_lshl1'),
         ('IMPORT', '_@_shl'),
-        ('CODE', '_@_lshl1', code0),
         ('CODE', '_@_lshl', code1) ]
 
 module(code=code, name='_rt_lshl.s');

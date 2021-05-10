@@ -4,7 +4,7 @@
 def code0():
     tryhop(3)
     label('_@_lshru')
-    STW(LACt)
+    ST(LACt)
     label('_@_lshru_lact')
     PUSH()
     LD(LACt);ANDI(16);_BEQ('.l4')
@@ -24,7 +24,7 @@ def code0():
 # LSHRU : LAC <-- LAC >> AC (signed) (clobbers T0)
 def code1():
     label('_@_lshrs')
-    PUSH();STW(LACt)
+    PUSH();ST(LACt)
     LDW(LAC+2);_BLT('.s1')
     _CALLJ('_@_lshru_lact');_BRA('.sret')
     label('.s1')

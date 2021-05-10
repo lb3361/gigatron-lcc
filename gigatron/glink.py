@@ -845,15 +845,14 @@ def _CMPWS(d):
     if args.cpu >= 5:
         CMPHS(d+1); SUBW(d)
     else:
-        tryhop(18)
         lbl1 = genlabel()
         lbl2 = genlabel()
-        STW(T3); XORW(d)
-        BGE(lbl1)
-        LDW(T3); ORI(1)
-        BRA(lbl2)
+        # no hops because cpu4 long jumps also use -2(vSP)
+        tryhop(18)
+        STLW(-2); XORW(d); BGE(lbl1)
+        LDLW(-2); ORI(1); BRA(lbl2)
         label(lbl1)
-        LDW(T3); SUBW(d)
+        LDLW(-2); SUBW(d)
         label(lbl2)
 @vasm
 def _CMPWU(d):
@@ -861,15 +860,14 @@ def _CMPWU(d):
     if args.cpu >= 5:
         CMPHU(d+1); SUBW(d)
     else:
-        tryhop(18)
         lbl1 = genlabel()
         lbl2 = genlabel()
-        STW(T3); XORW(d)
-        BGE(lbl1)
-        LDW(d); ORI(1)
-        BRA(lbl2)
+        # no hops because cpu4 long jumps also use -2(vSP)
+        tryhop(18)
+        STLW(-2); XORW(d); BGE(lbl1)
+        LDW(d); ORI(1); BRA(lbl2)
         label(lbl1)
-        LDW(T3); SUBW(d)
+        LDLW(-2); SUBW(d)
         label(lbl2)
 @vasm
 def _BMOV(s,d,n):
@@ -1089,7 +1087,8 @@ def _CALLI(d):
     if args.cpu >= 5:
         CALLI(d)
     else:
-        STLW(-2);LDWI(d);STW('sysFn');LDLW(-2);CALL('sysFn')
+        # no hops because cpu4 long jumps also use -2(vSP)
+        tryhop(11);STLW(-2);LDWI(d);STW('sysFn');LDLW(-2);CALL('sysFn')
 @vasm
 def _CALLJ(d):
     '''Call subroutine at far location d. 
@@ -1099,7 +1098,7 @@ def _CALLJ(d):
     if args.cpu >= 5:
         CALLI(d)
     else:
-        LDWI(d);STW('sysFn');CALL('sysFn')
+        tryhop(7);LDWI(d);STW('sysFn');CALL('sysFn')
 @vasm
 def _SAVE(offset, mask):
     '''Save all registers specified by mask at [SP+offset],

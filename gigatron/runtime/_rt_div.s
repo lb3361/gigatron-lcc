@@ -50,7 +50,7 @@ def code3():
    label('_@_divu')
    PUSH()
    LDI(0);STW(T1);STW(T0)
-   LDW(T2);_BGE('.divuA');_BNE('.divu1')
+   LDW(T2);_BGT('.divuA');_BNE('.divu1')
    _CALLJ('_@_divbyzero')     # case d == 0
    label('.divu1')          # case d >= 0x8000
    LDW(T3);_BGE('.divu2')

@@ -8,10 +8,10 @@ def code0():
    LDWI(0xfff0);ANDW(T2);_BEQ('.try8')
    LDI(0);_BRA('.shru2')
    label('.try8')
-   LDW(T2);ANDI(0x8);_BEQ('.try7')
+   LD(T2);ANDI(0x8);_BEQ('.try7')
    LD(T3+1);STW(T3)
    label('.try7')
-   LDW(T2);ANDI(7);_BNE('.shru1');
+   LD(T2);ANDI(7);_BNE('.shru1');
    LDW(T3);_BRA('.shru2')
    label('.shru1')
    XORI(7);_BNE('.try6')

@@ -1,4 +1,11 @@
+
+
 {
+    "#" : "This file describes the ROMs known to GLink",
+    "#" : "- Key 'cpu' tells which VCPU is implemented by this ROM",
+    "#" : "- Key 'romType' is used for runtime ROM check",
+    "#" : "- Other keys can be tested by the runtime libraries",
+
     "v4"  : { "cpu" : 4, "romType" : 56 },
     "v5a" : { "cpu" : 5, "romType" : 64 }
 }

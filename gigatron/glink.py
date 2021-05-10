@@ -34,6 +34,7 @@ import os, sys, traceback, functools, copy
 import builtins
 
 args = None
+rominfo = None
 romtype = None
 romcpu = None
 lccdir = '/usr/local/lib/gigatron-lcc'
@@ -1232,7 +1233,7 @@ def read_interface():
 
 def read_rominfo(rom):
     '''Read `rom.jsom' to translate rom names into romType byte and cpu version.'''
-    global romtype, romcpu
+    global rominfo, romtype, romcpu
     with open(os.path.join(lccdir,'roms.json')) as file:
         d = json.load(file)
         if rom in d:
@@ -1242,6 +1243,7 @@ def read_rominfo(rom):
         romcpu = rominfo['cpu']
     if not rominfo:
         print(f"glink: warning: rom '{args.rom}' is not recognized", file=sys.stderr)
+        rominfo = {}
     if romcpu and args.cpu and args.cpu > romcpu:
         print(f"glink: warning: rom '{args.rom}' does not implement cpu{args.cpu}", file=sys.stderr)
     

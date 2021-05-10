@@ -5,9 +5,6 @@
 def code0():
    label('_@_shru')
    PUSH()
-   LDWI(0xfff0);ANDW(T2);_BEQ('.try8')
-   LDI(0);_BRA('.shru2')
-   label('.try8')
    LD(T2);ANDI(0x8);_BEQ('.try7')
    LD(T3+1);STW(T3)
    label('.try7')

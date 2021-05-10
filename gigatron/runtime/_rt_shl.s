@@ -4,9 +4,6 @@
 def code0():
    label('_@_shl')
    PUSH()
-   LDWI(0xfff0);ANDW(T2);_BEQ('.try8')
-   LDI(0); _BRA('.reta')
-   label('.try8')
    LD(T2);_BEQ('.ret');ANDI(0x8);_BEQ('.try4')
    LDW(T3-1);STW(T3) # high byte of T2 is zero!
    label('.try4')

@@ -8,8 +8,8 @@
 #  LACx: s  sign
 
 def code0():
+   nohop()
    label('_@_divworker')
-   PUSH()
    label('.w1loop')
    LDW(T3);SUBW(T2);_BLT('.w2')
    LDW(T2);LSLW();_BLT('.w2')
@@ -26,7 +26,7 @@ def code0():
    LDW(T1);LSLW();STW(T1)
    _BRA('.w2loop')
    label('.w4')
-   tryhop(2);POP();RET()
+   RET()
 
 def code1():
    align(2)

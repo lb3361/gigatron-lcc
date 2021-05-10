@@ -1,6 +1,5 @@
 
-# LSHL1 : LAC <<= 1
-
+# LSHL1 : LAC <-- LAC << 1
 def code0():
     nohop()
     label('_@_lshl1')
@@ -8,7 +7,9 @@ def code0():
     LSLW();STW(LAC);LDW(LAC+2);LSLW();STW(LAC+2);RET()
     label('.l1')
     LSLW();STW(LAC);LDW(LAC+2);LSLW();ORI(1);STW(LAC+2);RET()
-    
+
+
+# LSHL : LAC <-- LAC << AC
 def code1():
     label('_@_lshl')
     PUSH()

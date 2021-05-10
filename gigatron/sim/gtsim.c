@@ -531,6 +531,9 @@ void print_trace(void)
   disassemble(addr, &mnemonic, operand);
   fprintf(stderr, "%04x:  [", addr);
   fprintf(stderr, " vAC=%04x vLR=%04x", deek(vAC), deek(vLR));
+  if (strchr(trace, 'l'))
+    fprintf(stderr, " LACt=%04x LACz=%02x LAC=%08x",
+            deek(0x81), peek(0x83), leek(0x84));
   if (strchr(trace, 't'))
     fprintf(stderr, " T[0-3]=%04x %04x %04x %04x",
             deek(T0), deek(T0+2), deek(T0+4), deek(T0+6));

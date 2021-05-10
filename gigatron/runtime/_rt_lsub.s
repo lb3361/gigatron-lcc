@@ -1,0 +1,43 @@
+
+# LAC - [vAC] --> LAC
+def code0():
+   nohop()
+   label('_@_lsub')
+   # load arg into T0/T1
+   STW(T3);DEEK();STW(T0)
+   LDI(2);ADDW(T3);DEEK();STW(T1)
+   label('_@_lsub_t0')
+   if True:                    
+      # alternating pattern
+      LD(LAC);SUBW(T0);ST(LAC);LD(vACH)
+      BNE('.a1');LD(T0+1);XORI(255);BEQ('.a1');LDWI(0x100);label('.a1')
+      ADDW(LAC+1);ST(LAC+1);LD(vACH)
+      BNE('.a2');LD(LAC+2);BEQ('.a2');LDWI(0x100);label('.a2')
+      SUBI(1);SUBW(T0+2);ST(LAC+2);LD(vACH)
+      BNE('.a3');LD(T0+3);XORI(255);BEQ('.a3');LDWI(0x100);label('.a3')
+      ADDW(LAC+3);ST(LAC+3)
+   RET()
+
+# -LAC --> LAC
+def code1():
+   nohop()
+   label('_@_lneg')
+   LDWI(0xffff);XORW(LAC+2);STW(LAC+2)
+   LDWI(0xffff);XORW(LAC);ADDI(1);STW(LAC)
+   BNE('.lneg1')
+   LDI(1);ADDW(LAC+2);STW(LAC+2)
+   label('.lneg1')
+   RET()
+   
+code= [ ('EXPORT', '_@_lsub'),
+        ('EXPORT', '_@_lsub_t0'),
+        ('CODE', '_@_lsub', code0),
+        ('EXPORT', '_@_lneg'),
+        ('CODE', '_@_lneg', code1) ]
+
+module(code=code, name='_rt_lsub.s');
+
+# Local Variables:
+# mode: python
+# indent-tabs-mode: ()
+# End:

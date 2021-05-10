@@ -368,8 +368,8 @@ for s in module_builtins_okay.split():
 def register_names():
     d = { "vPC":  0x0016, "vAC":  0x0018, "vLR":  0x001a, "vSP":  0x001c,
           "vACL": 0x0018, "vACH": 0x0019,
-          "LACx": 0x0083, "LAC":  0x0084, "FAC" : 0x0081,
-          "FACs": 0x0081, "FACe": 0x0082, "FACx": 0x0083, "FACm": 0x0084 }
+          "LAC":  0x0084, "LACx": 0x0083, "LACt": 0x0081,
+          "FAC" : 0x0081, "FACs": 0x0081, "FACe": 0x0082, "FACx": 0x0083, "FACm": 0x0084 }
     for i in range(0,4):  d[f'T{i}'] = 0x88+i+i
     for i in range(0,24): d[f'R{i}'] = 0x90+i+i
     for i in range(0,22): d[f'L{i}'] = d[f'R{i}']

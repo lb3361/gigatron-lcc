@@ -7,7 +7,7 @@ def code0():
    # load arg into T0/T1
    STW(T3);DEEK();STW(T0)
    LDI(2);ADDW(T3);DEEK();STW(T1)
-   label('_@_ladd_t0')
+   label('_@_ladd_t0t1')
    if args.cpu <= 5:
       # alternating pattern
       LD(LAC);ADDW(T0);ST(LAC);LD(vACH)
@@ -26,7 +26,7 @@ def code0():
    RET()
       
 code= [ ('EXPORT', '_@_ladd'),
-        ('EXPORT', '_@_ladd_t0'),
+        ('EXPORT', '_@_ladd_t0t1'),
         ('CODE', '_@_ladd', code0) ]
 
 module(code=code, name='_rt_ladd.s');

@@ -5,7 +5,7 @@ def code0():
    label('_@_lcmps')
    STW(T3);DEEK();STW(T0)
    LDI(2);ADDW(T3);DEEK();STW(T1)
-   label('_@_lcmps_t0')
+   label('_@_lcmps_t0t1')
    LDW(LAC+2)
    _CMPWS(T0+2)
    BEQ('.lcmp1')
@@ -13,7 +13,7 @@ def code0():
    label('_@_lcmpu')
    STW(T3);DEEK();STW(T0)
    LDI(2);ADDW(T3);DEEK();STW(T1)
-   label('_@_lcmpu_t0')
+   label('_@_lcmpu_t0t1')
    LDW(LAC+2)
    _CMPWU(T0+2)
    BEQ('.lcmp1')
@@ -35,12 +35,12 @@ def code1():
 code= [ ('EXPORT', '_@_lcmps'),
         ('EXPORT', '_@_lcmpu'),
         ('EXPORT', '_@_lcmpx'),
-        ('EXPORT', '_@_lcmps_t0'),
-        ('EXPORT', '_@_lcmpu_t0'),
+        ('EXPORT', '_@_lcmps_t0t1'),
+        ('EXPORT', '_@_lcmpu_t0t1'),
         ('CODE', '_@_lcmps', code0),
         ('CODE', '_@_lcmpx', code1) ]
 
-module(code=code, name='_rt_ladd.s');
+module(code=code, name='_rt_lcmp.s');
 
 # Local Variables:
 # mode: python

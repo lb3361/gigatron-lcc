@@ -1803,7 +1803,7 @@ def main(argv):
         # verification
         for s in segment_list:
             if s.pc > s.eaddr:
-                fatal(f"internal error: segment overflow in {s}")
+                fatal(f"internal error: segment overflow in {s} (final pc={hex(s.pc)})")
         
         # output
         save_gt1(args.o, v(args.e))

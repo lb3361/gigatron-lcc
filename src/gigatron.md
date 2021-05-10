@@ -1385,11 +1385,14 @@ static void address(Symbol q, Symbol p, long n)
 
 static void global(Symbol p)
 {
+  unsigned int size = p->type->size;
   const char *s = segname();
   if (p->u.seg == BSS && p->sclass != STATIC)
     s = "COMMON";
+  if (p->u.seg == LIT)
+    size = 0; /* unreliable in switch tables */
   lprint("('%s', %s, code%d, %d, %d)",
-          s, p->x.name, codenum, p->type->size, p->type->align);
+          s, p->x.name, codenum, size, p->type->align);
   xprint("# ======== %s\n", lhead.prev->s);
   xprint("def code%d():\n", codenum++);
   if (p->type->align > 1)

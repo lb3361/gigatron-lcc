@@ -1410,7 +1410,7 @@ def find_code_segment(size):
         if (s.saddr ^ (s.eaddr-1)) & 0xff00:
             epage = (s.saddr | 0xff) + 1               # segment crosses a page boundary:
             ns = Segment(s.saddr, epage)               # carve a non-crossing one and insert it in the list
-            s.saddr = epage
+            s.saddr = s.pc = epage
             segment_list.insert(i, ns)
             s = ns
         if s.pc + size <= s.eaddr:                     # is it large enough?

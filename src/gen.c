@@ -330,29 +330,14 @@ static void dumprule(int rulenum) {
 		fprint(stderr, "\n");
 }
 
-unsigned emitfmt(const char *fmt, Node p, Node *kids, short *nts)
+void emitfmt(const char *fmt, Node p, Node *kids, short *nts)
 {
-	/* Enhancements of emitasm with respect to the original version:
-	   - emitasm() now retrieves the template and calls emitfmt() 
-	     which parses the template and prints the output.
-	   - emitfmt() delegates %{...} delegates to the IR function emit3(),
-             which can call emitfmt() recursively.
-	   - Templates might be split in sections with |. Writing $0 to $9
-             only prints the first section of the specified kid template.
-             The other sections can be accessed with syntax $[0b] where '0'
-             is the kid number and 'b' is a letter indicating which section
-	     to process. */
-	static int alt_s;
-	int s = alt_s;
-	alt_s = 0;
+	/* Enhancements of emitasm with respect to the original
+	   version: emitasm() now retrieves the template and calls the
+	   IR function emitfmt() which parses the template and prints
+	   the output. This is the default version. */
 	for (; *fmt; fmt++)
-		if (*fmt == '|' && s == 0)
-			break;
-		else if (*fmt == '|')
-			s -= 1;
-		else if (s > 0)
-			continue;
-		else if (*fmt != '%')
+		if (*fmt != '%')
 			(void)putchar(*fmt);
 		else if (*++fmt == 'F')                                   /* %F */
 			print("%d", framesize);
@@ -360,26 +345,8 @@ unsigned emitfmt(const char *fmt, Node p, Node *kids, short *nts)
 			fputs(p->syms[*fmt - 'a']->x.name, stdout);
 		else if (*fmt >= '0' && *fmt <= '9')                      /* %0..%9 */
 			emitasm(kids[*fmt - '0'], nts[*fmt - '0']);
-		else if (*fmt == '[' && fmt[3] == ']' && fmt[1]>='0' && fmt[1]<='9'
-				&& fmt[2] >= 'a' && fmt[2] <= 'z') {      /* %[0a] */
-			fmt += 3;
-			alt_s = fmt[-1] - 'a';
-			emitasm(kids[fmt[-2] - '0'], nts[fmt[-2] - '0']);
-			alt_s = 0;
-		} else if (*fmt == '{') {
-			int level = 0;
-			const char *s;
-			for (s=fmt++; *s; s++)
-				if (*s=='{')
-					level += 1;
-				else if (*s=='}' && !--level)
-					break;
-			assert(!level);
-			IR->x.emit3(stringn(fmt, s-fmt), p, kids, nts);
-			fmt = s;
-		} else
+		else
 			(void)putchar(*fmt);
-	return 0;
 }
 unsigned emitasm(Node p, int nt)
 {
@@ -405,7 +372,7 @@ unsigned emitasm(Node p, int nt)
 				while (*fmt++ != '\n') { }
 		}
 		(*IR->x._kids)(p, rulenum, kids);
-		return emitfmt(fmt, p, kids, nts);
+		(*IR->x.emitfmt)(fmt, p, kids, nts);
 	}
 	return 0;
 }

@@ -473,7 +473,7 @@ def tryhop(sz=None, jump=True):
        plus `sz' bytes. This also ensures that no hop will occur during
        the next `sz' bytes. A long jump is generated when `jump' is True.'''
     if hops_enabled:
-        sz = sz or 4 ### max size of an instruction
+        sz = sz if sz != None else 4 # max size of an instruction
         sz = sz + size_long_jump()
         if bytes_left() < sz:
             hop(sz, jump=jump)
@@ -494,11 +494,11 @@ def space(d):
     for i in range(0,d):
         emit(0)
 @vasm
-def label(sym, val=None):
+def label(sym, val=None, hop=None):
     '''Define label `sym' to the value of PC or to `val'.
        Unless `hop` is False, this function checks whether 
        one needs to hop to a new page before defining the label.'''
-    tryhop()
+    tryhop(hop)
     if the_pass > 0:
         the_module.label(sym, v(val) if val else the_pc)
 
@@ -826,7 +826,7 @@ def _CMPIS(d):
         tryhop(5)
         BLT(lbl)
         SUBI(d)
-        label(lbl)
+        label(lbl, hop=0)
 @vasm
 def _CMPIU(d):
     '''Compare vAC (unsigned) with immediate in range 0..255'''
@@ -834,10 +834,10 @@ def _CMPIU(d):
         CMPHU(0); SUBI(d)
     else:
         lbl = genlabel()
-        tryhop(5)
+        tryhop(8)
         BGE(lbl)
         LDWI(0x100)
-        label(lbl)
+        label(lbl, hop=0)
         SUBI(d)
 @vasm
 def _CMPWS(d):
@@ -853,7 +853,7 @@ def _CMPWS(d):
         LDLW(-2); ORI(1); BRA(lbl2)
         label(lbl1)
         LDLW(-2); SUBW(d)
-        label(lbl2)
+        label(lbl2, hop=0)
 @vasm
 def _CMPWU(d):
     '''Compare vAC (unsigned) with register.'''
@@ -868,7 +868,7 @@ def _CMPWU(d):
         LDW(d); ORI(1); BRA(lbl2)
         label(lbl1)
         LDLW(-2); SUBW(d)
-        label(lbl2)
+        label(lbl2, hop=0)
 @vasm
 def _BMOV(s,d,n):
     '''Move memory block of size n from addr s to d.

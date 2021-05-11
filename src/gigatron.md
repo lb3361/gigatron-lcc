@@ -55,6 +55,7 @@ static void defsymbol(Symbol);
 static void doarg(Node);
 static void emit2(/* Node */) {}
 static void emit3(const char*, Node, Node*, short*);
+static void myemitfmt(const char*, Node, Node*, short*);
 static void export(Symbol);
 static void clobber(Node);
 static void function(Symbol, Symbol [], Symbol [], int);
@@ -401,7 +402,7 @@ ac: INDIRU1(ac) "%0PEEK();" 17
 #    spiller needs to be able to reload a register from an auto
 #    variable without allocating a register. This is achieved by another
 #    branch which defines two fragments using the alternate expansion 
-#    mechanism defined by emitfmt. The two fragments are a register name (T3)
+#    mechanism defined by myemitfmt. The two fragments are a register name (T3)
 #    and an instruction sequence.
 iarg: reg "%0"
 iarg: INDIRI2(zddr) "%0"
@@ -1058,6 +1059,55 @@ static void clobber(Node p)
 }
   
 
+static void myemitfmt(const char *fmt, Node p, Node *kids, short *nts)
+{
+	/* Enhancements of emitfmt with respect to the original version:
+	   - delegates %{...} delegates to the IR function emit3(),
+             which can call emitasm/emitfmt() recursively.
+	   - Templates might be split in sections with |. Writing $0 to $9
+             only prints the first section of the specified kid template.
+             The other sections can be accessed with syntax $[0b] where '0'
+             is the kid number and 'b' is a letter indicating which section
+	     to process. */
+	static int alt_s;
+	int s = alt_s;
+	alt_s = 0;
+	for (; *fmt; fmt++)
+		if (*fmt == '|' && s == 0)
+			break;
+		else if (*fmt == '|')
+			s -= 1;
+		else if (s > 0)
+			continue;
+		else if (*fmt != '%')
+			(void)putchar(*fmt);
+		else if (*++fmt == 'F')                                   /* %F */
+			print("%d", framesize);
+		else if (*fmt >= 'a' && *fmt < 'a' + NELEMS(p->syms))     /* %a..%c */
+			fputs(p->syms[*fmt - 'a']->x.name, stdout);
+		else if (*fmt >= '0' && *fmt <= '9')                      /* %0..%9 */
+			emitasm(kids[*fmt - '0'], nts[*fmt - '0']);
+		else if (*fmt == '[' && fmt[3] == ']' && fmt[1]>='0' && fmt[1]<='9'
+				&& fmt[2] >= 'a' && fmt[2] <= 'z') {      /* %[0a] */
+			fmt += 3;
+			alt_s = fmt[-1] - 'a';
+			emitasm(kids[fmt[-2] - '0'], nts[fmt[-2] - '0']);
+			alt_s = 0;
+		} else if (*fmt == '{') {
+			int level = 0;
+			const char *s;
+			for (s=fmt++; *s; s++)
+				if (*s=='{')
+					level += 1;
+				else if (*s=='}' && !--level)
+					break;
+			assert(!level);
+			emit3(stringn(fmt, s-fmt), p, kids, nts);
+			fmt = s;
+		} else
+			(void)putchar(*fmt);
+}
+
 
 static void emit3(const char *fmt, Node p, Node *kids, short *nts)
 {
@@ -1465,7 +1515,7 @@ Interface gigatronIR = {
           _isinstruction,
           _ntname,
           emit2,
-          emit3,
+          myemitfmt,
           doarg,
           target,
           clobber,

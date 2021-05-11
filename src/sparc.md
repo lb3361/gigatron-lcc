@@ -1112,7 +1112,7 @@ Interface sparcIR = {
                 _isinstruction,
                 _ntname,
                 emit2,
-				0, /* emit3 */
+		emitfmt,
                 doarg,
                 target,
                 clobber,
@@ -1171,7 +1171,7 @@ Interface solarisIR = {
                 _isinstruction,
                 _ntname,
                 emit2,
-				0, /* emit3 */
+		emitfmt,
                 doarg,
                 target,
                 clobber,

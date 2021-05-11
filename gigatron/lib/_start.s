@@ -9,14 +9,14 @@ def code0():
     LDI(10); _BRA('.exit')
     label('.init')
     # call init chain
-    LDWI('__glink_magic_init'); _CALLI('.callchain')
+    LDWI('__glink_magic_init'); _CALLI('_callchain')
     # call main
     LDI(0); STW(R8); STW(R9); _CALLI('main'); STW(R8)
     ### exit()
     label('exit')
     LDW(R8); STW(R0)
     # call fini chain
-    LDWI('__glink_magic_fini'); _CALLI('.callchain')
+    LDWI('__glink_magic_fini'); _CALLI('_callchain')
     LDW(R0)
     label('.exit')
     STW(R8)
@@ -29,7 +29,7 @@ def code0():
 def code1():
     # subroutine to call a chain of init/fini functions
     nohop()
-    label('.callchain')
+    label('_callchain')
     DEEK(); STW(R7); LDW(vLR); STW(R6)
     LDW(R7); _BRA('.callchaintst')
     label('.callchainloop')

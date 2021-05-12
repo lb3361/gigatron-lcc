@@ -1,6 +1,6 @@
 
 
-# MAC32X16:  LAC <-- T0T1 * T2 ; T0T1 <-- T0T1 << 16
+# MAC32X16:  LAC <-- T0T1 * T2 , T0T1 <-- T0T1 << 16  (clobbers T3)
 def code1():
    label('_@_mac32x16')
    PUSH()
@@ -13,15 +13,15 @@ def code1():
    LDW(T3);LSLW();STW(T3);_BNE('.mac2')
    tryhop(2);POP();RET()
    
-# LMUL:   LAC <-- LAC * [vAC]
+# LMUL:   LAC <-- LAC * [vAC]  (clobbers B0,B1, T0,T1,T2,T3)
 def code2():
    label('_@_lmul')
    PUSH()
-   STW(LACt);DEEK();STW(T2);
+   STW(B0);DEEK();STW(T2);
    LDW(LAC);STW(T0);LDW(LAC+2);STW(T0+2);
    LDI(0);STW(LAC);STW(LAC+2);
    _CALLJ('_@_mac32x16')
-   LDW(LACt);ADDI(2);DEEK();STW(T2)
+   LDW(B0);ADDI(2);DEEK();STW(T2)
    _CALLJ('_@_mac32x16')
    tryhop(2);POP();RET()
 

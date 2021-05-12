@@ -4,6 +4,7 @@
 # importing _rt_shr.s if not needed
 
 # T3 % T2 -> AC   [and T3 / T2 -> T1]
+#  clobbers B0-B2, T1
 
 def code1():
    label('_@_modu')
@@ -14,6 +15,7 @@ def code1():
    tryhop(2);POP();RET()
 
 # T3 % T2 -> AC   [and T3 / T2 -> T1]
+#  clobbers B0-B2, T1
 
 def code2():
    label('_@_mods')
@@ -31,7 +33,6 @@ def code2():
 
 
 # div_t *_divmod(div_t*,int a, int q)
-   
 def code3():
     label('_divmod')
     tryhop(4);LDW(vLR);STW(R22)

@@ -6,8 +6,12 @@ def code0():
    nohop()
    label('.copy2')
    LDW(T3);DEEK();DOKE(T2)
-   LDI(2);ADDW(T3);STW(T3)
-   LDI(2);ADDW(T2);STW(T2)
+   if args.cpu >= 6:
+      INCW(T3); INCW(T2)
+      INCW(T3); INCW(T2)
+   else:
+      LDI(2);ADDW(T3);STW(T3)
+      LDI(2);ADDW(T2);STW(T2)
    RET()
 
 # LCOPY [T3..T3+3] --> [T2..]
@@ -41,8 +45,11 @@ def code3():
    LDI(5);ADDW(T3);STW(T1)
    label('_@_bcopy')
    LDW(T3);PEEK();POKE(T2)
-   LDI(1);ADDW(T2);STW(T2)
-   LDI(1);ADDW(T3);STW(T3);
+   if args.cpu >= 6:
+      INCW(T2);INCW(T3);LDW(T3)
+   else:
+      LDI(1);ADDW(T2);STW(T2)
+      LDI(1);ADDW(T3);STW(T3)
    XORW(T1);BNE('_@_bcopy')
    RET()
 

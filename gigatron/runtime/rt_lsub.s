@@ -7,7 +7,7 @@ def code0():
    STW(T3);DEEK();STW(T0)
    LDI(2);ADDW(T3);DEEK();STW(T1)
    label('_@_lsub_t0t1')
-   if True:                    
+   if args.cpu <= 5:
       # alternating pattern
       LD(LAC);SUBW(T0);ST(LAC);LD(vACH)
       BNE('.a1');LD(T0+1);XORI(255);BEQ('.a1');LDWI(0x100);label('.a1')
@@ -16,6 +16,12 @@ def code0():
       SUBI(1);SUBW(T0+2);ST(LAC+2);LD(vACH)
       BNE('.a3');LD(T0+3);XORI(255);BEQ('.a3');LDWI(0x100);label('.a3')
       ADDW(LAC+3);ST(LAC+3)
+   else:
+      # untested but sensible
+      LD(LAC);SUBBA(T0);ST(LAC);LD(vACH)
+      ADDBA(LAC+1);SUBBA(T0+1);ST(LAC+1);LD(vACH)
+      ADDBA(LAC+2);SUBBA(T0+2);ST(LAC+2);LD(vACH)
+      ADDBA(LAC+3);SUBBA(T0+3);ST(LAC+3)
    RET()
 
 # -LAC --> LAC

@@ -28,31 +28,16 @@ def code0():
    label('.w4')
    RET()
 
-def code1():
-   align(2)
-   label('_@_SIGdiv')
-   space(2)
-
-def code2():
-   nohop()
-   label('_@_divbyzero')
-   _LDW('_@_SIGdiv');POP();BEQ('.z2')
-   # call _@_SIGdiv if nonzero
-   STW(T0);CALL(T0)
-   label('.z2')
-   # exit with return code 100
-   LDWI('_@_exit');STW(T0);LDI(100);CALL(T0)  
-
    
 # DIVU:  T3/T2 -> vAC
 # clobbers B0-B2, T1
    
-def code3():
+def code1():
    label('_@_divu')
    PUSH()
    LDI(0);STW(T1);STW(B0)
    LDW(T2);_BGT('.divuA');_BNE('.divu1')
-   _CALLJ('_@_divbyzero')     # case d == 0
+   _CALLJ('_@_raise_sigdiv')# case d == 0
    label('.divu1')          # case d >= 0x8000
    LDW(T3);_BGE('.divu2')
    SUBW(T2);_BLT('.divu2')
@@ -77,17 +62,17 @@ def code3():
 
 # DIVS:  T3/T2 -> vAC
    
-def code4():
+def code2():
    label('_@_divs')
    PUSH()
    LDI(0);STW(T1);STW(B0);ST(B2)
    LDW(T2);_BGE('.divs2');_BNE('.divs1')
-   _CALLJ('_@_divbyzero')               # case d == 0
+   _CALLJ('_@_raise_sigdiv')          # case d == 0
    label('.divs1')
    LDI(0);SUBW(T2);STW(T2);INC(B2)    # case d < 0
    label('.divs2')
    LDW(T3);_BGE('.divs3')
-   LDI(0);SUBW(T3);STW(T3)              # case a < 0
+   LDI(0);SUBW(T3);STW(T3)            # case a < 0
    LD(B2);XORI(3);ST(B2)
    label('.divs3')
    _CALLJ('_@_divworker')
@@ -104,11 +89,9 @@ def code4():
    
    
 code= [ ('CODE',   '_@_divworker', code0),
-        ('COMMON', '_@_SIGdiv',  code1, 2, 2),
-        ('CODE',   '_@_divbyzero', code2),
-        ('CODE', '_@_divu', code3), 
-        ('CODE', '_@_divs', code4), 
-        ('IMPORT', '_@_exit'),
+        ('CODE', '_@_divu', code1), 
+        ('CODE', '_@_divs', code2), 
+        ('IMPORT', '_@_raise_sigdiv'),
         ('EXPORT', '_@_divu'),
         ('EXPORT', '_@_divs') ]
 

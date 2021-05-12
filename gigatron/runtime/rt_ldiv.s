@@ -53,28 +53,13 @@ def code2():
     label('.wret')
     tryhop(2);POP();RET()
 
-def code3():
-    align(2)
-    label('_@_SIGdiv')
-    space(2)
-
-def code4():
-    nohop()
-    label('_@_ldivbyzero')
-    _LDW('_@_SIGdiv');POP();BEQ('.z2')
-    # call _@_SIGdiv if nonzero
-    STW(T0);CALL(T0)
-    label('.z2')
-    # exit with return code 100
-    LDWI('_@_exit');STW(T0);LDI(100);CALL(T0)  
-
 
 # LDIVU : LAC <- LAC / [vAC]    
 # LDIVU_TOT1: LAC <- LAC / T0T1
 # - clobbers B[0-2], T[0-3])
 # - leaves remainder << B1 in T0T1
 
-def code5():
+def code3():
     tryhop(16)
     label('_@_ldivu')
     STW(T3);DEEK();STW(T0);
@@ -83,7 +68,7 @@ def code5():
     PUSH()
     LDI(0);STW(B0);STW(T2);STW(T2+2)
     LDW(T0);ORW(T0+2);_BNE('.d1')             # if divisor is zero
-    _CALLJ('_@_ldivbyzero')
+    _CALLJ('_@_raise_sigdiv')
     label('.d1')
     LDW(T0+2);_BGE('.dA')                     # if divisor >= 0x8000000
     _CALLJ('_@_lcmpu_t0t1');_BLT('.dret')
@@ -110,7 +95,7 @@ def code5():
 # LDIVS_TOT1: LAC <- LAC / T0T1
 # (clobbers B[0-2], T[0-3])
 
-def code6():
+def code4():
     tryhop(16)
     label('_@_ldivs')
     STW(T3);DEEK();STW(T0);
@@ -119,7 +104,7 @@ def code6():
     PUSH()
     LDI(0);STW(B0);ST(B2);STW(T2);STW(T2+2)
     LDW(T0);ORW(T0+2);_BNE('.s1')             # if divisor is zero
-    _CALLJ('_@_ldivbyzero')
+    _CALLJ('_@_raise_sigdiv')
     label('.s1')                              # store signs
     LDW(T0+2);_BGE('.s2')
     _CALLJ('_@_lneg_t0t1')
@@ -146,13 +131,12 @@ code= [ ('EXPORT', '_@_ldivu'),
         ('IMPORT', '_@_lshl1'),
         ('IMPORT', '_@_lshl1_t0t1'),
         ('IMPORT', '_@_lneg'),
+        ('IMPORT', '_@_raise_sigdiv'),
         ('CODE', '_@_lshl1_t2t3', code0),
         ('CODE', '_@_lneg_t0t1', code1),
         ('CODE', '_@_ldivworker', code2),
-        ('COMMON', '_@_SIGdiv',  code3, 2, 2),
-        ('CODE',   '_@_ldivbyzero', code4),
-        ('CODE',   '_@_ldivu', code5),
-        ('CODE',   '_@_ldivs', code6) ]
+        ('CODE',   '_@_ldivu', code3),
+        ('CODE',   '_@_ldivs', code4) ]
 
 module(code=code, name='_rt_ldiv.s');
 

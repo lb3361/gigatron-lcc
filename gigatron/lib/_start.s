@@ -6,7 +6,7 @@ def code0():
     label('_start');
     # calls init0 in cpu4 compatible way
     LDWI('_init0'); STW(T3); CALL(T3); _BEQ('.init')
-    LDI(10); _BRA('.exit')
+    LDI(10); STW(R8); LDWI('.msg'); STW(R9); _BRA('.exit')
     label('.init')
     # call init chain
     LDWI('__glink_magic_init'); _CALLI('_callchain')
@@ -17,12 +17,12 @@ def code0():
     LDW(R8); STW(R0)
     # call fini chain
     LDWI('__glink_magic_fini'); _CALLI('_callchain')
-    LDW(R0)
-    label('.exit')
-    STW(R8)
+    LDW(R0); STW(R8)
     ### _exit()
     label('_exit')
-    # call _@_exit
+    LDI(0); STW(R9)
+    label('.exit')
+    # Calls _@_exit with return code in R8 and message or null in R9
     LDWI('_@_exit'); STW(T3); LDW(R8); CALL(T3)
     HALT()
 
@@ -48,6 +48,10 @@ def code3():
     align(2)
     label('__glink_magic_fini')
     words(0xBEEF)
+
+def code4():
+    label('.msg')
+    bytes(b'Machine check',0)
     
 # ======== (epilog)
 code=[
@@ -60,6 +64,7 @@ code=[
     ('CODE', '.callchain', code1),
     ('DATA', '__glink_magic_init', code2, 2, 2),
     ('DATA', '__glink_magic_fini', code3, 2, 2),
+    ('DATA', '.msg', code4, 0, 1),
     ('IMPORT', 'main'),
     ('IMPORT', '_init0'),
     ('IMPORT', '_@_exit') ]

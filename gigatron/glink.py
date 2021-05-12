@@ -485,7 +485,14 @@ def align(d):
 @vasm
 def bytes(*args):
     for w in args:
-        emit(v(w))
+        w = v(w)
+        if isinstance(w,int):
+            emit(v(w))
+        elif isinstance(w,builtins.bytes) or isinstance(w,bytearray):
+            for b in w:
+                emit(b)
+        else:
+            error(f"Illegal argument {w} for instruction 'bytes()'")
 @vasm
 def words(*args):
     for w in args:
@@ -1716,9 +1723,9 @@ def main(argv):
                             help='library files. -lxxx searches for libxxx.a')
         parser.add_argument('-L', type=str, action='append', metavar='LIBDIR',
                             help='specify an additional directory to search for libraries')
-        parser.add_argument('--symbols', action='store_const', dest='symbols', const=1,
+        parser.add_argument('--symbols', '--syms', action='store_const', dest='symbols', const=1,
                             help='outputs a sorted list of symbols')
-        parser.add_argument('--all-symbols', action='store_const', dest='symbols', const=2,
+        parser.add_argument('--all-symbols', '--all-syms', action='store_const', dest='symbols', const=2,
                             help='outputs a sorted list of all symbols, including generated ones')
         parser.add_argument('--entry', '-e', dest='e', metavar='START',
                             type=str, action='store', default='_start',

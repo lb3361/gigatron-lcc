@@ -1,4 +1,8 @@
 
+# This is called to exit a program
+# - R8 contains a return code (0 for success)
+# - R9 contains NULL or a pointer to a message string
+
 def code0():
     nohop()
     label('_@_exit');

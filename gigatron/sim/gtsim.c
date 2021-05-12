@@ -302,7 +302,9 @@ word loadGt1(const char *gt1)
 
 void sys_exit(void)
 {
-  exit((sword)peek(R8));
+  if (deek(R9))
+    printf("%s\n", &RAM[deek(R9)]);
+  exit((sword)deek(R8));
 }
 
 void sys_printf(void)

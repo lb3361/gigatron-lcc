@@ -2,7 +2,6 @@
 def code0():
     tryhop(15, jump=False)
     label('_@_exit');
-    STW(R8)
     LDWI(0xff00);STW('sysFn');SYS(34)
     label('.loop')
     BRA('.loop')

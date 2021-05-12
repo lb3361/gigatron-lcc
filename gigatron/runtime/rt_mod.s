@@ -11,7 +11,7 @@ def code1():
    PUSH()
    _CALLJ('_@_divu')
    STW(T1);
-   LD(T0+1);STW(T2);_CALLJ('_@_shru')
+   LD(B1);STW(T2);_CALLJ('_@_shru')
    tryhop(2);POP();RET()
 
 # T3 % T2 -> AC   [and T3 / T2 -> T1]
@@ -23,7 +23,7 @@ def code2():
    _CALLJ('_@_divs')
    STW(T1);
    LD(T0+1);STW(T2);_CALLJ('_@_shru');STW(T3)
-   LD(LACx);ANDI(2);_BEQ('.mods1')
+   LD(B2);ANDI(2);_BEQ('.mods1')
    LDI(0);SUBW(T3);_BRA('.mods2')
    label('.mods1')
    LDW(T3)

@@ -1,16 +1,15 @@
 
 def code0():
-    label('div', '_divmod')
+    label('ldiv', '_ldivmod')
     
     
 # ======== (epilog)
 code=[
-    ('EXPORT', 'div'),
+    ('EXPORT', 'ldiv'),
     ('CODE', 'aliases', code0),
-    ('IMPORT', '_divmod'),
     ('IMPORT', '_ldivmod') ]
 
-module(code=code, name='div.s');
+module(code=code, name='ldiv.s');
 
 # Local Variables:
 # mode: python

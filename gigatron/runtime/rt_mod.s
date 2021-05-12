@@ -22,7 +22,7 @@ def code2():
    PUSH()
    _CALLJ('_@_divs')
    STW(T1);
-   LD(T0+1);STW(T2);_CALLJ('_@_shru');STW(T3)
+   LD(B1);STW(T2);_CALLJ('_@_shru');STW(T3)
    LD(B2);ANDI(2);_BEQ('.mods1')
    LDI(0);SUBW(T3);_BRA('.mods2')
    label('.mods1')

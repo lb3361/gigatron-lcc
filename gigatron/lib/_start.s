@@ -6,7 +6,7 @@ def code0():
     label('_start');
     # calls init0 in cpu4 compatible way
     LDWI('_init0'); STW(T3); CALL(T3); _BEQ('.init')
-    LDI(10); STW(R8); LDWI('.msg'); STW(R9); _BRA('.exit')
+    LDI(10); STW(R8); LDWI('.msg'); STW(R9); _BRA('_exitm')
     label('.init')
     # call init chain
     LDWI('__glink_magic_init'); _CALLI('_callchain')
@@ -21,7 +21,7 @@ def code0():
     ### _exit()
     label('_exit')
     LDI(0); STW(R9)
-    label('.exit')
+    label('_exitm')
     # Calls _@_exit with return code in R8 and message or null in R9
     LDWI('_@_exit'); STW(T3); LDW(R8); CALL(T3)
     HALT()
@@ -57,6 +57,7 @@ def code4():
 code=[
     ('EXPORT', '_start'),
     ('EXPORT', '_exit'),
+    ('EXPORT', '_exitm'),
     ('EXPORT', 'exit'),
     ('EXPORT', '__glink_magic_init'),
     ('EXPORT', '__glink_magic_fini'),

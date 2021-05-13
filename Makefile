@@ -16,15 +16,14 @@ LDFLAGS=-g
 HOSTFILE=${TOP}etc/gigatron-lcc.c
 
 
-SUBDIRS=${G}runtime ${G}lib ${G}sim
+SUBDIRS=${G}runtime ${G}lib ${G}map64k ${G}mapsim 
 
 FILES=${B}glcc ${B}glink ${B}glink.py ${B}interface.json ${B}roms.json
 
-MAPS=64k 32k
-
 default: all
 
-all: build-dir lcc-all gigatron-all subdirs-all
+all: build-dir lcc-all gigatron-all
+	${MAKE} subdirs-all
 
 clean: lcc-clean gigatron-clean subdirs-clean build-dir-clean
 
@@ -55,11 +54,10 @@ subdirs-%: FORCE
 		`echo $@ | sed -e 's/^subdirs-//'`; \
 	   done
 
-gigatron-all: gigatron-include gigatron-maps ${FILES} 
+gigatron-all: gigatron-include ${FILES} 
 
 gigatron-clean: FORCE
 	-rm -rf ${FILES} ${B}include
-	-for n in ${MAPS} ; do rm -rf ${B}map$$n; done
 
 gigatron-install: FORCE
 	-${INSTALL} -d ${libdir}
@@ -69,11 +67,6 @@ gigatron-install: FORCE
 	for n in ${FILES}; do \
 	    mode=644; test -x "$$n" && mode=755 ; \
 	    ${INSTALL} -m $$mode "$$n" ${libdir}/ ; done
-	for m in ${MAPS} ; do \
-	    ${INSTALL} -d "${libdir}/map$$m" ; \
-	    for n in "${G}map$$m/*" ; do \
-	        ${INSTALL} -m 0644 "${B}map$$m/"`basename "$$n"` "${libdir}/map$$m/" ; \
-	done ; done
 	-${INSTALL} -d "${libdir}/include"
 	for n in "${B}include"/* ; do \
 	    ${INSTALL} -m 0644 "$$n" "${libdir}/include/" ; done
@@ -85,9 +78,6 @@ gigatron-install: FORCE
 gigatron-include: FORCE
 	-mkdir -p ${B}include
 	cp ${TOP}include/gigatron/* ${B}/include/
-
-gigatron-maps: FORCE
-	for n in ${MAPS}; do mkdir -p ${B}map$$n; cp ${G}map$$n/* ${B}map$$n; done
 
 ${B}glink: ${G}glink
 	cp ${G}glink ${B}glink

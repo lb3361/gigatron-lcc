@@ -3,7 +3,7 @@
 
 int errno;
 
-int system(const char *)
+int system(const char *cmd)
 {
 	// Override in a map.
 	errno = ENOTIMPL;

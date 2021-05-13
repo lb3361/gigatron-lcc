@@ -11,30 +11,32 @@ B=${TOP}${BUILDDIR}/
 G=${TOP}gigatron/
 CFLAGS=-O3 -g
 
+MAPDIR=mapsim
+
 LIBSIMFILES= printf.s _exitm.s
 
-all: ${B}gtsim ${B}mapsim/map.py ${B}mapsim/libsim.a
+all: ${B}gtsim ${B}${MAPDIR}/map.py ${B}${MAPDIR}/libsim.a
 
 ${B}gtsim: gtsim.c
 	${CC} ${CFLAGS} -o $@ gtsim.c -lm
 
-${B}mapsim/map.py: map.py
-	-mkdir -p ${B}mapsim
+${B}${MAPDIR}/map.py: map.py
+	-mkdir -p ${B}${MAPDIR}
 	cp map.py $@
 
-${B}mapsim/libsim.a: ${LIBSIMFILES}
-	-mkdir -p ${B}mapsim
+${B}${MAPDIR}/libsim.a: ${LIBSIMFILES}
+	-mkdir -p ${B}${MAPDIR}
 	cat ${LIBSIMFILES} > $@
 
 clean: FORCE
-	-rm -rf ${B}mapsim/map.py ${B}mapsim/libsim.a
-	-rmdir ${B}mapsim
+	-rm -rf ${B}${MAPDIR}/map.py ${B}${MAPDIR}/libsim.a
+	-rmdir ${B}${MAPDIR}
 
 install: FORCE
-	-${INSTALL} -d "${libdir}/mapsim
+	-${INSTALL} -d "${libdir}/${MAPDIR}
 	${INSTALL} -m 0755 ${B}gtsim ${libdir}/
-	${INSTALL} -m 0644 ${B}mapsim/libsim.a ${libdir}/mapsim/
-	${INSTALL} -m 0644 ${B}mapsim/map.py ${libdir}/mapsim/
+	${INSTALL} -m 0644 ${B}${MAPDIR}/libsim.a ${libdir}/${MAPDIR}/
+	${INSTALL} -m 0644 ${B}${MAPDIR}/map.py ${libdir}/${MAPDIR}/
 
 FORCE: .PHONY
 

@@ -17,9 +17,10 @@ def code2():
     label('.z2')
     # exit with return code 100
     LDI(20);STW(R8);LDWI('.msg');STW(R9)
-    _CALLJ('_@_exit');HALT()
+    _CALLJ('_exitm');HALT()
 
 code= [ ('EXPORT', '_@_raise_sigdiv'),
+        ('IMPORT', '_exitm'),
         ('COMMON', '_@_SIGdiv',  code0, 2, 2),
         ('DATA', '.msg', code1, 0, 1),
         ('CODE', '_@_raise_sigdiv', code2) ]

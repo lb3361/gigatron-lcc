@@ -11,7 +11,7 @@ B=${TOP}${BUILDDIR}/
 G=${TOP}gigatron/
 CFLAGS=-O3 -g
 
-LIBSIMFILES= printf.s _rt_exit.s
+LIBSIMFILES= printf.s _exitm.s
 
 all: ${B}gtsim ${B}mapsim/map.py ${B}mapsim/libsim.a
 

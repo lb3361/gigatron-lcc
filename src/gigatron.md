@@ -315,15 +315,17 @@ con1: CNSTI1  "%a"  range(a,1,1)
 con1: CNSTU1  "%a"  range(a,1,1)
 con1: CNSTI2  "%a"  range(a,1,1)
 con1: CNSTU2  "%a"  range(a,1,1)
-con8: CNSTI2  "%a"  range(a,0,255)
-con8: CNSTU2  "%a"  range(a,0,255)
-con8: CNSTP2  "%a"  if_zpconst(a)
-con8: CNSTI1  "%a"
-con8: CNSTU1  "%a"
-con8: zddr    "%0"
-co8n: CNSTI2  "%a"  range(a,-255,-1)
-co8s: CNSTI2  "%a"  range(a,-128,127)
-co8s: CNSTI1  "%a"
+con8: CNSTI2  "%a"  range(a,8,8)
+con8: CNSTU2  "%a"  range(a,8,8)
+conB: CNSTI2  "%a"  range(a,0,255)
+conB: CNSTU2  "%a"  range(a,0,255)
+conB: CNSTP2  "%a"  if_zpconst(a)
+conB: CNSTI1  "%a"
+conB: CNSTU1  "%a"
+conB: zddr    "%0"
+conBn: CNSTI2  "%a"  range(a,-255,-1)
+conBs: CNSTI2  "%a"  range(a,-128,127)
+conBs: CNSTI1  "%a"
 con: CNSTI1   "%a"
 con: CNSTU1   "%a"
 con: CNSTI2   "%a"
@@ -337,7 +339,7 @@ con: addr     "%0"
 # in the sequence gramma
 # -- lddr represent a frame offset
 # -- addr represent a simple address (equivalent to con)
-# -- zddr represent a zero page address (equivalent to con8)
+# -- zddr represent a zero page address (equivalent to conB)
 lddr: ADDRLP2 "%a+%F"
 lddr: ADDRFP2 "%a+%F"
 addr: ADDRGP2 "%a" 
@@ -345,7 +347,7 @@ addr: con "%0"
 addr: zddr "%0"
 zddr: VREGP "%a" if_vregp_not_temp(a)
 zddr: ADDRGP2 "%a" if_zpglobal(a)
-zddr: con8 "%0"
+zddr: conB "%0"
 
 # -- expressions
 # All the following nonterminals represent expressions in the tree grammar.
@@ -368,7 +370,7 @@ stmt: reg ""
 stmt: ac1 "\t%0\n"
 reg: ac   "\t%0STW(%c);\n" 20
 ac: reg   "LDW(%0);" 20
-ac: con8  "LDI(%0);" 16
+ac: conB  "LDI(%0);" 16
 ac: con   "LDWI(%0);" 20
 ac: zddr  "LDI(%0);" 16
 ac: addr  "LDWI(%0);" 20
@@ -424,36 +426,38 @@ ac: ADDP2(ac,iarg)  "%0%[1b]ADDW(%1);" 28
 ac: ADDI2(iarg,ac)  "%1%[0b]ADDW(%0);" 28
 ac: ADDU2(iarg,ac)  "%1%[0b]ADDW(%0);" 28
 ac: ADDP2(iarg,ac)  "%1%[0b]ADDW(%0);" 28
-ac: ADDI2(ac,con8) "%0ADDI(%1);" 28
-ac: ADDU2(ac,con8) "%0ADDI(%1);" 28
-ac: ADDP2(ac,con8) "%0ADDI(%1);" 28
-ac: ADDI2(ac,co8n) "%0SUBI(-(%1));" 28
-ac: ADDU2(ac,co8n) "%0SUBI(-(%1));" 28
-ac: ADDP2(ac,co8n) "%0SUBI(-(%1));" 28
+ac: ADDI2(ac,conB) "%0ADDI(%1);" 28
+ac: ADDU2(ac,conB) "%0ADDI(%1);" 28
+ac: ADDP2(ac,conB) "%0ADDI(%1);" 28
+ac: ADDI2(ac,conBn) "%0SUBI(-(%1));" 28
+ac: ADDU2(ac,conBn) "%0SUBI(-(%1));" 28
+ac: ADDP2(ac,conBn) "%0SUBI(-(%1));" 28
 ac: SUBI2(ac,iarg)  "%0%[1b]SUBW(%1);" 28
 ac: SUBU2(ac,iarg)  "%0%[1b]SUBW(%1);" 28
 ac: SUBP2(ac,iarg)  "%0%[1b]SUBW(%1);" 28
-ac: SUBI2(ac,con8) "%0SUBI(%1);" 28
-ac: SUBU2(ac,con8) "%0SUBI(%1);" 28
-ac: SUBP2(ac,con8) "%0SUBI(%1);" 28
-ac: SUBI2(ac,co8n) "%0ADDI(-(%1));" 28
-ac: SUBU2(ac,co8n) "%0ADDI(-(%1));" 28
-ac: SUBP2(ac,co8n) "%0ADDI(-(%1));" 28
+ac: SUBI2(ac,conB) "%0SUBI(%1);" 28
+ac: SUBU2(ac,conB) "%0SUBI(%1);" 28
+ac: SUBP2(ac,conB) "%0SUBI(%1);" 28
+ac: SUBI2(ac,conBn) "%0ADDI(-(%1));" 28
+ac: SUBU2(ac,conBn) "%0ADDI(-(%1));" 28
+ac: SUBP2(ac,conBn) "%0ADDI(-(%1));" 28
 ac: NEGI2(ac)   "%0STW(T3);LDI(0);SUBW(T3);" 68
 ac: NEGI2(reg ) "LDI(0);SUBW(%0);" 48
-ac: LSHI2(ac, con8) "%0%{shl1}" 100
+ac: LSHI2(ac, conB) "%0%{shl1}" 100
 ac: LSHI2(ac, iarg) "%0%[1b]_SHL(%1);" 200
 ac: RSHI2(ac, iarg) "%0%[1b]_SHRS(%1);" 200
-ac: LSHU2(ac, con8) "%0%{shl1}" 100
+ac: RSHI2(ac, con8) "%0LD(vACH);XORI(128);SUBI(128);" 64
+ac: LSHU2(ac, conB) "%0%{shl1}" 100
 ac: LSHU2(ac, iarg) "%0%[1b]_SHL(%1);" 200
+ac: RSHU2(ac, con8) "%0LD(vACH);" 16
 ac: RSHU2(ac, iarg) "%0%[1b]_SHRU(%1);" 200
-ac: MULI2(con8, ac) "%1%{mul0}" 100
-ac: MULI2(co8n, ac) "%1%{mul0}" 110
-ac: MULI2(con8, reg) "%{mul0%1}" 100
-ac: MULI2(co8n, reg) "%{mul0%1}" 110
+ac: MULI2(conB, ac) "%1%{mul0}" 100
+ac: MULI2(conBn, ac) "%1%{mul0}" 110
+ac: MULI2(conB, reg) "%{mul0%1}" 100
+ac: MULI2(conBn, reg) "%{mul0%1}" 110
 ac: MULI2(ac, iarg) "%0%[1b]_MUL(%1);" 200
 ac: MULI2(iarg, ac) "%1%[0b]_MUL(%0);" 200
-ac: MULU2(con8, ac) "%1%{mul0}" 100
+ac: MULU2(conB, ac) "%1%{mul0}" 100
 ac: MULU2(ac, iarg) "%0%[1b]_MUL(%1);" 200
 ac: MULU2(iarg, ac) "%1%[0b]_MUL(%0);" 200
 ac: DIVI2(ac, iarg) "%0%[1b]_DIVS(%1);" 200
@@ -466,36 +470,36 @@ ac: BANDI2(ac,iarg)  "%0%[1b]ANDW(%1);" 28
 ac: BANDU2(ac,iarg)  "%0%[1b]ANDW(%1);" 28
 ac: BANDI2(iarg,ac)  "%1%[0b]ANDW(%0);" 28
 ac: BANDU2(iarg,ac)  "%1%[0b]ANDW(%0);" 28
-ac: BANDI2(ac,con8)  "%0ANDI(%1);" 16 
-ac: BANDU2(ac,con8)  "%0ANDI(%1);" 16 
+ac: BANDI2(ac,conB)  "%0ANDI(%1);" 16 
+ac: BANDU2(ac,conB)  "%0ANDI(%1);" 16 
 ac: BORI2(ac,iarg)  "%0%[1b]ORW(%1);" 28
 ac: BORU2(ac,iarg)  "%0%[1b]ORW(%1);" 28
 ac: BORI2(iarg,ac)  "%1%[0b]ORW(%0);" 28
 ac: BORU2(iarg,ac)  "%1%[0b]ORW(%0);" 28
-ac: BORI2(ac,con8)  "%0ORI(%1);" 16 
-ac: BORU2(ac,con8)  "%0ORI(%1);" 16 
+ac: BORI2(ac,conB)  "%0ORI(%1);" 16 
+ac: BORU2(ac,conB)  "%0ORI(%1);" 16 
 ac: BXORI2(ac,iarg)  "%0%[1b]XORW(%1);" 28
 ac: BXORU2(ac,iarg)  "%0%[1b]XORW(%1);" 28
 ac: BXORI2(iarg,ac)  "%1%[0b]XORW(%0);" 28
 ac: BXORU2(iarg,ac)  "%1%[0b]XORW(%0);" 28
-ac: BXORI2(ac,con8)  "%0XORI(%1);" 16 
-ac: BXORU2(ac,con8)  "%0XORI(%1);" 
+ac: BXORI2(ac,conB)  "%0XORI(%1);" 16 
+ac: BXORU2(ac,conB)  "%0XORI(%1);" 
 
 # A couple EAC variants
-eac: ADDI2(eac,con8) "%0ADDI(%1);" 28
-eac: ADDU2(eac,con8) "%0ADDI(%1);" 28
-eac: ADDP2(eac,con8) "%0ADDI(%1);" 28
-eac: ADDI2(eac,co8n) "%0SUBI(-(%1));" 28
-eac: ADDU2(eac,co8n) "%0SUBI(-(%1));" 28
-eac: ADDP2(eac,co8n) "%0SUBI(-(%1));" 28
-eac: SUBI2(eac,con8) "%0SUBI(%1);" 28
-eac: SUBU2(eac,con8) "%0SUBI(%1);" 28
-eac: SUBP2(eac,con8) "%0SUBI(%1);" 28
-eac: SUBI2(eac,co8n) "%0ADDI(-(%1));" 28
-eac: SUBU2(eac,co8n) "%0ADDI(-(%1));" 28
-eac: SUBP2(eac,co8n) "%0ADDI(-(%1));" 28
-eac: LSHI2(eac, con8) "%0%{shl1}" 100
-eac: LSHU2(eac, con8) "%0%{shl1}" 100
+eac: ADDI2(eac,conB) "%0ADDI(%1);" 28
+eac: ADDU2(eac,conB) "%0ADDI(%1);" 28
+eac: ADDP2(eac,conB) "%0ADDI(%1);" 28
+eac: ADDI2(eac,conBn) "%0SUBI(-(%1));" 28
+eac: ADDU2(eac,conBn) "%0SUBI(-(%1));" 28
+eac: ADDP2(eac,conBn) "%0SUBI(-(%1));" 28
+eac: SUBI2(eac,conB) "%0SUBI(%1);" 28
+eac: SUBU2(eac,conB) "%0SUBI(%1);" 28
+eac: SUBP2(eac,conB) "%0SUBI(%1);" 28
+eac: SUBI2(eac,conBn) "%0ADDI(-(%1));" 28
+eac: SUBU2(eac,conBn) "%0ADDI(-(%1));" 28
+eac: SUBP2(eac,conBn) "%0ADDI(-(%1));" 28
+eac: LSHI2(eac, conB) "%0%{shl1}" 100
+eac: LSHU2(eac, conB) "%0%{shl1}" 100
 
 # Assignments
 stmt: ASGNP2(zddr,ac)  "\t%1STW(%0);\n" 20
@@ -511,19 +515,19 @@ stmt: ASGNU1(iarg,ac1) "\t%1%[0b]POKE(%0);\n" 26
 
 # Conditional branches
 stmt: EQI2(ac,con0)  "\t%0_BEQ(%a);\n" 28
-stmt: EQI2(ac,con8)  "\t%0XORI(%1);_BEQ(%a);\n" 42
+stmt: EQI2(ac,conB)  "\t%0XORI(%1);_BEQ(%a);\n" 42
 stmt: EQI2(ac,iarg)  "\t%0%[1b]XORW(%1);_BEQ(%a);\n" 54
 stmt: EQI2(iarg,ac)  "\t%1%[0b]XORW(%0);_BEQ(%a);\n" 54
 stmt: NEI2(ac,con0)  "\t%0_BNE(%a);\n" 28
-stmt: NEI2(ac,con8)  "\t%0XORI(%1);_BNE(%a);\n" 42
+stmt: NEI2(ac,conB)  "\t%0XORI(%1);_BNE(%a);\n" 42
 stmt: NEI2(ac,iarg)  "\t%0%[1b]XORW(%1);_BNE(%a);\n" 54
 stmt: NEI2(iarg,ac)  "\t%1%[0b]XORW(%0);_BNE(%a);\n" 54
 stmt: EQU2(ac,con0)  "\t%0_BEQ(%a);\n" 28
-stmt: EQU2(ac,con8)  "\t%0XORI(%1);_BEQ(%a);\n" 42
+stmt: EQU2(ac,conB)  "\t%0XORI(%1);_BEQ(%a);\n" 42
 stmt: EQU2(ac,iarg)  "\t%0%[1b]XORW(%1);_BEQ(%a);\n" 54
 stmt: EQU2(iarg,ac)  "\t%1%[0b]XORW(%0);_BEQ(%a);\n" 54
 stmt: NEU2(ac,con0)  "\t%0_BNE(%a);\n" 28
-stmt: NEU2(ac,con8)  "\t%0XORI(%1);_BNE(%a);\n" 42
+stmt: NEU2(ac,conB)  "\t%0XORI(%1);_BNE(%a);\n" 42
 stmt: NEU2(ac,iarg)  "\t%0%[1b]XORW(%1);_BNE(%a);\n" 54
 stmt: NEU2(iarg,ac)  "\t%1%[0b]XORW(%0);_BNE(%a);\n" 54
 stmt: LTI2(ac,con0) "\t%0_BLT(%a);\n" 28
@@ -532,14 +536,14 @@ stmt: GTI2(ac,con0) "\t%0_BGT(%a);\n" 28
 stmt: GEI2(ac,con0) "\t%0_BGE(%a);\n" 28
 stmt: GTU2(ac,con0) "\t%0_BNE(%a);\n" 28
 stmt: LEU2(ac,con0) "\t%0_BEQ(%a);\n" 28
-stmt: LTI2(ac,con8) "\t%0_CMPIS(%1);_BLT(%a);\n" 80
-stmt: LEI2(ac,con8) "\t%0_CMPIS(%1);_BLE(%a);\n" 80
-stmt: GTI2(ac,con8) "\t%0_CMPIS(%1);_BGT(%a);\n" 80
-stmt: GEI2(ac,con8) "\t%0_CMPIS(%1);_BGE(%a);\n" 80
-stmt: LTU2(ac,con8) "\t%0_CMPIU(%1);_BLT(%a);\n" 80
-stmt: LEU2(ac,con8) "\t%0_CMPIU(%1);_BLE(%a);\n" 80
-stmt: GTU2(ac,con8) "\t%0_CMPIU(%1);_BGT(%a);\n" 80
-stmt: GEU2(ac,con8) "\t%0_CMPIU(%1);_BGE(%a);\n" 80
+stmt: LTI2(ac,conB) "\t%0_CMPIS(%1);_BLT(%a);\n" 80
+stmt: LEI2(ac,conB) "\t%0_CMPIS(%1);_BLE(%a);\n" 80
+stmt: GTI2(ac,conB) "\t%0_CMPIS(%1);_BGT(%a);\n" 80
+stmt: GEI2(ac,conB) "\t%0_CMPIS(%1);_BGE(%a);\n" 80
+stmt: LTU2(ac,conB) "\t%0_CMPIU(%1);_BLT(%a);\n" 80
+stmt: LEU2(ac,conB) "\t%0_CMPIU(%1);_BLE(%a);\n" 80
+stmt: GTU2(ac,conB) "\t%0_CMPIU(%1);_BGT(%a);\n" 80
+stmt: GEU2(ac,conB) "\t%0_CMPIU(%1);_BGE(%a);\n" 80
 stmt: LTI2(ac,iarg) "\t%0%[1b]_CMPWS(%1);_BLT(%a);\n" 100
 stmt: LEI2(ac,iarg) "\t%0%[1b]_CMPWS(%1);_BLE(%a);\n" 100
 stmt: GTI2(ac,iarg) "\t%0%[1b]_CMPWS(%1);_BGT(%a);\n" 100
@@ -599,13 +603,13 @@ lac: DIVU4(lac,larg) "%0%1_LDIVU();" 200
 lac: MODI4(lac,larg) "%0%1_LMODS();" 200
 lac: MODU4(lac,larg) "%0%1_LMODU();" 200
 lac: LSHI4(lac,reg)  "%0LDW(%1);_LSHL();" 200
-lac: LSHI4(lac,con8) "%0LDI(%1);_LSHL();"  200
+lac: LSHI4(lac,conB) "%0LDI(%1);_LSHL();"  200
 lac: LSHU4(lac,reg)  "%0LDW(%1);_LSHL();"  200
-lac: LSHU4(lac,con8) "%0LDI(%1);_LSHL();"  200
+lac: LSHU4(lac,conB) "%0LDI(%1);_LSHL();"  200
 lac: RSHI4(lac,reg)  "%0LDW(%1);_LSHRS();" 200
-lac: RSHI4(lac,con8) "%0LDI(%1);_LSHRS();" 200
+lac: RSHI4(lac,conB) "%0LDI(%1);_LSHRS();" 200
 lac: RSHU4(lac,reg)  "%0LDW(%1);_LSHRU();" 200
-lac: RSHU4(lac,con8) "%0LDI(%1);_LSHRU();" 200
+lac: RSHU4(lac,conB) "%0LDI(%1);_LSHRU();" 200
 lac: NEGI4(lac) "%0_LNEG();" 200
 lac: BCOMU4(lac) "%0_LCOM();" 200
 lac: BANDU4(lac,larg) "%0%1_LAND();" 200
@@ -766,9 +770,9 @@ stmt: ASGNU1(ac,iarg)  "\t%0%[1b]POKEA(%1);\n" mincpu6(28)
 stmt: ASGNP2(ac,con)  "\t%0%[1b]DOKEI(%1);\n" mincpu6(30)
 stmt: ASGNI2(ac,con)  "\t%0%[1b]DOKEI(%1);\n" mincpu6(30)
 stmt: ASGNU2(ac,con)  "\t%0%[1b]DOKEI(%1);\n" mincpu6(30)
-stmt: ASGNI1(ac,con8) "\t%0%[1b]POKEI(%1);\n" mincpu6(28)
-stmt: ASGNI1(ac,co8s) "\t%0%[1b]POKEI(%1);\n" mincpu6(28)
-stmt: ASGNU1(ac,con8) "\t%0%[1b]POKEI(%1);\n" mincpu6(28)
+stmt: ASGNI1(ac,conB) "\t%0%[1b]POKEI(%1);\n" mincpu6(28)
+stmt: ASGNI1(ac,conBs) "\t%0%[1b]POKEI(%1);\n" mincpu6(28)
+stmt: ASGNU1(ac,conB) "\t%0%[1b]POKEI(%1);\n" mincpu6(28)
 reg: INDIRI2(ac) "\t%0DEEKA(%c);\n" mincpu6(30)
 reg: INDIRU2(ac) "\t%0DEEKA(%c);\n" mincpu6(30)
 reg: INDIRP2(ac) "\t%0DEEKA(%c);\n" mincpu6(30)

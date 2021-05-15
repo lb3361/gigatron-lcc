@@ -19,11 +19,11 @@ static wchar_t ctow(char c)
 static int wtoc(wchar_t w)
 {
 	if (w >> 8) {
-		if ((w & 0xFFFCu) == 0x2190)
-			return 128 + (w & 0x03);
+		if ((w & 0xfffcU) == 0x2190)
+			return 0x80 | (w & 0x03);
 		return -1;
 	} else {
-		if ((w & 0xFFFCu) == 0x80)
+		if ((w & 0xfc) == 0x80)
 			return -1;
 		return w;
 	}

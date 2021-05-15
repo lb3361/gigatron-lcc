@@ -1124,22 +1124,22 @@ def _FCVU():
 def _CALLI(d):
     '''Call subroutine at far location d.
        - For cpu >= 5. this function just emits a CALLI instruction
-       - For cpu < 5, this function trashes 'sysFn'.'''
+       - For cpu < 5, this function trashes 'sysArgs6' and 'sysArgs7'.'''
     if args.cpu >= 5:
         CALLI(d)
     else:
         # no hops because cpu4 long jumps also use -2(vSP)
-        tryhop(11);STLW(-2);LDWI(d);STW('sysFn');LDLW(-2);CALL('sysFn')
+        tryhop(11);STLW(-2);LDWI(d);STW('sysArgs6');LDLW(-2);CALL('sysArgs6')
 @vasm
 def _CALLJ(d):
     '''Call subroutine at far location d. 
        - For cpu >= 5. this function just emits a CALLI instruction
-       - For cpu < 5, this function trashes 'sysFn' and 'vAC' 
+       - For cpu < 5, this function trashes vAC, 'sysArgs6' and 'sysArgs7' 
          but generates a smaller code than _CALLI.'''
     if args.cpu >= 5:
         CALLI(d)
     else:
-        tryhop(7);LDWI(d);STW('sysFn');CALL('sysFn')
+        tryhop(7);LDWI(d);STW('sysArgs6');CALL('sysArgs6')
 @vasm
 def _SAVE(offset, mask):
     '''Save all registers specified by mask at [SP+offset],

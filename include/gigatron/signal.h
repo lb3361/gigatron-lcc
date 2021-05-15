@@ -14,7 +14,18 @@ typedef int sig_atomic_t;
 #define SIGSEGV	11
 #define SIGTERM	15
 
-void (*signal(int, void (*)(int)))(int);
+#define FPE_INTDIV      1       /* integer divide by zero */
+/* #define FPE_INTOVF      2       /* integer overflow */
+#define FPE_FLTDIV      3       /* floating point divide by zero */
+#define FPE_FLTOVF      4       /* floating point overflow */
+/* #define FPE_FLTUND      5       /* floating point underflow */
+/* #define FPE_FLTRES      6       /* floating point inexact result */
+/* #define FPE_FLTINV      7       /* floating point invalid operation */
+
+typedef void(*sig_handler_t)(int);
+
+sig_handler_t signal(int, sig_handler_t);
+
 int raise(int);
 
 #endif /* __SIGNAL */

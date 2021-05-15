@@ -38,6 +38,8 @@ install: FORCE
 	${INSTALL} -m 0644 ${B}${MAPDIR}/libsim.a ${libdir}/${MAPDIR}/
 	${INSTALL} -m 0644 ${B}${MAPDIR}/map.py ${libdir}/${MAPDIR}/
 
+test: FORCE
+
 FORCE: .PHONY
 
 .PHONY: 

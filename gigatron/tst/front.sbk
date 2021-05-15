@@ -1,0 +1,300 @@
+#VCPUv5
+
+# ======== ('CODE', 'main', code0)
+def code0():
+	label('main');
+	tryhop(4);LDW(vLR);STW(R22);_SP(-4);STW(SP);_SAVE(2, 0x400000); # R22
+	LDI(0);STW(R8);
+	_SP(0);_MOV(R8,[vAC]);
+	CALLI('exit');
+	LDI(0);
+	label('.1');
+	STW(R8);_RESTORE(2, 0x400000);_SP(4);STW(SP);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+# ======== ('CODE', 'nested', code1)
+def code1():
+	label('nested');
+	tryhop(4);LDW(vLR);STW(R22);
+	LDW(R8);_CMPIS(4);_BGE('.6');
+	LDW(R9);XORI(114);_BEQ('.9');
+	label('.6');
+	LDW(R8);XORI(1);_BNE('.8');
+	LDW(R9);XORI(104);_BEQ('.9');
+	LDW(R9);XORI(105);_BEQ('.9');
+	label('.8');
+	LDW(R8);XORI(2);_BNE('.3');
+	LDW(R9);XORI(111);_BEQ('.9');
+	LDW(R9);XORI(121);_BNE('.3');
+	label('.9');
+	LDW(R9);STW(R8);
+	label('.3');
+	LDI(0);
+	label('.2');
+	STW(R8);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+# ======== ('CODE', 's', code2)
+def code2():
+	label('s');
+	tryhop(4);LDW(vLR);STW(R22);
+	label('.10');
+	LDW(R22);tryhop(3);STW(vLR);RET();
+# ======== ('DATA', 'Dy', code3, 4, 2)
+def code3():
+	align(2);
+	label('Dy');
+	words(0); # 0
+	space(2);
+# ======== ('DATA', 'Dz', code4, 4, 2)
+def code4():
+	align(2);
+	label('Dz');
+	words(1); # 1
+	space(2);
+# ======== ('CODE', 'Dfunc', code5)
+def code5():
+	label('Dfunc');
+	tryhop(4);LDW(vLR);STW(R22);_SP(-2);STW(SP);_SAVE(0, 0x400000); # R22
+	STW(R8);_RESTORE(0, 0x400000);_SP(2);STW(SP);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+# ======== ('CODE', 'f', code6)
+def code6():
+	label('f');
+	tryhop(4);LDW(vLR);STW(R22);
+	STW(R8);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+# ======== ('CODE', 'f1', code7)
+def code7():
+	label('f1');
+	tryhop(4);LDW(vLR);STW(R22);
+	STW(R8);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+# ======== ('CODE', 'f2', code8)
+def code8():
+	label('f2');
+	tryhop(4);LDW(vLR);STW(R22);_SP(-2);STW(SP);_SAVE(0, 0x400000); # R22
+	STW(R8);_RESTORE(0, 0x400000);_SP(2);STW(SP);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+# ======== ('CODE', 'g', code9)
+def code9():
+	label('g');
+	tryhop(4);LDW(vLR);STW(R22);_SP(-2);STW(SP);_SAVE(0, 0x400000); # R22
+	STW(R8);_RESTORE(0, 0x400000);_SP(2);STW(SP);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+# ======== ('CODE', 'h', code10)
+def code10():
+	label('h');
+	tryhop(4);LDW(vLR);STW(R22);_SP(-2);STW(SP);_SAVE(0, 0x400000); # R22
+	STW(R8);_RESTORE(0, 0x400000);_SP(2);STW(SP);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+# ======== ('CODE', 'h1', code11)
+def code11():
+	label('h1');
+	tryhop(4);LDW(vLR);STW(R22);_SP(-2);STW(SP);_SAVE(0, 0x400000); # R22
+	STW(R8);_RESTORE(0, 0x400000);_SP(2);STW(SP);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+# ======== ('CODE', 'h2', code12)
+def code12():
+	label('h2');
+	tryhop(4);LDW(vLR);STW(R22);
+	STW(R8);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+# ======== ('DATA', '.21', code13, 2, 2)
+def code13():
+	align(2);
+	label('.21');
+	words(1); # 1
+# ======== ('CODE', 'set1', code14)
+def code14():
+	label('set1');
+	tryhop(4);LDW(vLR);STW(R22);
+	STW(R8);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+# ======== ('DATA', '.23', code15, 2, 2)
+def code15():
+	align(2);
+	label('.23');
+	words(2); # 2
+# ======== ('CODE', 'set2', code16)
+def code16():
+	label('set2');
+	tryhop(4);LDW(vLR);STW(R22);
+	STW(R8);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+# ======== ('CODE', 'goo', code17)
+def code17():
+	label('goo');
+	tryhop(4);LDW(vLR);STW(R22);
+	LDW(R22);tryhop(3);STW(vLR);RET();
+# ======== ('CODE', 'sss', code18)
+def code18():
+	label('sss');
+	tryhop(4);LDW(vLR);STW(R22);
+	STW(R8);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+# ======== ('BSS', '.27', code19, 5, 1)
+def code19():
+	label('.27');
+	space(5);
+# ======== ('CODE', 'rrr', code20)
+def code20():
+	label('rrr');
+	tryhop(4);LDW(vLR);STW(R22);
+	STW(R8);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+# ======== ('CODE', 'setstatic', code21)
+def code21():
+	label('setstatic');
+	tryhop(4);LDW(vLR);STW(R22);
+	STW(R8);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+# ======== ('CODE', 'gx1', code22)
+def code22():
+	label('gx1');
+	tryhop(4);LDW(vLR);STW(R22);_SP(-2);STW(SP);_SAVE(0, 0x400000); # R22
+	STW(R8);_RESTORE(0, 0x400000);_SP(2);STW(SP);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+# ======== ('CODE', 'ff1', code23)
+def code23():
+	label('ff1');
+	tryhop(4);LDW(vLR);STW(R22);
+	STW(R8);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+# ======== ('CODE', 'gg1', code24)
+def code24():
+	label('gg1');
+	tryhop(4);LDW(vLR);STW(R22);
+	STW(R8);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+# ======== ('CODE', 'hh1', code25)
+def code25():
+	label('hh1');
+	tryhop(4);LDW(vLR);STW(R22);
+	STW(R8);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+# ======== ('CODE', 'cmp', code26)
+def code26():
+	label('cmp');
+	tryhop(4);LDW(vLR);STW(R22);_SP(-2);STW(SP);_SAVE(0, 0x400000); # R22
+	STW(R8);_RESTORE(0, 0x400000);_SP(2);STW(SP);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+# ======== ('CODE', 'sort', code27)
+def code27():
+	label('sort');
+	tryhop(4);LDW(vLR);STW(R22);_SP(-2);STW(SP);_SAVE(0, 0x400000); # R22
+	STW(R8);_RESTORE(0, 0x400000);_SP(2);STW(SP);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+# ======== ('CODE', 'onearg', code28)
+def code28():
+	label('onearg');
+	tryhop(4);LDW(vLR);STW(R22);_SP(-2);STW(SP);_SAVE(0, 0x400000); # R22
+	STW(R8);_RESTORE(0, 0x400000);_SP(2);STW(SP);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+# ======== ('COMMON', 'ss4', code29, 2, 2)
+def code29():
+	align(2);
+	label('ss4');
+	space(2);
+# ======== ('BSS', 'ss2', code30, 2, 2)
+def code30():
+	align(2);
+	label('ss2');
+	space(2);
+# ======== ('BSS', 'ss5', code31, 2, 2)
+def code31():
+	align(2);
+	label('ss5');
+	space(2);
+# ======== ('COMMON', 'ss3', code32, 2, 2)
+def code32():
+	align(2);
+	label('ss3');
+	space(2);
+# ======== ('BSS', 'ss1', code33, 2, 2)
+def code33():
+	align(2);
+	label('ss1');
+	space(2);
+# ======== ('BSS', 'yy', code34, 2, 2)
+def code34():
+	align(2);
+	label('yy');
+	space(2);
+# ======== ('COMMON', 'z', code35, 2, 2)
+def code35():
+	align(2);
+	label('z');
+	space(2);
+# ======== ('COMMON', 'y', code36, 2, 2)
+def code36():
+	align(2);
+	label('y');
+	space(2);
+# ======== ('COMMON', 'x', code37, 2, 2)
+def code37():
+	align(2);
+	label('x');
+	space(2);
+# ======== ('COMMON', 'b', code38, 2, 2)
+def code38():
+	align(2);
+	label('b');
+	space(2);
+# ======== ('COMMON', 'a', code39, 2, 2)
+def code39():
+	align(2);
+	label('a');
+	space(2);
+# ======== (epilog)
+code=[
+	('EXPORT', 'main'),
+	('CODE', 'main', code0),
+	('EXPORT', 'nested'),
+	('CODE', 'nested', code1),
+	('EXPORT', 's'),
+	('CODE', 's', code2),
+	('EXPORT', 'Dy'),
+	('DATA', 'Dy', code3, 4, 2),
+	('EXPORT', 'Dz'),
+	('DATA', 'Dz', code4, 4, 2),
+	('EXPORT', 'Dfunc'),
+	('CODE', 'Dfunc', code5),
+	('EXPORT', 'f'),
+	('CODE', 'f', code6),
+	('EXPORT', 'f1'),
+	('CODE', 'f1', code7),
+	('EXPORT', 'f2'),
+	('CODE', 'f2', code8),
+	('EXPORT', 'g'),
+	('CODE', 'g', code9),
+	('EXPORT', 'h'),
+	('CODE', 'h', code10),
+	('EXPORT', 'h1'),
+	('CODE', 'h1', code11),
+	('EXPORT', 'h2'),
+	('CODE', 'h2', code12),
+	('DATA', '.21', code13, 2, 2),
+	('EXPORT', 'set1'),
+	('CODE', 'set1', code14),
+	('DATA', '.23', code15, 2, 2),
+	('EXPORT', 'set2'),
+	('CODE', 'set2', code16),
+	('CODE', 'goo', code17),
+	('EXPORT', 'sss'),
+	('CODE', 'sss', code18),
+	('BSS', '.27', code19, 5, 1),
+	('EXPORT', 'rrr'),
+	('CODE', 'rrr', code20),
+	('EXPORT', 'setstatic'),
+	('CODE', 'setstatic', code21),
+	('EXPORT', 'gx1'),
+	('CODE', 'gx1', code22),
+	('EXPORT', 'ff1'),
+	('CODE', 'ff1', code23),
+	('EXPORT', 'gg1'),
+	('CODE', 'gg1', code24),
+	('EXPORT', 'hh1'),
+	('CODE', 'hh1', code25),
+	('EXPORT', 'cmp'),
+	('CODE', 'cmp', code26),
+	('EXPORT', 'sort'),
+	('CODE', 'sort', code27),
+	('EXPORT', 'onearg'),
+	('CODE', 'onearg', code28),
+	('IMPORT', 'exit'),
+	('IMPORT', 'qsort'),
+	('IMPORT', 'strcmp'),
+	('COMMON', 'ss4', code29, 2, 2),
+	('BSS', 'ss2', code30, 2, 2),
+	('BSS', 'ss5', code31, 2, 2),
+	('COMMON', 'ss3', code32, 2, 2),
+	('BSS', 'ss1', code33, 2, 2),
+	('BSS', 'yy', code34, 2, 2),
+	('COMMON', 'z', code35, 2, 2),
+	('COMMON', 'y', code36, 2, 2),
+	('COMMON', 'x', code37, 2, 2),
+	('COMMON', 'b', code38, 2, 2),
+	('COMMON', 'a', code39, 2, 2) ]
+module(code=code, name='tst/front.c', cpu=5);
+
+# Local Variables:
+# mode: python
+# indent-tabs-mode: t
+# End:

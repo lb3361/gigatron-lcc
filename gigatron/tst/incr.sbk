@@ -1,0 +1,125 @@
+#VCPUv5
+
+# ======== ('CODE', 'main', code0)
+def code0():
+	label('main');
+	tryhop(4);LDW(vLR);STW(R22);
+	LDI(0);
+	label('.1');
+	STW(R8);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+# ======== ('CODE', 'memchar', code1)
+def code1():
+	label('memchar');
+	tryhop(4);LDW(vLR);STW(R22);_SP(-4);STW(SP);
+	_SP(-4+4);DEEK();STW(R21);
+	LDI(1);STW(R20);
+	_SP(-4+4);STW(R19);
+	LDI(1);ADDW(R21);DOKE(R19);
+	_SP(-1+4);STW(R19);
+	LDW(R21);PEEK();POKE(R19);
+	_SP(-4+4);DEEK();ADDW(R20);STW(R21);
+	_SP(-4+4);STW(R20);
+	LDW(R21);DOKE(R20);
+	_SP(-1+4);STW(R20);
+	LDW(R21);PEEK();POKE(R20);
+	_SP(-4+4);DEEK();STW(R21);
+	LDWI(-1);STW(R20);
+	_SP(-4+4);STW(R19);
+	LDW(R21);ADDW(R20);DOKE(R19);
+	_SP(-1+4);STW(R19);
+	LDW(R21);PEEK();POKE(R19);
+	_SP(-4+4);DEEK();ADDW(R20);STW(R21);
+	_SP(-4+4);STW(R20);
+	LDW(R21);DOKE(R20);
+	_SP(-1+4);STW(R20);
+	LDW(R21);PEEK();POKE(R20);
+	LDI(0);
+	label('.2');
+	STW(R8);_SP(4);STW(SP);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+# ======== ('CODE', 'memint', code2)
+def code2():
+	label('memint');
+	tryhop(4);LDW(vLR);STW(R22);_SP(-4);STW(SP);
+	_SP(-4+4);DEEK();STW(R21);
+	LDI(2);STW(R20);
+	_SP(-4+4);STW(R19);
+	LDI(2);ADDW(R21);DOKE(R19);
+	_SP(-2+4);STW(R19);
+	LDW(R21);DEEK();DOKE(R19);
+	_SP(-4+4);DEEK();ADDW(R20);STW(R21);
+	_SP(-4+4);STW(R20);
+	LDW(R21);DOKE(R20);
+	_SP(-2+4);STW(R20);
+	LDW(R21);DEEK();DOKE(R20);
+	_SP(-4+4);DEEK();STW(R21);
+	LDWI(-2);STW(R20);
+	_SP(-4+4);STW(R19);
+	LDW(R21);ADDW(R20);DOKE(R19);
+	_SP(-2+4);STW(R19);
+	LDW(R21);DEEK();DOKE(R19);
+	_SP(-4+4);DEEK();ADDW(R20);STW(R21);
+	_SP(-4+4);STW(R20);
+	LDW(R21);DOKE(R20);
+	_SP(-2+4);STW(R20);
+	LDW(R21);DEEK();DOKE(R20);
+	LDI(0);
+	label('.3');
+	STW(R8);_SP(4);STW(SP);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+# ======== ('CODE', 'regchar', code3)
+def code3():
+	label('regchar');
+	tryhop(4);LDW(vLR);STW(R22);
+	LDW(R18);STW(R21);
+	LDI(1);ADDW(R21);STW(R18);
+	LDW(R21);PEEK();STW(R19);
+	LDI(1);ADDW(R18);STW(R21);
+	LDW(R21);STW(R18);
+	LDW(R21);PEEK();STW(R19);
+	LDW(R18);STW(R21);
+	LDWI(-1);STW(R20);
+	LDW(R21);ADDW(R20);STW(R18);
+	LDW(R21);PEEK();STW(R19);
+	LDW(R18);ADDW(R20);STW(R21);
+	LDW(R21);STW(R18);
+	LDW(R21);PEEK();STW(R19);
+	LDI(0);
+	label('.4');
+	STW(R8);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+# ======== ('CODE', 'regint', code4)
+def code4():
+	label('regint');
+	tryhop(4);LDW(vLR);STW(R22);
+	LDW(R18);STW(R21);
+	LDI(2);ADDW(R21);STW(R18);
+	LDW(R21);DEEK();STW(R19);
+	LDI(2);ADDW(R18);STW(R21);
+	LDW(R21);STW(R18);
+	LDW(R21);DEEK();STW(R19);
+	LDW(R18);STW(R21);
+	LDWI(-2);STW(R20);
+	LDW(R21);ADDW(R20);STW(R18);
+	LDW(R21);DEEK();STW(R19);
+	LDW(R18);ADDW(R20);STW(R21);
+	LDW(R21);STW(R18);
+	LDW(R21);DEEK();STW(R19);
+	LDI(0);
+	label('.5');
+	STW(R8);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+# ======== (epilog)
+code=[
+	('EXPORT', 'main'),
+	('CODE', 'main', code0),
+	('EXPORT', 'memchar'),
+	('CODE', 'memchar', code1),
+	('EXPORT', 'memint'),
+	('CODE', 'memint', code2),
+	('EXPORT', 'regchar'),
+	('CODE', 'regchar', code3),
+	('EXPORT', 'regint'),
+	('CODE', 'regint', code4) ]
+module(code=code, name='tst/incr.c', cpu=5);
+
+# Local Variables:
+# mode: python
+# indent-tabs-mode: t
+# End:

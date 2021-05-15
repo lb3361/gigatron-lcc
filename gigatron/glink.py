@@ -926,7 +926,7 @@ def _BMOV(s,d,n):
             _LDI(d); STW(T2)
         if s != [vAC] and s != [T3]:
             _LDI(s); STW(T3)
-        _LDI(n-1);ADDW(T3);STW(T1)
+        _LDI(n);ADDW(T3);STW(T1)
         extern('_@_bcopy')
         _CALLI('_@_bcopy')         # [T3..T1) --> [T2..]
 @vasm

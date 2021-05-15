@@ -1,0 +1,400 @@
+#VCPUv5
+
+# ======== ('CODE', 'print', code0)
+def code0():
+	label('print');
+	tryhop(4);LDW(vLR);STW(R22);_SP(-40);STW(SP);_SAVE(38, 0x400000); # R22
+	LDWI('.2');STW(R8);
+	_SP(0);_MOV(R8,[vAC]);
+	LDWI('c');PEEK();XORI(128);SUBI(128);STW(R9);
+	_SP(2);_MOV(R9,[vAC]);
+	LDWI('s');DEEK();STW(R10);
+	_SP(4);_MOV(R10,[vAC]);
+	LDWI('i');DEEK();STW(R11);
+	_SP(6);_MOV(R11,[vAC]);
+	_LMOV('l',L12);
+	_SP(8);_LMOV(L12,[vAC]);
+	LDWI('C');PEEK();STW(R14);
+	_SP(12);_MOV(R14,[vAC]);
+	LDWI('S');DEEK();STW(R15);
+	_SP(14);_MOV(R15,[vAC]);
+	LDWI('I');DEEK();STW(R22);
+	_SP(16);_MOV(R22,[vAC]);
+	_LMOV('L',L21);
+	_SP(18);_LMOV(L21,[vAC]);
+	_FMOV('f',F20);
+	_SP(22);_FMOV(F20,[vAC]);
+	_FMOV('d',F20);
+	_SP(27);_FMOV(F20,[vAC]);
+	_FMOV('D',F20);
+	_SP(32);_FMOV(F20,[vAC]);
+	CALLI('printf');
+	label('.1');
+	_RESTORE(38, 0x400000);_SP(40);STW(SP);LDW(R22);tryhop(3);STW(vLR);RET();
+# ======== ('CODE', 'main', code1)
+def code1():
+	label('main');
+	tryhop(4);LDW(vLR);STW(R22);_SP(-2);STW(SP);_SAVE(0, 0x400000); # R22
+	LDWI('c');STW(R22);
+	LDI(1);POKE(R22);
+	LDWI('c');PEEK();XORI(128);SUBI(128);STW(R22);
+	LDWI('s');STW(R21);
+	LDW(R22);DOKE(R21);
+	LDWI('i');STW(R21);
+	LDW(R22);DOKE(R21);
+	LDW(R22);STW(LAC);LD(vACH);XORI(128);SUBI(128);LD(vACH);ST(LAC+2);ST(LAC+3);_LMOV(LAC,'l');
+	LDW(R22);STW(R21);
+	LDWI('C');STW(R20);
+	LDW(R21);POKE(R20);
+	LDWI('S');STW(R20);
+	LDW(R21);DOKE(R20);
+	LDWI('I');STW(R20);
+	LDW(R21);DOKE(R20);
+	LDW(R22);STW(LAC);LDI(0);STW(LAC+2);_LMOV(LAC,'L');
+	LDW(R22);STW(LAC);LDI(0);STW(LAC+2);_FCVI();_FMOV(FAC,F20);
+	_FMOV(F20,'f');
+	_FMOV(F20,'d');
+	_FMOV(F20,'D');
+	CALLI('print');
+	LDWI('s');STW(R22);
+	LDI(2);DOKE(R22);
+	LDWI('s');DEEK();STW(R22);
+	LDWI('c');STW(R21);
+	LDW(R22);POKE(R21);
+	LDWI('i');STW(R21);
+	LDW(R22);DOKE(R21);
+	LDW(R22);STW(LAC);LD(vACH);XORI(128);SUBI(128);LD(vACH);ST(LAC+2);ST(LAC+3);_LMOV(LAC,'l');
+	LDW(R22);STW(R21);
+	LDWI('C');STW(R20);
+	LDW(R21);POKE(R20);
+	LDWI('S');STW(R20);
+	LDW(R21);DOKE(R20);
+	LDWI('I');STW(R20);
+	LDW(R21);DOKE(R20);
+	LDW(R22);STW(LAC);LDI(0);STW(LAC+2);_LMOV(LAC,'L');
+	LDW(R22);STW(LAC);LDI(0);STW(LAC+2);_FCVI();_FMOV(FAC,F20);
+	_FMOV(F20,'f');
+	_FMOV(F20,'d');
+	_FMOV(F20,'D');
+	CALLI('print');
+	LDWI('i');STW(R22);
+	LDI(3);DOKE(R22);
+	LDWI('i');DEEK();STW(R22);
+	LDWI('c');STW(R21);
+	LDW(R22);POKE(R21);
+	LDWI('s');STW(R21);
+	LDW(R22);DOKE(R21);
+	LDW(R22);STW(LAC);LD(vACH);XORI(128);SUBI(128);LD(vACH);ST(LAC+2);ST(LAC+3);_LMOV(LAC,'l');
+	LDW(R22);STW(R21);
+	LDWI('C');STW(R20);
+	LDW(R21);POKE(R20);
+	LDWI('S');STW(R20);
+	LDW(R21);DOKE(R20);
+	LDWI('I');STW(R20);
+	LDW(R21);DOKE(R20);
+	LDW(R22);STW(LAC);LDI(0);STW(LAC+2);_LMOV(LAC,'L');
+	LDW(R22);STW(LAC);LDI(0);STW(LAC+2);_FCVI();_FMOV(FAC,F20);
+	_FMOV(F20,'f');
+	_FMOV(F20,'d');
+	_FMOV(F20,'D');
+	CALLI('print');
+	_LMOV('.4','l');
+	_LMOV('l',L21);
+	LDWI('c');STW(R20);
+	LDW(L21);POKE(R20);
+	LDWI('s');STW(R19);
+	LDW(L21);DOKE(R19);
+	LDWI('i');STW(R19);
+	LDW(L21);DOKE(R19);
+	LDW(L21);STW(R20);
+	LDWI('C');STW(R19);
+	LDW(R20);POKE(R19);
+	LDWI('S');STW(R19);
+	LDW(R20);DOKE(R19);
+	LDWI('I');STW(R19);
+	LDW(R20);DOKE(R19);
+	_LMOV(L21,'L');
+	_LMOV(L21,LAC);_FCVI();_FMOV(FAC,F20);
+	_FMOV(F20,'f');
+	_FMOV(F20,'d');
+	_FMOV(F20,'D');
+	CALLI('print');
+	LDWI('C');STW(R22);
+	LDI(5);POKE(R22);
+	LDWI('C');PEEK();STW(R22);
+	LDWI('c');STW(R21);
+	LDW(R22);POKE(R21);
+	LDWI('s');STW(R21);
+	LDW(R22);DOKE(R21);
+	LDWI('i');STW(R21);
+	LDW(R22);DOKE(R21);
+	LDW(R22);STW(LAC);LD(vACH);XORI(128);SUBI(128);LD(vACH);ST(LAC+2);ST(LAC+3);_LMOV(LAC,'l');
+	LDW(R22);STW(R21);
+	LDWI('S');STW(R20);
+	LDW(R21);DOKE(R20);
+	LDWI('I');STW(R20);
+	LDW(R21);DOKE(R20);
+	LDW(R22);STW(LAC);LDI(0);STW(LAC+2);_LMOV(LAC,'L');
+	LDW(R22);STW(LAC);LDI(0);STW(LAC+2);_FCVI();_FMOV(FAC,F20);
+	_FMOV(F20,'f');
+	_FMOV(F20,'d');
+	_FMOV(F20,'D');
+	CALLI('print');
+	LDWI('S');STW(R22);
+	LDI(6);DOKE(R22);
+	LDWI('S');DEEK();STW(R22);
+	LDWI('c');STW(R20);
+	LDW(R22);POKE(R20);
+	LDWI('s');STW(R20);
+	LDW(R22);DOKE(R20);
+	LDWI('i');STW(R20);
+	LDW(R22);DOKE(R20);
+	LDW(R22);STW(LAC);LDI(0);STW(LAC+2);_LMOV(LAC,'l');
+	LDWI('C');STW(R21);
+	LDW(R22);POKE(R21);
+	LDWI('I');STW(R21);
+	LDW(R22);DOKE(R21);
+	LDW(R22);STW(LAC);LDI(0);STW(LAC+2);_LMOV(LAC,'L');
+	LDW(R22);STW(LAC);LDI(0);STW(LAC+2);_FCVU();_FMOV(FAC,F20);
+	_FMOV(F20,'f');
+	_FMOV(F20,'d');
+	_FMOV(F20,'D');
+	CALLI('print');
+	LDWI('I');STW(R22);
+	LDI(7);DOKE(R22);
+	LDWI('I');DEEK();STW(R22);
+	LDWI('c');STW(R20);
+	LDW(R22);POKE(R20);
+	LDWI('s');STW(R20);
+	LDW(R22);DOKE(R20);
+	LDWI('i');STW(R20);
+	LDW(R22);DOKE(R20);
+	LDW(R22);STW(LAC);LDI(0);STW(LAC+2);_LMOV(LAC,'l');
+	LDWI('C');STW(R21);
+	LDW(R22);POKE(R21);
+	LDWI('S');STW(R21);
+	LDW(R22);DOKE(R21);
+	LDW(R22);STW(LAC);LDI(0);STW(LAC+2);_LMOV(LAC,'L');
+	LDW(R22);STW(LAC);LDI(0);STW(LAC+2);_FCVU();_FMOV(FAC,F20);
+	_FMOV(F20,'f');
+	_FMOV(F20,'d');
+	_FMOV(F20,'D');
+	CALLI('print');
+	_LMOV('.5','L');
+	_LMOV('L',L21);
+	LDWI('c');STW(R19);
+	LDW(L21);POKE(R19);
+	LDWI('s');STW(R19);
+	LDW(L21);DOKE(R19);
+	LDWI('i');STW(R19);
+	LDW(L21);DOKE(R19);
+	_LMOV(L21,'l');
+	LDWI('C');STW(R20);
+	LDW(L21);POKE(R20);
+	LDWI('S');STW(R20);
+	LDW(L21);DOKE(R20);
+	LDWI('I');STW(R20);
+	LDWI('S');DEEK();DOKE(R20);
+	_LMOV(L21,LAC);_FCVU();_FMOV(FAC,F20);
+	_FMOV(F20,'f');
+	_FMOV(F20,'d');
+	_FMOV(F20,'D');
+	CALLI('print');
+	_FMOV('.6','f');
+	_FMOV('f',F20);
+	_FMOV(F20,FAC);_FTOI();LDW(LAC);STW(R19);
+	LDWI('c');STW(R18);
+	LDW(R19);POKE(R18);
+	LDWI('s');STW(R18);
+	LDW(R19);DOKE(R18);
+	LDWI('i');STW(R18);
+	LDW(R19);DOKE(R18);
+	_FMOV(F20,FAC);_FTOI();_LMOV(LAC,'l');
+	_FMOV(F20,FAC);_FTOU();LDW(LAC);STW(R19);
+	LDWI('C');STW(R18);
+	LDW(R19);POKE(R18);
+	LDWI('S');STW(R18);
+	LDW(R19);DOKE(R18);
+	LDWI('I');STW(R18);
+	LDW(R19);DOKE(R18);
+	_FMOV(F20,FAC);_FTOU();_LMOV(LAC,'L');
+	_FMOV(F20,'d');
+	_FMOV(F20,'D');
+	CALLI('print');
+	_FMOV('.7','d');
+	_FMOV('d',F20);
+	_FMOV(F20,FAC);_FTOI();LDW(LAC);STW(R19);
+	LDWI('c');STW(R18);
+	LDW(R19);POKE(R18);
+	LDWI('s');STW(R18);
+	LDW(R19);DOKE(R18);
+	LDWI('i');STW(R18);
+	LDW(R19);DOKE(R18);
+	_FMOV(F20,FAC);_FTOI();_LMOV(LAC,'l');
+	_FMOV(F20,FAC);_FTOU();LDW(LAC);STW(R19);
+	LDWI('C');STW(R18);
+	LDW(R19);POKE(R18);
+	LDWI('S');STW(R18);
+	LDW(R19);DOKE(R18);
+	LDWI('I');STW(R18);
+	LDW(R19);DOKE(R18);
+	_FMOV(F20,FAC);_FTOU();_LMOV(LAC,'L');
+	_FMOV(F20,'f');
+	_FMOV(F20,'D');
+	CALLI('print');
+	_FMOV('.8','D');
+	_FMOV('D',F20);
+	_FMOV(F20,FAC);_FTOI();LDW(LAC);STW(R19);
+	LDWI('c');STW(R18);
+	LDW(R19);POKE(R18);
+	LDWI('s');STW(R18);
+	LDW(R19);DOKE(R18);
+	LDWI('i');STW(R18);
+	LDW(R19);DOKE(R18);
+	_FMOV(F20,FAC);_FTOI();_LMOV(LAC,'l');
+	_FMOV(F20,FAC);_FTOU();LDW(LAC);STW(R19);
+	LDWI('C');STW(R18);
+	LDW(R19);POKE(R18);
+	LDWI('S');STW(R18);
+	LDW(R19);DOKE(R18);
+	LDWI('I');STW(R18);
+	LDW(R19);DOKE(R18);
+	_FMOV(F20,FAC);_FTOU();_LMOV(LAC,'L');
+	_FMOV(F20,'f');
+	_FMOV(F20,'d');
+	CALLI('print');
+	LDWI('p');STW(R22);
+	LDI(0);DOKE(R22);
+	LDI(0);DOKE(R22);
+	LDI(0);DOKE(R22);
+	LDI(0);DOKE(R22);
+	LDWI('P');STW(R21);
+	LDWI('P');DEEK();DOKE(R22);
+	LDI(0);DOKE(R21);
+	LDI(0);DOKE(R21);
+	LDI(0);DOKE(R21);
+	LDI(0);DOKE(R21);
+	LDWI('p');DEEK();DOKE(R21);
+	LDI(0);
+	label('.3');
+	STW(R8);_RESTORE(0, 0x400000);_SP(2);STW(SP);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+# ======== ('COMMON', 'P', code2, 2, 2)
+def code2():
+	align(2);
+	label('P');
+	space(2);
+# ======== ('COMMON', 'p', code3, 2, 2)
+def code3():
+	align(2);
+	label('p');
+	space(2);
+# ======== ('COMMON', 'D', code4, 5, 1)
+def code4():
+	label('D');
+	space(5);
+# ======== ('COMMON', 'd', code5, 5, 1)
+def code5():
+	label('d');
+	space(5);
+# ======== ('COMMON', 'f', code6, 5, 1)
+def code6():
+	label('f');
+	space(5);
+# ======== ('COMMON', 'L', code7, 4, 2)
+def code7():
+	align(2);
+	label('L');
+	space(4);
+# ======== ('COMMON', 'I', code8, 2, 2)
+def code8():
+	align(2);
+	label('I');
+	space(2);
+# ======== ('COMMON', 'S', code9, 2, 1)
+def code9():
+	label('S');
+	space(2);
+# ======== ('COMMON', 'C', code10, 1, 1)
+def code10():
+	label('C');
+	space(1);
+# ======== ('COMMON', 'l', code11, 4, 2)
+def code11():
+	align(2);
+	label('l');
+	space(4);
+# ======== ('COMMON', 'i', code12, 2, 2)
+def code12():
+	align(2);
+	label('i');
+	space(2);
+# ======== ('COMMON', 's', code13, 2, 1)
+def code13():
+	label('s');
+	space(2);
+# ======== ('COMMON', 'c', code14, 1, 1)
+def code14():
+	label('c');
+	space(1);
+# ======== ('DATA', '.8', code15, 0, 1)
+def code15():
+	label('.8');
+	bytes(132,48,0,0,0); # 11.000000
+# ======== ('DATA', '.7', code16, 0, 1)
+def code16():
+	label('.7');
+	bytes(132,32,0,0,0); # 10.000000
+# ======== ('DATA', '.6', code17, 0, 1)
+def code17():
+	label('.6');
+	bytes(132,16,0,0,0); # 9.000000
+# ======== ('DATA', '.5', code18, 0, 2)
+def code18():
+	align(2);
+	label('.5');
+	words(8,0); # 8
+# ======== ('DATA', '.4', code19, 0, 2)
+def code19():
+	align(2);
+	label('.4');
+	words(4,0); # 4
+# ======== ('DATA', '.2', code20, 0, 1)
+def code20():
+	label('.2');
+	bytes(37,100,32,37,100,32,37,100);
+	bytes(32,37,108,100,32,37,117,32);
+	bytes(37,117,32,37,117,32,37,108);
+	bytes(117,32,37,102,32,37,102,32);
+	bytes(37,108,102,10,0);
+# ======== (epilog)
+code=[
+	('EXPORT', 'print'),
+	('CODE', 'print', code0),
+	('EXPORT', 'main'),
+	('CODE', 'main', code1),
+	('IMPORT', 'printf'),
+	('COMMON', 'P', code2, 2, 2),
+	('COMMON', 'p', code3, 2, 2),
+	('COMMON', 'D', code4, 5, 1),
+	('COMMON', 'd', code5, 5, 1),
+	('COMMON', 'f', code6, 5, 1),
+	('COMMON', 'L', code7, 4, 2),
+	('COMMON', 'I', code8, 2, 2),
+	('COMMON', 'S', code9, 2, 1),
+	('COMMON', 'C', code10, 1, 1),
+	('COMMON', 'l', code11, 4, 2),
+	('COMMON', 'i', code12, 2, 2),
+	('COMMON', 's', code13, 2, 1),
+	('COMMON', 'c', code14, 1, 1),
+	('DATA', '.8', code15, 0, 1),
+	('DATA', '.7', code16, 0, 1),
+	('DATA', '.6', code17, 0, 1),
+	('DATA', '.5', code18, 0, 2),
+	('DATA', '.4', code19, 0, 2),
+	('DATA', '.2', code20, 0, 1) ]
+module(code=code, name='tst/cvt.c', cpu=5);
+
+# Local Variables:
+# mode: python
+# indent-tabs-mode: t
+# End:

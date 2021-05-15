@@ -26,6 +26,8 @@ install: FORCE
 	-${INSTALL} -d "${libdir}/${MAPDIR}
 	${INSTALL} -m 0644 ${B}${MAPDIR}/map.py ${libdir}/${MAPDIR}/
 
+test: FORCE
+
 FORCE: .PHONY
 
 .PHONY: 

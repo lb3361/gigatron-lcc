@@ -12,6 +12,9 @@ LN_S=ln -s
 B=${TOP}${BUILDDIR}/
 BL=${TOP}${BUILDDIR}/libc/
 G=${TOP}gigatron/
+GLCC=${B}glcc
+ROM=../gigatron-rom/dev.rom
+GTSIM=${B}gtsim -rom ${TOP}${ROM}
 
 SFILES=$(wildcard *.s)
 CFILES=$(wildcard *.c)
@@ -37,17 +40,17 @@ ${B}cpu6/libc.a: ${SFILES} ${O6FILES} ${RFILES}
 
 ${BL}%_4.o: %.c ${B}rcc
 	-@mkdir -p ${BL}
-	${B}glcc -c -cpu=4 -o $@ $<
+	${GLCC} -c -cpu=4 -o $@ $<
 
 ${BL}%_5.o: %.c ${B}rcc
 	-@mkdir -p ${BL}
-	${B}glcc -c -cpu=5 -o $@ $<
+	${GLCC} -c -cpu=5 -o $@ $<
 
 ${BL}%_6.o: %.c ${B}rcc
 	-@mkdir -p ${BL}
-	${B}glcc -c -cpu=6 -o $@  $<
+	${GLCC} -c -cpu=6 -o $@  $<
 
-clean: testclean FORCE
+clean: FORCE
 	-rm ${OFILES}
 	-for cpu in 4 5 6; do \
 	   rm ${B}cpu$$cpu/libc.a ; \
@@ -63,31 +66,26 @@ install: FORCE
 
 
 TSTCFILES=$(wildcard tst/TST*.c)
-TSTO4FILES=${patsubst tst/%.c,tst4/%.out,${TSTCFILES}}
-TSTO5FILES=${patsubst tst/%.c,tst5/%.out,${TSTCFILES}}
-GTSIM=${B}gtsim -rom ${TOP}../gigatron-rom/dev.rom
-GLCC=${B}glcc
+TSTO4FILES=${patsubst tst/%.c,${B}tst4/%.out,${TSTCFILES}}
+TSTO5FILES=${patsubst tst/%.c,${B}tst5/%.out,${TSTCFILES}}
 
 test: ${TSTO4FILES} ${TSTO5FILES}
 
-testclean: FORCE
-	-rm -rf tst4 tst5
-
-tst4/%.out: tst4/%.gt1
+%.out: %.gt1
 	${GTSIM} $< > $@
 	cmp $@ tst/`basename $@`
 
-tst5/%.out: tst5/%.gt1
-	${GTSIM} $< > $@
-	cmp $@ tst/`basename $@`
-
-tst4/%.gt1: tst/%.c FORCE
-	test -d tst4 || mkdir tst4
+${B}tst4/%.gt1: tst/%.c FORCE
+	test -d ${B}tst4 || mkdir ${B}tst4
 	${GLCC} -map=sim -cpu=4 -o $@ $<
 
-tst5/%.gt1: tst/%.c FORCE
-	test -d tst5 || mkdir tst5
+${B}tst5/%.gt1: tst/%.c FORCE
+	test -d ${B}tst5 || mkdir ${B}tst5
 	${GLCC} -map=sim -cpu=5 -o $@ $<
+
+${B}tst6/%.gt1: tst/%.c FORCE
+	test -d ${B}tst6 || mkdir ${B}tst6
+	${GLCC} -map=sim -cpu=6 -o $@ $<
 
 FORCE: .PHONY
 

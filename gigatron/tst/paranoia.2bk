@@ -1,0 +1,48 @@
+tst/paranoia.c:339: warning: implicit declaration of function `abort'
+tst/paranoia.c:374: warning: implicit declaration of function `Instructions'
+tst/paranoia.c:375: warning: implicit declaration of function `Pause'
+tst/paranoia.c:376: warning: implicit declaration of function `Heading'
+tst/paranoia.c:378: warning: implicit declaration of function `Characteristics'
+tst/paranoia.c:380: warning: implicit declaration of function `History'
+tst/paranoia.c:387: warning: implicit declaration of function `TstCond'
+tst/paranoia.c:396: warning: implicit declaration of function `TstPtUf'
+tst/paranoia.c:585: warning: implicit declaration of function `BadCond'
+tst/paranoia.c:589: warning: implicit declaration of function `notify'
+tst/paranoia.c:596: warning: implicit declaration of function `BadCond'
+tst/paranoia.c:597: warning: implicit declaration of function `notify'
+tst/paranoia.c:606: warning: implicit declaration of function `notify'
+tst/paranoia.c:721: warning: implicit declaration of function `BadCond'
+tst/paranoia.c:800: warning: implicit declaration of function `notify'
+tst/paranoia.c:837: warning: implicit declaration of function `notify'
+tst/paranoia.c:886: warning: implicit declaration of function `notify'
+tst/paranoia.c:901: warning: implicit declaration of function `BadCond'
+tst/paranoia.c:974: warning: implicit declaration of function `BadCond'
+tst/paranoia.c:988: warning: implicit declaration of function `SqXMinX'
+tst/paranoia.c:1144: warning: implicit declaration of function `NewD'
+tst/paranoia.c:1152: warning: implicit declaration of function `SR3750'
+tst/paranoia.c:1157: warning: implicit declaration of function `NewD'
+tst/paranoia.c:1213: warning: implicit declaration of function `SR3980'
+tst/paranoia.c:1221: warning: implicit declaration of function `PrintIfNPositive'
+tst/paranoia.c:1227: warning: implicit declaration of function `PrintIfNPositive'
+tst/paranoia.c:1236: warning: implicit declaration of function `SR3980'
+tst/paranoia.c:1250: warning: implicit declaration of function `SR3980'
+tst/paranoia.c:1366: warning: implicit declaration of function `TstPtUf'
+tst/paranoia.c:1390: warning: implicit declaration of function `TstPtUf'
+tst/paranoia.c:1584: warning: implicit declaration of function `IsYeqX'
+tst/paranoia.c:1867: warning: missing return value
+tst/paranoia.c:1874: warning: implicit declaration of function `BadCond'
+tst/paranoia.c:1874: warning: missing return value
+tst/paranoia.c:1884: warning: missing return value
+tst/paranoia.c:1924: warning: missing return value
+tst/paranoia.c:1939: warning: missing return value
+tst/paranoia.c:1956: warning: missing return value
+tst/paranoia.c:1975: warning: missing return value
+tst/paranoia.c:1988: warning: missing return value
+tst/paranoia.c:1995: warning: missing return value
+tst/paranoia.c:2055: warning: missing return value
+tst/paranoia.c:2062: warning: missing return value
+tst/paranoia.c:2070: warning: missing return value
+tst/paranoia.c:2087: warning: missing return value
+tst/paranoia.c:2115: warning: missing return value
+tst/paranoia.c:2144: warning: missing return value
+tst/paranoia.c:2173: warning: missing return value

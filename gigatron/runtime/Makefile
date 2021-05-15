@@ -7,20 +7,22 @@ DESTDIR=
 BUILDDIR=build
 B=${TOP}${BUILDDIR}/
 GLCC=${B}glcc
-GTSIM=${B}gtsim -rom ${TOP}../gigatron-rom/dev.rom
-
-CFILES=$(wildcard tst/TST*.c)
-O4FILES=${patsubst tst/%.c,tst4/%.out,${CFILES}}
-O5FILES=${patsubst tst/%.c,tst5/%.out,${CFILES}}
 
 all: FORCE
 
-clean: FORCE
-	-rm -rf tst4 tst5
+clean: testclean FORCE
 
 install: FORCE
 
-test: ${O4FILES} ${O5FILES}
+TSTCFILES=$(wildcard tst/TST*.c)
+TSTO4FILES=${patsubst tst/%.c,tst4/%.out,${TSTCFILES}}
+TSTO5FILES=${patsubst tst/%.c,tst5/%.out,${TSTCFILES}}
+GTSIM=${B}gtsim -rom ${TOP}../gigatron-rom/dev.rom
+
+test: ${TSTO4FILES} ${TSTO5FILES}
+
+testclean: FORCE
+	-rm -rf tst4 tst5
 
 tst4/%.out: tst4/%.gt1
 	${GTSIM} $< > $@

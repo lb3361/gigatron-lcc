@@ -315,8 +315,6 @@ con1: CNSTI1  "%a"  range(a,1,1)
 con1: CNSTU1  "%a"  range(a,1,1)
 con1: CNSTI2  "%a"  range(a,1,1)
 con1: CNSTU2  "%a"  range(a,1,1)
-con8: CNSTI2  "%a"  range(a,8,8)
-con8: CNSTU2  "%a"  range(a,8,8)
 conB: CNSTI2  "%a"  range(a,0,255)
 conB: CNSTU2  "%a"  range(a,0,255)
 conB: CNSTP2  "%a"  if_zpconst(a)
@@ -443,13 +441,15 @@ ac: SUBU2(ac,conBn) "%0ADDI(-(%1));" 28
 ac: SUBP2(ac,conBn) "%0ADDI(-(%1));" 28
 ac: NEGI2(ac)   "%0STW(T3);LDI(0);SUBW(T3);" 68
 ac: NEGI2(reg ) "LDI(0);SUBW(%0);" 48
-ac: LSHI2(ac, conB) "%0%{shl1}" 100
+ac: LSHI2(ac, con1) "%0LSLW();" 28
+ac: LSHU2(ac, con1) "%0LSLW();" 28
+ac: LSHI2(ac, conB) "%0_SHLI(%1);" 100
+ac: LSHU2(ac, conB) "%0_SHLI(%1);" 100
+ac: RSHI2(ac, conB) "%0_SHRIS(%1);" 100
+ac: RSHU2(ac, conB) "%0_SHRIU(%1);" 100
 ac: LSHI2(ac, iarg) "%0%[1b]_SHL(%1);" 200
 ac: RSHI2(ac, iarg) "%0%[1b]_SHRS(%1);" 200
-ac: RSHI2(ac, con8) "%0LD(vACH);XORI(128);SUBI(128);" 64
-ac: LSHU2(ac, conB) "%0%{shl1}" 100
 ac: LSHU2(ac, iarg) "%0%[1b]_SHL(%1);" 200
-ac: RSHU2(ac, con8) "%0LD(vACH);" 16
 ac: RSHU2(ac, iarg) "%0%[1b]_SHRU(%1);" 200
 ac: MULI2(conB, ac) "%1%{mul0}" 100
 ac: MULI2(conBn, ac) "%1%{mul0}" 110
@@ -1117,35 +1117,7 @@ static void myemitfmt(const char *fmt, Node p, Node *kids, short *nts)
 
 static void emit3(const char *fmt, Node p, Node *kids, short *nts)
 {
-  /* %{shlC} -- left shift vAC by a constant */
-  if (!strncmp(fmt,"shl", 3) && fmt[3] >= '0' && fmt[3] <= '9' && ! fmt[4])
-    {
-      int i,c,m;
-      Node k;
-      i = fmt[3] - '0';
-      k = kids[i];
-      assert(k);
-      if (k->syms[0] == 0 || k->syms[0]->scope != CONSTANTS)
-        if (generic(k->op) == INDIR && k->syms[2] && k->syms[2]->u.t.cse)
-          k = k->syms[2]->u.t.cse;
-      assert(k->syms[0] && k->syms[0]->scope == CONSTANTS);
-      c = k->syms[0]->u.c.v.i;
-      assert(c>=0 && c<256);
-      if (c >= 16) {
-        print("LDI(0);");
-        return;
-      }
-      if (c >= 8) {
-        print("ST(vACH);ORI(255);XORI(255);");
-        c -= 8;
-      }
-      while (c > 0) {
-        print("LSLW();");
-        c -= 1;
-      }
-      return;
-    }
-  /* ${mulC[:R]} -- multiplication by a small constant */
+  /* %{mulC[:R]} -- multiplication by a small constant */
   if (!strncmp(fmt,"mul", 3) && fmt[3] >= '0' && fmt[3] <= '9')
     {
       int i, c;

@@ -47,13 +47,12 @@ ${BL}%_6.o: %.c ${B}rcc
 	-@mkdir -p ${BL}
 	${B}glcc -c -cpu=6 -o $@  $<
 
-clean: FORCE
+clean: testclean FORCE
 	-rm ${OFILES}
 	-for cpu in 4 5 6; do \
 	   rm ${B}cpu$$cpu/libc.a ; \
 	   rmdir ${B}cpu$$cpu ; \
 	 done
-	-rm -rf tst4 tst5
 	-rmdir ${BL}
 
 install: FORCE
@@ -70,6 +69,9 @@ GTSIM=${B}gtsim -rom ${TOP}../gigatron-rom/dev.rom
 GLCC=${B}glcc
 
 test: ${TSTO4FILES} ${TSTO5FILES}
+
+testclean: FORCE
+	-rm -rf tst4 tst5
 
 tst4/%.out: tst4/%.gt1
 	${GTSIM} $< > $@

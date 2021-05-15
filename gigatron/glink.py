@@ -731,6 +731,39 @@ def _LD(d):
     else:
         _LDI(d); PEEK()
 @vasm
+def _SHLI(imm):
+    imm &= 0xf
+    if (imm & 0x8):
+        ST('vACH');ORI(255);XORI(255)
+        imm &= 0x7
+    # not worth calling SYS_LSLW8_24 or SYS_LSLW4_46
+    for i in range(0, imm):
+        LSLW()
+@vasm
+def _SHRIS(imm):
+    imm &= 0xf
+    if imm == 8:
+        LD(vACH);XORI(128); SUBI(128)
+    elif imm == 1:
+        extern("_@_shrs1")
+        _CALLI("_@_shrs1")
+    else:
+        STW(T3); LDI(imm); STW(T2);
+        extern('_@_shrs')
+        _CALLJ('_@_shrs')            # T3<<T2 -> vAC
+@vasm
+def _SHRIU(imm):
+    imm &= 0xf
+    if imm == 8:
+        LD(vACH)
+    elif imm == 1:
+        extern("_@_shru1")
+        _CALLI("_@_shru1")
+    else:
+        STW(T3); LDI(imm); STW(T2);
+        extern('_@_shru')
+        _CALLJ('_@_shru')            # T3<<T2 -> vAC
+@vasm
 def _SHL(d):
     STW(T3); LDW(d); STW(T2)
     extern('_@_shl') 

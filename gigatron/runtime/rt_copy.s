@@ -65,7 +65,7 @@ code= [ ('EXPORT', '_@_lcopy'),
         
 
 
-module(code=code, name='_rt_lcopy.s')
+module(code=code, name='rt_lcopy.s')
 
 # Local Variables:
 # mode: python

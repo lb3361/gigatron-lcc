@@ -14,6 +14,10 @@ def code2():
     _LDW('_@_SIGdiv');BEQ('.z2')
     # call _@_SIGdiv if nonzero
     STW(T0);CALL(T0)
+    # if the signal returns,
+    # continue program with the
+    # result returned by the signal
+    POP();RET()
     label('.z2')
     # exit with return code 100
     LDI(20);STW(R8);LDWI('.msg');STW(R9)
@@ -25,7 +29,7 @@ code= [ ('EXPORT', '_@_raise_sigdiv'),
         ('DATA', '.msg', code1, 0, 1),
         ('CODE', '_@_raise_sigdiv', code2) ]
 
-module(code=code, name='_rt_sigdiv.s');
+module(code=code, name='rt_sigdiv.s');
 
 # Local Variables:
 # mode: python

@@ -39,7 +39,7 @@ code= [ ('EXPORT', '_@_lcom'),
         ('CODE', '_@_lor',  code2),
         ('CODE', '_@_lxor', code3) ]
 
-module(code=code, name='_rt_ladd.s');
+module(code=code, name='rt_ladd.s');
 
 # Local Variables:
 # mode: python

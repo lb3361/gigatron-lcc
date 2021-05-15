@@ -23,7 +23,7 @@ def code0():
 code= [ ('EXPORT', '_@_mul'),
         ('CODE', '_@_mul', code0) ]
 
-module(code=code, name='_rt_mul.s');
+module(code=code, name='rt_mul.s');
 
 # Local Variables:
 # mode: python

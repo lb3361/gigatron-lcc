@@ -23,7 +23,7 @@ code= [ ('EXPORT', '_@_lshl1'),
         ('EXPORT', '_@_lshl1_t0t1'),
         ('CODE', '_@_lshl1_t0t1', code1) ]
 
-module(code=code, name='_rt_lshl1.s');
+module(code=code, name='rt_lshl1.s');
 
 # Local Variables:
 # mode: python

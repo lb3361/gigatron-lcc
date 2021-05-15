@@ -40,7 +40,7 @@ code= [ ('EXPORT', '_@_lcmps'),
         ('CODE', '_@_lcmps', code0),
         ('CODE', '_@_lcmpx', code1) ]
 
-module(code=code, name='_rt_lcmp.s');
+module(code=code, name='rt_lcmp.s');
 
 # Local Variables:
 # mode: python

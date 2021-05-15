@@ -55,7 +55,7 @@ code= [ ('CODE', '_@_lmodu', code1),
         ('IMPORT', '_@_ldivu'),
         ('IMPORT', '_@_ldivs') ]
 
-module(code=code, name='_rt_lmod.s');
+module(code=code, name='rt_lmod.s');
 
 # Local Variables:
 # mode: python

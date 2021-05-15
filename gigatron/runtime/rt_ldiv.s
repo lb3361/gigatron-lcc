@@ -138,7 +138,7 @@ code= [ ('EXPORT', '_@_ldivu'),
         ('CODE',   '_@_ldivu', code3),
         ('CODE',   '_@_ldivs', code4) ]
 
-module(code=code, name='_rt_ldiv.s');
+module(code=code, name='rt_ldiv.s');
 
 # Local Variables:
 # mode: python

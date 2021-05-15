@@ -41,7 +41,7 @@ code= [ ('EXPORT', '_@_lsub'),
         ('EXPORT', '_@_lneg'),
         ('CODE', '_@_lneg', code1) ]
 
-module(code=code, name='_rt_lsub.s');
+module(code=code, name='rt_lsub.s');
 
 # Local Variables:
 # mode: python

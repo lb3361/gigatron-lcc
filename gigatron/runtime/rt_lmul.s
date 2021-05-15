@@ -32,7 +32,7 @@ code= [ ('EXPORT', '_@_lmul'),
         ('CODE', '_@_mac32x16', code1),
         ('CODE', '_@_lmul', code2) ]
 
-module(code=code, name='_rt_lmul.s');
+module(code=code, name='rt_lmul.s');
 
 # Local Variables:
 # mode: python

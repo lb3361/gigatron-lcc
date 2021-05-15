@@ -31,7 +31,7 @@ code= [ ('EXPORT', '_@_saveR%dto7' % i) for i in range(0,8) ] + \
       [ ('EXPORT', '_@_restoreR%dto7' % i) for i in range(0,8) ] + \
       [ ('CODE', '_@_restoreR0to7', code1) ] 
 
-module(code=code, name='_rt_save.s');
+module(code=code, name='rt_save.s');
 
 # Local Variables:
 # mode: python

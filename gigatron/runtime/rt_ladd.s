@@ -29,7 +29,7 @@ code= [ ('EXPORT', '_@_ladd'),
         ('EXPORT', '_@_ladd_t0t1'),
         ('CODE', '_@_ladd', code0) ]
 
-module(code=code, name='_rt_ladd.s');
+module(code=code, name='rt_ladd.s');
 
 # Local Variables:
 # mode: python

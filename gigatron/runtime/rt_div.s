@@ -95,7 +95,7 @@ code= [ ('CODE',   '_@_divworker', code0),
         ('EXPORT', '_@_divu'),
         ('EXPORT', '_@_divs') ]
 
-module(code=code, name='_rt_div.s');
+module(code=code, name='rt_div.s');
 
 # Local Variables:
 # mode: python

@@ -54,7 +54,7 @@ code= [ ('CODE', '_@_modu', code1),
         ('IMPORT', '_@_divu'),
         ('IMPORT', '_@_divs') ]
 
-module(code=code, name='_rt_mod.s');
+module(code=code, name='rt_mod.s');
 
 # Local Variables:
 # mode: python

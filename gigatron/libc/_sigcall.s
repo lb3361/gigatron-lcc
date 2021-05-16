@@ -10,8 +10,8 @@ def code0():
     nohop()
     label('.saveR8to22')
     PUSH()
-    LDWI(-34);ADDW(SP);STW(SP)
-    _SP(4);_BMOV(R8,[vAC],30)
+    LDWI(-36);ADDW(SP);STW(SP)
+    _SP(6);_BMOV(R8,[vAC],30)
     POP();RET()
 
 def code1():
@@ -19,19 +19,19 @@ def code1():
     nohop()
     label('.restoreR8to22')
     PUSH()
-    _SP(4);_BMOV([vAC],R8,30)
-    LDI(34);ADDW(SP);STW(SP)
+    _SP(6);_BMOV([vAC],R8,30)
+    LDI(36);ADDW(SP);STW(SP)
     POP();RET()
 
 def code2():
     '''Redirected from _@_raise'''
     nohop()
     label('_sigcall0')
-    PUSH();STW(T0);
+    STW(T0);LDW(vLR);DOKE(SP)
     _CALLJ('.saveR8to22')
     LD(T0);STW(R8);LD(T0+1);STW(R9);_CALLJ('_sigcall');STW(T0)
     _CALLJ('.restoreR8to22')
-    LDW(T0);POP();RET()
+    LDW(SP);DEEK();STW(vLR);LDW(T0);RET()
     
 code=[
     ('IMPORT', '_sigcall'),

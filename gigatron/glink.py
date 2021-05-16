@@ -1163,7 +1163,7 @@ def _SAVE(offset, mask):
                 rt = "_@_saveR%dto7" % i
                 extern(rt)
                 if args.cpu < 5:
-                    _LDI(rt);STW('sysFn');_SP(offset);CALL('sysFn')
+                    _LDI(rt);STW('sysArgs6');_SP(offset);CALL('sysArgs6')
                 else:
                     _SP(offset);CALLI(rt)
                 i = 7
@@ -1197,7 +1197,7 @@ def _RESTORE(offset, mask):
                 rt = "_@_restoreR%dto7" % i
                 extern(rt)
                 if args.cpu < 5:
-                    _LDI(rt);STW('sysFn');_SP(offset);CALL('sysFn')
+                    _LDI(rt);STW('sysArgs6');_SP(offset);CALL('sysArgs6')
                 else:
                     _SP(offset);CALLI(rt)
                 i = 7

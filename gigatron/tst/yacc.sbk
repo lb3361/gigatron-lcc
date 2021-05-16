@@ -13,7 +13,7 @@ def code1():
 # ======== ('CODE', 'yylex', code2)
 def code2():
 	label('yylex');
-	tryhop(4);LDW(vLR);STW(R22);_SP(-10);STW(SP);_SAVE(6, 0x400080); # R7,22
+	tryhop(4);LDW(vLR);DOKE(SP);_SP(-10);STW(SP);_SAVE(8, 0x80); # R7
 	_BRA('.3');
 	label('.2');
 	label('.5');
@@ -41,7 +41,7 @@ def code2():
 	LDWI('yyout');DEEK();STW(R8);
 	LDWI('.16');STW(R9);
 	LDW(R7);STW(R10);
-	_SP(4);_MOV(R10,[vAC]);
+	_SP(6);_MOV(R10,[vAC]);
 	CALLI('fprintf');
 	label('.7');
 	label('.3');
@@ -50,7 +50,8 @@ def code2():
 	LDW(R22);_BGE('.2');
 	LDI(0);
 	label('.1');
-	STW(R8);_RESTORE(6, 0x400080);_SP(10);STW(SP);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	STW(R8);_RESTORE(8, 0x80); # R7
+	_SP(10);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
 # ======== ('DATA', '.17', code3, 0, 2)
 def code3():
 	align(2);
@@ -513,7 +514,7 @@ def code13():
 # ======== ('CODE', 'yylook', code14)
 def code14():
 	label('yylook');
-	tryhop(4);LDW(vLR);STW(R22);_SP(-24);STW(SP);_SAVE(4, 0x4000fe); # R1-7,22
+	tryhop(4);LDW(vLR);DOKE(SP);_SP(-24);STW(SP);_SAVE(6, 0xfe); # R1-7
 	LDWI('yymorfg');DEEK();_BNE('.34');
 	LDWI('yytext');STW(R4);
 	_BRA('.35');
@@ -745,9 +746,9 @@ def code14():
 	LDWI('yytchar');DEEK();POKE(R21);
 	label('.97');
 	LDW(R6);DEEK();ADDI(4);DEEK();STW(R8);
-	_SP(0);_MOV(R8,[vAC]);
+	_SP(2);_MOV(R8,[vAC]);
 	LDWI('yyfnd');DEEK();DEEK();STW(T3);LDI(0);SUBW(T3);STW(R9);
-	_SP(2);_MOV(R9,[vAC]);
+	_SP(4);_MOV(R9,[vAC]);
 	CALLI('yyback');STW(R22);
 	LDW(R22);XORI(1);_BEQ('.101');
 	LDWI('yylstate');STW(R22);
@@ -856,18 +857,19 @@ def code14():
 	LDWI('yytext');STW(R4);
 	_BRA('.36');
 	label('.33');
-	STW(R8);_RESTORE(4, 0x4000fe);_SP(24);STW(SP);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	STW(R8);_RESTORE(6, 0xfe); # R1-7
+	_SP(24);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
 # ======== ('CODE', 'yyback', code15)
 def code15():
 	label('yyback');
-	tryhop(4);LDW(vLR);STW(R22);
+	tryhop(4);LDW(vLR);STW(R21);
 	LDW(R8);_BNE('.122');
 	LDI(0);
 	_BRA('.118');
 	label('.121');
-	LDW(R8);STW(R21);
-	LDI(2);ADDW(R21);STW(R8);
-	LDW(R21);DEEK();XORW(R9);_BNE('.124');
+	LDW(R8);STW(R22);
+	LDI(2);ADDW(R22);STW(R8);
+	LDW(R22);DEEK();XORW(R9);_BNE('.124');
 	LDI(1);
 	_BRA('.118');
 	label('.124');
@@ -875,11 +877,11 @@ def code15():
 	LDW(R8);DEEK();_BNE('.121');
 	LDI(0);
 	label('.118');
-	STW(R8);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	STW(R8);LDW(R21);tryhop(5);STW(vLR);LDW(R8);RET();
 # ======== ('CODE', 'yyinput', code16)
 def code16():
 	label('yyinput');
-	tryhop(4);LDW(vLR);STW(R22);_SP(-6);STW(SP);_SAVE(2, 0x400000); # R22
+	tryhop(4);LDW(vLR);DOKE(SP);_SP(-6);STW(SP);
 	LDWI('yysbuf');STW(R22);
 	LDWI('yysptr');DEEK();_CMPWU(R22);_BLE('.131');
 	LDWI('yysptr');STW(R22);
@@ -925,18 +927,18 @@ def code16():
 	label('.128');
 	LDW(R22);
 	label('.126');
-	STW(R8);_RESTORE(2, 0x400000);_SP(6);STW(SP);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	STW(R8);_SP(6);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
 # ======== ('CODE', 'yyoutput', code17)
 def code17():
 	label('yyoutput');
-	tryhop(4);LDW(vLR);STW(R22);_SP(-6);STW(SP);_SAVE(4, 0x400000); # R22
-	_SP(0+6);STW(R22);
-	LDW(R8);DOKE(R22);
+	tryhop(4);LDW(vLR);DOKE(SP);_SP(-8);STW(SP);_SAVE(6, 0x80); # R7
+	LDW(R8);STW(R7);
 	LDWI('yyout');DEEK();STW(R22);
 	LDW(R22);DEEK();SUBI(1);STW(R21);
 	LDW(R21);DOKE(R22);
 	LDW(R21);_BGE('.136');
-	_SP(0+6);DEEK();LD(vACL);STW(R8);
+	LD(R7);ST(R22);
+	LDW(R22);STW(R8);
 	LDWI('yyout');DEEK();STW(R9);
 	CALLI('_flsbuf');
 	_BRA('.137');
@@ -944,32 +946,33 @@ def code17():
 	LDWI('yyout');DEEK();ADDI(2);STW(R22);
 	LDW(R22);DEEK();STW(R21);
 	LDI(1);ADDW(R21);DOKE(R22);
-	_SP(0+6);DEEK();POKE(R21);
+	LDW(R7);POKE(R21);
 	label('.137');
 	LDI(0);
 	label('.135');
-	STW(R8);_RESTORE(4, 0x400000);_SP(6);STW(SP);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	STW(R8);_RESTORE(6, 0x80); # R7
+	_SP(8);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
 # ======== ('CODE', 'yyunput', code18)
 def code18():
 	label('yyunput');
-	tryhop(4);LDW(vLR);STW(R22);
-	LDWI('yytchar');STW(R21);
-	LDW(R8);DOKE(R21);
+	tryhop(4);LDW(vLR);STW(R20);
+	LDWI('yytchar');STW(R22);
+	LDW(R8);DOKE(R22);
 	LDWI('yytchar');DEEK();XORI(10);_BNE('.139');
-	LDWI('yylineno');STW(R21);
-	LDWI('yylineno');DEEK();SUBI(1);DOKE(R21);
+	LDWI('yylineno');STW(R22);
+	LDWI('yylineno');DEEK();SUBI(1);DOKE(R22);
 	label('.139');
-	LDWI('yysptr');STW(R21);
-	LDWI('yysptr');DEEK();STW(R20);
-	LDI(1);ADDW(R20);DOKE(R21);
-	LDWI('yytchar');DEEK();POKE(R20);
+	LDWI('yysptr');STW(R22);
+	LDWI('yysptr');DEEK();STW(R21);
+	LDI(1);ADDW(R21);DOKE(R22);
+	LDWI('yytchar');DEEK();POKE(R21);
 	LDI(0);
 	label('.138');
-	STW(R8);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	STW(R8);LDW(R20);tryhop(5);STW(vLR);LDW(R8);RET();
 # ======== ('CODE', 'main', code19)
 def code19():
 	label('main');
-	tryhop(4);LDW(vLR);STW(R22);_SP(-2);STW(SP);_SAVE(0, 0x400000); # R22
+	tryhop(4);LDW(vLR);DOKE(SP);_SP(-2);STW(SP);
 	LDWI('yyin');STW(R22);
 	LDWI('_iob');DOKE(R22);
 	LDWI('yyout');STW(R22);
@@ -977,20 +980,20 @@ def code19():
 	CALLI('yyparse');
 	LDI(0);
 	label('.141');
-	STW(R8);_RESTORE(0, 0x400000);_SP(2);STW(SP);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	STW(R8);_SP(2);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
 # ======== ('CODE', 'yyerror', code20)
 def code20():
 	label('yyerror');
-	tryhop(4);LDW(vLR);STW(R22);_SP(-6);STW(SP);_SAVE(4, 0x400000); # R22
-	_SP(0+6);STW(R22);
+	tryhop(4);LDW(vLR);DOKE(SP);_SP(-6);STW(SP);
+	_SP(2+6);STW(R22);
 	LDW(R8);DOKE(R22);
 	LDWI('.144');STW(R8);
-	_SP(0+6);DEEK();STW(R9);
-	_SP(2);_MOV(R9,[vAC]);
+	_SP(2+6);DEEK();STW(R9);
+	_SP(4);_MOV(R9,[vAC]);
 	CALLI('printf');
 	LDI(0);
 	label('.143');
-	STW(R8);_RESTORE(4, 0x400000);_SP(6);STW(SP);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	STW(R8);_SP(6);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
 # ======== ('DATA', 'yyexca', code21, 0, 1)
 def code21():
 	label('yyexca');
@@ -1400,7 +1403,7 @@ def code31():
 # ======== ('CODE', 'yyparse', code32)
 def code32():
 	label('yyparse');
-	tryhop(4);LDW(vLR);STW(R22);_SP(-324);STW(SP);_SAVE(4, 0x4000ff); # R0-7,22
+	tryhop(4);LDW(vLR);DOKE(SP);_SP(-324);STW(SP);_SAVE(6, 0xff); # R0-7
 	LDI(0);STW(R22);
 	LDW(R22);STW(R6);
 	LDWI('yychar');STW(R22);
@@ -1624,17 +1627,18 @@ def code32():
 	label('.225');
 	LDWI('.226');STW(R8);
 	LDWI('yytext');STW(R9);
-	_SP(2);_MOV(R9,[vAC]);
+	_SP(4);_MOV(R9,[vAC]);
 	CALLI('printf');
 	_BRA('.148');
 	label('.227');
 	LDWI('.144');STW(R8);
 	LDWI('yytext');STW(R9);
-	_SP(2);_MOV(R9,[vAC]);
+	_SP(4);_MOV(R9,[vAC]);
 	CALLI('printf');
 	_BRA('.148');
 	label('.145');
-	STW(R8);_RESTORE(4, 0x4000ff);_SP(324);STW(SP);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	STW(R8);_RESTORE(6, 0xff); # R0-7
+	_SP(324);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
 # ======== ('DATA', '.203', code33, 0, 2)
 def code33():
 	align(2);

@@ -3,17 +3,17 @@
 # ======== ('CODE', 'main', code0)
 def code0():
 	label('main');
-	tryhop(4);LDW(vLR);STW(R22);_SP(-22);STW(SP);_SAVE(8, 0x4000fc); # R2-7,22
-	_SP(0+22);STW(R22);
-	LDW(R8);DOKE(R22);
+	tryhop(4);LDW(vLR);DOKE(SP);_SP(-22);STW(SP);_SAVE(10, 0xfc); # R2-7
 	_SP(2+22);STW(R22);
+	LDW(R8);DOKE(R22);
+	_SP(4+22);STW(R22);
 	LDW(R9);DOKE(R22);
-	_SP(0+22);DEEK();_CMPIS(1);_BGT('.2');
+	_SP(2+22);DEEK();_CMPIS(1);_BGT('.2');
 	_FMOV('.4',F2);
 	_BRA('.3');
 	label('.2');
-	_SP(2+22);DEEK();ADDI(2);DEEK();STW(R8);
-	_SP(0);_MOV(R8,[vAC]);
+	_SP(4+22);DEEK();ADDI(2);DEEK();STW(R8);
+	_SP(2);_MOV(R8,[vAC]);
 	CALLI('atof');_FMOV(FAC,F20);
 	_FMOV(F20,FAC);LDWI('.5');_FDIV();_FMOV(FAC,F2);
 	label('.3');
@@ -37,7 +37,7 @@ def code0():
 	LDW(R22);STW(R5);
 	LDWI(-1);XORW(R22);_BNE('.10');
 	LDWI('.14');STW(R8);
-	_SP(0);_MOV(R8,[vAC]);
+	_SP(2);_MOV(R8,[vAC]);
 	CALLI('printf');
 	LDI(0);STW(R7);
 	label('.15');
@@ -48,23 +48,23 @@ def code0():
 	_FMOV(F20,FAC);LDI(F17);_FDIV();LDI(F2);_FCMP();_BLT('.19');
 	LDW(R7);_CMPIS(32);_BGT('.21');
 	LDWI('.23');STW(R8);
-	_SP(0);_MOV(R8,[vAC]);
+	_SP(2);_MOV(R8,[vAC]);
 	LDW(R7);STW(R9);
-	_SP(2);_MOV(R9,[vAC]);
+	_SP(4);_MOV(R9,[vAC]);
 	CALLI('printf');
 	_BRA('.22');
 	label('.21');
 	LDWI('.24');STW(R8);
-	_SP(0);_MOV(R8,[vAC]);
+	_SP(2);_MOV(R8,[vAC]);
 	LDW(R7);STW(R9);
-	_SP(2);_MOV(R9,[vAC]);
+	_SP(4);_MOV(R9,[vAC]);
 	CALLI('printf');
 	label('.22');
 	LDWI('.25');STW(R8);
-	_SP(0);_MOV(R8,[vAC]);
+	_SP(2);_MOV(R8,[vAC]);
 	LDWI('f');STW(R22);
 	LDW(R6);STW(LAC);LDI(0);STW(LAC+2);_FCVI();_FMOV(FAC,F19);
-	LDW(R7);LSLW();LSLW();ADDW(R7);ADDW(R22);_FMOV([vAC],FAC);LDWI('.5');_FMUL();LDI(F19);_FDIV();_SP(2);_FMOV(FAC,[vAC]);
+	LDW(R7);LSLW();LSLW();ADDW(R7);ADDW(R22);_FMOV([vAC],FAC);LDWI('.5');_FMUL();LDI(F19);_FDIV();_SP(4);_FMOV(FAC,[vAC]);
 	CALLI('printf');
 	label('.19');
 	label('.16');
@@ -72,7 +72,8 @@ def code0():
 	LDW(R7);_CMPIS(127);_BLE('.15');
 	LDI(0);
 	label('.1');
-	STW(R8);_RESTORE(8, 0x4000fc);_SP(22);STW(SP);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	STW(R8);_RESTORE(10, 0xfc); # R2-7
+	_SP(22);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
 # ======== ('COMMON', 'f', code1, 640, 1)
 def code1():
 	label('f');

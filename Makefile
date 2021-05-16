@@ -116,21 +116,21 @@ TST6=${patsubst ${G}tst/%.1bk,${B}tst6/%.out, ${TSTBK1FILES}}
 
 ${B}tst0/%.s: tst/%.c FORCE
 	test -d ${B}tst0 || mkdir ${B}tst0
-	-${GLCC} -S -o $@  $< 2>${B}tst0/$(*F).out
-	cmp ${B}tst0/$(*F).out ${G}tst/$(*F).2bk
-	cmp $@ ${G}tst/$(*F).sbk
+	-${GLCC} -S -o $@  $< 2>"${B}tst0/$(*F).out"
+	cmp "${B}tst0/$(*F).out" "${G}tst/$(*F).2bk"
+	[ ! -r "${G}tst/$(*F).sbk" ] || cmp $@ "${G}tst/$(*F).sbk"
 
 ${B}tst4/%.gt1: tst/%.c FORCE
 	test -d ${B}tst4 || mkdir ${B}tst4
-	${GLCC} -map=sim -cpu=4 -o $@ $< 2>${B}tst0/$(*F).out
+	${GLCC} -map=sim -cpu=4 -o $@ $< 2>"${B}tst0/$(*F).out"
 
 ${B}tst5/%.gt1: tst/%.c FORCE
 	test -d ${B}tst5 || mkdir ${B}tst5
-	${GLCC} -map=sim -cpu=5 -o $@ $< 2>${B}tst0/$(*F).out
+	${GLCC} -map=sim -cpu=5 -o $@ $< 2>"${B}tst0/$(*F).out"
 
 ${B}tst6/%.gt1: tst/%.c FORCE
 	test -d ${B}tst6 || mkdir ${B}tst6
-	${GLCC} -map=sim -cpu=6 -o $@ $< 2>${B}tst0/$(*F).out
+	${GLCC} -map=sim -cpu=6 -o $@ $< 2>"${B}tst0/$(*F).out"
 
 glcc-test: ${TST0} ${TST4} ${TST5}
 

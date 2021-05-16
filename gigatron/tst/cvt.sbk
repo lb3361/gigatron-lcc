@@ -3,38 +3,38 @@
 # ======== ('CODE', 'print', code0)
 def code0():
 	label('print');
-	tryhop(4);LDW(vLR);STW(R22);_SP(-40);STW(SP);_SAVE(38, 0x400000); # R22
+	tryhop(4);LDW(vLR);DOKE(SP);_SP(-40);STW(SP);
 	LDWI('.2');STW(R8);
-	_SP(0);_MOV(R8,[vAC]);
+	_SP(2);_MOV(R8,[vAC]);
 	LDWI('c');PEEK();XORI(128);SUBI(128);STW(R9);
-	_SP(2);_MOV(R9,[vAC]);
+	_SP(4);_MOV(R9,[vAC]);
 	LDWI('s');DEEK();STW(R10);
-	_SP(4);_MOV(R10,[vAC]);
+	_SP(6);_MOV(R10,[vAC]);
 	LDWI('i');DEEK();STW(R11);
-	_SP(6);_MOV(R11,[vAC]);
+	_SP(8);_MOV(R11,[vAC]);
 	_LMOV('l',L12);
-	_SP(8);_LMOV(L12,[vAC]);
+	_SP(10);_LMOV(L12,[vAC]);
 	LDWI('C');PEEK();STW(R14);
-	_SP(12);_MOV(R14,[vAC]);
+	_SP(14);_MOV(R14,[vAC]);
 	LDWI('S');DEEK();STW(R15);
-	_SP(14);_MOV(R15,[vAC]);
+	_SP(16);_MOV(R15,[vAC]);
 	LDWI('I');DEEK();STW(R22);
-	_SP(16);_MOV(R22,[vAC]);
+	_SP(18);_MOV(R22,[vAC]);
 	_LMOV('L',L21);
-	_SP(18);_LMOV(L21,[vAC]);
+	_SP(20);_LMOV(L21,[vAC]);
 	_FMOV('f',F20);
-	_SP(22);_FMOV(F20,[vAC]);
+	_SP(24);_FMOV(F20,[vAC]);
 	_FMOV('d',F20);
-	_SP(27);_FMOV(F20,[vAC]);
+	_SP(29);_FMOV(F20,[vAC]);
 	_FMOV('D',F20);
-	_SP(32);_FMOV(F20,[vAC]);
+	_SP(34);_FMOV(F20,[vAC]);
 	CALLI('printf');
 	label('.1');
-	_RESTORE(38, 0x400000);_SP(40);STW(SP);LDW(R22);tryhop(3);STW(vLR);RET();
+	_SP(40);STW(SP);DEEK();tryhop(3);STW(vLR);RET();
 # ======== ('CODE', 'main', code1)
 def code1():
 	label('main');
-	tryhop(4);LDW(vLR);STW(R22);_SP(-2);STW(SP);_SAVE(0, 0x400000); # R22
+	tryhop(4);LDW(vLR);DOKE(SP);_SP(-2);STW(SP);
 	LDWI('c');STW(R22);
 	LDI(1);POKE(R22);
 	LDWI('c');PEEK();XORI(128);SUBI(128);STW(R22);
@@ -277,7 +277,7 @@ def code1():
 	LDWI('p');DEEK();DOKE(R21);
 	LDI(0);
 	label('.3');
-	STW(R8);_RESTORE(0, 0x400000);_SP(2);STW(SP);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	STW(R8);_SP(2);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
 # ======== ('COMMON', 'P', code2, 2, 2)
 def code2():
 	align(2);

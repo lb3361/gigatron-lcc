@@ -1187,6 +1187,7 @@ static void doarg(Node p)
   if (argoffset == 0) {
     argno = 0;
     argmaxno = 0;
+    argoffset = 2;
     for (c=p; c; c=c->link)
       if (generic(c->op) == CALL ||
           (generic(c->op) == ASGN && generic(c->kids[1]->op) == CALL &&
@@ -1242,22 +1243,34 @@ static void printregmask(unsigned mask) {
 
 static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
 {
+  /* stack frame:
+  |                    n bytes                   : arguments
+  |    SP+Framesize -> 2 bytes                   : saved vLR
+  |                    maxoffset bytes           : local variables
+  |                    sisesave bytes            : saved registers
+  |                    maxargoffset bytes        : argument building area
+  |              SP -> 2 bytes                   : buffer where callees can save vLR
+  **/
+
   int i, tmpr, roffset, sizesave, ty;
+  unsigned savemask;
   Symbol r;
   usedmask[0] = usedmask[1] = 0;
   freemask[0] = freemask[1] = ~(unsigned)0;
-  offset = maxoffset = maxargoffset = 0;
+  offset = maxoffset = 0;
+  maxargoffset = 2;
   assert(f->type && f->type->type);
   ty = ttob(f->type->type);
-  tmpr = topbit(REGMASK_TEMPS);
+  tmpr = -1;
   if (ncalls) {
     tmask[IREG] = REGMASK_TEMPS;
     vmask[IREG] = REGMASK_SAVED;
   } else {
-    tmask[IREG] = REGMASK_TEMPS & ~(1<<tmpr);
+    tmask[IREG] = REGMASK_TEMPS;
     vmask[IREG] = REGMASK_MOREVARS;
   }
   /* locate incoming arguments */
+  offset = 2;
   roffset = 0;
   for (i = 0; callee[i]; i++) {
     Symbol p = callee[i];
@@ -1277,6 +1290,9 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
         q->x = p->x;
         q->type = p->type;
       } else {
+        /* Be more aggressive allocating registers for arguments */
+        if (!p->addressed && p->ref >= 1.5)
+          p->sclass = REGISTER;
         /* Let gencode know about args passed in register */
         q->sclass = REGISTER;
         q->x = r->x;
@@ -1291,6 +1307,18 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   assert(!caller[i]);
   offset = 0;
   gencode(caller, callee);
+  /* compute framesize */
+  savemask = usedmask[IREG] & REGMASK_SAVED;
+  sizesave = 2 * bitcount(savemask);
+  maxargoffset = (maxargoffset + 1) & ~0x1;
+  maxoffset = (maxoffset + 1) & ~0x1;
+  framesize = maxargoffset + sizesave + maxoffset;
+  assert(framesize >= 2);
+  /* can we make a frameless leaf function */
+  if (ncalls == 0 && framesize == 2 && (tmask[IREG] & ~usedmask[IREG])) {
+    tmpr = topbit(tmask[IREG] & ~usedmask[IREG]);
+    framesize = 0;
+  }
   /* prologue */
   xprint_init();
   segment(CODE);
@@ -1298,34 +1326,35 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   print("# ======== %s\n", lhead.prev->s);
   print("def code%d():\n", codenum++);
   print("\tlabel(%s);\n", f->x.name);
-  print("\ttryhop(4);LDW(vLR);STW(%s);", ireg[tmpr]->x.name);
-  usedmask[IREG] &= REGMASK_SAVED;
-  if (ncalls) usedmask[IREG] |= (1<<tmpr);
-  sizesave = 2 * bitcount(usedmask[IREG]);
-  maxargoffset = (maxargoffset + 1) & ~0x1;
-  maxoffset = (maxoffset + 1) & ~0x1;
-  framesize = maxargoffset + sizesave + maxoffset;
-  if (framesize > 0)
-    print("_SP(%d);STW(SP);",-framesize);
-  if (sizesave) {
-    print("_SAVE(%d, 0x%x); # ", maxargoffset, usedmask[IREG]);
-    printregmask(usedmask[IREG]);
+  if (framesize == 0) {
+    print("\ttryhop(4);LDW(vLR);STW(%s);\n", ireg[tmpr]->x.name);
+  } else {
+    print("\ttryhop(4);LDW(vLR);DOKE(SP);_SP(%d);STW(SP);", -framesize);
+    if (sizesave) {
+      print("_SAVE(%d, 0x%x); # ", maxargoffset, savemask);
+      printregmask(savemask);
+    }
+    print("\n");
   }
-  print("\n");
   /* Emit actual code */
   emitcode();
   /* Epilogue */
   print("\t");
   if (opsize(ty) <= 2 && (optype(ty) == I || optype(ty) == U || optype(ty) == P))
     print("STW(R8);");
-  if (sizesave)
-    print("_RESTORE(%d, 0x%x);", maxargoffset, usedmask[IREG]);
-  if (framesize)
-    print("_SP(%d);STW(SP);", framesize);
-  if (opsize(ty) <= 2 && (optype(ty) == I || optype(ty) == U || optype(ty) == P))
-    print("LDW(%s);tryhop(5);STW(vLR);LDW(R8);RET();\n", ireg[tmpr]->x.name);
+  if (sizesave) {
+    print("_RESTORE(%d, 0x%x); # ", maxargoffset, savemask);
+    printregmask(savemask);
+    print("\n\t");
+  }
+  if (framesize == 0)
+    print("LDW(%s);", ireg[tmpr]->x.name);
   else
-    print("LDW(%s);tryhop(3);STW(vLR);RET();\n", ireg[tmpr]->x.name);
+    print("_SP(%d);STW(SP);DEEK();", framesize);
+  if (opsize(ty) <= 2 && (optype(ty) == I || optype(ty) == U || optype(ty) == P))
+    print("tryhop(5);STW(vLR);LDW(R8);RET();\n");
+  else
+    print("tryhop(3);STW(vLR);RET();\n");
   /* print delayed data */
   xprint_finish();
 }

@@ -3,13 +3,13 @@
 # ======== ('CODE', 'main', code0)
 def code0():
 	label('main');
-	tryhop(4);LDW(vLR);STW(R22);_SP(-4);STW(SP);_SAVE(2, 0x400000); # R22
+	tryhop(4);LDW(vLR);DOKE(SP);_SP(-4);STW(SP);
 	LDI(0);STW(R8);
-	_SP(0);_MOV(R8,[vAC]);
+	_SP(2);_MOV(R8,[vAC]);
 	CALLI('exit');
 	LDI(0);
 	label('.1');
-	STW(R8);_RESTORE(2, 0x400000);_SP(4);STW(SP);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	STW(R8);_SP(4);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
 # ======== ('CODE', 'nested', code1)
 def code1():
 	label('nested');
@@ -51,8 +51,8 @@ def code4():
 # ======== ('CODE', 'Dfunc', code5)
 def code5():
 	label('Dfunc');
-	tryhop(4);LDW(vLR);STW(R22);_SP(-2);STW(SP);_SAVE(0, 0x400000); # R22
-	STW(R8);_RESTORE(0, 0x400000);_SP(2);STW(SP);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	tryhop(4);LDW(vLR);DOKE(SP);_SP(-2);STW(SP);
+	STW(R8);_SP(2);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
 # ======== ('CODE', 'f', code6)
 def code6():
 	label('f');
@@ -66,23 +66,23 @@ def code7():
 # ======== ('CODE', 'f2', code8)
 def code8():
 	label('f2');
-	tryhop(4);LDW(vLR);STW(R22);_SP(-2);STW(SP);_SAVE(0, 0x400000); # R22
-	STW(R8);_RESTORE(0, 0x400000);_SP(2);STW(SP);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	tryhop(4);LDW(vLR);DOKE(SP);_SP(-2);STW(SP);
+	STW(R8);_SP(2);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
 # ======== ('CODE', 'g', code9)
 def code9():
 	label('g');
-	tryhop(4);LDW(vLR);STW(R22);_SP(-2);STW(SP);_SAVE(0, 0x400000); # R22
-	STW(R8);_RESTORE(0, 0x400000);_SP(2);STW(SP);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	tryhop(4);LDW(vLR);DOKE(SP);_SP(-2);STW(SP);
+	STW(R8);_SP(2);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
 # ======== ('CODE', 'h', code10)
 def code10():
 	label('h');
-	tryhop(4);LDW(vLR);STW(R22);_SP(-2);STW(SP);_SAVE(0, 0x400000); # R22
-	STW(R8);_RESTORE(0, 0x400000);_SP(2);STW(SP);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	tryhop(4);LDW(vLR);DOKE(SP);_SP(-2);STW(SP);
+	STW(R8);_SP(2);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
 # ======== ('CODE', 'h1', code11)
 def code11():
 	label('h1');
-	tryhop(4);LDW(vLR);STW(R22);_SP(-2);STW(SP);_SAVE(0, 0x400000); # R22
-	STW(R8);_RESTORE(0, 0x400000);_SP(2);STW(SP);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	tryhop(4);LDW(vLR);DOKE(SP);_SP(-2);STW(SP);
+	STW(R8);_SP(2);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
 # ======== ('CODE', 'h2', code12)
 def code12():
 	label('h2');
@@ -135,8 +135,8 @@ def code21():
 # ======== ('CODE', 'gx1', code22)
 def code22():
 	label('gx1');
-	tryhop(4);LDW(vLR);STW(R22);_SP(-2);STW(SP);_SAVE(0, 0x400000); # R22
-	STW(R8);_RESTORE(0, 0x400000);_SP(2);STW(SP);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	tryhop(4);LDW(vLR);DOKE(SP);_SP(-2);STW(SP);
+	STW(R8);_SP(2);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
 # ======== ('CODE', 'ff1', code23)
 def code23():
 	label('ff1');
@@ -155,18 +155,18 @@ def code25():
 # ======== ('CODE', 'cmp', code26)
 def code26():
 	label('cmp');
-	tryhop(4);LDW(vLR);STW(R22);_SP(-2);STW(SP);_SAVE(0, 0x400000); # R22
-	STW(R8);_RESTORE(0, 0x400000);_SP(2);STW(SP);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	tryhop(4);LDW(vLR);DOKE(SP);_SP(-2);STW(SP);
+	STW(R8);_SP(2);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
 # ======== ('CODE', 'sort', code27)
 def code27():
 	label('sort');
-	tryhop(4);LDW(vLR);STW(R22);_SP(-2);STW(SP);_SAVE(0, 0x400000); # R22
-	STW(R8);_RESTORE(0, 0x400000);_SP(2);STW(SP);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	tryhop(4);LDW(vLR);DOKE(SP);_SP(-2);STW(SP);
+	STW(R8);_SP(2);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
 # ======== ('CODE', 'onearg', code28)
 def code28():
 	label('onearg');
-	tryhop(4);LDW(vLR);STW(R22);_SP(-2);STW(SP);_SAVE(0, 0x400000); # R22
-	STW(R8);_RESTORE(0, 0x400000);_SP(2);STW(SP);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	tryhop(4);LDW(vLR);DOKE(SP);_SP(-2);STW(SP);
+	STW(R8);_SP(2);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
 # ======== ('COMMON', 'ss4', code29, 2, 2)
 def code29():
 	align(2);

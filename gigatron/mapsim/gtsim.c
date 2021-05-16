@@ -531,16 +531,30 @@ void print_trace(void)
   word addr = addlo(deek(vPC),2);
   operand[0] = 0;
   disassemble(addr, &mnemonic, operand);
-  fprintf(stderr, "%04x:  [", addr);
+  fprintf(stderr, "%04x: [", addr);
   fprintf(stderr, " vAC=%04x vLR=%04x", deek(vAC), deek(vLR));
   if (strchr(trace, 's'))
     fprintf(stderr, " vSP=%02x", peek(vSP));
   if (strchr(trace, 'l'))
-    fprintf(stderr, " LACt=%04x LACz=%02x LAC=%08x",
-            deek(0x81), peek(0x83), leek(0x84));
+    fprintf(stderr, " B[0-2]=%02x %02x %02x LAC=%08x",
+            peek(0x81), peek(0x82), peek(0x83), leek(0x84));
   if (strchr(trace, 't'))
     fprintf(stderr, " T[0-3]=%04x %04x %04x %04x",
             deek(T0), deek(T0+2), deek(T0+4), deek(T0+6));
+  if (strchr(trace, 'r')) {
+    int i;
+    fprintf(stderr, "\n\t R[0-7]=%04x", deek(R0));
+    for (i=1; i<8; i++)
+      fprintf(stderr, " %04x", deek(R0+i+i));
+    fprintf(stderr, "\n\t R[8-15]=%04x", deek(R0+16));
+    for (i=9; i<16; i++)
+      fprintf(stderr, " %04x", deek(R0+i+i));
+    fprintf(stderr, "\n\t R[16-22]=%04x", deek(R0+32));
+    for (i=16; i<23; i++)
+      fprintf(stderr, " %04x", deek(R0+i+i));
+  }
+  if (strchr(trace, 's'))
+    fprintf(stderr, " SP=%04x", deek(SP));
   fprintf(stderr, " ]  %-5s %-18s\n",  mnemonic, operand);
 }
 

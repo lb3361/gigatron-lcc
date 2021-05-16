@@ -74,7 +74,7 @@ def code15():
 	LDWI(v('_iob')+8);STW(R8);
 	CALLI('fflush');
 	LDWI('sigsave');DEEK();_BEQ('.4');
-	LDI(8);STW(R8);
+	LDI(4);STW(R8);
 	LDWI('sigsave');DEEK();STW(R9);
 	CALLI('signal');
 	LDWI('sigsave');STW(R22);
@@ -128,7 +128,7 @@ def code17():
 	LDI(1);DOKE(R22);
 	LDWI('Milestone');STW(R22);
 	LDI(0);DOKE(R22);
-	LDI(8);STW(R8);
+	LDI(4);STW(R8);
 	LDWI('sigfpe');STW(R9);
 	CALLI('signal');
 	CALLI('Instructions');

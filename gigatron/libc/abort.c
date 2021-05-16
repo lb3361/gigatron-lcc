@@ -1,7 +1,7 @@
 #include <stdlib.h>
+#include <signal.h>
 
 void abort(void)
 {
-	extern int _exitm(int,const char*);
-	_exitm(10, "Abort");
+	raise(SIGABRT);
 }

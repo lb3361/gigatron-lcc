@@ -68,7 +68,8 @@ def code3():
     PUSH()
     LDI(0);STW(B0);STW(T2);STW(T2+2)
     LDW(T0);ORW(T0+2);_BNE('.d1')             # if divisor is zero
-    _CALLJ('_@_raise_sigdiv')
+    LDWI(0x0104)
+    _CALLI('_@_raise');_BRA('.dret')
     label('.d1')
     LDW(T0+2);_BGE('.dA')                     # if divisor >= 0x8000000
     _CALLJ('_@_lcmpu_t0t1');_BLT('.dret')
@@ -104,7 +105,8 @@ def code4():
     PUSH()
     LDI(0);STW(B0);ST(B2);STW(T2);STW(T2+2)
     LDW(T0);ORW(T0+2);_BNE('.s1')             # if divisor is zero
-    _CALLJ('_@_raise_sigdiv')
+    LDWI(0x0104)
+    _CALLI('_@_raise');_BRA('.sret')
     label('.s1')                              # store signs
     LDW(T0+2);_BGE('.s2')
     _CALLJ('_@_lneg_t0t1')
@@ -131,7 +133,7 @@ code= [ ('EXPORT', '_@_ldivu'),
         ('IMPORT', '_@_lshl1'),
         ('IMPORT', '_@_lshl1_t0t1'),
         ('IMPORT', '_@_lneg'),
-        ('IMPORT', '_@_raise_sigdiv'),
+        ('IMPORT', '_@_raise'),
         ('CODE', '_@_lshl1_t2t3', code0),
         ('CODE', '_@_lneg_t0t1', code1),
         ('CODE', '_@_ldivworker', code2),

@@ -24,7 +24,7 @@ test: ${TSTO4FILES} ${TSTO5FILES}
 
 %.out: %.gt1
 	${GTSIM} $< > $@
-	cmp $@ tst/`basename $@`
+	cmp $@ tst/$(@F)
 
 ${B}tst4/%.gt1: tst/%.c FORCE
 	test -d ${B}tst4 || mkdir ${B}tst4

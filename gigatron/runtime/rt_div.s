@@ -37,13 +37,14 @@ def code1():
    PUSH()
    LDI(0);STW(T1);STW(B0)
    LDW(T2);_BGT('.divuA');_BNE('.divu1')
-   _CALLJ('_@_raise_sigdiv')# case d == 0
+   LDWI(0x0104)             # case d == 0
+   _CALLI('_@_raise');_BRA('.divu5')
    label('.divu1')          # case d >= 0x8000
    LDW(T3);_BGE('.divu2')
    SUBW(T2);_BLT('.divu2')
-   STW(T3);LDI(1);_BRA('.divuret')
+   STW(T3);LDI(1);_BRA('.divu5')
    label('.divu2')
-   LDI(0);_BRA('.divuret')
+   LDI(0);_BRA('.divu5')
    label('.divuA')          # case 0 < d < 0x8000
    LDW(T3);_BGE('.divuB')
    label('.divu3')          # | a >= 0x8000
@@ -56,7 +57,7 @@ def code1():
    label('.divuB')          # | a < 0x8000
    _CALLJ('_@_divworker')
    LDW(T1)
-   label('.divuret')
+   label('.divu5')
    tryhop(2);POP();RET()
 
 
@@ -66,8 +67,9 @@ def code2():
    label('_@_divs')
    PUSH()
    LDI(0);STW(T1);STW(B0);ST(B2)
-   LDW(T2);_BGE('.divs2');_BNE('.divs1')
-   _CALLJ('_@_raise_sigdiv')          # case d == 0
+   LDW(T2);_BGT('.divs2');_BNE('.divs1')
+   LDWI(0x0104)                       # case d == 0
+   _CALLI('_@_raise');_BRA('.divs5')
    label('.divs1')
    LDI(0);SUBW(T2);STW(T2);INC(B2)    # case d < 0
    label('.divs2')
@@ -91,7 +93,7 @@ def code2():
 code= [ ('CODE',   '_@_divworker', code0),
         ('CODE', '_@_divu', code1), 
         ('CODE', '_@_divs', code2), 
-        ('IMPORT', '_@_raise_sigdiv'),
+        ('IMPORT', '_@_raise'),
         ('EXPORT', '_@_divu'),
         ('EXPORT', '_@_divs') ]
 

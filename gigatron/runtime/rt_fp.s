@@ -33,49 +33,29 @@ def scope():
     T2L = T2
     T2H = T2+1
 
-
     # ==== sigFPE exception
 
     def code_vsp():
-        '''Saved vSP for returning from a sigFPE exception'''
+        '''Saved vSP for fpe recovery'''
         label('.vspfpe')
         space(1)
     def macro_save_vsp(r=T2):
         '''Save vSP for returning from a sigFPE exception. 
            Clobbers r which defaults to T2'''
         LDWI('.vspfpe');STW(r);LD(vSP);DOKE(r)
-    def code_sigfpe():
-        align(2)
-        label('_@_SIGFPE')
-        space(2)
-    def code_msg_fpe():
-        label('.msg_fpe')
-        bytes(b'Floating point exception', 0)
-    def code_raise_sigfpe():
+    def code_fpe():
         nohop()
-        label('_@_divbyzero')
-        LDI(3)  # FPE_FLTDIV
-        BRA('_@_raise_sigfpe')
-        label('_@_overflow')
-        LDI(4)  # FPE_FLTOVF
-        label('_@_raise_sigfpe')
-        STW(R9); LDI(8); STW(R8) # SIGFPE
-        LDWI(0xffff); ST(AEXP); STW(AM); STW(AM+2)
-        LDWI('_@_SIGFPE'); STW(T0); DEEK(); BEQ('.raise2'); STW(T1)
-        LDI(0); DOKE(T0);               # reset sigfpe to default
-        CALL(T1);                       # call 
-        LDWI('.vspfpe')                 # return result if signal returns
-        POP(); RET()
-        label('.raise2')                # default disposition: exit
-        LDI(20);STW(R8)
-        LDWI('.msg_ovf');STW(R9)
-        _CALLJ('_exitm')
-        HALT()
+        label('_@_ovf') ############ overflow
+        LDWI(0x204);BRA('.fpe1')
+        label('_@_fpe') ############ floating point error
+        LDWI(0x304)
+        label('.fpe1')
+        _CALLI('_@_raise')
+        _LD('.vspfpe'); ST(vSP)
+        POP();RET()
 
     code += [('BSS','.vspfpe', code_vsp, 1, 1),
-             ('COMMON', '_@_SIGFPE', code_sigfpe, 2, 2),
-             ('DATA', '.msg_fpe', code_msg_fpe, 0, 1),
-             ('CODE', '_@_raise_sigfpe', code_raise_sigfpe) ]
+             ('CODE', '_@_fpe', code_fpe) ]
 
     # ==== load/store FAC 
 

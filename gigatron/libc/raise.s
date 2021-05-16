@@ -15,10 +15,10 @@ def code1():
     STW(T0);ANDI(0xf8);BEQ('.raise1');LDWI(0xffff);RET() # bad signo
     label('.raise1')
     LDWI('_sigptr'); DEEK(); BEQ('.raise2')
-    PUSH();STW(T3);LDW(T0);CALL(T3);POP();RET()          # dispatcher
+    STW(T3);LDW(vLR);DOKE(SP);LDW(T0);CALL(T3);          # dispatcher (no return)
     label('.raise2')
-    LD(T0);STW(R8);LD(T0+1);STW(R9);_CALLJ('_exits')     # exit
-    HALT()
+    LD(T0);STW(R8);LD(T0+1);STW(R9);_CALLJ('_exits')     # exit (no return)
+    HALT()                                               # just in case
     
 code=[
     ('IMPORT', '_exits'),

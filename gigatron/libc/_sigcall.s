@@ -24,13 +24,12 @@ def code1():
     POP();RET()
 
 def code2():
-    '''Redirected from _@_raise'''
+    '''Redirected from _@_raise with vLR saved in [SP].'''
     nohop()
     label('_sigcall0')
-    STW(T0);LDW(vLR);DOKE(SP)
-    _CALLJ('.saveR8to22')
-    LD(T0);STW(R8);LD(T0+1);STW(R9);_CALLJ('_sigcall');STW(T0)
-    _CALLJ('.restoreR8to22')
+    STW(T0);_CALLJ('.saveR8to22')
+    LD(T0);STW(R8);LD(T0+1);STW(R9);_CALLJ('_sigcall')
+    STW(T0);_CALLJ('.restoreR8to22')
     LDW(SP);DEEK();STW(vLR);LDW(T0);RET()
     
 code=[

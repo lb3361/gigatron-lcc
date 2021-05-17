@@ -60,10 +60,8 @@ code= [ ('EXPORT', '_@_lcopy'),
         ('EXPORT', '_@_fcopy_nc'),
         ('CODE', '.copy2', code0),
         ('CODE', '_@_lcopy', code1),
-        ('CODE', '_@_bcopy', code2),
-        ('CODE', '_@_fcopy_nc', code3) ]
-        
-
+        ('CODE', '_@_fcopy_nc', code2),
+        ('CODE', '_@_bcopy', code3) ]
 
 module(code=code, name='rt_lcopy.s')
 

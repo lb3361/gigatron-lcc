@@ -59,8 +59,7 @@ def code3():
 	LDWI('.4');DEEK();STW(R8);
 	_SP(2);_MOV(R8,[vAC]);
 	LDWI('.2');STW(R22);
-	LDW(R7);LSLW();ADDW(R22);DEEK();STW(R22);
-	CALL(R22);STW(R22);
+	LDW(R7);LSLW();ADDW(R22);DEEK();CALL(vAC);STW(R22);
 	LDWI(v('.3')+32);STW(R21);
 	LDW(R22);DOKE(R21);
 	LDWI(v('.3')+34);STW(R22);
@@ -10104,8 +10103,7 @@ def code82():
 	LDWI('glork');DOKE(R22);
 	LDI(4);STW(R8);
 	_SP(2);_MOV(R8,[vAC]);
-	_SP(-128+156);DEEK();STW(R22);
-	CALL(R22);STW(R22);
+	_SP(-128+156);DEEK();CALL(vAC);STW(R22);
 	LDW(R22);XORI(4);_BEQ('.3144');
 	LDI(28);ADDW(R7);DEEK();_BEQ('.3146');
 	LDWI('.3135');STW(R8);

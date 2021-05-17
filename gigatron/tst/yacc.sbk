@@ -21,8 +21,7 @@ def code2():
 	LDW(R7);_CMPWS(R22);_BLT('.6');
 	LDW(R7);_CMPIS(4);_BGT('.6');
 	LDWI(v('.17')+2);STW(R22);
-	LDW(R7);LSLW();ADDW(R22);DEEK();STW(R22);
-	CALL(R22);
+	LDW(R7);LSLW();ADDW(R22);DEEK();CALL(vAC);
 	label('.8');
 	CALLI('yywrap');STW(R22);
 	LDW(R22);_BEQ('.7');
@@ -1512,8 +1511,7 @@ def code32():
 	LDW(R0);_BLT('.187');
 	LDW(R0);_CMPIS(3);_BGT('.187');
 	LDWI('.203');STW(R22);
-	LDW(R0);LSLW();ADDW(R22);DEEK();STW(R22);
-	CALL(R22);
+	LDW(R0);LSLW();ADDW(R22);DEEK();CALL(vAC);
 	label('.190');
 	LDWI('.191');STW(R8);
 	CALLI('yyerror');
@@ -1590,8 +1588,7 @@ def code32():
 	LDW(R0);_CMPIS(4);_BLT('.148');
 	LDW(R0);_CMPIS(14);_BGT('.148');
 	LDWI(v('.228')-8);STW(R22);
-	LDW(R0);LSLW();ADDW(R22);DEEK();STW(R22);
-	CALL(R22);
+	LDW(R0);LSLW();ADDW(R22);DEEK();CALL(vAC);
 	label('.210');
 	LDWI('yyerrflag');STW(R22);
 	LDI(0);DOKE(R22);

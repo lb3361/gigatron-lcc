@@ -2389,8 +2389,7 @@ def code17():
 	LDW(R22);_CMPIS(1);_BLT('.523');
 	LDW(R22);_CMPIS(4);_BGT('.523');
 	LDWI(v('.545')-2);STW(R21);
-	LDW(R22);LSLW();ADDW(R21);DEEK();STW(R22);
-	CALL(R22);
+	LDW(R22);LSLW();ADDW(R21);DEEK();CALL(vAC);
 	label('.525');
 	_FMOV('Underflow','UfThold');
 	_FMOV('CInvrse',F20);
@@ -3152,8 +3151,7 @@ def code17():
 	LDW(R22);_CMPIS(2);_BLT('.707');
 	LDW(R22);_CMPIS(5);_BGT('.707');
 	LDWI(v('.713')-4);STW(R21);
-	LDW(R22);LSLW();ADDW(R21);DEEK();STW(R22);
-	CALL(R22);
+	LDW(R22);LSLW();ADDW(R21);DEEK();CALL(vAC);
 	label('.709');
 	_FMOV('One',FAC);LDWI('U2');_FADD();_FMOV(FAC,'X');
 	_BRA('.708');

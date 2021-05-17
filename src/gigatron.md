@@ -672,18 +672,25 @@ stmt: ASGNF5(pdst,INDIRF5(psrc)) "\t%[0b]%[1b]_FMOV(%1,%0);\n" 160
 # Calls
 fac: CALLF5(addr) "CALLI(%0);" mincpu5(28)
 fac: CALLF5(reg)  "CALL(%0);" 26
+fac: CALLF5(ac)   "%0CALL(vAC);" 26
 lac: CALLI4(addr) "CALLI(%0);" mincpu5(28)
 lac: CALLI4(reg)  "CALL(%0);" 26
+lac: CALLI4(ac)   "%0CALL(vAC);" 26
 lac: CALLU4(addr) "CALLI(%0);" mincpu5(28)
 lac: CALLU4(reg)  "CALL(%0);" 26
+lac: CALLU4(ac)   "%0CALL(vAC);" 26
 ac: CALLI2(addr)  "CALLI(%0);" mincpu5(28)
 ac: CALLI2(reg)   "CALL(%0);" 26
+ac: CALLI2(ac)    "%0CALL(vAC);" 26
 ac: CALLU2(addr)  "CALLI(%0);" mincpu5(28)
 ac: CALLU2(reg)   "CALL(%0);" 26
+ac: CALLU2(ac)    "%0CALL(vAC);" 26
 ac: CALLP2(addr)  "CALLI(%0);" mincpu5(28)
 ac: CALLP2(reg)   "CALL(%0);" 26
+ac: CALLP2(ac)    "%0CALL(vAC);" 26
 stmt: CALLV(addr) "\tCALLI(%0);\n" mincpu5(28)
 stmt: CALLV(reg)  "\tCALL(%0);\n" 26
+stmt: CALLV(ac)   "\t%0CALL(vAC);\n" 26
 stmt: ARGF5(vsrc) "\t%[0b]_SP(%c);_FMOV(%0,[vAC]);\n"  if_arg_stk(a)
 stmt: ARGI4(vsrc) "\t%[0b]_SP(%c);_LMOV(%0,[vAC]);\n"  if_arg_stk(a)
 stmt: ARGU4(vsrc) "\t%[0b]_SP(%c);_LMOV(%0,[vAC]);\n"  if_arg_stk(a)
@@ -742,6 +749,7 @@ fac: CVIF5(lac) "%0_FCVI();" if_cv_from(a,4,200)
 stmt: LABELV       "\tlabel(%a);\n"
 stmt: JUMPV(addr)  "\t_BRA(%0);\n"  14
 stmt: JUMPV(reg)   "\tCALL(%0);\n"  14
+stmt: JUMPV(ac)    "\t%0CALL(vAC);\n" 14
 
 
 # More opcodes for cpu=5

@@ -75,8 +75,7 @@ def code2():
 	LDW(R6);_CMPIS(98);_BLT('.20');
 	LDW(R6);_CMPIS(102);_BGT('.20');
 	LDWI(v('.52')-196);STW(R22);
-	LDW(R6);LSLW();ADDW(R22);DEEK();STW(R22);
-	CALL(R22);
+	LDW(R6);LSLW();ADDW(R22);DEEK();CALL(vAC);
 	label('.51');
 	LDW(R6);XORI(119);_BEQ('.38');
 	_BRA('.20');

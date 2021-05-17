@@ -1139,12 +1139,11 @@ def _CALLI(d):
 def _CALLJ(d):
     '''Call subroutine at far location d. 
        - For cpu >= 5. this function just emits a CALLI instruction
-       - For cpu < 5, this function trashes vAC, 'sysArgs6' and 'sysArgs7' 
-         but generates a smaller code than _CALLI.'''
+       - For cpu < 5, this function trashes vAC.'''
     if args.cpu >= 5:
         CALLI(d)
     else:
-        tryhop(7);LDWI(d);STW('sysArgs6');CALL('sysArgs6')
+        tryhop(5);LDWI(d);CALL(vAC)
 @vasm
 def _SAVE(offset, mask):
     '''Save all registers specified by mask at [SP+offset],

@@ -538,6 +538,9 @@ void print_trace(void)
   if (strchr(trace, 'l'))
     fprintf(stderr, " B[0-2]=%02x %02x %02x LAC=%08x",
             peek(0x81), peek(0x82), peek(0x83), leek(0x84));
+  if (strchr(trace, 'f'))
+    fprintf(stderr, " S=%02x AE=%02x AM=%02x.%08x",
+            peek(0x81), peek(0x82), peek(0x87), leek(0x83));
   if (strchr(trace, 't'))
     fprintf(stderr, " T[0-3]=%04x %04x %04x %04x",
             deek(T0), deek(T0+2), deek(T0+4), deek(T0+6));

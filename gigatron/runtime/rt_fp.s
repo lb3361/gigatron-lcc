@@ -27,7 +27,7 @@ def scope():
 
     B0 = B1 = B2 = LAC = None
     SIGN = 0x81   # FAC sign in the high bit. Other bits reserved
-    AEXP = 0x82   # FAC exponent
+    AE = 0x82   # FAC exponent
     AM = 0x83     # FAC mantissa with an additional high byte
     BM = T0
     T2L = T2
@@ -39,39 +39,179 @@ def scope():
         '''Saved vSP for fpe recovery'''
         label('.vspfpe')
         space(1)
+
     def macro_save_vsp(r=T2):
         '''Save vSP for returning from a sigFPE exception. 
            Clobbers r which defaults to T2'''
         LDWI('.vspfpe');STW(r);LD(vSP);DOKE(r)
+
     def code_fpe():
         nohop()
-        label('_@_ovf') ############ overflow
+        label('_@_fovf') ### overflow
+        LDWI(0xffff);_CALLI('_@_fsetfac')
         LDWI(0x204);BRA('.fpe1')
-        label('_@_fpe') ############ floating point error
+        label('_@_fpe')  ### floating point error
         LDWI(0x304)
         label('.fpe1')
         _CALLI('_@_raise')
         _LD('.vspfpe'); ST(vSP)
         POP();RET()
 
-    code += [('BSS','.vspfpe', code_vsp, 1, 1),
+    code += [('IMPORT', '_@_raise'),
+             ('BSS','.vspfpe', code_vsp, 1, 1),
              ('CODE', '_@_fpe', code_fpe) ]
 
     # ==== load/store FAC 
 
-    #    extern('_@_fstorefac')
-    #    extern('_@_floadfac') 
-    #    extern('_@_fadd')
-    #    extern('_@_fsub')
-    #    extern('_@_fmul')
-    #    extern('_@_fdiv')
-    #    extern('_@_fneg')
-    #    extern('_@_fcmp')
+    def code_fldfac():
+        nohop()
+        label('_@_fldfac')
+        if args.cpu <= 5:
+            # it does not seem worth testing for the lack of page crossings
+            LDW(T3);PEEK();ST(AE)
+            LDI(1);ADDW(T3);PEEK();ST(AM+3);ANDI(0x80);ST(SIGN)
+            LDI(2);ADDW(T3);PEEK();ST(AM+2)
+            LDI(3);ADDW(T3);PEEK();ST(AM+1)
+            LDI(4);ADDW(T3);PEEK();ST(AM)
+            LD(AM+3);ORI(0x80);ST(AM+3)
+            LDI(0);ST(AM+4)
+            RET()
+        else:
+            # cpu6 brings (untested) possibilities
+            LDW(T3)
+            ANDI(0xfc)
+            XORI(0xfc)
+            BEQ('.fldslow')
+            # -- no page crossings
+            LDW(T3)
+            PEEKA+(AE)
+            PEEKA+(AM+3)
+            PEEKA+(AM+2)
+            PEEKA+(AM+1)
+            PEEKA+(AM)
+            LD(AM+3);ANDI(0x80);ST(SIGN)
+            ORBI(AM+3, 0x80)
+            MOVQ(AM+4, 0x00)
+            RET()
+            # -- with page crossings
+            label('.fltslow')
+            LDW(T3)
+            PEEKA(AE)
+            INCW(vAC);PEEKA(AM+3)
+            INCW(vAC);PEEKA(AM+2)
+            INCW(vAC);PEEKA(AM+1)
+            INCW(vAC);PEEKA(AM)
+            LD(AM+3);ANDI(0x80);ST(SIGN)
+            ORBI(AM+3, 0x80)
+            MOVQ(AM+4, 0x00)
+            RET()
+
+    def code_fstfac():
+        nohop()
+        label('_@_fstfac')
+        LD(AE);POKE(T2)
+        LD(SIGN);BGE('.fst1')
+        LD(AM+3);ORI(0x80);BRA('.fst2')      # negative
+        label('.fst1');LD(AM+3);ANDI(0x7f)  # positive
+        label('.fst2');ST(T3)
+        if args.cpu <= 5:
+            LDW(T2)
+            ANDI(0xfc)
+            XORI(0xfc)
+            BEQ('.fstslow')
+            # -- no page crossings
+            INC(T2);LD(T3);POKE(T2)
+            INC(T2);LD(AM+2);POKE(T2)
+            INC(T2);LD(AM+1);POKE(T2)
+            INC(T2);LD(AM);POKE(T2)
+            RET()
+            # -- page crossings
+            label('.fstslow')
+            LDI(1);ADDW(T2);STW(T2);LD(T3);POKE(T2)
+            LDI(1);ADDW(T2);STW(T2);LD(AM+2);POKE(T2)
+            LDI(1);ADDW(T2);STW(T2);LD(AM+1);POKE(T2)
+            LDI(1);ADDW(T2);STW(T2);LD(AM);POKE(T2)
+            RET()
+        else:
+            # is it true that cpu6 has no POKEA+ (?)
+            LDW(T2)
+            INCW(vAC);POKEA(T3)
+            INCW(vAC);POKEA(AM+2)
+            INCW(vAC);POKEA(AM+1)
+            INCW(vAC);POKEA(AM)
+            RET()
+
+    def code_fclrfac():
+        nohop()
+        label('_@_fclrfac')
+        LDI(0)
+        label('_@_fsetfac')
+        ST(AE)
+        STW(AM)
+        STW(AM+2)
+        LDI(0)
+        ST(SIGN)
+        ST(AM+4)
+        RET()
+
+
+    code += [('EXPORT', '_@_fldfac'),
+             ('EXPORT', '_@_fstfac'),
+             ('CODE', '_@_fldfac', code_fldfac),
+             ('CODE', '_@_fstfac', code_fstfac),
+             ('CODE', '_@_fclrfac', code_fclrfac) ]
+
+    # ==== normalization
+
+
+    # ==== conversions
+
     #    extern('_@_ftou')
     #    extern('_@_ftoi')
     #    extern('_@_fcvi')
     #    extern('_@_fcvu')
 
+    # ==== additions and subtractions
+
+    #    extern('_@_fadd')
+    #    extern('_@_fsub')
+
+    # ==== multiplication
+
+    #    extern('_@_fmul')
+
+    # ==== division
+
+    #    extern('_@_fdiv')
+
+    # ==== comparisons
+
+    #    extern('_@_fcmp')
+
+    # ==== misc
+
+    def code_fneg():
+        nohop()
+        label('_@_fneg')
+        LD(SIGN);XORI(0x80);ST(SIGN)
+        RET()
+
+    def code_fscalb():
+        nohop()
+        label('_@_fscalb')
+        PUSH()
+        STW(T0);LD(AE);ADDW(T0);BLT('.fscalund')
+        ST(AE);LD(vACH);BNE('.fscalovf')
+        POP();RET()
+        label('.fscalund') # underflow
+        _CALLJ('_@_fclrfac');POP();RET()
+        label('.fscalovf') # overflow
+        macro_save_vsp();_CALLJ('_@_fovf');HALT()
+
+    code += [('EXPORT', '_@_fneg'),
+             ('EXPORT', '_@_fscalb'),
+             ('CODE', '_@_fneg', code_fneg),
+             ('CODE', '_@_fscalb', code_fscalb) ]
 
     return code
 

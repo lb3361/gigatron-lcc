@@ -1049,15 +1049,15 @@ def _FMOV(s,d):
                 STW(T3)
             elif s != [T3]:
                 _LDI(s); STW(T3)
-            extern('_@_fstorefac') 
-            _CALLI('_@_fstorefac')   # [T3..T3+5) --> FAC
+            extern('_@_fldfac')
+            _CALLI('_@_fldfac')   # [T3..T3+5) --> FAC
         elif s == FAC:
             if d == [vAC]:
                 STW(T2)
             elif d != [T2]:
                 _LDI(d); STW(T2)
-            extern('_@_floadfac') 
-            _CALLJ('_@_floadfac')   # FAC --> [T2..T2+5)
+            extern('_@_fstfac')
+            _CALLJ('_@_fstfac')   # FAC --> [T2..T2+5)
         elif is_zeropage(d, 4) and is_zeropage(s, 4):
             _LDW(s); STW(d); _LDW(s+2); STW(d+2); _LD(s+4); ST(d+4)
         else:
@@ -1120,6 +1120,11 @@ def _FCVI():
 def _FCVU():
     extern('_@_fcvu')
     _CALLJ('_@_fcvu')
+@vasm
+def _FSCALB():
+    extern('_@_fscalb')
+    _CALLI('_@_fscalb')
+
 @vasm
 def _CALLI(d):
     '''Call subroutine at far location d.
@@ -1608,7 +1613,7 @@ def process_magic_heap(s, head_module, head_addr):
     for s in segment_list:
         a0 = (s.pc + 1) & ~0x1
         a1 = s.eaddr &  ~0x1
-        if a1 - a0 >= 24:
+        if a1 - a0 >= max(24, args.mhss or 24):
             s.buffer.extend(builtins.bytes(4 + (s.pc & 1)))
             doke_gt1(a0, a1 - a0)
             doke_gt1(a0 + 2, deek_gt1(head_addr))
@@ -1773,6 +1778,9 @@ def main(argv):
                             help='minimal segment size for functions split across segments.')
         parser.add_argument('--no-runtime-bss-initialization', action='store_true',
                             help='cause all bss segments to go as zeroes in the gt1 file')
+        parser.add_argument('--minimal-heap-segment-size', dest='mhss',
+                            metavar='SIZE', type=int, action='store',
+                            help='minimal heap segment size for __glink_magic_heap.')
         parser.add_argument('--debug-messages', '-d', dest='d', action='count', default=0,
                             help='enable debugging output. repeat for more.')
         args = parser.parse_args(argv)

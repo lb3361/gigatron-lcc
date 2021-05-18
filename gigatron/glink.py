@@ -620,7 +620,7 @@ def POP():
     tryhop(1); emit(0x63)
 @vasm
 def ALLOC(d):
-    tryhop(2); emit(0xdf, check_zp(d))
+    tryhop(2); emit(0xdf, check_im8s(d))
 @vasm
 def SYS(op):
     op = v(op)

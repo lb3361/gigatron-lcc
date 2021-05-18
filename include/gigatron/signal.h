@@ -9,16 +9,16 @@ typedef void (*sig_handler_t)(int);
 #define SIG_ERR ((sig_handler_t)(unsigned int)-1)
 #define SIG_IGN ((sig_handler_t)1)
 
-/* Non recoverable signals        */
-#define SIGABRT	0  /* see abort() */
-#define SIGILL	1  /* (not impl.) */
-#define SIGSEGV	2  /* (not impl.) */
-#define SIGQUIT	3  /* (not impl.) */
-/* Recoverable signals            */
-#define SIGFPE  4  /* see runtime */
-#define SIGINT	5  /* (not impl.) */
-#define SIGTERM	6  /* (not impl.) */
-#define SIGVBL  7  /* (not yet.)  */
+/* -- Non recoverable signals  */
+#define SIGABRT	0  /*  abort() */
+#define SIGILL	1  /*  n/a     */
+#define SIGSEGV	2  /*  n/a     */
+#define SIGQUIT	3  /*  n/a     */
+/* -- Recoverable signals      */
+#define SIGFPE  4  /*  runtime */
+#define SIGINT	5  /*  n/a     */
+#define SIGTERM	6  /*  n/a     */
+#define SIGVIRQ 7  /*  vIRQ    */
 
 #define FPE_INTDIV      1       /* integer divide by zero */
 #define FPE_FLTOVF      2       /* floating point overflow */

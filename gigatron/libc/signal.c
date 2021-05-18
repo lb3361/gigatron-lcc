@@ -1,19 +1,27 @@
 #include <signal.h>
 
 extern void _exits(int, int);
-extern void _sigcall0();
 
 static sig_handler_t sigvec[8];
-void (*_sigptr)();
+
+extern void _sigcall0();
+extern void _sigvirq0();
+extern void (*_sigptr)();
+extern void (*vIRQ_v5)();
 
 sig_handler_t signal(int signo, sig_handler_t h)
 {
-	sig_handler_t old;
+	register sig_handler_t old;
+	/* validate arguments */
 	if ((signo & ~7u) || (h == SIG_ERR))
 		return SIG_ERR;
-	_sigptr = _sigcall0;
+	/* signal table */
 	old = sigvec[signo];
 	sigvec[signo] = h;
+	/* activate */
+	_sigptr = _sigcall0;
+	if (signo == SIGVIRQ)
+		vIRQ_v5 = (~1u & (unsigned)h) ? _sigvirq0 : 0;
 	return old;
 }
 
@@ -22,14 +30,15 @@ int _sigcall(int signo, int fpeinfo)
 	typedef int (*handler)(int,int);
 	handler *vec = (handler*)sigvec;
 	handler h;
-
+	
 	signo &= 7;
 	h = vec[signo];
-	if (h == (handler)SIG_IGN)
-		if (signo & 4)
-			return 0;
-	vec[signo] = (handler)SIG_DFL;
-	if (h != (handler)SIG_DFL) {
+	/* Handle SIG_IGN for recoverable signals */
+	if ((h == (handler)SIG_IGN) && (signo & 4))
+		return 0;
+	/* Call signal handler */
+	if (~1u & (unsigned)h) {
+		vec[signo] = (handler)SIG_DFL;
 		if (signo & 4)
 			return h(signo, fpeinfo);
 		else

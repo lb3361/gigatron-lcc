@@ -48,7 +48,7 @@ def scope():
     def code_fpe():
         nohop()
         label('_@_fovf') ### overflow
-        LDWI(0xffff);_CALLI('_@_fsetfac')
+        _LDI(0xffff);_CALLI('_@_fsetfac')
         LDWI(0x204);BRA('.fpe1')
         label('_@_fpe')  ### floating point error
         LDWI(0x304)

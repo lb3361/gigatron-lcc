@@ -369,15 +369,15 @@ stmt: ac1 "\t%0\n"
 reg: ac   "\t%0STW(%c);\n" 20
 ac: reg   "LDW(%0);" 20
 ac: conB  "LDI(%0);" 16
-ac: con   "LDWI(%0);" 20
+ac: con   "_LDI(%0);" 21
 ac: zddr  "LDI(%0);" 16
-ac: addr  "LDWI(%0);" 20
+ac: addr  "_LDI(%0);" 21
 ac: eac   "%0" 
 ac1: ac   "%0"
 ac: ac1   "%0LD(vACL);" 16
 eac: reg  "LDW(%0);" 20
 eac: zddr "LDI(%0);" 16
-eac: addr "LDWI(%0);" 20
+eac: addr "_LDI(%0);" 21
 eac: lddr "_SP(%0);"  50
 
 # Loads

@@ -23,7 +23,7 @@ def code1():
 	_SP(-1+6);STW(R21);
 	LDW(R22);PEEK();POKE(R21);
 	_SP(-4+6);DEEK();STW(R22);
-	LDWI(-1);STW(R21);
+	_LDI(-1);STW(R21);
 	_SP(-4+6);STW(R20);
 	LDW(R22);ADDW(R21);DOKE(R20);
 	_SP(-1+6);STW(R20);
@@ -52,7 +52,7 @@ def code2():
 	_SP(-2+6);STW(R21);
 	LDW(R22);DEEK();DOKE(R21);
 	_SP(-4+6);DEEK();STW(R22);
-	LDWI(-2);STW(R21);
+	_LDI(-2);STW(R21);
 	_SP(-4+6);STW(R20);
 	LDW(R22);ADDW(R21);DOKE(R20);
 	_SP(-2+6);STW(R20);
@@ -76,7 +76,7 @@ def code3():
 	LDW(R22);STW(R18);
 	LDW(R22);PEEK();STW(R19);
 	LDW(R18);STW(R22);
-	LDWI(-1);STW(R21);
+	_LDI(-1);STW(R21);
 	LDW(R22);ADDW(R21);STW(R18);
 	LDW(R22);PEEK();STW(R19);
 	LDW(R18);ADDW(R21);STW(R22);
@@ -96,7 +96,7 @@ def code4():
 	LDW(R22);STW(R18);
 	LDW(R22);DEEK();STW(R19);
 	LDW(R18);STW(R22);
-	LDWI(-2);STW(R21);
+	_LDI(-2);STW(R21);
 	LDW(R22);ADDW(R21);STW(R18);
 	LDW(R22);DEEK();STW(R19);
 	LDW(R18);ADDW(R21);STW(R22);

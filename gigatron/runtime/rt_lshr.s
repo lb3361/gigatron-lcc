@@ -28,7 +28,7 @@ def code1():
     LDW(LAC+2);_BLT('.s1')
     _CALLJ('_@_lshru_b0');_BRA('.sret')
     label('.s1')
-    LDWI(0xffff);STW(T0);XORW(LAC);STW(LAC)
+    _LDI(0xffff);STW(T0);XORW(LAC);STW(LAC)
     LDW(T0);XORW(LAC+2);STW(LAC+2)
     _CALLJ('_@_lshru_b0')
     LDW(T0);XORW(LAC);STW(LAC)

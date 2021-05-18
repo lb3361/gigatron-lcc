@@ -53,15 +53,29 @@ def code3():
    XORW(T1);BNE('_@_bcopy')
    RET()
 
+# WCOPY [T3..T1) --> [T2..]
+# Same as BCOPY but word aligned
+
+def code4():
+    nohop()
+    label('_@_wcopy')
+    LDW(T3);DEEK();DOKE(T2)
+    LDI(2);ADDW(T2);STW(T2)
+    LDI(2);ADDW(T3);STW(T3)
+    XORW(T1);BNE('_@_wcopy')
+    RET()
+   
       
 code= [ ('EXPORT', '_@_lcopy'),
-        ('EXPORT', '_@_bcopy'),
         ('EXPORT', '_@_fcopy'),
         ('EXPORT', '_@_fcopy_nc'),
+        ('EXPORT', '_@_bcopy'),
+        ('EXPORT', '_@_wcopy'),
         ('CODE', '.copy2', code0),
         ('CODE', '_@_lcopy', code1),
         ('CODE', '_@_fcopy_nc', code2),
-        ('CODE', '_@_bcopy', code3) ]
+        ('CODE', '_@_bcopy', code3),
+        ('CODE', '_@_wcopy', code4) ]
 
 module(code=code, name='rt_lcopy.s')
 

@@ -86,11 +86,11 @@ def code4():
 	LDI(0);STW(R16);
 	LDI(0);STW(R15);
 	LDI(0);STW(R14);
-	LDWI('i');DEEK();STW(R22);
+	_LDI('i');DEEK();STW(R22);
 	LDW(R22);LSLW();LSLW();ADDW(R22);STW(R21);
-	LDWI('a');ADDW(R21);_FMOV([vAC],F11);
+	_LDI('a');ADDW(R21);_FMOV([vAC],F11);
 	_SP(-5+8);_FMOV(F11,[vAC]);
-	LDWI('b');ADDW(R21);_FMOV([vAC],F8);
+	_LDI('b');ADDW(R21);_FMOV([vAC],F8);
 	_FMOV('.12',F11);
 	_SP(-5+8);_FMOV([vAC],FAC);LDI(F8);_FADD();LDI(F11);_FCMP();_BEQ('.10');
 	LDW(R22);_BEQ('.10');
@@ -100,7 +100,7 @@ def code4():
 	label('.10');
 	LDI(0);STW(R22);
 	label('.11');
-	LDWI('i');STW(R21);
+	_LDI('i');STW(R21);
 	LDW(R22);DOKE(R21);
 	LDI(0);
 	label('.9');
@@ -109,14 +109,14 @@ def code4():
 def code5():
 	label('f5');
 	tryhop(4);LDW(vLR);STW(R15);
-	LDWI('k');DEEK();STW(R22);
-	LDWI('m');DEEK();STW(R21);
-	LDWI('A');DEEK();STW(R20);
+	_LDI('k');DEEK();STW(R22);
+	_LDI('m');DEEK();STW(R21);
+	_LDI('A');DEEK();STW(R20);
 	LDW(R22);_MUL(R21);STW(T3);LSLW();LSLW();ADDW(T3);ADDW(R20);STW(R19);
-	LDWI('j');DEEK();STW(R18);
+	_LDI('j');DEEK();STW(R18);
 	LDW(R18);_MUL(R21);STW(T3);LSLW();LSLW();ADDW(T3);ADDW(R20);STW(R21);
-	LDWI('n');DEEK();STW(R20);
-	LDWI('B');DEEK();STW(R17);
+	_LDI('n');DEEK();STW(R20);
+	_LDI('B');DEEK();STW(R17);
 	LDW(R22);_MUL(R20);STW(T3);LSLW();LSLW();ADDW(T3);ADDW(R17);STW(R22);
 	LDW(R18);_MUL(R20);STW(T3);LSLW();LSLW();ADDW(T3);ADDW(R17);STW(R20);
 	LDW(R22);_FMOV([vAC],FAC);LDW(R20);_FMUL();_FMOV(FAC,F16);

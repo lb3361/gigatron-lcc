@@ -33,9 +33,9 @@ def code2():
    label('_@_shrs')
    PUSH();
    LDW(T3);_BGE('.shrs1')
-   LDWI(0xffff);XORW(T3);STW(T3)
+   _LDI(0xffff);XORW(T3);STW(T3)
    _CALLJ('_@_shru')
-   STW(T3);LDWI(0xffff);XORW(T3)
+   STW(T3);_LDI(0xffff);XORW(T3)
    _BRA('.shrs2')
    label('.shrs1')
    _CALLJ('_@_shru')

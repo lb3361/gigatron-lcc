@@ -4,8 +4,8 @@
 def code0():
    nohop()
    label('_@_lcom')
-   LDWI(0xffff);XORW(LAC);STW(LAC)
-   LDWI(0xffff);XORW(LAC+2);STW(LAC+2)
+   _LDI(0xffff);XORW(LAC);STW(LAC)
+   _LDI(0xffff);XORW(LAC+2);STW(LAC+2)
    RET()
 
 def code1():

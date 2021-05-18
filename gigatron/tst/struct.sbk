@@ -111,7 +111,7 @@ def code6():
 	label('odd');
 	tryhop(4);LDW(vLR);DOKE(SP);_SP(-10);STW(SP);
 	_SP(-3+10);STW(T2);_SP(2+10);_BMOV([vAC],[T2],3)
-	LDWI('.51');STW(R8);
+	_LDI('.51');STW(R8);
 	_SP(2);_MOV(R8,[vAC]);
 	_SP(-3+10);STW(R9);
 	_SP(4);_MOV(R9,[vAC]);
@@ -151,7 +151,7 @@ def code10():
 	_SP(-36+68);STW(T2);_BMOV('.54',[T2],4)
 	_SP(-16+68);STW(T2);_BMOV('.55',[T2],16)
 	_SP(-40+68);STW(R8);
-	LDWI(-10);STW(R22);
+	_LDI(-10);STW(R22);
 	LDW(R22);STW(R9);
 	LDW(R22);STW(R10);
 	_SP(6);_MOV(R10,[vAC]);
@@ -183,7 +183,7 @@ def code10():
 	_SP(-14+68);ADDW(R22);DEEK();STW(R10);
 	_SP(6);_MOV(R10,[vAC]);
 	CALLI('makepoint');
-	LDWI('.60');STW(R8);
+	_LDI('.60');STW(R8);
 	_SP(2);_MOV(R8,[vAC]);
 	_SP(-16+68);STW(R22);
 	LDW(R7);_SHLI(2);ADDW(R22);DEEK();STW(R9);
@@ -195,11 +195,11 @@ def code10():
 	_SP(6);STW(T2);_SP(-24+68);_BMOV([vAC],[T2],8);
 	CALLI('ptinrect');STW(R22);
 	LDW(R22);_BNE('.63');
-	LDWI('.65');STW(R8);
+	_LDI('.65');STW(R8);
 	_SP(2);_MOV(R8,[vAC]);
 	CALLI('printf');
 	label('.63');
-	LDWI('.66');STW(R8);
+	_LDI('.66');STW(R8);
 	_SP(2);_MOV(R8,[vAC]);
 	_SP(-24+68);DEEK();STW(R9);
 	_SP(4);_MOV(R9,[vAC]);

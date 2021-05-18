@@ -4,6 +4,8 @@
 
 int a = 3;
 long b = 323421L;
+volatile int vblcount = 0;
+extern char frameCount;
 
 int handler(int signo, int fpeinfo)
 {
@@ -17,6 +19,12 @@ long lhandler(int signo, int fpeinfo)
 	return 1234L;
 }
 
+void vhandler(int signo)
+{
+	printf("SIGVIRQ(%d): count=%d\n", signo, vblcount++);
+	frameCount=255;
+	signal(SIGVIRQ, vhandler);
+}
 
 int main()
 {
@@ -24,5 +32,9 @@ int main()
 	printf("%d/0 = %d\n", a, a / 0);
 	signal(SIGFPE, (sig_handler_t)lhandler);
 	printf("%ld/0 = %ld\n", b , b / 0);
+	signal(SIGVIRQ, vhandler);
+	while (vblcount < 10) { 
+		b = b * b;
+	}
 	return 0;
 }

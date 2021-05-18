@@ -14,8 +14,8 @@ def code0():
 def code1():
     nohop()
     label('_@_lneg_t0t1')
-    LDWI(0xffff);XORW(T0+2);STW(T0+2)
-    LDWI(0xffff);XORW(T0);ADDI(1);STW(T0)
+    _LDI(0xffff);XORW(T0+2);STW(T0+2)
+    _LDI(0xffff);XORW(T0);ADDI(1);STW(T0)
     BNE('.lneg1')
     LDI(1);ADDW(T0+2);STW(T0+2)
     label('.lneg1')

@@ -312,6 +312,8 @@ void sys_printf(void)
   const char *fmt = (char*)&RAM[deek(R8)];
   word ap = deek(SP) + 4;
   int n = 0;
+  if (trace)
+    fflush(NULL);
   while(fmt && *fmt)
     {
       if (fmt[0] == '%')
@@ -362,6 +364,8 @@ void sys_printf(void)
       fmt += 1;
       n += 1;
     }
+  if (trace)
+    fflush(NULL);
   // return value
   doke(vAC, n);
 }

@@ -1,6 +1,4 @@
-#!/usr/bin/env python3
-
-#   Copyright (c) 2021, LB3361
+#   Additions with respect to LCC are Copyright (c) 2021, LB3361
 #
 #    Redistribution and use in source and binary forms, with or
 #    without modification, are permitted provided that the following
@@ -27,22 +25,3 @@
 #    OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 #    OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 #    POSSIBILITY OF SUCH DAMAGE.
-
-from __future__ import print_function
-import sys
-
-if sys.version_info < (3, 6):
-    print('glink: fatal error: python 3.6.0 or higher is required.')
-    sys.exit(1)
-
-from glink import *
-
-if __name__ == '__main__':
-    sys.exit(main(sys.argv[1:]))
-
-# Local Variables:
-# mode: python
-# indent-tabs-mode: ()
-# End:
-
-

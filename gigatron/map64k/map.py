@@ -32,7 +32,7 @@ def map_extra_modules(romtype):
     version, checks the ram configuration, and returns 0 if all goes well.
     '''
     def code0():
-        tryhop(25, jump=False)
+        nohop() # short function that must fit in a single segment
         label('_init0')
         _LDI(initsp);STW(SP);
         LD('romType');ANDI(0xfc);SUBI(romtype or 0);BLT('.err')

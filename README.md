@@ -51,7 +51,11 @@ There is also
 ```
 $ make test
 ```
-to run the current test suite.
+to run the current test suite. The LCC test files are in `tst`
+but some need pieces of the runtime or library that are still missing.
+The runtime and library test files are in `gigatron/{runtime,libc,libm}/tst`.
+They give a good idea of what works at the moment.
+
 
 
 ## Compiler invocation

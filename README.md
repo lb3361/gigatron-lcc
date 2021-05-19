@@ -7,7 +7,7 @@ This version of LCC targets the [Gigatron](http://gigatron.io) VCPU.
 It keeps many of the ideas of the previous attempt to port LCC to the
 Gigatron (pgavlin's).  For instance it outputs assembly code that can be parsed by
 Python and it features a linker writen in Python that can directly
-ready these files. It also differs in important ways. For instance the
+read these files. It also differs in important ways. For instance the
 code generator is fundamentally different.
 
 ## Status
@@ -209,20 +209,24 @@ The code generator uses two consecutive blocks of zero page locations:
   *  The second block, located at addresses `0x90-0xbf`, contains 24 general 
      purpose sixteen bits registers named `R0` to `R23`. 
      Register pairs named can hold longs. Register triplets named
-     can hold floats. Registers `R0` to `R7` are called-saved
-     registers. Registers `R8` to `R15` can be used to pass
+     can hold floats. Registers `R0` to `R7` are callee-saved
+     registers. Registers `R8` to `R15` are used to pass
      arguments to functions. Registers `R15` to `R22` are used
      for temporaries. Register `R23` or `SP` is the stack pointer.
      
 The function prologue first saves `vLR` and constructs a stack frame
 by adjusting `SP`. It then saves the callee-saved registers onto the stack.
-Nonleaf functions also save 'vLR' in the stack frame and copy the argument 
+Nonleaf functions save 'vLR' in the stack frame and copy the argument 
 passed in a registers to their final location. In contrast, leaf functions
-keep the saved `vLR` in a register and keep arguments passed in registers
+keep arguments passed in registers
 where they are because these registers are no longer needed for further calls.
 In the same vein, nonleaf functions allocate callee-saved registers
 for local variables, whereas leaf functions use callee-saved registers
 in last resord and often avoid having to construct a stack-frame alltogether. 
+Leaf functions that do not need to allocate space on the stack can 
+use a register to save VLR and become entirely frameless.
+Sometimes one can help this by using `register` when declaring 
+local variables. I have to find a way to make lcc more aggressive in that respect. 
 
 Saving `vLR` allows us to use `CALLI` as a long jump
 without fearing to erase the function return address.

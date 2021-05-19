@@ -36,7 +36,7 @@ Building under Linux should just be a matter of typing
 $ make PREFIX=/usr/local
 ```
 where variable `PREFIX` indicates where the compiler should be installed.
-You can either invoke from its build location `./build/glcc` or
+You can either invoke the compilier from its build location `./build/glcc` or
 install it into your system with command
 ```
 $ make PREFIX=/usr/local install
@@ -46,6 +46,12 @@ and symlinks the compiler driver `glcc` and linker driver `glink`
 into `${PREFIX}/bin`. A minimal set of include files are copied 
 into `${PREFIX}/lib/gigatron-lcc/include` but very little of what 
 they define is currently implemented.
+
+There is also 
+```
+$ make test
+```
+to run the current test suite.
 
 
 ## Compiler invocation

@@ -202,7 +202,7 @@ def scope():
         label('.fscalund') # underflow
         _CALLJ('_@_fclrfac');POP();RET()
         label('.fscalovf') # overflow
-        macro_save_vsp();_CALLJ('_@_fovf');HALT()
+        macro_save_vsp();_CALLJ('_@_foverflow');HALT()
 
     code += [('EXPORT', '_@_fneg'),
              ('EXPORT', '_@_fscalb'),

@@ -1,5 +1,5 @@
 
-# ------------size----addr----step----end---- dataonly
+# ------------size----addr----step----end---- flags (1=nocode, 2=nodata)
 segments = [ (0x0060, 0x08a0, 0x0100, 0x80a0, 0),
 	     (0x00fa, 0x0200, 0x0100, 0x0500, 1),
 	     (0x0200, 0x0500, None,   None,   1),

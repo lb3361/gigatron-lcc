@@ -232,16 +232,16 @@ class Module:
 
 class Segment:
     '''Represent memory segments to be populated with code/data'''
-    __slots__ = ('saddr', 'eaddr', 'pc', 'dataonly', 'buffer', 'nbss')
-    def __init__(self, saddr, eaddr, dataonly=False):
+    __slots__ = ('saddr', 'eaddr', 'pc', 'flags', 'buffer', 'nbss')
+    def __init__(self, saddr, eaddr, flags=False):
         self.saddr = saddr
         self.eaddr = eaddr
         self.pc = saddr
-        self.dataonly = dataonly or False
+        self.flags = flags or False # 0x1: no code, 0x2 : no data
         self.buffer = None
         self.nbss = None
     def __repr__(self):
-        d = ',dataonly=True' if self.dataonly else ''
+        d = f",flags={hex(self.flags)}" if self.flags else ''
         return f"Segment({hex(self.saddr)},{hex(self.eaddr)}{d})"
                 
 def emit(*args):
@@ -261,6 +261,11 @@ def extern(sym):
     if the_pass == 0 and sym not in the_module.imports:
         the_module.imports.append(sym)
 
+def is_placed(frag4):
+    '''Tells if a code fragment is a placed function'''
+    if isinstance(frag4, tuple) and frag4[0] == 'org':
+            return frag4[1]
+    return False
 
 # ------------- jumps and hops
 
@@ -461,13 +466,15 @@ def hi(x):
     return (v(x) >> 8) & 0xff
 
 @vasm
-def nohop():
+def nohop(org=None):
     '''Force a code fragment to be fit in a single page.
        An error will be signaled if no page can fit it.
-       Internal: information collected in measure_code_fragment.'''
+       Giving argument `org` additionally forces the function
+       to live at the specified address.'''
     global short_function
+    # this information is collected in measure_code_fragment()
     if the_pass == 0:
-        short_function = True
+        short_function = True if org == None else ('org', org)
 @vasm
 def tryhop(sz=None, jump=True):
     '''Hops to a new page if the current page cannot hold a long jump
@@ -1327,9 +1334,11 @@ def measure_code_fragment(m, frag):
         fatal(str(err), exc=True)
     function_size = the_pc - lbranch_counter
     if short_function:
-        debug(f"nohop function '{frag[1]}' is {function_size} bytes long")
+        addr = is_placed(short_function)
+        fname = frag[1] + (f"@{hex(addr)}" if addr else "")
+        debug(f"nohop function '{fname}' is {function_size} bytes long")
         if function_size >= 256:
-            error("function '{frag[1]}' is declared short but is too long for that")
+            error("function '{fname}' is declared short but is too long for that")
     else:
         debug(f"function '{frag[1]}' is {function_size}+{lbranch_counter} bytes long")
     frag = frag[0:3] + (the_pc - lbranch_counter, short_function)
@@ -1428,7 +1437,7 @@ def round_used_segments():
     for (i,s) in enumerate(segment_list):
         epage = (s.pc + 0xff) & ~0xff
         if s.pc > s.saddr and s.eaddr > epage:
-            segment_list.insert(i+1, Segment(epage, s.eaddr, s.dataonly))
+            segment_list.insert(i+1, Segment(epage, s.eaddr, s.flags))
             s.eaddr = epage
             if args.d >= 2:
                 debug(f"rounding {segment_list[i:i+2]}")
@@ -1437,32 +1446,57 @@ def round_used_segments():
  
 def find_data_segment(size, align=None):
     for s in segment_list:
+        if s.flags & 0x2:  # not a data segment
+            continue
         pc = s.pc
         if align and align > 1:
             pc = align * ((pc + align - 1) // align)
         if s.eaddr - pc > size:
             return s
 
-def find_code_segment(size):
+def find_code_segment(size, addr=None):
     # Since code segments cannot cross page boundaries
     # it is sometimes necessary to carve a code segment from a larger one
+    # Argument addr is a requested address.
     size = min(256, size)
     for (i,s) in enumerate(segment_list):
-        if s.dataonly:
+        if addr:
+            if addr >= s.saddr and addr < s.eaddr:
+                return segment_for_placed_fragment(size, addr, s, i)
+            continue
+        if s.flags & 0x1:  # not a code segment
             continue
         if s.pc > s.saddr and s.pc + size <= s.eaddr:  # segment has enough free size and does not cross
             return s                                   # a page boundary because it already contains code
         if (s.saddr ^ (s.eaddr-1)) & 0xff00:
             epage = (s.saddr | 0xff) + 1               # segment crosses a page boundary:
-            ns = Segment(s.saddr, epage)               # carve a non-crossing one and insert it in the list
+            ns = Segment(s.saddr, epage, s.flags)      # carve a non-crossing one and insert it in the list
             s.saddr = s.pc = epage
             segment_list.insert(i, ns)
             s = ns
         if s.pc + size <= s.eaddr:                     # is it large enough?
             return s
     return None
-    
-def assemble_code_fragments(m):
+
+def segment_for_placed_fragment(size, addr, s, i):
+    epage = min(s.eaddr, (addr | 0xff) + 1)
+    if addr + size > epage:
+        error(f"Page overflow for placed fragment {the_fragment[1]}@{hex(addr)}")
+    elif s.pc > addr or addr + size > s.eaddr:
+        error(f"Requested space for placed fragment {the_fragment[1]}@{hex(addr)} is busy")
+    if epage < s.eaddr:                  # - make a single page segment
+        ns = Segment(s.saddr, epage, s.flags)
+        s.saddr = s.pc = epage
+        segment_list.insert(i, ns)
+        s = ns
+    if addr > s.saddr:                   # - make a segment for [s.saddr,addr)
+        ns = Segment(s.saddr, addr, s.flags)
+        ns.pc = s.pc
+        segment_list.insert(i, ns)
+        s.pc = s.saddr = addr
+    return s
+
+def assemble_code_fragments(m, placed=False):
     global the_module, the_fragment, the_segment, the_pc
     global hops_enabled, short_function
     the_module = m
@@ -1470,13 +1504,16 @@ def assemble_code_fragments(m):
         the_fragment = frag
         if frag[0] == 'CODE':
             shortonly = frag[4]
+            addr = is_placed(shortonly)
+            if bool(placed) != bool(addr):
+                continue
             funcsize = frag[3]
             the_segment = None
             sfst = min(256, args.sfst or 96)
             if shortonly or funcsize < sfst:
                 short_function = True
                 hops_enabled = False
-                the_segment = find_code_segment(funcsize)
+                the_segment = find_code_segment(funcsize, addr)
                 if shortonly and not the_segment:
                     error(f"cannot find a segment for short function '{frag[1]}' of length {funcsize}")
                 if the_segment and (args.d >= 2 or final_pass):
@@ -1527,12 +1564,13 @@ def run_pass():
     segment_list = []
     for (s,e,d) in map_segments():
         segment_list.append(Segment(s,e,d))
-    if args.start_from_0x200:
-        reserve_jump_in_0x200()
     debug(f"pass {the_pass}")
-    # code segments
+    # code segments with explicit address
     for m in module_list:
-        assemble_code_fragments(m)
+        assemble_code_fragments(m, placed=True)
+    # remaining code segments
+    for m in module_list:
+        assemble_code_fragments(m, placed=False)
     # data segments
     for m in module_list:
         assemble_data_fragments(m, 'DATA')
@@ -1577,23 +1615,6 @@ def doke_gt1(addr, val):
     o = addr - s.saddr
     s.buffer[o] = val & 0xff
     s.buffer[o+1] = (val >> 8) & 0xff
-
-def reserve_jump_in_0x200():
-    if args.start_from_0x200:
-        for seg in segment_list:
-            if seg.saddr == 0x200:
-                seg.pc += 6
-                seg.buffer = bytearray(6)
-                return
-    error(f"cannot find a segment starting in 0x200 to insert a jump")
-
-def write_jump_in_0x200():
-    if args.start_from_0x200:
-        seg = find_segment_for_address(0x200)
-        start = resolve(args.e)
-        if start and seg and seg.saddr == 0x200:
-            seg.buffer[0:6] = builtins.bytes((0x11, lo(start), hi(start), # LDWI(start)
-                                              0x2b, 0x1a, 0xff))          # STW(vLR); RET()
 
 def process_magic_bss(s, head_module, head_addr):
     '''Construct a linked list of sizeable bss segments to be cleared at runtime.'''
@@ -1767,8 +1788,6 @@ def main(argv):
         parser.add_argument('--entry', '-e', dest='e', metavar='START',
                             type=str, action='store', default='_start',
                             help='select the entry point symbol (default _start)')
-        parser.add_argument('--start-from-0x200', action='store_true',
-                            help='writes a jump to the entry point at address 0x200.')
         parser.add_argument('--short-function-size-threshold', dest='sfst',
                             metavar='SIZE', type=int, action='store',
                             help='attempts to fit functions smaller than this threshold into a single page.')
@@ -1844,8 +1863,6 @@ def main(argv):
 
         # magic happens here
         process_magic_symbols()
-        if args.start_from_0x200:
-            write_jump_in_0x200()
 
         # verification
         for s in segment_list:

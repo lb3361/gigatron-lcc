@@ -7,8 +7,7 @@ def code0():
 code=[
     ('EXPORT', 'div'),
     ('CODE', 'aliases', code0),
-    ('IMPORT', '_divmod'),
-    ('IMPORT', '_ldivmod') ]
+    ('IMPORT', '_divmod') ]
 
 module(code=code, name='div.s');
 

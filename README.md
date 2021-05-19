@@ -107,6 +107,95 @@ are documented by typing `glink -h`
 	VCPU opcodes. For signed bytes, use `signed char` or use the
 	compiler option `-Wf-unsigned_char=0`. The preprocessor macros
 	`__CHAR_UNSIGNED` or `CHAR_IS_SIGNED` are defined accordingly.
+	
+## Examples
+
+Running the LCC 8 queens program:
+
+```
+$ ./build/glcc -map=sim tst/8q.c 
+tst/8q.c:30: warning: missing return value
+tst/8q.c:37: warning: implicit declaration of function `printf'
+tst/8q.c:39: warning: missing return value
+$ ./build/gtsim a.gt1 
+1 5 8 6 3 7 2 4 
+1 6 8 3 7 4 2 5 
+1 7 4 6 8 2 5 3 
+1 7 5 8 2 4 6 3 
+2 4 6 8 3 1 7 5 
+2 5 7 1 3 8 6 4 
+2 5 7 4 1 8 6 3 
+2 6 1 7 4 8 3 5 
+2 6 8 3 1 4 7 5 
+2 7 3 6 8 5 1 4 
+2 7 5 8 1 4 6 3 
+2 8 6 1 3 5 7 4 
+...
+```
+
+Capturing signals:
+```
+$ cat gigatron/libc/tst/TSTsignal.c 
+#include <string.h>
+#include <stdio.h>
+#include <signal.h>
+
+int a = 3;
+long b = 323421L;
+volatile int vblcount = 0;
+extern char frameCount;
+
+int handler(int signo, int fpeinfo)
+{
+	printf("handle %d %d\n", signo, fpeinfo);
+	return 1234;
+}
+
+long lhandler(int signo, int fpeinfo)
+{
+	printf("handle %d %d\n", signo, fpeinfo);
+	return 1234L;
+}
+
+void vhandler(int signo)
+{
+	printf("SIGVIRQ(%d): count=%d\n", signo, vblcount++);
+	frameCount=255;
+	signal(SIGVIRQ, vhandler);
+}
+
+int main()
+{
+	signal(SIGFPE, (sig_handler_t)handler);
+	printf("%d/0 = %d\n", a, a / 0);
+	signal(SIGFPE, (sig_handler_t)lhandler);
+	printf("%ld/0 = %ld\n", b , b / 0);
+	signal(SIGVIRQ, vhandler);
+	while (vblcount < 10) { 
+		b = b * b;
+	}
+	return 0;
+}
+$ ./build/glcc -map=sim  gigatron/libc/tst/TSTsignal.c 
+$ ./build/gtsim a.gt1 
+handle 4 1
+3/0 = 1234
+handle 4 1
+323421/0 = 1234
+SIGVIRQ(7): count=0
+SIGVIRQ(7): count=1
+SIGVIRQ(7): count=2
+SIGVIRQ(7): count=3
+SIGVIRQ(7): count=4
+SIGVIRQ(7): count=5
+SIGVIRQ(7): count=6
+SIGVIRQ(7): count=7
+SIGVIRQ(7): count=8
+SIGVIRQ(7): count=9
+```
+
+
+
 
 ## Internals
 

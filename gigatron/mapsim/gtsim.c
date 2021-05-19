@@ -179,32 +179,32 @@ void poke(word a, quad x) {
 }
 
 word deek(word a) {
-  if ((a & 0xff) == 0xff)
+  if ((a & 0xff) > 0xfe)
     fprintf(stderr, "(gtsim) deek crosses page boundary\n");
   return (word)RAM[a]|(word)(RAM[a+1]<<8);
 }
 
 void doke(word a, quad x) {
-  if ((a & 0xff) == 0xff)
+  if ((a & 0xff) > 0xfe)
     fprintf(stderr, "(gtsim) doke crosses page boundary\n");
   RAM[a] = (x & 0xff);
   RAM[a+1] = ((x >> 8) & 0xff);
 }
 
 quad leek(word a) {
-  if ((a & 0xff) == 0xff)
+  if ((a & 0xff) > 0xfc)
     fprintf(stderr, "(gtsim) leek crosses page boundary\n");
   return ((quad)RAM[a] | ((quad)RAM[a+1]<<8) |
           ((quad)RAM[a+2]<<16) | ((quad)RAM[a+3]<<24) );
 }
 
 double feek(word a) {
-  int sign = RAM[a+1] & 0x80;
+  double sign = (RAM[a+1] & 0x80) ? -1 : +1;
   int exp = RAM[a];
   quad mant = ((quad)RAM[a+4] | ((quad)RAM[a+3]<<8) |
                ((quad)RAM[a+2]<<16) | ((quad)(RAM[a+1]|0x80)<<24) );
   if (exp)
-    return scalb((double)mant/0x100000000UL, (double)(exp-128));
+    return sign * scalb((double)mant/0x100000000UL, (double)(exp-128));
   else
     return 0;
 }
@@ -297,8 +297,6 @@ word loadGt1(const char *gt1)
   fclose(fp);
   fatal("Premature EOF in GT1 file '%s'\n", gt1);
 }
-
-
 
 void sys_exit(void)
 {
@@ -435,23 +433,6 @@ int oper16(word addr, int i, char *operand)
   sprintf(operand, "$%04x", deek(addlo(addr,i)));
   return i+2;
 }
-
-int disasbcc(word addr, char **pm, char *operand)
-{
-  switch(peek(addlo(addr,1)))
-    {
-    case 0x3f:  *pm = "BEQ"; break;
-    case 0x72:  *pm = "BNE"; break;
-    case 0x50:  *pm = "BLT"; break;
-    case 0x4d:  *pm = "BGT"; break;
-    case 0x56:  *pm = "BLE"; break;
-    case 0x53:  *pm = "BGE"; break;
-    default:    *pm = "B??"; break;
-    }
-  sprintf(operand, "$%04x", (addr&0xff00)|((peek(addlo(addr,2))+2)&0xff));
-  return 3;
-}
-
 
 int disassemble(word addr, char **pm, char *operand)
 {

@@ -9,6 +9,7 @@ def code0():
     '''Redirected from _@_raise with vLR saved in [SP].'''
     label('_sigcall0')
     STW(T0)
+    label('_sigcall1')
     # create a stack frame and save R8-R22
     _SP(-36);STW(SP);ADDI(6);STW(T2);LDI(R8);STW(T3);LDI(R23);STW(T1);_CALLJ('_@_wcopy')
     # call _sigcall(signo,fpeinfo)
@@ -31,7 +32,7 @@ def code1():
     LDW(SP);SUBI(22);STW(SP);ADDI(2);STW(T2)
     LDI(B0-1);STW(T3);LDI(T1);STW(T1);_CALLJ('_@_wcopy')
     LDI('sysFn');STW(T3);LDI(v('sysArgs7')+1);STW(T1);_CALLJ('_@_wcopy')
-    LDWI('.rti');DOKE(SP);LDI(7);_CALLJ('_sigcall0')  # call sigcall0
+    LDWI('.rti');DOKE(SP);LDI(7);STW(T0);_CALLJ('_sigcall1')  # call sigcall0
 
 def code2():
     '''vIRQ return'''

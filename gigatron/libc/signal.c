@@ -6,7 +6,7 @@ static sig_handler_t sigvec[8];
 
 extern void _sigcall0();
 extern void _sigvirq0();
-extern void (*_sigptr)();
+extern void (*_raiseptr)();
 extern void (*vIRQ_v5)();
 
 sig_handler_t signal(int signo, sig_handler_t h)
@@ -19,7 +19,7 @@ sig_handler_t signal(int signo, sig_handler_t h)
 	old = sigvec[signo];
 	sigvec[signo] = h;
 	/* activate */
-	_sigptr = _sigcall0;
+	_raiseptr = _sigcall0;
 	if (signo == SIGVIRQ)
 		vIRQ_v5 = (~1u & (unsigned)h) ? _sigvirq0 : 0;
 	return old;

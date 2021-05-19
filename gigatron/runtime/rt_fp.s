@@ -27,18 +27,13 @@ def scope():
 
     B0 = B1 = B2 = LAC = None
     SIGN = 0x81   # FAC sign in the high bit. Other bits reserved
-    AE = 0x82   # FAC exponent
+    AE = 0x82     # FAC exponent
     AM = 0x83     # FAC mantissa with an additional high byte
     BM = T0
     T2L = T2
     T2H = T2+1
 
     # ==== sigFPE exception
-
-    def code_vsp():
-        '''Saved vSP for fpe recovery'''
-        label('.vspfpe')
-        space(1)
 
     def macro_save_vsp(r=T2):
         '''Save vSP for returning from a sigFPE exception. 
@@ -47,18 +42,19 @@ def scope():
 
     def code_fpe():
         nohop()
-        label('_@_fovf') ### overflow
+        label('_@_foverflow')   ### overflow
         _LDI(0xffff);_CALLI('_@_fsetfac')
         LDWI(0x204);BRA('.fpe1')
-        label('_@_fpe')  ### floating point error
+        label('_@_fexception')  ### floating point error
         LDWI(0x304)
         label('.fpe1')
         _CALLI('_@_raise')
-        _LD('.vspfpe'); ST(vSP)
+        label('.vspfpe',pc()+1)        
+        LDI(0)  # this instruction is patched by macro_save_vsp.
+        ST(vSP)
         POP();RET()
 
     code += [('IMPORT', '_@_raise'),
-             ('BSS','.vspfpe', code_vsp, 1, 1),
              ('CODE', '_@_fpe', code_fpe) ]
 
     # ==== load/store FAC 

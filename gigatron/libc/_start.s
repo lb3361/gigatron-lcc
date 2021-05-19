@@ -5,7 +5,7 @@ def code0():
     ### _start()
     label('_start');
     # save vLR, vSP
-    PUSH();LDWI('_vsp');STW(T3);LD(vSP);POKE(T3)
+    PUSH();LDWI('_exitvsp');STW(T3);LD(vSP);POKE(T3)
     # calls init0 in cpu4 compatible way
     LDWI('_init0'); STW(T3); CALL(T3); _BEQ('.init')
     LDI(10); STW(R8); LDWI('.msg'); STW(R9); _BRA('.exitm')
@@ -52,17 +52,12 @@ def code3():
 
 def code4():
     label('.msg')
-    bytes(b'Machine check',0)
-
-def code5():
-    label('_vsp')
-    space(1)
+    bytes(b'Machine check failed',0)
     
 # ======== (epilog)
 code=[
     ('EXPORT', '_start'),
     ('EXPORT', '_exit'),
-    ('EXPORT', '_vsp'),
     ('EXPORT', 'exit'),
     ('EXPORT', '__glink_magic_init'),
     ('EXPORT', '__glink_magic_fini'),
@@ -71,10 +66,10 @@ code=[
     ('DATA', '__glink_magic_init', code2, 2, 2),
     ('DATA', '__glink_magic_fini', code3, 2, 2),
     ('DATA', '.msg', code4, 0, 1),
-    ('BSS', '_vsp', code5, 1, 1),
     ('IMPORT', 'main'),
     ('IMPORT', '_init0'),
-    ('IMPORT', '_exitm') ]
+    ('IMPORT', '_exitm'),
+    ('IMPORT', '_exitvsp') ]
 
 if not args.no_runtime_bss_initialization:
     code.append(('IMPORT', '__glink_magic_bss')) # causes _init1.c to be included

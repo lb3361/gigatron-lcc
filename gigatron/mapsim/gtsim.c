@@ -487,7 +487,7 @@ int disassemble(word addr, char **pm, char *operand)
     case 0xff:  *pm = "RET"; return 1;
     case 0x75:  *pm = "PUSH"; return 1;
     case 0x63:  *pm = "POP"; return 1;
-    case 0xdf:  *pm = "CALL"; goto oper8;
+    case 0xdf:  *pm = "ALLOC"; goto oper8;
     case 0xcd:  *pm = "DEF"; goto oper8;
     case 0x85:  *pm = "CALLI"; goto oper16;
     case 0x1f:  *pm = "CMPHS"; goto oper8;

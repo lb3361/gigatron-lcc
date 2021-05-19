@@ -5,12 +5,14 @@ def code0():
     nohop()
     label('_exitm');
     LDWI(0xff00);STW('sysFn');SYS(34)
+    label('_exitvsp', pc()+1)
+    LDI(0);ST(vSP)
     HALT()
     
 # ======== (epilog)
 code=[
     ('EXPORT', '_exitm'),
-    ('IMPORT', '_vsp'),
+    ('EXPORT', '_exitvsp'),
     ('CODE', '_exitm', code0) ]
 
 module(code=code, name='_exitm.s');

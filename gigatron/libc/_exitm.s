@@ -5,8 +5,9 @@
 def code0():
     nohop()
     label('_exitm');
-    LDWI('_vsp');PEEK();ST(vSP)
-    LDW(R8);BEQ('.ret')
+    label('_exitvsp', pc()+1)
+    LDI(0) # this instruction is patched by _start
+    ST(vSP);LDW(R8);BEQ('.ret')
     # Just flashes a pixel with a
     # position indicative of the return code
     LDWI(0x102);PEEK();ADDW(R8);ST(R8);
@@ -21,11 +22,10 @@ def code0():
 # ======== (epilog)
 code=[
     ('EXPORT', '_exitm'),
-    ('IMPORT', '_vsp'),
+    ('EXPORT', '_exitvsp'),
     ('CODE', '_exitm', code0) ]
 
 module(code=code, name='_exitm.s');
-
 
 # Local Variables:
 # mode: python

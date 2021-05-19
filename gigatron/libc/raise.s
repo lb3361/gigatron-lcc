@@ -7,7 +7,7 @@ def code0():
     LDW(R8);
     label('_@_raise')
     STW(T0);ANDI(0xf8);BNE('.raise1');
-    label('_sigptr', pc()+1)
+    label('_raiseptr', pc()+1)
     LDWI(0)                          # calling signal() patches this instruction
     BEQ('.raise2')
     STW(T3);LDW(vLR);DOKE(SP);LDW(T0);CALL(T3);          # dispatcher (no return)
@@ -20,7 +20,7 @@ code=[
     ('IMPORT', '_exits'),
     ('EXPORT', 'raise'),
     ('EXPORT', '_@_raise'),
-    ('EXPORT', '_sigptr'),
+    ('EXPORT', '_raiseptr'),
     ('CODE', 'raise', code0) ]
 
 module(code=code, name='raise.s');

@@ -25,7 +25,8 @@ def code1():
     nohop()
     label('_sigvirq0')
     # save vLR/T[1-3] without using registers
-    PUSH();ALLOC(-6);LDW(T1);STLW(0);LDW(T2);STLW(2);LDW(T3);STLW(4)
+    # skip 2 stack bytes because a lot of code uses STLW(-2)/LDLW(2) to save AC
+    ALLOC(-8);LDW(T1);STLW(0);LDW(T2);STLW(2);LDW(T3);STLW(4);PUSH()
     # clear virq vector (now that we can use T3)
     LDWI('vIRQ_v5');STW(T3);LDI(0);DOKE(T3)  
     # save sysFn/sysArgs[0-7]/B[0-2]/LAC/T0
@@ -40,7 +41,7 @@ def code2():
     label('.rti')    # restore...
     LDI(2);ADDW(SP);STW(T3);ADDI(10);STW(T1);LDI(0x80);STW(T2);_CALLJ('_@_wcopy')
     LDI(10);ADDW(T1);STW(T1);STW(SP);LDI('sysFn');STW(T2);_CALLJ('_@_wcopy')
-    LDLW(0);STW(T1);LDLW(2);STW(T2);LDLW(4);STW(T3);ALLOC(6);POP()
+    POP();LDLW(0);STW(T1);LDLW(2);STW(T2);LDLW(4);STW(T3);ALLOC(8)
     LDWI(0x400);LUP(0)
     
 code=[

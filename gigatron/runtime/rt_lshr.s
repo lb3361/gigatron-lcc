@@ -1,11 +1,11 @@
 
 
-# LSHRU : LAC <-- LAC >> AC (clobbers B0)
+# LSHRU : LAC <-- LAC >> AC (clobbers B0, T2, T3)
 def code0():
     tryhop(3)
     label('_@_lshru')
     ST(B0)
-    label('_@_lshru_b0')
+    label('__@lshru_b0')
     PUSH()
     LD(B0);ANDI(16);_BEQ('.l4')
     LDW(LAC+2);STW(LAC);LDI(0);STW(LAC+2)
@@ -21,16 +21,16 @@ def code0():
     tryhop(2);POP();RET()
 
 
-# LSHRU : LAC <-- LAC >> AC (signed) (clobbers T0, B0)
+# LSHRS : LAC <-- LAC >> AC (signed) (clobbers T0, B0, T2, T3)
 def code1():
     label('_@_lshrs')
     PUSH();ST(B0)
     LDW(LAC+2);_BLT('.s1')
-    _CALLJ('_@_lshru_b0');_BRA('.sret')
+    _CALLJ('__@lshru_b0');_BRA('.sret')
     label('.s1')
     _LDI(0xffff);STW(T0);XORW(LAC);STW(LAC)
     LDW(T0);XORW(LAC+2);STW(LAC+2)
-    _CALLJ('_@_lshru_b0')
+    _CALLJ('__@lshru_b0')
     LDW(T0);XORW(LAC);STW(LAC)
     LDW(T0);XORW(LAC+2);STW(LAC+2)
     label('.sret')

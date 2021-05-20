@@ -25,20 +25,98 @@ def scope():
     # temporarily define new register names.
     code = []
 
-    B0 = B1 = B2 = LAC = None
-    SIGN = 0x81   # FAC sign in the high bit. Other bits reserved
-    AE = 0x82     # FAC exponent
-    AM = 0x83     # FAC mantissa with an additional high byte
-    BM = T0
     T2L = T2
     T2H = T2+1
+    T3L = T3
+    T3H = T3+1
 
+    AE = 0x82     # FAC exponent
+    AM = 0x83     # FAC mantissa with an additional high byte
+    BE = T0+5     # same as T2H!    
+    BM = T0       # T0/T1/T2L
+
+    # naming convention for exported symbols
+    # '_@_xxxx' are the public api.
+    # '__@xxxx' are private.
+    
+    # ==== Macros
+
+    genlabel_counter = 0
+    def genlabel():
+        global genlabel_counter
+        genlabel_counter += 1
+        return ".GL%d" % genlabel_counter
+
+    def m_savevsp(reg = T2):
+        '''Save vSP to be restored on exception'''
+        if args.cpu <= 5:
+            LDWI('.vspfpe');STW(reg)
+            LD(vSP);DOKE(reg)
+        else:
+            LDWI('.vspfpe');POKEA(vLR)
+    
+    def m_load(ptr = T3, exponent = AE, mantissa = AM, ext = True):
+        '''Load float pointed by `ptr` into `exponent` and `mantissa`.
+           Argument `ext` says whether `mantissa` is 32 or 40 bits.
+           Preserve the value of pointer `ptr`.
+           Argument `exponent` might be None to ignore it.
+           Returns sign in bit 7 of vAC.'''
+        if args.cpu <= 5:
+            if exponent:
+                LDW(ptr);PEEK();ST(exponent)
+            LDI(1);ADDW(ptr);PEEK();STLW(-2);ORI(128);ST(mantissa+3)
+            LDI(2);ADDW(ptr);PEEK();ST(mantissa+2)
+            LDI(3);ADDW(ptr);PEEK();ST(mantissa+1)
+            LDI(4);ADDW(ptr);PEEK();ST(mantissa)
+            if ext:
+                LDI(0);ST(mantissa+4)
+            LDLW(-2)
+        else:
+            LDW(ptr)
+            if exponent:
+                PEEKA(exponent)
+            INCW(vAC);PEEKA(mantissa+3)
+            INCW(vAC);PEEKA(mantissa+2)
+            INCW(vAC);PEEKA(mantissa+1)
+            INCW(vAC);PEEKA(mantissa)
+            if ext:
+                MOVQ(mantissa+4, 0x00)
+            LD(mantissa+3); 
+            ORBI(mantissa+3, 0x80)
+
+    def m_store(ptr = T3, exponent = AE, mantissa = AM, ret = False, fastpath = False):
+        '''Save float at location `ptr`.
+           Exponent and mantissa are taken from the specified locations.
+           vAC is expected to be 0x7f for a positive number, 0xff for a negative one.
+           Returns if `ret` is true. May use a fast path if `fastpath` is true.
+           Pointer `ptr` is not preserved.'''
+        STLW(-2)
+        if args.cpu <= 5:
+            LD(exponent);POKE(ptr)
+            if fastpath:
+                lblslow = genlabel()
+                lbldone = genlabel()
+                LD(ptr);ANDI(0xfc);XORI(0xfc);_BEQ(lblslow)
+                # no page crossing
+                INC(ptr);LDLW(-2);ANDW(mantissa+3);POKE(ptr)
+                INC(ptr);LD(mantissa+2);POKE(ptr)
+                INC(ptr);LD(mantissa+1);POKE(ptr)
+                INC(ptr);LD(mantissa);POKE(ptr)
+                RET() if ret else _BRA(lbldone)
+                label(lblslow)
+            # page crossing possible
+            LDI(1);ADDW(ptr);STW(ptr);LDLW(-2);ANDW(mantissa+3);POKE(ptr)
+            LDI(1);ADDW(ptr);STW(ptr);LD(mantissa+2);POKE(ptr)
+            LDI(1);ADDW(ptr);STW(ptr);LD(mantissa+1);POKE(ptr)
+            LDI(1);ADDW(ptr);STW(ptr);LD(mantissa);POKE(ptr)
+            if fastpath:
+                label(lbldone)
+            if ret:
+                RET() 
+
+        
+    
     # ==== sigFPE exception
-
-    def macro_save_vsp(r=T2):
-        '''Save vSP for returning from a sigFPE exception. 
-           Clobbers r which defaults to T2'''
-        LDWI('.vspfpe');STW(r);LD(vSP);DOKE(r)
 
     def code_fpe():
         nohop()
@@ -59,104 +137,16 @@ def scope():
 
     # ==== load/store FAC 
 
-    def code_fldfac():
-        nohop()
-        label('_@_fldfac')
-        if args.cpu <= 5:
-            # it does not seem worth testing for the lack of page crossings
-            LDW(T3);PEEK();ST(AE)
-            LDI(1);ADDW(T3);PEEK();ST(AM+3);ANDI(0x80);ST(SIGN)
-            LDI(2);ADDW(T3);PEEK();ST(AM+2)
-            LDI(3);ADDW(T3);PEEK();ST(AM+1)
-            LDI(4);ADDW(T3);PEEK();ST(AM)
-            LD(AM+3);ORI(0x80);ST(AM+3)
-            LDI(0);ST(AM+4)
-            RET()
-        else:
-            # cpu6 brings (untested) possibilities
-            LDW(T3)
-            ANDI(0xfc)
-            XORI(0xfc)
-            BEQ('.fldslow')
-            # -- no page crossings
-            LDW(T3)
-            PEEKA+(AE)
-            PEEKA+(AM+3)
-            PEEKA+(AM+2)
-            PEEKA+(AM+1)
-            PEEKA+(AM)
-            LD(AM+3);ANDI(0x80);ST(SIGN)
-            ORBI(AM+3, 0x80)
-            MOVQ(AM+4, 0x00)
-            RET()
-            # -- with page crossings
-            label('.fltslow')
-            LDW(T3)
-            PEEKA(AE)
-            INCW(vAC);PEEKA(AM+3)
-            INCW(vAC);PEEKA(AM+2)
-            INCW(vAC);PEEKA(AM+1)
-            INCW(vAC);PEEKA(AM)
-            LD(AM+3);ANDI(0x80);ST(SIGN)
-            ORBI(AM+3, 0x80)
-            MOVQ(AM+4, 0x00)
-            RET()
-
-    def code_fstfac():
-        nohop()
-        label('_@_fstfac')
-        LD(AE);POKE(T2)
-        LD(SIGN);BGE('.fst1')
-        LD(AM+3);ORI(0x80);BRA('.fst2')      # negative
-        label('.fst1');LD(AM+3);ANDI(0x7f)  # positive
-        label('.fst2');ST(T3)
-        if args.cpu <= 5:
-            LDW(T2)
-            ANDI(0xfc)
-            XORI(0xfc)
-            BEQ('.fstslow')
-            # -- no page crossings
-            INC(T2);LD(T3);POKE(T2)
-            INC(T2);LD(AM+2);POKE(T2)
-            INC(T2);LD(AM+1);POKE(T2)
-            INC(T2);LD(AM);POKE(T2)
-            RET()
-            # -- page crossings
-            label('.fstslow')
-            LDI(1);ADDW(T2);STW(T2);LD(T3);POKE(T2)
-            LDI(1);ADDW(T2);STW(T2);LD(AM+2);POKE(T2)
-            LDI(1);ADDW(T2);STW(T2);LD(AM+1);POKE(T2)
-            LDI(1);ADDW(T2);STW(T2);LD(AM);POKE(T2)
-            RET()
-        else:
-            # is it true that cpu6 has no POKEA+ (?)
-            LDW(T2)
-            INCW(vAC);POKEA(T3)
-            INCW(vAC);POKEA(AM+2)
-            INCW(vAC);POKEA(AM+1)
-            INCW(vAC);POKEA(AM)
-            RET()
-
-    def code_fclrfac():
-        nohop()
-        label('_@_fclrfac')
-        LDI(0)
-        label('_@_fsetfac')
-        ST(AE)
-        STW(AM)
-        STW(AM+2)
-        LDI(0)
-        ST(SIGN)
-        ST(AM+4)
-        RET()
 
 
-    code += [('EXPORT', '_@_fldfac'),
-             ('EXPORT', '_@_fstfac'),
-             ('CODE', '_@_fldfac', code_fldfac),
-             ('CODE', '_@_fstfac', code_fstfac),
-             ('CODE', '_@_fclrfac', code_fclrfac) ]
 
+    if False:
+        code += [('EXPORT', '_@_fldfac'),
+                 ('EXPORT', '_@_fstfac'),
+                 ('CODE', '_@_fldfac', code_fldfac),
+                 ('CODE', '_@_fstfac', code_fstfac),
+                 ('CODE', '_@_fclrfac', code_fclrfac) ]
+        
     # ==== normalization
 
 

@@ -11,17 +11,16 @@ def code0():
 # LSHL1_T0T1:   T0T1 <-- T0T1 << 1
 def code1():
    nohop()
-   label('_@_lshl1_t0t1')
+   label('__@lshl1_t0t1')
    LDW(T0);BLT('.lsl1')
    LSLW();STW(T0);LDW(T0+2);LSLW();STW(T0+2);RET()
    label('.lsl1')
    LSLW();STW(T0);LDW(T0+2);LSLW();ORI(1);STW(T0+2);RET()
-
     
 code= [ ('EXPORT', '_@_lshl1'),
         ('CODE', '_@_lshl1', code0),
-        ('EXPORT', '_@_lshl1_t0t1'),
-        ('CODE', '_@_lshl1_t0t1', code1) ]
+        ('EXPORT', '__@lshl1_t0t1'),
+        ('CODE', '__@lshl1_t0t1', code1) ]
 
 module(code=code, name='rt_lshl1.s');
 

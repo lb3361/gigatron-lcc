@@ -9,7 +9,7 @@
 
 def code0():
    nohop()
-   label('_@_divworker')
+   label('__@divworker')
    label('.w1loop')
    LDW(T3);SUBW(T2);_BLT('.w2')
    LDW(T2);LSLW();_BLT('.w2')
@@ -55,7 +55,7 @@ def code1():
    LDW(T3);SUBW(T2)
    STW(T3);BLT('.divu4')
    label('.divuB')          # | a < 0x8000
-   _CALLJ('_@_divworker')
+   _CALLJ('__@divworker')
    LDW(T1)
    label('.divu5')
    tryhop(2);POP();RET()
@@ -77,7 +77,7 @@ def code2():
    LDI(0);SUBW(T3);STW(T3)            # case a < 0
    LD(B2);XORI(3);ST(B2)
    label('.divs3')
-   _CALLJ('_@_divworker')
+   _CALLJ('__@divworker')
    LD(B2)
    ANDI(1)
    _BEQ('.divs4')
@@ -90,7 +90,7 @@ def code2():
    tryhop(2);POP();RET()
    
    
-code= [ ('CODE',   '_@_divworker', code0),
+code= [ ('CODE',   '__@divworker', code0),
         ('CODE', '_@_divu', code1), 
         ('CODE', '_@_divs', code2), 
         ('IMPORT', '_@_raise'),

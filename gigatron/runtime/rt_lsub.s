@@ -6,7 +6,7 @@ def code0():
    # load arg into T0/T1
    STW(T3);DEEK();STW(T0)
    LDI(2);ADDW(T3);DEEK();STW(T1)
-   label('_@_lsub_t0t1')
+   label('__@lsub_t0t1')
    if args.cpu <= 5:
       # alternating pattern
       LD(LAC);SUBW(T0);ST(LAC);LD(vACH)
@@ -36,7 +36,7 @@ def code1():
    RET()
    
 code= [ ('EXPORT', '_@_lsub'),
-        ('EXPORT', '_@_lsub_t0t1'),
+        ('EXPORT', '__@lsub_t0t1'),
         ('CODE', '_@_lsub', code0),
         ('EXPORT', '_@_lneg'),
         ('CODE', '_@_lneg', code1) ]

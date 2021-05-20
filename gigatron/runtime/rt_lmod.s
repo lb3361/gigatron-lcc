@@ -16,6 +16,10 @@ def code1():
     PUSH()
     STW(T3);DEEK();STW(T0);
     LDW(T3);ADDI(2);DEEK();STW(T1);
+    ORW(T0);_BNE('.lmodu1')
+    LDWI(0x0104);_CALLI('_@_raise')
+    tryhop(2);POP();RET()
+    label('.lmodu1')
     _CALLI('__@ldivu_t0t1')
     LDW(T2);STW(T0);LDW(T3);STW(T1)
     LD(B1);_CALLI('_@_lshru')
@@ -30,6 +34,10 @@ def code2():
     PUSH()
     STW(T3);DEEK();STW(T0);
     LDW(T3);ADDI(2);DEEK();STW(T1);
+    ORW(T0);_BNE('.lmods1')
+    LDWI(0x0104);_CALLI('_@_raise')
+    tryhop(2);POP();RET()
+    label('.lmods1')
     _CALLI('__@ldivs_t0t1')
     LD(B1);_CALLI('_@_lshru')
     LD(B2);ANDI(2);_BEQ('.m1');_CALLJ('_@_lneg');label('.m1')

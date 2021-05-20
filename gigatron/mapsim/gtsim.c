@@ -215,7 +215,7 @@ double feek(word a) {
 #define vLR       (0x1a)
 #define vSP       (0x1c)
 #define sysFn     (0x22)
-#define sysArg0   (0x24+0)
+#define sysArgs0  (0x24+0)
 #define LAC       (0x84)
 #define T0        (0x88+0)
 #define R0        (0x90+0)
@@ -239,7 +239,7 @@ void debugSysFn(void)
 {
   debug("SysFn=$%04x SysArgs=", deek(sysFn));
   for (int i=0,c='['; i<8; i++, c=' ')
-    debug("%c%02x", c, peek(sysArg0+i));
+    debug("%c%02x", c, peek(sysArgs0+i));
   debug("]");
 }
 
@@ -301,7 +301,7 @@ word loadGt1(const char *gt1)
 void sys_exit(void)
 {
   if (deek(R9))
-    fprintf(stderr, "%s\n", &RAM[deek(R9)]);
+    printf("%s\n", &RAM[deek(R9)]);
   exit((sword)deek(R8));
 }
 
@@ -523,26 +523,33 @@ void print_trace(void)
   if (strchr(trace, 'l'))
     fprintf(stderr, " B[0-2]=%02x %02x %02x LAC=%08x",
             peek(0x81), peek(0x82), peek(0x83), leek(0x84));
-  if (strchr(trace, 'f'))
-    fprintf(stderr, " S=%02x AE=%02x AM=%02x.%08x",
-            peek(0x81), peek(0x82), peek(0x87), leek(0x83));
   if (strchr(trace, 't'))
     fprintf(stderr, " T[0-3]=%04x %04x %04x %04x",
             deek(T0), deek(T0+2), deek(T0+4), deek(T0+6));
+  if (strchr(trace, 'f')) 
+    fprintf(stderr, "\n\t S=%02x AE=%02x AM=%02x%08x FAC=%e",
+            peek(0x81), peek(0x82), peek(0x87), leek(0x83),
+            scalb((double)(((long long)peek(0x87)<<32)|(long long)leek(0x83)),
+                  peek(0x82)-160) * ((peek(0x81)&0x80)?-1:1) );
+  if (strchr(trace, 'S')) {
+    int i;
+    fprintf(stderr, "\n\t sysFn=%04x sysArgs=%02x", deek(sysFn), peek(sysArgs0));
+    for(i=1; i<7; i++)
+      fprintf(stderr, " %02x", peek(sysArgs0+i));
+  }
   if (strchr(trace, 'r')) {
     int i;
-    fprintf(stderr, "\n\t R[0-7]=%04x", deek(R0));
+    fprintf(stderr, "\n\t R[00-07]=%04x", deek(R0));
     for (i=1; i<8; i++)
       fprintf(stderr, " %04x", deek(R0+i+i));
-    fprintf(stderr, "\n\t R[8-15]=%04x", deek(R0+16));
+    fprintf(stderr, "\n\t R[08-15]=%04x", deek(R0+16));
     for (i=9; i<16; i++)
       fprintf(stderr, " %04x", deek(R0+i+i));
-    fprintf(stderr, "\n\t R[16-22]=%04x", deek(R0+32));
-    for (i=16; i<23; i++)
+    fprintf(stderr, "\n\t R[16-23]=%04x", deek(R0+32));
+    for (i=17; i<24; i++)
       fprintf(stderr, " %04x", deek(R0+i+i));
+    fprintf(stderr, "=SP");
   }
-  if (strchr(trace, 's'))
-    fprintf(stderr, " SP=%04x", deek(SP));
   fprintf(stderr, " ]  %-5s %-18s\n",  mnemonic, operand);
 }
 

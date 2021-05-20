@@ -35,6 +35,9 @@ def scope():
     BE = T0+5     # same as T2H!    
     BM = T0       # T0/T1/T2L
 
+    SIGN = 0x81   # sign byte
+                  #  bit7 = sign(FAC)
+    
     # naming convention for exported symbols
     # '_@_xxxx' are the public api.
     # '__@xxxx' are private.
@@ -47,14 +50,6 @@ def scope():
         genlabel_counter += 1
         return ".GL%d" % genlabel_counter
 
-    def m_savevsp(reg = T2):
-        '''Save vSP to be restored on exception'''
-        if args.cpu <= 5:
-            LDWI('.vspfpe');STW(reg)
-            LD(vSP);DOKE(reg)
-        else:
-            LDWI('.vspfpe');POKEA(vLR)
-    
     def m_load(ptr = T3, exponent = AE, mantissa = AM, ext = True):
         '''Load float pointed by `ptr` into `exponent` and `mantissa`.
            Argument `ext` says whether `mantissa` is 32 or 40 bits.
@@ -92,7 +87,8 @@ def scope():
            Pointer `ptr` is not preserved.'''
         STLW(-2)
         if args.cpu <= 5:
-            LD(exponent);POKE(ptr)
+            if exponent:
+                LD(exponent);POKE(ptr)
             if fastpath:
                 lblslow = genlabel()
                 lbldone = genlabel()
@@ -112,41 +108,103 @@ def scope():
             if fastpath:
                 label(lbldone)
             if ret:
-                RET() 
+                RET()
+        else:
+            if exponent:
+                LD(exponent); POKE(ptr)
+            INCW(ptr);LDLW(-2);ANDW(mantissa+3);POKE(ptr)
+            INCW(ptr);LD(mantissa+2);POKE(ptr)
+            INCW(ptr);LD(mantissa+1);POKE(ptr)
+            INCW(ptr);LD(mantissa);POKE(ptr)
+            if ret:
+                RET()
+                
+    # ==== common things
 
-        
-    
-    # ==== sigFPE exception
-
-    def code_fpe():
+    def code_fexception():
         nohop()
-        label('_@_foverflow')   ### overflow
-        _LDI(0xffff);_CALLI('_@_fsetfac')
-        LDWI(0x204);BRA('.fpe1')
-        label('_@_fexception')  ### floating point error
-        LDWI(0x304)
-        label('.fpe1')
+        label('__@fexception')   ### SIGFPE/exception
+        LDWI(0x304);_BRA('.raise')
+        label('__@foverflow')    ### SIGFPE/overflow
+        _LDI(0xffff);STW(AM);STW(AM+2);ST(AE);LDWI(0x204);
+        label('.raise')
         _CALLI('_@_raise')
         label('.vspfpe',pc()+1)        
-        LDI(0)  # this instruction is patched by macro_save_vsp.
-        ST(vSP)
-        POP();RET()
+        LDI(0)  # this instruction is patched by fsavevsp.
+        ST(vSP);POP();RET()
 
-    code += [('IMPORT', '_@_raise'),
-             ('CODE', '_@_fpe', code_fpe) ]
-
-    # ==== load/store FAC 
-
-
-
-
-    if False:
-        code += [('EXPORT', '_@_fldfac'),
-                 ('EXPORT', '_@_fstfac'),
-                 ('CODE', '_@_fldfac', code_fldfac),
-                 ('CODE', '_@_fstfac', code_fstfac),
-                 ('CODE', '_@_fclrfac', code_fclrfac) ]
+    def code_fsavevsp():
+        nohop()
+        label('__@fsavevsp')
+        if args.cpu <= 5:
+            LDWI('.vspfpe');STW(T2)
+            LD(vSP);DOKE(T2)
+        else:
+            LDWI('.vspfpe');POKEA(vLR)
+        RET()
         
+    def code_clrfac():
+        nohop()
+        label('__@clrfac')
+        LDI(0);ST(AE);STW(AM);STW(AM+2);ST(AM+4)
+        RET()
+
+    def code_fzero():
+        label('_@_fzero')
+        bytes(0,0,0,0,0) # 0.0F
+
+    def code_fone():
+        label('_@_fone')
+        bytes(129,0,0,0,0) # 1.0F
+
+    def code_fhalf():
+        label('_@_fhalf')
+        bytes(128,0,0,0,0) # 0.5F
+        
+    module(name='rt_fexception.s',
+           code=[ ('IMPORT', '_@_raise'),
+                  ('EXPORT', '__@fexception'),
+                  ('EXPORT', '__@foverflow'),
+                  ('EXPORT', '__@fsavevsp'),
+                  ('EXPORT', '__@clrfac'),
+                  ('EXPORT', '_@_fzero'),
+                  ('EXPORT', '_@_fone'),
+                  ('EXPORT', '_@_fhalf'),
+                  ('CODE', '__@fexception', code_fexception),
+                  ('CODE', '__@fsavevsp', code_fsavevsp),
+                  ('CODE', '__@clrfac', code_clrfac),
+                  ('DATA', '_@_fzero', code_fzero, 5, 1),
+                  ('DATA', '_@_fone', code_fone, 5, 1),
+                  ('DATA', '_@_fhalf', code_fhalf, 5, 1) ] )
+    
+    # ==== load FAC 
+
+    def code_fldfac():
+        '''[T3]->FAC'''
+        nohop()
+        label('_@_fldfac')
+        m_load(T3, exponent=AE, mantissa=AM, ext=True)
+        ANDI(0x80);ST(SIGN)
+        RET()
+
+    module(name='rt_fldfac.s',
+           code=[ ('EXPORT', '_@_fldfac'),
+                  ('CODE', '_@_fldfac', code_fldfac) ] )
+
+    # ==== store FAC 
+
+    def code_fstfac():
+        '''FAC->[T2]'''
+        nohop()
+        label('_@_fstfac')
+        LDW(SIGN);ANDI(0x80);ORI(0x7f)
+        m_store(T2, exponent=AE, mantissa=AM, ret=True)
+
+    module(name='rt_fstfac.s',
+           code=[ ('EXPORT', '_@_fstfac'),
+                  ('CODE', '_@_fstfac', code_fstfac) ] )
+
+    
     # ==== normalization
 
 
@@ -174,14 +232,22 @@ def scope():
 
     #    extern('_@_fcmp')
 
-    # ==== misc
+    # ==== fneg
 
     def code_fneg():
         nohop()
         label('_@_fneg')
+        LD(AE);BEQ('.fnegret')
         LD(SIGN);XORI(0x80);ST(SIGN)
+        label('.fnegret')
         RET()
 
+    module(name = 'rt_fneg.s',
+           code = [ ('EXPORT', '_@_fneg'),
+                    ('CODE', '_@_fneg', code_fneg) ] )
+
+    # ===== fscalb
+    
     def code_fscalb():
         nohop()
         label('_@_fscalb')
@@ -189,20 +255,24 @@ def scope():
         STW(T0);LD(AE);ADDW(T0);BLT('.fscalund')
         ST(AE);LD(vACH);BNE('.fscalovf')
         POP();RET()
-        label('.fscalund') # underflow
-        _CALLJ('_@_fclrfac');POP();RET()
-        label('.fscalovf') # overflow
-        macro_save_vsp();_CALLJ('_@_foverflow');HALT()
+        label('.fscalund')
+        _CALLJ('__@clrfac');POP();RET()
+        label('.fscalovf')
+        _CALLJ('__@fsavevsp')
+        _CALLJ('__@foverflow');HALT()
 
-    code += [('EXPORT', '_@_fneg'),
-             ('EXPORT', '_@_fscalb'),
-             ('CODE', '_@_fneg', code_fneg),
-             ('CODE', '_@_fscalb', code_fscalb) ]
+    module(name = 'rt_fscalb.s',
+           code = [ ('IMPORT', '__@clrfac'),
+                    ('IMPORT', '__@foverflow'),
+                    ('EXPORT', '_@_fscalb'),
+                    ('CODE', '_@_fscalb', code_fscalb) ] )
 
     return code
 
 
-module(code=scope(), name='rt_fp.s');
+
+# create all the modules
+scope()
 
 # Local Variables:
 # mode: python

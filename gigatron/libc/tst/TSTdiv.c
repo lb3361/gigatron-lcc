@@ -13,7 +13,7 @@ void checkldiv(long a, long q)
 	printf("ldiv(%ld, %ld) = {%ld, %ld}\n", a, q, r.quot, r.rem);
 }
 
-void main()
+int main()
 {
 	checkdiv(12345,123);
 	checkdiv(12345,-123);
@@ -21,4 +21,5 @@ void main()
 	checkldiv(12345,123);
 	checkldiv(12345,-123);
 	checkldiv(-12345,123);
+	return 0;
 }

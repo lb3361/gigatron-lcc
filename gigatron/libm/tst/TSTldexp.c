@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <math.h>
+#include <signal.h>
 
 
 double pi = 3.141592539;
@@ -25,7 +26,11 @@ int main()
 	printf("frexp(0)=%.7e * 2^%d\n", p1, exp1);
 	printf("ldexp(%.7e,%d)=%.7e\n", 0, -2, ldexp(0, -200));
 	printf("ldexp(%.7e,%d)=%.7e\n", pi, -200, ldexp(pi, -200));
-	// printf("ldexp(%.7e,%d)=%.7e", pi, +200, ldexp(pi, +200));
+
+	signal(SIGFPE,SIG_IGN);
+	printf("ldexp(%.7e,%d)=%.7e\n", pi, +200, ldexp(pi, +200));
+	signal(SIGFPE,SIG_DFL);
+	printf("ldexp(%.7e,%d)=%.7e\n", pi, +200, ldexp(pi, +200));
 	
 	return 0;
 }

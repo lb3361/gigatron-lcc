@@ -392,6 +392,7 @@ def new_globals():
     global module_dict
     g = module_dict.copy()
     g['args'] = copy.copy(args)
+    g['rominfo'] = copy.copy(rominfo)
     g['__builtins__'] = module_builtins.copy()
     return g
 

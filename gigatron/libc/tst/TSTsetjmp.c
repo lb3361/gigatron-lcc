@@ -28,7 +28,7 @@ unsigned long lfact(unsigned long n)
 	return rr;
 }
 
-void main()
+int main()
 {
 	register int i = 1234;
 	register long j = 4321;
@@ -56,5 +56,5 @@ void main()
 		printf("overflow setjmp returns %d\n", r);
 		printf("now i=%d and j=%ld\n", i, j);
 	}
-
+	return 0;
 }

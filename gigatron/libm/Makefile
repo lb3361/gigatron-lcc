@@ -72,7 +72,7 @@ TSTO5FILES=${patsubst tst/%.c,${B}tst5/%.out,${TSTCFILES}}
 test: ${TSTO4FILES} ${TSTO5FILES}
 
 %.out: %.gt1
-	${GTSIM} $< > $@
+	-${GTSIM} $< > $@
 	cmp $@ tst/$(@F)
 
 ${B}tst4/%.gt1: tst/%.c FORCE

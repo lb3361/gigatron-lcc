@@ -65,23 +65,23 @@ def code3():
     PUSH()
     STW(T3);DEEK();STW(T0);
     LDW(T3);ADDI(2);DEEK();STW(T1);
+    ORW(T0);_BNE('.ldivu1')
+    LDWI(0x0104);_CALLI('_@_raise')
+    tryhop(2);POP();RET()
+    label('.ldivu1')
     _CALLJ('__@ldivu_t0t1')
     LDW(T2);STW(LAC);LDW(T3);STW(LAC+2)
     tryhop(2);POP();RET()
 
 def code3b():
     # takes dividend in LAC
-    # takes divisor in T0T1
+    # takes nonzero divisor in T0T1
     # return quotient in T2T3
     # return remainder<<B1 in LAC
     label('__@ldivu_t0t1')
     PUSH()
     LDI(0);STW(B0);STW(T2);STW(T3)
-    LDW(T0);ORW(T1);_BNE('.d1')             # if divisor is zero
-    LDWI(0x0104)
-    _CALLI('_@_raise');_BRA('.dret')
-    label('.d1')
-    LDW(T1);_BGE('.dA')                     # if divisor >= 0x8000000
+    LDW(T1);_BGE('.dA')                       # if divisor >= 0x8000000
     _CALLJ('__@lcmpu_t0t1');_BLT('.dret')
     _CALLJ('__@lsub_t0t1');INC(T2);_BRA('.dret')
     label('.dA')                              # 0 < divisor < 0x8000000
@@ -111,6 +111,10 @@ def code4():
     PUSH()
     STW(T3);DEEK();STW(T0);
     LDW(T3);ADDI(2);DEEK();STW(T1);
+    ORW(T0);_BNE('.ldivs1')
+    LDWI(0x0104);_CALLI('_@_raise')
+    tryhop(2);POP();RET()
+    label('.ldivs1')
     _CALLJ('__@ldivs_t0t1')
     LDW(T0);STW(LAC);LDW(T1);STW(LAC+2)
     tryhop(2);POP();RET()
@@ -118,16 +122,12 @@ def code4():
 def code4b():
     label('__@ldivs_t0t1')
     # takes dividend in LAC
-    # takes divisor in T0T1
+    # takes nonzero divisor in T0T1
     # return abs(quotient) in T2T3
     # return quotient in T0T1
     # return abs(remainder)<<B1 in LAC
     PUSH()
     LDI(0);STW(B0);ST(B2);STW(T2);STW(T3)
-    LDW(T0);ORW(T1);_BNE('.s1')             # if divisor is zero
-    LDWI(0x0104)
-    _CALLI('_@_raise');_BRA('.sret')
-    label('.s1')                              # store signs
     LDW(T1);_BGE('.s2')
     _CALLJ('__@lneg_t0t1')
     INC(B2)

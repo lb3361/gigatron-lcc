@@ -4449,11 +4449,11 @@ def code125():
 	align(2);
 	label('sigsave');
 	space(2);
-# ======== ('COMMON', 'ovfl_buf', code126, 64, 2)
+# ======== ('COMMON', 'ovfl_buf', code126, 24, 2)
 def code126():
 	align(2);
 	label('ovfl_buf');
-	space(64);
+	space(24);
 # ======== ('DATA', '.1003', code127, 0, 1)
 def code127():
 	label('.1003');
@@ -7244,7 +7244,7 @@ code=[
 	('COMMON', 'BInvrse', code123, 5, 1),
 	('COMMON', 'Radix', code124, 5, 1),
 	('COMMON', 'sigsave', code125, 2, 2),
-	('COMMON', 'ovfl_buf', code126, 64, 2),
+	('COMMON', 'ovfl_buf', code126, 24, 2),
 	('IMPORT', 'sqrt'),
 	('IMPORT', 'log'),
 	('IMPORT', 'floor'),

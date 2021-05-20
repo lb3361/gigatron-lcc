@@ -4,7 +4,8 @@
 
 
 
-typedef int jmp_buf[32];
+typedef int jmp_buf[12];
+
 int setjmp(jmp_buf);
 void longjmp(jmp_buf, int);
 

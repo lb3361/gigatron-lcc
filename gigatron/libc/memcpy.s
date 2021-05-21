@@ -55,21 +55,27 @@ def code1():
     label('.loop')
     LDW(R8);ORI(255);ADDI(1);SUBW(R8);STW(R11)  # R11: bytes until end of source page
     LDW(R9);ORI(255);ADDI(1);SUBW(R9);STW(R12)  # R12: bytes until end of destination page
-    _CMPWU(R11);_BGE('.memcpy1')
+    if args.cpu < 5:
+        _BLT('.memcpy1')
+        SUBW(R11);_BGE('.memcpy1')  # we know R12&0x8000 == 0
+    else:
+        _CMPWU(R11);_BGE('.memcpy1')
     LDW(R12);STW(R11)
     label('.memcpy1')                           # R11=min(R11,R12)
-    LDW(R10);_CMPWU(R11);_BGE('.memcpy2')
+    if args.cpu < 5:
+        LDW(R10);_BLT('.memcpy2')
+        SUBW(R11);_BGE('.memcpy2')
+    else:
+        LDW(R10);_CMPWU(R11);_BGE('.memcpy2')
     LDW(R10);STW(R11)
     label('.memcpy2')                           # R11=min(R11,R10)
     # calls in-page-copy
-    LDW(R8);STW('sysArgs0')
-    LDW(R9);STW('sysArgs2')
+    LDW(R8);STW('sysArgs0');ADDW(R11);STW(R8)
+    LDW(R9);STW('sysArgs2');ADDW(R11);STW(R9)
     LD(R11);STW('sysArgs4')
     m_CopyMemory()
-    LDW(R8);ADDW(R11);STW(R8)
-    LDW(R9);ADDW(R11);STW(R9)
-    LDW(R10);SUBW(R11);STW(R10)
-    _BNE('.loop')
+    LDW(R10);SUBW(R11);STW(R10);_BNE('.loop')
+    label('.done')
     LDW(R22);tryhop(5);STW(vLR);LDW(R21);RET();
 
 code.append(('CODE', '_memcpy', code1))

@@ -5,10 +5,8 @@ def code0():
     nohop()
     label('copysign')
     LDW(vLR);STW(R22)
-    _FMOV(F8, FAC)
-    LD(F8+1);XORW(F11+1);ANDI(0x80);BEQ('.ret')
-    _FNEG()
-    label('.ret')
+    LD(F8+1);XORW(F11+1);ANDI(0x80);XORW(F8+1);ST(F8+1)
+    _FMOV(F8,FAC)
     LDW(R22);STW(vLR);RET()
     
 code=[

@@ -25,5 +25,6 @@ extern double ceil(double);
 extern double fabs(double);
 extern double floor(double);
 extern double fmod(double, double);
+extern double copysign(double, double);
 
 #endif /* __MATH */

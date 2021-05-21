@@ -237,9 +237,7 @@ def scope():
     def code_fneg():
         nohop()
         label('_@_fneg')
-        LD(AE);BEQ('.fnegret')
         LD(SIGN);XORI(0x80);ST(SIGN)
-        label('.fnegret')
         RET()
 
     module(name = 'rt_fneg.s',

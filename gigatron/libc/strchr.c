@@ -1,10 +1,13 @@
 #include <string.h>
 
+extern const void* _memscan(const void*, int, size_t);
+
 char *
-strchr(const char *p, int ch)
+strchr(register const char *p, register int ch)
 {
-	for(; *p; p++)
-		if (*p == ch)
-			return (char*)p;
+	const char *q = _memscan(p, ch, 0xffffu);
+	if (q && *q)
+		return (char*)q;
 	return 0;
 }
+

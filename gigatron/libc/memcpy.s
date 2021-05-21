@@ -17,6 +17,7 @@ else:
     def m_CopyMemory():
         _CALLJ('_memcpy0')
     def code0():
+        nohop()
         # copy without page crossings
         # takes source ptr in sysArgs0/1
         # takes dest ptr in sysArgs2/3
@@ -30,15 +31,15 @@ else:
         label('.cpy2')
         LDWI("SYS_LSRW1_48"); STW('sysFn'); LDW('sysArgs4'); SYS(48);
         STW('sysArgs4');BEQ('.cpydone')
-        label('.cpy2loop')
-        LDW('sysArgs2');DEEK();DOKE('sysArgs0')
         if args.cpu <= 5:
+            label('.cpy2loop')
+            LDW('sysArgs2');DEEK();DOKE('sysArgs0')
             INC('sysArgs2');INC('sysArgs0')
             INC('sysArgs2');INC('sysArgs0')
             LD('sysArgs4');SUBI(1);ST('sysArgs4');BNE('.cpy2loop')
         else:
-            ADDBI('sysArgs0', 2)
-            ADDBI('sysArgs2', 2)
+            label('.cpy2loop')
+            DEEK+('sysArgs0'); DOKE+('sysArgs2')
             DBNE('sysArgs4', '.cpy2loop')
         label('.cpydone')
         RET()

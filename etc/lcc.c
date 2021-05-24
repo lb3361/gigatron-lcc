@@ -592,12 +592,11 @@ static void opt(char *arg) {
 					break;	/* -C requires that -b is supported */
 				clist = append(&arg[3], clist);
 				if (strncmp(&arg[3], "-unsigned_char=", 15) == 0) {
-					plist = append("-U__CHAR_UNSIGNED__", plist);
-					plist = append("-U_CHAR_IS_SIGNED", plist);
-					if ((arg[3+15] - '0') & 1)
+					if ((arg[3+15] - '0') == 0) {
+						plist = append("-U__CHAR_UNSIGNED__", plist);
+					} else {
 						plist = append("-D__CHAR_UNSIGNED__", plist);
-					else
-						plist = append("-D_CHAR_IS_SIGNED", plist);
+					}
 				}
 #define xx(name,k) \
 				if (strcmp(&arg[3], "-wchar_t=" #name) == 0) \

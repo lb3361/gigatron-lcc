@@ -35,15 +35,24 @@ if sys.version_info < (3, 6):
     print('glcc: fatal error: python 3.6.0 or higher is required.')
     sys.exit(1)
 
-import os, sys, json
+import os, sys, json, tempfile
 import os.path as path
 
 # locate progdir
 progname = path.realpath(__file__)
 progdir = path.dirname(progname)
 
+# find lcc
+lccname = path.join(progdir, "lcc")
+if not os.access(lccname, os.X_OK):
+   lccname = path.join(progdir, "lcc.exe")
+if not os.access(lccname, os.X_OK):
+   print("glcc: fatal error: cannot find executable lcc in %s" % progdir, file=sys.stderr)
+   sys.exit(1)
+
 # read rom data
 roms = {}
+rominfo = {}
 romfile = path.join(progdir, 'roms.json')
 if os.access(romfile, os.R_OK):
     with open(romfile) as file:
@@ -51,44 +60,90 @@ if os.access(romfile, os.R_OK):
 else:
     printf("glcc: cannot access rom file %s" % romfile, file = sys.stderr)
 
-# copy arguments
+# collect arguments minus -cpu, -rom, -map
 hascpu = False
 hasrom = False
+hasmap = False
 hasv = False
+usage = False
+argv = []
 for arg in sys.argv:
     if arg.startswith('-cpu='):
-        hascpu = True
+        hascpu = arg[5:]
     elif arg.startswith('-rom='):
-        hasrom = True
+        hasrom = arg[5:]
+    elif arg.startswith('-map='):
+        hasmap = arg[5:]
     elif arg == '-v':
         hasv = True
-if hascpu or not hasrom:
-    argv = sys.argv
-else:
-    argv = []
-    for arg in sys.argv:
         argv.append(arg)
-        if arg.startswith('-rom='):
-            rom = arg[5:]
-            if not rom in roms:
-                print("glcc: warning. unrecognized rom '%s'" % rom, file=sys.stderr)
-            else:
-                argv.append("-cpu=%d" % roms[rom]['cpu'])
-        romarg = False
+    else:
+        argv.append(arg)
+if len(argv) < 2:
+    usage = True
 
-# find and exec lcc
-lccname = path.join(progdir, "lcc")
-if not os.access(lccname, os.X_OK):
-   lccname = path.join(progdir, "lcc")
-if not os.access(lccname, os.X_OK):
-   print("glcc: fatal error: cannot find executable lcc in %s" % progdir, file=sys.stderr)
-   sys:exit(1)
-if hasv:
-    argv[0] = lccname
-    print(*argv, file=sys.stderr)
-argv[0] = path.basename(lccname)
-os.putenv("LCCDIR", progdir)
-os.execv(lccname, argv)
+# set defaults
+if not hasrom:
+    hasrom = 'v5a'
+if not hasmap:
+    hasmap = '64k'
+if not hasrom in roms:
+    print("glcc: warning: unrecognized rom '%s'" % hasrom, file=sys.stderr)
+else:
+    rominfo = roms[hasrom]
+    if not hascpu:
+        hascpu = rominfo['cpu']
+if not hascpu:
+    hascpu = 5
+    print("glcc: warning: defaulting to cpu '%d'" % hascpu, file=sys.stderr)
+
+
+temporaries = []
+try:
+    if usage:
+        print("Usage: glcc {...options_or_files...}", file=sys.stderr)
+        print("  Besides the lcc options listed later, glcc recognizes", file=sys.stderr)
+        print("  -map=MAP  to select a memory map (default 64k)", file=sys.stderr)
+        print("  -rom=ROM  to select a rom (default v5a)", file=sys.stderr)
+        print("  -rom=CPU  to select a target cpu (default to rom's)", file=sys.stderr)
+        print("", file=sys.stderr)
+        os.spawnv(os.P_WAIT, lccname, [ path.basename(lccname) ] )
+        sys.exit(1)
+    else:
+        # create rominfo include file
+        (infofd, infoname) = tempfile.mkstemp(suffix='.i', prefix='lcc')
+        temporaries.append(infoname)
+        argv.append("-Wp-i%s" % infoname)
+        with os.fdopen(infofd, mode="w") as f:
+            print('#define CPU %s'   % hascpu, file=f)
+            print('#define MAP "%s"' % hasmap, file=f)
+            print('#define ROM "%s"' % hasrom, file=f)
+            for k in rominfo:
+                # Alas this is nearly useless for the library because
+                # conditionals in .c files are not interpreted at
+                # glink time like conditionals in .s files are.
+                v = rominfo[k]
+                v = int(v) if isinstance(v, int) else '"%s"' % v
+                print('#define ROM_%s %s' % (k , v), file=f)
+        # add the rom/map/cpu options
+        argv.insert(1, "-map=%s" % hasmap)
+        argv.insert(1, "-rom=%s" % hasrom)
+        argv.insert(1, "-cpu=%s" % hascpu)
+        # spawn lcc
+        if hasv:
+            argv[0] = lccname
+            print(*argv, file=sys.stderr)
+            argv[0] = path.basename(lccname)
+        os.putenv("LCCDIR", progdir)
+        exitcode = os.spawnv(os.P_WAIT, lccname, argv)
+        sys.exit(exitcode)
+finally:
+    for tmp in temporaries:
+        if os.access(tmp, os.F_OK):
+            if hasv:
+                print("rm %s" % tmp, file=sys.stderr)
+            os.remove(tmp)
+            
 
 # Local Variables:
 # mode: python

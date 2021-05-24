@@ -6,6 +6,10 @@
     "#" : "- Key 'romType' is used for runtime ROM check",
     "#" : "- Other keys can be tested by the runtime libraries",
 
-    "v4"  : { "cpu" : 4, "romType" : 56 },
-    "v5a" : { "cpu" : 5, "romType" : 64 }
+    "v4"  : { "cpu" : 4,
+	      "romType" : 56 },
+
+    "v5a" : { "cpu" : 5,
+	      "romType" : 64,
+	      "has_vIRQ" : 1 }
 }

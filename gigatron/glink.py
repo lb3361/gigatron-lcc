@@ -1805,11 +1805,8 @@ def main(argv):
         args = parser.parse_args(argv)
 
         # set defaults
-        if False:
-            if args.map == None:
-                args.map = '64k'
-            if args.rom == None:
-                args.rom = 'v5a'
+        if args.map == None:
+            fatal("glink: please provide a -map=xxx option")
         read_rominfo(args.rom)
         args.cpu = args.cpu or romcpu or 5
         args.files = args.files or []

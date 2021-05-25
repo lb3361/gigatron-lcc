@@ -50,6 +50,9 @@ struct cpustate_s { // TTL state that the CPU controls
 
 uint8_t ROM[1<<16][2], RAM[1<<16], IN=0xff;
 
+long long ot;
+long long t;
+
 CpuState cpuCycle(const CpuState S)
 {
   CpuState T = S; // New state is old state unless something changes
@@ -122,7 +125,7 @@ void sim(void)
   int vgaY = 0;
   CpuState S;
 
-  for(long long t = -2; ; t++)
+  for(t = -2; ; t++)
     {
       // reset
       if (t < 0)
@@ -146,10 +149,13 @@ void sim(void)
       }
 
       // callbacks
-      if (S.PC == 0x3b4)
+      if (S.PC == 0x3b4) {
         sys_0x3b4(&T);
-      if (S.PC == 0x301)
+      } else if (S.PC == 0x301) {
         next_0x301(&T);
+      } else if (S.PC == 0x303) {
+        ot = t - 2;
+      }
       // commit
       S = T;
     }
@@ -509,7 +515,7 @@ int disassemble(word addr, char **pm, char *operand)
     }
 }
 
-void print_trace(void)
+void print_trace(CpuState *S)
 {
   char operand[32];
   char *mnemonic = "???";
@@ -517,6 +523,9 @@ void print_trace(void)
   operand[0] = 0;
   disassemble(addr, &mnemonic, operand);
   fprintf(stderr, "%04x: [", addr);
+  if (strchr(trace, 'n')) {
+    fprintf(stderr, "  AC=%02x YX=%02x%02x vTicks=%d t=%+06ld\n\t", S->AC, S->Y, S->X, (int)(char)peek(0x15), (long)((t-ot) % 1000000));
+  }
   fprintf(stderr, " vAC=%04x vLR=%04x", deek(vAC), deek(vLR));
   if (strchr(trace, 's'))
     fprintf(stderr, " vSP=%02x", peek(vSP));
@@ -556,7 +565,7 @@ void print_trace(void)
 void next_0x301(CpuState *S)
 {
   if (trace && nogt1)
-    print_trace();
+    print_trace(S);
 }
 
 

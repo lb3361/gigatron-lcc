@@ -18,8 +18,8 @@
     "exp" : { "cpu" : 5,
 	      "romType" : "0xf8",
 	      "has_vIRQ" : 1,
-	      "has_SYS_CopyMemory" :    { "addr" : "0xe9", "cycs" : 34 },
-	      "has_SYS_CopyMemoryExt" : { "addr" : "0xec", "cycs" : 42 }
+	      "has_SYS_CopyMemory" :    { "addr" : "0xe9", "cycs" : 80 },
+	      "has_SYS_CopyMemoryExt" : { "addr" : "0xec", "cycs" : 94 }
 	    }
 	      
 }

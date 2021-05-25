@@ -1291,8 +1291,8 @@ def read_rominfo(rom):
         if rom in d:
             rominfo = d[args.rom]
     if rominfo:
-        romtype = rominfo['romType']
-        romcpu = rominfo['cpu']
+        romtype = int(str(rominfo['romType']),0)
+        romcpu = int(str(rominfo['cpu']),0)
     if not rominfo:
         print(f"glink: warning: rom '{args.rom}' is not recognized", file=sys.stderr)
         rominfo = {}

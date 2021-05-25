@@ -7,9 +7,19 @@
     "#" : "- Other keys can be tested by the runtime libraries",
 
     "v4"  : { "cpu" : 4,
-	      "romType" : 56 },
+	      "romType" : "0x38"
+	    },
 
     "v5a" : { "cpu" : 5,
-	      "romType" : 64,
-	      "has_vIRQ" : 1 }
+	      "romType" : "0x40",
+	      "has_vIRQ" : 1
+	    },
+
+    "exp" : { "cpu" : 5,
+	      "romType" : "0xf8",
+	      "has_vIRQ" : 1,
+	      "has_SYS_CopyMemory" :    { "addr" : "0xe9", "cycs" : 34 },
+	      "has_SYS_CopyMemoryExt" : { "addr" : "0xec", "cycs" : 42 }
+	    }
+	      
 }

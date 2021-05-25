@@ -9,14 +9,20 @@ if 'has_SYS_ScanMemory' in rominfo:
         # scan memory without page crossings
         # takes data ptr in sysArgs0/1
         # takes two byte targets in sysArgs2/3
-        # takes length in sysArgs4 (0 means 256)
+        # takes length in vACL (0 means 256)
+        # returns pointer to target or 0
         SYS(54)
 else:
     def m_prepScanMemory():
         pass
     def m_ScanMemory():
-        _CALLJ('_memscan0')
+        ST('sysArgs4');_CALLJ('_memscan0')
     def code0():
+        # scan memory without page crossings
+        # takes data ptr in sysArgs0/1
+        # takes two byte targets in sysArgs2/3
+        # takes length in sysArgs4 (not vACL)
+        # returns pointer to target or 0
         nohop()
         label('_memscan0')
         LDW('sysArgs0');PEEK();STW(T3)
@@ -55,8 +61,7 @@ def code1():
     label('.memscan1')                           # R11=min(R11,R12)
     # calls page version
     LDW(R8);STW('sysArgs0');ADDW(R11);STW(R8)
-    LD(R11);STW('sysArgs4')
-    m_ScanMemory();_BNE('.done')
+    LD(R11);m_ScanMemory();_BNE('.done')
     LDW(R10);SUBW(R11);STW(R10);_BNE('.loop')
     label('.done')
     STW(R21);LDW(R22);tryhop(5);STW(vLR);LDW(R21);RET();

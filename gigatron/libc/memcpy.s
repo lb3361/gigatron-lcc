@@ -2,26 +2,29 @@
 code = [ ('EXPORT', 'memcpy') ]
 
 if 'has_SYS_CopyMemory' in rominfo:
+    info = rominfo['has_SYS_CopyMemory']
+    addr = int(str(info['addr']),0)
+    cycs = int(str(info['cycs']),0)
     # no rom has this yet
     def m_prepCopyMemory():
-        LDWI('SYS_CopyMemory_v6_54'); STW('sysFn')
+        LDWI(addr);STW('sysFn')
     def m_CopyMemory():
         # copy without page crossings
-        # takes source ptr in sysArgs0/1
-        # takes dest ptr in sysArgs2/3
-        # takes length in sysArgs4/5
-        SYS(54)
+        # takes destination ptr in sysArgs0/1
+        # takes source ptr in sysArgs2/3
+        # takes length in vACL (0 means 256)
+        SYS(cycs)
 else:
     def m_prepCopyMemory():
         pass
     def m_CopyMemory():
-        _CALLJ('_memcpy0')
+        STW('sysArgs4');_CALLJ('_memcpy0')
     def code0():
         nohop()
         # copy without page crossings
-        # takes source ptr in sysArgs0/1
-        # takes dest ptr in sysArgs2/3
-        # takes length in sysArgs4/5
+        # takes destination ptr in sysArgs0/1
+        # takes source ptr in sysArgs2/3
+        # takes length in sysArgs4/5 (not vAC)
         label('_memcpy0')
         # single byte
         LD('sysArgs4');ANDI(1);BEQ('.cpy2')
@@ -73,8 +76,7 @@ def code1():
     # calls in-page-copy
     LDW(R8);STW('sysArgs0');ADDW(R11);STW(R8)
     LDW(R9);STW('sysArgs2');ADDW(R11);STW(R9)
-    LD(R11);STW('sysArgs4')
-    m_CopyMemory()
+    LD(R11);m_CopyMemory()
     LDW(R10);SUBW(R11);STW(R10);_BNE('.loop')
     label('.done')
     LDW(R22);tryhop(5);STW(vLR);LDW(R21);RET();

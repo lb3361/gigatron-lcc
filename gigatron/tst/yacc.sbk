@@ -1403,8 +1403,7 @@ def code31():
 def code32():
 	label('yyparse');
 	tryhop(4);LDW(vLR);DOKE(SP);_SP(-324);STW(SP);_SAVE(6, 0xff); # R0-7
-	LDI(0);STW(R22);
-	LDW(R22);STW(R6);
+	_LDI(0);STW(R6);
 	_LDI('yychar');STW(R22);
 	_LDI(-1);DOKE(R22);
 	_LDI('yynerrs');STW(R22);

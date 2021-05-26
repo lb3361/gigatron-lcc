@@ -302,6 +302,12 @@ reg: LOADP2(reg)  "\tLDW(%0);STW(%c);\n"  move(a)
 reg: LOADI4(reg)  "\t_LMOV(%0,%c);\n"     move(a)
 reg: LOADU4(reg)  "\t_LMOV(%0,%c);\n"     move(a)
 reg: LOADF5(reg)  "\t_FMOV(%0,%c);\n"     move(a)
+# -- these were missing, really
+reg: LOADI1(conBs) "\tLDI(%0);ST(%c);\n"
+reg: LOADU1(conB)  "\tLDI(%0);ST(%c);\n"
+reg: LOADI2(con)   "\t_LDI(%0);STW(%c);\n"
+reg: LOADU2(con)   "\t_LDI(%0);STW(%c);\n"
+reg: LOADP2(con)   "\t_LDI(%0);STW(%c);\n"
 
 # -- constants
 # These non terminal represent constants in the tree grammar
@@ -464,8 +470,8 @@ ac: DIVI2(ac, iarg) "%0%[1b]_DIVS(%1);" 200
 ac: DIVU2(ac, iarg) "%0%[1b]_DIVU(%1);" 200
 ac: MODI2(ac, iarg) "%0%[1b]_MODS(%1);" 200
 ac: MODU2(ac, iarg) "%0%[1b]_MODU(%1);" 200
-ac: BCOMI2(ac)      "%0STW(T3);LDWI(-1);XORW(T3);" 68
-ac: BCOMU2(ac)      "%0STW(T3);LDWI(-1);XORW(T3);" 68
+ac: BCOMI2(ac)      "%0STW(T3);_LDI(-1);XORW(T3);" 68
+ac: BCOMU2(ac)      "%0STW(T3);_LDI(-1);XORW(T3);" 68
 ac: BANDI2(ac,iarg)  "%0%[1b]ANDW(%1);" 28
 ac: BANDU2(ac,iarg)  "%0%[1b]ANDW(%1);" 28
 ac: BANDI2(iarg,ac)  "%1%[0b]ANDW(%0);" 28

@@ -1,37 +1,37 @@
 
-
-# memset(d,v,l)
-
-def code0():
-    '''version that uses Sys_SetMemory_v2_54'''
-    label('memset');                            # R8=d, R9=v, R10=l
-    tryhop(4);LDW(vLR);STW(R22)
-    LDW(R8);STW(R21)                            # save R8 into R21
-    LDWI('SYS_SetMemory_v2_54');STW('sysFn')    # prep sys
-    LD(R9);ST('sysArgs1')
-    label('.loop')
-    LDW(R8);ORI(255);ADDI(1);SUBW(R8);STW(R11)           # R11: bytes until end of page
-    LDW(R10);_BGE('.test2');SUBW(R11);_BRA('.partial')
-    label('.test2');SUBW(R11);_BLE('.final')             # if R10>R11 goto partial else final
-    label('.partial')
-    STW(R10)
-    LDW(R8);STW('sysArgs2');ADDW(R11);STW(R8)
-    LDW(R11);ST('sysArgs0')
-    SYS(54)
-    _BRA('.loop')
-    label('.final')
-    LDW(R10);_BEQ('.done');ST('sysArgs0')
-    LDW(R8);STW('sysArgs2')
-    SYS(54)
-    label('.done')
-    LDW(R22);tryhop(5);STW(vLR);LDW(R21);RET();
-
+def scope():
     
-code=[
-    ('EXPORT', 'memset'),
-    ('CODE', 'memset', code0) ]
-	
-module(code=code, name='memset.s');
+    # memset(d,v,l)
+
+    def code0():
+        '''version that uses Sys_SetMemory_v2_54'''
+        label('memset');                            # R8=d, R9=v, R10=l
+        tryhop(4);LDW(vLR);STW(R22)
+        LDW(R8);STW(R21);STW('sysArgs2')
+        LDWI('SYS_SetMemory_v2_54');STW('sysFn')    # prep sys
+        LD(R9);ST('sysArgs1')
+        label('.loop')
+        LD(R8);ST(R20);LDI(255);ST(R20+1)           # R20 is minus count to end of block
+        LDW(R10);_BGT('.memset2')
+        _BEQ('.done')                               # a) len is zero
+        ADDW(R20);_BRA('.memset4')                  # b) len is larger than 0x8000
+        label('.memset2')
+        ADDW(R20);_BLE('.memset5')                  # c) len is smaller than -R20
+        label('.memset4')
+        STW(R10)                                    # d) len is larger than -R20
+        LDI(0);SUBW(R20);STW(R20);ST('sysArgs0');SYS(54)
+        LDW(R8);ADDW(R20);STW(R8);STW('sysArgs2')
+        _BRA('.loop')
+        label('.memset5')
+        LDW(R10);ST('sysArgs0');SYS(54)
+        label('.done')
+        LDW(R22);tryhop(5);STW(vLR);LDW(R21);RET();
+
+
+    return [('EXPORT', 'memset'),
+            ('CODE', 'memset', code0) ]
+
+module(code=scope(), name='memset.s');
 
 # Local Variables:
 # mode: python

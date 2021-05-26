@@ -80,7 +80,7 @@ def where(exc=False):
     else:
         stb = traceback.extract_stack(limit=10)
     for s in stb:
-        if (s[2].startswith('code')):
+        if isinstance(s[0],str) and not s[0].endswith('.py'):
             fn = s[0] or "<unknown>"
             if fn.startswith(lccdir):
                 fn = fn[len(lccdir):].lstrip('/')
@@ -1874,6 +1874,8 @@ def main(argv):
         return 0
     
     except FileNotFoundError as err:
+        fatal(str(err), exc=True)
+    except Exception as err:
         fatal(str(err), exc=True)
 
 

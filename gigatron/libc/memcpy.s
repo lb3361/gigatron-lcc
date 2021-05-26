@@ -65,11 +65,11 @@ def scope():
         LDI(255);ST(R20+1)                          # R20 is minus count to page boundary
         LDW(R10);_BGT('.memcpy2')
         _BEQ('.done')                               # a) len is zero
-        ADDW(R20);_BRA('.memcpy4')                  # b) len is large
+        ADDW(R20);_BRA('.memcpy4')                  # b) len is larger than 0x8000
         label('.memcpy2')
         ADDW(R20);_BLE('.memcpy5')                  # c) len is smaller than -R20
         label('.memcpy4')
-        STW(R10)
+        STW(R10)                                    # d) len is larger than -R20
         LDI(0);SUBW(R20);STW(R20);m_CopyMemory()
         LDW(R8);ADDW(R20);STW(R8);STW('sysArgs0')
         LDW(R9);ADDW(R20);STW(R9);STW('sysArgs2')

@@ -4,16 +4,17 @@ def scope():
     code = [ ('EXPORT', '_memscan') ]
 
     if 'has_SYS_ScanMemory' in rominfo:
-        # no rom has this yet
+        info = rominfo['has_SYS_ScanMemory']
+        addr = int(str(info['addr']),0)
+        cycs = int(str(info['cycs']),0)
         def m_prepScanMemory():
-            LDWI('SYS_ScanMemory_v6_54'); STW('sysFn')
+            LDWI(addr);STW('sysFn')
         def m_ScanMemory():
-            # scan memory without page crossings
-            # takes data ptr in sysArgs0/1
-            # takes two byte targets in sysArgs2/3
+            # copy without page crossings
+            # takes destination ptr in sysArgs0/1
+            # takes source ptr in sysArgs2/3
             # takes length in vACL (0 means 256)
-            # returns pointer to target or 0
-            SYS(54)
+            SYS(cycs)
     else:
         def m_prepScanMemory():
             pass
@@ -42,29 +43,31 @@ def scope():
         code.append(('CODE', '_memscan0', code0))
 
 
-    # void *_memscan(void *s, int c0c1, size_t n)
+    # void *_memscan(void *s, char c0, char c1, size_t n)
     # - scans at most n bytes from s until finding one equal to c0 or c1
     # - return pointer to the byte if found, 0 if not found.
 
     def code1():
-        label('_memscan');                          # R8=d, R9=c0c1, R10=l
+        label('_memscan');                          # R8=d, R9=c0 R10=c1, R11=l
         tryhop(4);LDW(vLR);STW(R22)
-        LDW(R9);STW('sysArgs2')
+        LDW(R8);STW('sysArgs0')
+        LD(R10);ST(R9+1);LDW(R9);STW('sysArgs2')
         m_prepScanMemory()
         label('.loop')
-        LDW(R8);ORI(255);ADDI(1);SUBW(R8);STW(R11)  # R11: bytes until end of page
-        LDW(R10);_BEQ('.done')
-        if args.cpu < 5:
-            _BLT('.memscan1')
-            SUBW(R11);_BGE('.memscan1')  # we know R11 & 0x8000 == 0
-        else:
-            _CMPWU(R11);_BGE('.memscan1')
-        LDW(R10);STW(R11)
-        label('.memscan1')                           # R11=min(R11,R12)
-        # calls page version
-        LDW(R8);STW('sysArgs0');ADDW(R11);STW(R8)
-        LD(R11);m_ScanMemory();_BNE('.done')
-        LDW(R10);SUBW(R11);STW(R10);_BNE('.loop')
+        LD(R8);ST(R20);LDI(255);ST(R20+1)           # R20 is minus count to end of block
+        LDW(R11);_BGE('.memscan2')
+        ADDW(R20);_BRA('.memscan4')                 # b) len is larger than 0x8000
+        label('.memscan2')
+        _BEQ('.done')                               # a) len is zero
+        ADDW(R20);_BLE('.memscan5')                 # c) len is smaller than -R20
+        label('.memscan4')
+        STW(R11)                                    # d) len is larger than -R20
+        LDI(0);SUBW(R20);STW(R20)
+        m_ScanMemory();_BNE('.done')
+        LDW(R8);ADDW(R20);STW(R8);STW('sysArgs0')
+        _BRA('.loop')
+        label('.memscan5')
+        LDW(R11);m_ScanMemory()
         label('.done')
         STW(R21);LDW(R22);tryhop(5);STW(vLR);LDW(R21);RET();
 

@@ -19,7 +19,7 @@ def scope():
         def m_prepScanMemory():
             pass
         def m_ScanMemory():
-            ST('sysArgs4');_CALLJ('_memscan0')
+            STW('sysArgs4');_CALLJ('_memscan0')
         def code0():
             # scan memory without page crossings
             # takes data ptr in sysArgs0/1
@@ -28,13 +28,20 @@ def scope():
             # returns pointer to target or 0
             nohop()
             label('_memscan0')
-            LDW('sysArgs0');PEEK();STW(T3)
-            LD('sysArgs2');XORW(T3);BEQ('.scanok')
-            LD('sysArgs3');XORW(T3);BEQ('.scanok')
-            INC('sysArgs0')
             if args.cpu <= 5:
-                LD('sysArgs4');SUBI(1);ST('sysArgs4');BNE('_memscan0')
+                LDI(0);SUBW('sysArgs4');STW('sysArgs4')
+                label('.scanloop')
+                LDW('sysArgs0');PEEK();STW(T3)
+                LD('sysArgs2');XORW(T3);BEQ('.scanok')
+                LD('sysArgs3');XORW(T3);BEQ('.scanok')
+                INC('sysArgs0');INC('sysArgs4')
+                LD('sysArgs4');BNE('.scanloop')
             else:
+                label('.scanloop')
+                LDW('sysArgs0');PEEKA(T3)
+                LD('sysArgs2');XORW(T3);BEQ('.scanok')
+                LD('sysArgs3');XORW(T3);BEQ('.scanok')
+                INC('sysArgs0')
                 DBNE('sysArgs4','_memscan0')
             LDI(0);RET()
             label('.scanok')
@@ -51,7 +58,7 @@ def scope():
         label('_memscan');                          # R8=d, R9=c0 R10=c1, R11=l
         tryhop(4);LDW(vLR);STW(R22)
         LDW(R8);STW('sysArgs0')
-        LD(R10);ST(R9+1);LDW(R9);STW('sysArgs2')
+        LD(R9);ST('sysArgs2');LD(R10);ST('sysArgs3')
         m_prepScanMemory()
         label('.loop')
         LD(R8);ST(R20);LDI(255);ST(R20+1)           # R20 is minus count to end of block
@@ -73,7 +80,7 @@ def scope():
 
     code.append(('CODE', '_memscan', code1))
 
-    return code
+    return code;
 
 module(code=scope(), name='memscan.s');
 

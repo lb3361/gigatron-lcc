@@ -75,15 +75,18 @@ gigatron-install: FORCE
 	    mode=644; test -x "$$n" && mode=755 ; \
 	    ${INSTALL} -m $$mode "$$n" ${libdir}/ ; done
 	-${INSTALL} -d "${libdir}/include"
-	for n in "${B}include"/* ; do \
+	for n in "${B}include"/*,h ; do \
 	    ${INSTALL} -m 0644 "$$n" "${libdir}/include/" ; done
+	-${INSTALL} -d "${libdir}/include/gigatron"
+	for n in "${B}include/gigatron"/*,h ; do \
+	    ${INSTALL} -m 0644 "$$n" "${libdir}/include/gigatron/" ; done
 	-${INSTALL} -d ${bindir}
 	${LN_S} ${libdir}/glcc ${bindir}/glcc
 	${LN_S} ${libdir}/glink ${bindir}/glink
 
 gigatron-include: FORCE
 	-mkdir -p ${B}include
-	cp ${TOP}include/gigatron/* ${B}/include/
+	cp -r ${TOP}include/gigatron/* ${B}/include/
 
 ${B}glink: ${G}glink
 	cp ${G}glink ${B}glink

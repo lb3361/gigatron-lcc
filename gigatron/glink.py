@@ -66,6 +66,7 @@ dedup_errors = set()
 map_extra_modules = None
 map_extra_libs = None
 map_segments = None
+map_describe = None
 
 # --------------- utils
 
@@ -80,7 +81,9 @@ def where(exc=False):
     else:
         stb = traceback.extract_stack(limit=10)
     for s in stb:
-        if isinstance(s[0],str) and not s[0].endswith('.py'):
+        if isinstance(s[0],str) and not s[0].endswith('.py') \
+           and not s[0].endswith('glink') \
+           and not s[0].endswith('glcc'):
             fn = s[0] or "<unknown>"
             if fn.startswith(lccdir):
                 fn = fn[len(lccdir):].lstrip('/')
@@ -1777,7 +1780,7 @@ def main(argv):
                 the symbols that it imports, then recursively all the
                 modules that are needed to resolve imported
                 symbols.''')
-        parser.add_argument('files', type=str, nargs='+',
+        parser.add_argument('files', type=str, nargs='*',
                             help='input files')
         parser.add_argument('-o', type=str, default='a.gt1', metavar='GT1FILE',
                             help='select the output filename (default: a.gt1)')
@@ -1786,7 +1789,9 @@ def main(argv):
         parser.add_argument('-rom', "--rom", type=str, action='store', default='v5a',
                             help='select the target rom version: v4, v5a (default: v5a).')
         parser.add_argument('-map', "--map", type=str, action='store', 
-                            help='select a linker map (default: 64k)')
+                            help='select a linker map')
+        parser.add_argument('-info', "--info", action='store_true', 
+                            help='describe the selected map, cpu, rom')
         parser.add_argument('-l', type=str, action='append', metavar='LIB',
                             help='library files. -lxxx searches for libxxx.a')
         parser.add_argument('-L', type=str, action='append', metavar='LIBDIR',
@@ -1830,7 +1835,33 @@ def main(argv):
         args.L.append(os.path.join(lccdir,f"cpu{args.cpu}"))
         args.L.append(lccdir)
 
+        # info request only
+        if args.info:
+            print('================= ROM INFO')
+            if rominfo and romtype and romcpu:
+                print(f"  Rom '{args.rom}' (romType={hex(romtype)}) implements cpu {romcpu}.")
+                print(f"  Keys: {[k for k in rominfo if k not in ('cpu', 'romType')]}")
+            else:
+                print(f" No information found on rom '{args.rom}'")
+            print()
+            print('================= CPU INFO')
+            if args.cpu == 6:
+                print('  vCPU 6 is an experimental cpu with numerous additional opcodes')
+            elif args.cpu == 5:
+                print('  vCPU 5 was introduced in ROMv5a with opcodes CALLI, CMPHU, CMPHS.')
+            elif args.cpu == 4:
+                print('  vCPU 4 is the version that comes with ROMv4.')
+            print()
+            print('================= MAP INFO')
+            if map_describe:
+                map_describe()
+            else:
+                print(f"  No information found on map '{args.map}'")
+            return 0
+        
         # load all .s/.o/.a files
+        if not args.files:
+            fatal(f"no input files were specified")
         for f in args.files:
             read_file(f)
         for m in module_list:

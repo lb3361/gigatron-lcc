@@ -1,4 +1,16 @@
 
+def map_describe():
+    print('''  Memory map 'sim' targets the simulator 'gtsim'.
+             
+  Code and data are placed as with memory map '64k'.  The memory map
+  causes the linker to load library 'libsim' which overrides various
+  libc components. Function 'printf' is directly executed by gtsim and
+  prints to gtsim's standard output and function '_exitm' exits
+  gtsim. It is expected that libsim will eventually delegate all stdio
+  operations to gtsim.  This particularly useful for the glcc test
+  suite.  ''')
+
+
 # ------------size----addr----step----end---- flags (1=nocode, 2=nodata)
 segments = [ (0x0060, 0x08a0, 0x0100, 0x80a0, 0),
 	     (0x00fa, 0x0200, 0x0100, 0x0500, 1),

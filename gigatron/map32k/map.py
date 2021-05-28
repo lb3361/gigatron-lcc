@@ -1,30 +1,27 @@
 
-def map_describe():
-    print('''  Memory map '64k' targets memory expanded Gigatrons.
-             
- Code and data can be placed in the video memory holes or 
- in the memory above 0x8000. The stack grows downwards from 0xfffe.
- Space in page 2 to 6 is reserved for data items. Small data
- objects often fit in the memory holes. Meanwhile the high
- 32KB of memory provides space for large data objects.
 
- Option '--short-function-size-threshold=256' has the effect of using
- high memory for all functions that fit in a page but do not fit in a
- video memory hole. Option '--long-function-segment-size=128' has the
- effect of moving all long functions in high memory, minimizing the
- need to hop from page to page inside the same function. Function
- placement can be seen with glink option '-d' or glcc option '-Wl-d'.
- ''')
+def map_describe():
+    print('''  Memory map '32k' targets the 32KB Gigatron.
+             
+  Program and data are scattered in the video memory holes starting in
+  0x8a0-0x8ff and progressing towards 0x7fa0-0x7fff. Data items larger
+  than 96 bytes can be located in page 2 to 5. The stack grows
+  downwards from 0x6fe. The map also inserts a stub in 0x200
+  that jumps to the actual entry point.
+
+  This memory map is very constraining because it only provides space
+  for a couple data items larger than 96 bytes. Problems can arise if
+  the stack grows into a data region.
+  ''')
 
 
 # ------------size----addr----step----end---- flags (1=nocode, 2=nodata)
 segments = [ (0x0060, 0x08a0, 0x0100, 0x80a0, 0),
 	     (0x00fa, 0x0200, 0x0100, 0x0500, 1),
-	     (0x0200, 0x0500, None,   None,   1),
-	     (0x7000, 0x8000, None,   None,   0)   ]
+	     (0x0100, 0x0500, None,   None,   1)   ]
 
-initsp = 0xfffe
-minram = 0x100
+initsp = 0x6fe
+minram = 0x80
 
 def map_segments():
     '''
@@ -50,7 +47,8 @@ def map_extra_modules(romtype):
     version, checks the ram configuration, and returns 0 if all goes well.
     '''
     def code0():
-        nohop() # short function that must fit in a single segment
+        '''Init function.'''
+        nohop()
         label('_init0')
         _LDI(initsp);STW(SP);
         LD('romType');ANDI(0xfc);SUBI(romtype or 0);BLT('.err')
@@ -58,10 +56,18 @@ def map_extra_modules(romtype):
         LDI(0);RET()
         label('.err')
         LDI(1);RET()
-    code=[ ('EXPORT', '_init0'), ('CODE', '_init0', code0) ]
+    def code1():
+        '''Jump to the entry point in 0x200.'''
+        org(0x200)
+        LDWI(args.e)
+        CALL(vAC)
+    code=[ ('EXPORT', '_init0'),
+           ('CODE', '_init0', code0),
+           ('CODE', '_usercode', code1) ]
     name='_map.s'
     debug(f"synthetizing module '{name}'")
     module(code=code, name=name);
+
 
 
 # Local Variables:

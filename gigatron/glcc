@@ -85,8 +85,10 @@ if len(argv) < 2:
 # set defaults
 if not hasrom:
     hasrom = 'v5a'
+    print("glcc: defaulting to rom '%s'" % hasrom, file=sys.stderr)
 if not hasmap:
-    hasmap = '64k'
+    hasmap = '32k'
+    print("glcc: defaulting to map '%s'" % hasmap, file=sys.stderr)
 if not hasrom in roms:
     print("glcc: warning: unrecognized rom '%s'" % hasrom, file=sys.stderr)
 else:
@@ -103,7 +105,7 @@ try:
     if usage:
         print("Usage: glcc {...options_or_files...}", file=sys.stderr)
         print("  Besides the lcc options listed later, glcc recognizes", file=sys.stderr)
-        print("  -map=MAP  to select a memory map (default 64k)", file=sys.stderr)
+        print("  -map=MAP  to select a memory map (default 32k)", file=sys.stderr)
         print("  -rom=ROM  to select a rom (default v5a)", file=sys.stderr)
         print("  -rom=CPU  to select a target cpu (default to rom's)", file=sys.stderr)
         print("", file=sys.stderr)

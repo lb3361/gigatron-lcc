@@ -10,7 +10,7 @@ LN_S=ln -s
 B=${TOP}${BUILDDIR}/
 G=${TOP}gigatron/
 
-MAPDIR=map64k
+MAPDIR=map32k
 
 all: ${B}${MAPDIR}/map.py
 

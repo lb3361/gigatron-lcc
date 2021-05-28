@@ -467,15 +467,24 @@ def hi(x):
     return (v(x) >> 8) & 0xff
 
 @vasm
-def nohop(org=None):
-    '''Force a code fragment to be fit in a single page.
-       An error will be signaled if no page can fit it.
-       Giving argument `org` additionally forces the function
-       to live at the specified address.'''
+def org(addr):
+    '''Force a code fragment to be placed at a specific location.
+       The fragment must fit in the page and the required space
+       must be available. This currently piggybacks on nohop()
+       and does not work for code fragments. I have to find
+       a better way of doing this.'''
     global short_function
     # this information is collected in measure_code_fragment()
     if the_pass == 0:
-        short_function = True if org == None else ('org', org)
+        short_function = True if org == None else ('org', int(addr))
+@vasm
+def nohop():
+    '''Force a code fragment to be fit in a single page.
+       An error will be signaled if no page can fit it.'''
+    global short_function
+    # this information is collected in measure_code_fragment()
+    if the_pass == 0:
+        short_function = True
 @vasm
 def tryhop(sz=None, jump=True):
     '''Hops to a new page if the current page cannot hold a long jump

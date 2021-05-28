@@ -54,7 +54,10 @@ def map_extra_modules(romtype):
         label('_init0')
         _LDI(initsp);STW(SP);
         LD('romType');ANDI(0xfc);SUBI(romtype or 0);BLT('.err')
-        LD('memSize');BNE('.err')
+        if minram == 0x100:
+            LD('memSize');BNE('.err')
+        else:
+            LD('memSize');SUBI(1);ANDI(0xff);SUBI(minram-1);BLT('.err')
         LDI(0);RET()
         label('.err')
         LDI(1);RET()

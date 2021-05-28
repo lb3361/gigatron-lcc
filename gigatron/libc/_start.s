@@ -7,7 +7,7 @@ def code0():
     # save vLR, vSP
     PUSH();LDWI('_exitvsp');STW(T3);LD(vSP);POKE(T3)
     # calls init0 in cpu4 compatible way
-    LDWI('_init0'); STW(T3); CALL(T3); _BEQ('.init')
+    LDWI('_init0'); CALL(vAC); _BEQ('.init')
     LDI(10); STW(R8); LDWI('.msg'); STW(R9); _BRA('.exitm')
     label('.init')
     # call init chain
@@ -34,7 +34,7 @@ def code1():
     DEEK(); STW(R7); LDW(vLR); STW(R6)
     LDW(R7); _BRA('.callchaintst')
     label('.callchainloop')
-    DEEK();STW(T3);CALL(T3)
+    DEEK();CALL(vAC)
     LDI(2);ADDW(R7);DEEK();STW(R7)
     label('.callchaintst')
     _BNE('.callchainloop')

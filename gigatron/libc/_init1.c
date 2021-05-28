@@ -14,6 +14,7 @@ static void _init_bss(void)
   struct bsschain *r = __glink_magic_bss;
   if (r != (void*)0xBEEF)
     {
+      __glink_magic_bss = 0; // because we destroy the chain in the process
       while (r)
         {
           struct bsschain *n = r->next;

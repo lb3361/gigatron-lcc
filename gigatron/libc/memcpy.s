@@ -79,7 +79,7 @@ def scope():
         label('.done')
         LDW(R22);tryhop(5);STW(vLR);LDW(R21);RET();
 
-    code.append(('CODE', '_memcpy', code1))
+    code.append(('CODE', 'memcpy', code1))
 	
     return code
 

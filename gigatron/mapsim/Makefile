@@ -13,7 +13,7 @@ CFLAGS=-O3 -g
 
 MAPDIR=mapsim
 
-LIBSIMFILES= printf.s _exitm.s
+LIBSIMFILES= libsim/printf.s libsim/_exitm.s
 
 all: ${B}gtsim ${B}${MAPDIR}/map.py ${B}${MAPDIR}/libsim.a
 

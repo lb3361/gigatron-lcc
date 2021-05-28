@@ -1784,7 +1784,7 @@ def main(argv):
                             help='input files')
         parser.add_argument('-o', type=str, default='a.gt1', metavar='GT1FILE',
                             help='select the output filename (default: a.gt1)')
-        parser.add_argument('-cpu', "--cpu", type=int, action='store',
+        parser.add_argument('-cpu', "--cpu", type=int, action='store', default=5,
                             help='select the target cpu version: 4, 5, 6 (default: 5).')
         parser.add_argument('-rom', "--rom", type=str, action='store', default='v5a',
                             help='select the target rom version: v4, v5a (default: v5a).')
@@ -1820,7 +1820,10 @@ def main(argv):
 
         # set defaults
         if args.map == None:
-            fatal("glink: please provide a -map=xxx option")
+            args.map = '32k'
+            print(f"glink: defaulting to map '{args.map}'", file=sys.stderr)
+
+        # process rom and map
         read_rominfo(args.rom)
         args.cpu = args.cpu or romcpu or 5
         args.files = args.files or []
@@ -1828,8 +1831,6 @@ def main(argv):
         args.l = args.l or []
         args.L = args.L or []
         read_interface()
-
-        # process map
         read_map(args.map)
         args.L.append(os.path.join(lccdir,f"map{args.map}"))
         args.L.append(os.path.join(lccdir,f"cpu{args.cpu}"))

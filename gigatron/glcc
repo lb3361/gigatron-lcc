@@ -82,23 +82,11 @@ for arg in sys.argv:
 if len(argv) < 2:
     usage = True
 
-# set defaults
-if not hasrom:
-    hasrom = 'v5a'
-    print("glcc: defaulting to rom '%s'" % hasrom, file=sys.stderr)
-if not hasmap:
-    hasmap = '32k'
-    print("glcc: defaulting to map '%s'" % hasmap, file=sys.stderr)
-if not hasrom in roms:
-    print("glcc: warning: unrecognized rom '%s'" % hasrom, file=sys.stderr)
-else:
+# set defaults cpu according to rom
+if hasrom and hasrom in roms:
     rominfo = roms[hasrom]
     if not hascpu:
         hascpu = rominfo['cpu']
-if not hascpu:
-    hascpu = 5
-    print("glcc: warning: defaulting to cpu '%d'" % hascpu, file=sys.stderr)
-
 
 temporaries = []
 try:
@@ -108,6 +96,7 @@ try:
         print("  -map=MAP  to select a memory map (default 32k)", file=sys.stderr)
         print("  -rom=ROM  to select a rom (default v5a)", file=sys.stderr)
         print("  -rom=CPU  to select a target cpu (default to rom's)", file=sys.stderr)
+        print("  -info     gives information about the selected map, cpu, and rom", file=sys.stderr) 
         print("", file=sys.stderr)
         os.spawnv(os.P_WAIT, lccname, [ path.basename(lccname) ] )
         sys.exit(1)
@@ -128,9 +117,12 @@ try:
                 v = int(v) if isinstance(v, int) else '"%s"' % v
                 print('#define ROM_%s %s' % (k , v), file=f)
         # add the rom/map/cpu options
-        argv.insert(1, "-map=%s" % hasmap)
-        argv.insert(1, "-rom=%s" % hasrom)
-        argv.insert(1, "-cpu=%s" % hascpu)
+        if hasmap:
+            argv.insert(1, "-map=%s" % hasmap)
+        if hasrom:
+            argv.insert(1, "-rom=%s" % hasrom)
+        if hascpu:
+            argv.insert(1, "-cpu=%s" % hascpu)
         # spawn lcc
         if hasv:
             argv[0] = lccname

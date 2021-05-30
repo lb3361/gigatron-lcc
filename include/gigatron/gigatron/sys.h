@@ -105,6 +105,10 @@
 
 /* All stubs are in gigatron/libc/gigatron.s */
 
+/* -- SYS_Lup -- */
+int SYS_Lup(unsigned int addr);
+#define has_SYS_Lup() 1
+
 
 /* -- SYS_Random -- */
 unsigned int SYS_Random(void);

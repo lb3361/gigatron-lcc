@@ -2,6 +2,18 @@
 def scope():
 
     # ----------------------------------------
+    # int SYS_Lup(unsigned int addr)
+    #   Notes: This is not a real SYS call. Just the LUP instruction.
+    def code0():
+        nohop()
+        label('SYS_Lup')
+        LDW(R8);LUP(0);RET()
+
+    module(name='sys_lup.s',
+           code=[('EXPORT', 'SYS_Lup'),
+                 ('CODE', 'SYS_Lup', code0) ])
+
+    # ----------------------------------------
     # unsigned int SYS_Random(void);
     def code0():
         nohop()
@@ -63,7 +75,7 @@ def scope():
            code=[('EXPORT', 'SYS_SpiExchangeBytes'),
                  ('CODE', 'SYS_SpiExchangeBytes', code0) ])
 
-    
+
 # execute    
 scope()
 

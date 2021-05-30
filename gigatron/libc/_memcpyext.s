@@ -24,7 +24,8 @@ def scope():
     else:
 
         def m_prepCopyMemoryExt():
-            _LDI(0x1f8);PEEK();STW(R16);_BEQ('.done')      # R16: copy of 3f8
+            _LDI(0x1f8);PEEK();STW(R16);_BNE('.ok')        # R16: copy of 3f8
+            _LDI(0);STW(R21);_BRA('.done');label('.ok')
             XORW(R8);ANDI(0xc0);XORW(R16);STW(R17)         # R17: destination ctrl word
             LDI(0);STW(R8)                                 # R8 = zero
             _LDI('SYS_ExpanderControl_v4_40');STW('sysFn') # prep sys call

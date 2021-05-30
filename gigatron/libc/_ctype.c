@@ -34,3 +34,20 @@ unsigned char _ctype(register unsigned int c)
 		return _ctype2[c - 64];
 	return 0;
 }
+
+int toupper(register int c) {
+	register int d = c - 64;
+	if (d >= 0 && c - 132 <= 0)
+		if (_ctype2[d] & __L)
+			return c & 0x5f;
+	return c;
+}
+
+int tolower(register int c) {
+	register int d = c - 64;
+	if (d >= 0 && c - 132 <= 0)
+		if (_ctype2[d] & __U)
+			return c | 0x20;
+	return c;
+}
+

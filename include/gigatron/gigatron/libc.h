@@ -21,13 +21,13 @@ extern void _exits(register int signo, register int fpeinfo);
    Only one of those can exist per c file. */
 #define DECLARE_INIT_FUNCTION(func) \
    static struct { void(*f)(void); void *next; \
-                 } __glink_magic_init = { func, 0 } ;
+                 } __glink_magic_init = { func, 0 } 
 
 /* Arrange for finalization function func() to be called when main() returns. 
    Only one of these can exist per c file. */
 #define DECLARE_FINI_FUNCTION(func) \
    static struct { void(*f)(void); void *next; \
-                 } __glink_magic_init = { func, 0 } ;
+                 } __glink_magic_fini = { func, 0 } 
 
 
 /* ---- Misc ---- */

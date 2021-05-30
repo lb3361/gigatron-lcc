@@ -32,12 +32,14 @@ def code1():
     nohop()
     label('_callchain')
     DEEK(); STW(R7); LDW(vLR); STW(R6)
-    LDW(R7); _BRA('.callchaintst')
+    _LDI(0xBEEF);XORW(R7);_BEQ('.callchaindone')
+    LDW(R7);_BRA('.callchaintst')
     label('.callchainloop')
     DEEK();CALL(vAC)
     LDI(2);ADDW(R7);DEEK();STW(R7)
     label('.callchaintst')
     _BNE('.callchainloop')
+    label('.callchaindone')
     LDW(R6); STW(vLR); RET()
 
 def code2():

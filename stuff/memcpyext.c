@@ -58,7 +58,6 @@ void scroll(void)
 		videoTable[i+i] = videoTable[i+i+16];
 	for (i=112; i<120; i++)
 		videoTable[i+i] = pages[i-112];
-	clear_lines(112,120);
 }
 
 void newline(screenpos_t *pos)
@@ -67,6 +66,7 @@ void newline(screenpos_t *pos)
 	pos->y += 1;
 	if (pos->y >  14) {
 		scroll();
+		clear_lines(112,120);
 		pos->y = 14;
 	}
 	pos->addr = (char*)(videoTable[16*pos->y]<<8);
@@ -78,17 +78,8 @@ void print_char(screenpos_t *pos, int ch)
 	char *addr;
 	int i;
 	if (ch < 32) {
-		if (ch == '\b' && pos->x > 0) {
-			pos->x -= 1;
-			pos->addr -= 6;
-		}
-		else if (ch == '\r') {
-			pos->x = 0;
-			pos->addr = (char*)(videoTable[16*pos->y]<<8);
-		}
-		else if (ch == '\n') {
+		if (ch == '\n') 
 			newline(pos);
-		}
 		return;
 	} else if (ch < 82) {
 		fntp = font32up + 5 * (ch - 32);

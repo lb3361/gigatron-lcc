@@ -301,7 +301,7 @@ def hop(sz, jump):
             global the_segment, the_pc
             hops_enabled = False
             the_segment.pc = the_pc
-            lfss = args.lfss or 48
+            lfss = args.lfss or 32
             ns = find_code_segment(max(lfss, sz))
             if not ns:
                 fatal(f"map memory exhausted while fitting function `{the_fragment[1]}'.")
@@ -1534,7 +1534,7 @@ def assemble_code_fragments(m, placed=False):
             if not the_segment:
                 short_function = False
                 hops_enabled = True
-                lfss = args.lfss or 16
+                lfss = args.lfss or 32
                 the_segment = find_code_segment(min(lfss, 256))
                 if not the_segment:
                     fatal(f"map memory exhausted while fitting function '{frag[1]}'.")
@@ -1806,7 +1806,7 @@ def main(argv):
         parser.add_argument('--short-function-size-threshold', dest='sfst',
                             metavar='SIZE', type=int, action='store',
                             help='attempts to fit functions smaller than this threshold into a single page.')
-        parser.add_argument('--long-functions-segment-size', dest='lfss',
+        parser.add_argument('--long-function-segment-size', dest='lfss',
                             metavar='SIZE', type=int, action='store',
                             help='minimal segment size for functions split across segments.')
         parser.add_argument('--no-runtime-bss-initialization', action='store_true',

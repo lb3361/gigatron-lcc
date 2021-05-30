@@ -1,8 +1,28 @@
+
+
+/* Testing code for SYS_CopyMemory, SYS_CopyMemoryExt.
+
+   Compile with  'glcc -map=32k -rom=exp memcpyext.c'
+   
+   -map=32k is used to allow us to swap banks and check that we wrote what we intended.
+   -rom=exp selects implementations of memcpy and _memcpyext that call SYS_CopyMemory
+            and SYS_CopyMemoryExt. These can be seen in gigatron-lcc/gigatron/libc.
+
+   Then you can run the resulting gt1 inside gtemuAT67.
+   You need of course to load a rom that contains SYS_CopyMemory 
+   and SYS_CopyMemoryExt.
+
+*/
+
+
 #include <stdlib.h>
 #include <string.h>
 #include <gigatron/sys.h>
 #include <gigatron/libc.h>
 #include <stdarg.h>
+
+
+/* -------------------- QUICK PRINTF CODE ---------------- */
 
 #define FGBG 0x3f20
 
@@ -28,8 +48,6 @@ void clear_screen(screenpos_t *pos)
 	pos->addr = (char*)(videoTable[0]<<8);
 }
 
-
-
 void scroll(void)
 {
 	char pages[8];
@@ -53,7 +71,6 @@ void newline(screenpos_t *pos)
 	}
 	pos->addr = (char*)(videoTable[16*pos->y]<<8);
 }
-
 
 void print_char(screenpos_t *pos, int ch)
 {
@@ -91,7 +108,6 @@ void print_char(screenpos_t *pos, int ch)
 	if (pos->x > 24)
 		newline(pos);
 }
-
 
 screenpos_t pos;
 
@@ -141,14 +157,10 @@ void printf(const char *fmt, ...)
 	va_end(ap);
 }
 
-void print_string(screenpos_t *pos, char *str)
-{
-	while (str && *str)
-		print_char(pos, *str++);
-}
+
+/* -------------------- THIS IS THE TEST ---------------- */
 
 char * const sbuffer = (void*)(0xe000u);
-char * const ibuffer = (void*)(0xe200u); // in bank 2
 char * const dbuffer = (void*)(0xe400u);
 
 void setbank(int bank)

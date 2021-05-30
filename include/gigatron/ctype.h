@@ -16,7 +16,7 @@ extern int toupper(int);
 
 extern unsigned char _ctype(unsigned int);
 
-#define isascii(c)      ((c)==((c)&0x7f))
+#define isascii(c)      (!((c)&~0x7fU))
 #define	isalnum(c)	(_ctype(c)&(__U|__L|__N))
 #define	isalpha(c)	(_ctype(c)&(__U|__L))
 #define	iscntrl(c)	(_ctype(c)&(__C))

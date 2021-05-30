@@ -31,6 +31,6 @@ unsigned char _ctype(register unsigned int c)
 	if (c < 64)
 		return _ctype1[c];
 	else if (c < 132)
-		return _ctype2[c & 0x3f];
+		return _ctype2[c - 64];
 	return 0;
 }

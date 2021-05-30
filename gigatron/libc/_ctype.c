@@ -22,7 +22,7 @@ static unsigned char _ctype2[] = {
 	__L,	__L,	__L,	__L,	__L,	__L,	__L,	__L,
 	__L,	__L,	__L,	__L,	__L,	__L,	__L,	__L, /*70*/
 	__L,	__L,	__L,	__P,	__P,	__P,	__P,	__C,
-	__P,    __P,    __P,    __P   /* Gigatron arrow characters */
+	__P,    __P,    __P,    __P   /* <==== Gigatron arrow characters */
 };
 
 
@@ -37,7 +37,7 @@ unsigned char _ctype(register unsigned int c)
 
 int toupper(register int c) {
 	register int d = c - 64;
-	if (d >= 0 && c - 132 <= 0)
+	if (d >= 0 && c - 132 < 0)
 		if (_ctype2[d] & __L)
 			return c & 0x5f;
 	return c;
@@ -45,7 +45,7 @@ int toupper(register int c) {
 
 int tolower(register int c) {
 	register int d = c - 64;
-	if (d >= 0 && c - 132 <= 0)
+	if (d >= 0 && c - 132 < 0)
 		if (_ctype2[d] & __U)
 			return c | 0x20;
 	return c;

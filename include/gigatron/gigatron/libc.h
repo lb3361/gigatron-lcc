@@ -48,8 +48,6 @@ extern void *_memcpyext(char bank, void *dst, const void* src, size_t n);
 
 
 
-/* ---- Stdio ---- */
-
 
 
 #endif

@@ -9,6 +9,7 @@ extern int errno;
 
 /* Other errors */
 #define ENOTIMPL 35
+#define EINVAL   36
 
 
 #endif /* __ERRNO */

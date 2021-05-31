@@ -25,7 +25,6 @@ static unsigned char _ctype2[] = {
 	__P,    __P,    __P,    __P   /* <==== Gigatron arrow characters */
 };
 
-
 unsigned char _ctype(register unsigned int c)
 {
 	if (c < 64)

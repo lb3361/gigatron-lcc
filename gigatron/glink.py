@@ -1295,17 +1295,28 @@ def read_interface():
         for (name, value) in json.load(file).items():
             symdefs[name] = value if isinstance(value, int) else int(value, base=0)
 
+def get_rominfo(roms, rom):
+    ri = roms[rom]
+    if 'inherits' in ri:
+        if ri['inherits'] not in roms:
+            fatal(f"roms.json: rom '{rom}' inherits from an unknown rom")
+        else:
+            rj = get_rominfo(roms, ri['inherits'])
+            for k in rj:
+                if k not in ri:
+                    ri[k] = rj[k]
+            ri.pop('inherits')
+    return ri
+            
 def read_rominfo(rom):
     '''Read `rom.jsom' to translate rom names into romType byte and cpu version.'''
     global rominfo, romtype, romcpu
     with open(os.path.join(lccdir,'roms.json')) as file:
-        d = json.load(file)
-        if rom in d:
-            rominfo = d[args.rom]
-    if rominfo:
+        rominfo = get_rominfo(json.load(file), rom)
+    if rominfo and 'romType' in rominfo and 'cpu' in rominfo:
         romtype = int(str(rominfo['romType']),0)
         romcpu = int(str(rominfo['cpu']),0)
-    if not rominfo:
+    else:
         print(f"glink: warning: rom '{args.rom}' is not recognized", file=sys.stderr)
         rominfo = {}
     if romcpu and args.cpu and args.cpu > romcpu:

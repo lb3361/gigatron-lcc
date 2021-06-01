@@ -12,14 +12,20 @@
 
     "v5a" : { "cpu" : 5,
 	      "romType" : "0x40",
+	      "inherits" : "v4",
 	      "has_vIRQ" : 1
+	    },
+
+    "dev" : { "cpu" : 5,
+	      "romType" : "0xf8",
+	      "inherits" : "v5a",
+	      "has_SYS_CopyMemory" :    { "addr" : "0xe9", "cycs" : 80 },
+	      "has_SYS_CopyMemoryExt" : { "addr" : "0xec", "cycs" : 94 }
 	    },
 
     "exp" : { "cpu" : 5,
 	      "romType" : "0xf8",
-	      "has_vIRQ" : 1,
-	      "has_SYS_CopyMemory" :    { "addr" : "0xe9", "cycs" : 80 },
-	      "has_SYS_CopyMemoryExt" : { "addr" : "0xec", "cycs" : 94 }
+	      "inherits" : "dev"
 	    }
-	      
+
 }

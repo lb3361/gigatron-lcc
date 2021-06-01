@@ -321,6 +321,8 @@ con1: CNSTI1  "%a"  range(a,1,1)
 con1: CNSTU1  "%a"  range(a,1,1)
 con1: CNSTI2  "%a"  range(a,1,1)
 con1: CNSTU2  "%a"  range(a,1,1)
+con1n: CNSTI1  "%a"  range(a,-1,-1)
+con1n: CNSTI2  "%a"  range(a,-1,-1)
 conB: CNSTI2  "%a"  range(a,0,255)
 conB: CNSTU2  "%a"  range(a,0,255)
 conB: CNSTP2  "%a"  if_zpconst(a)
@@ -430,21 +432,21 @@ ac: ADDP2(ac,iarg)  "%0%[1b]ADDW(%1);" 28
 ac: ADDI2(iarg,ac)  "%1%[0b]ADDW(%0);" 28
 ac: ADDU2(iarg,ac)  "%1%[0b]ADDW(%0);" 28
 ac: ADDP2(iarg,ac)  "%1%[0b]ADDW(%0);" 28
-ac: ADDI2(ac,conB) "%0ADDI(%1);" 28
-ac: ADDU2(ac,conB) "%0ADDI(%1);" 28
-ac: ADDP2(ac,conB) "%0ADDI(%1);" 28
-ac: ADDI2(ac,conBn) "%0SUBI(-(%1));" 28
-ac: ADDU2(ac,conBn) "%0SUBI(-(%1));" 28
-ac: ADDP2(ac,conBn) "%0SUBI(-(%1));" 28
+ac: ADDI2(ac,conB) "%0ADDI(%1);" 27
+ac: ADDU2(ac,conB) "%0ADDI(%1);" 27
+ac: ADDP2(ac,conB) "%0ADDI(%1);" 27
+ac: ADDI2(ac,conBn) "%0SUBI(-(%1));" 27
+ac: ADDU2(ac,conBn) "%0SUBI(-(%1));" 27
+ac: ADDP2(ac,conBn) "%0SUBI(-(%1));" 27
 ac: SUBI2(ac,iarg)  "%0%[1b]SUBW(%1);" 28
 ac: SUBU2(ac,iarg)  "%0%[1b]SUBW(%1);" 28
 ac: SUBP2(ac,iarg)  "%0%[1b]SUBW(%1);" 28
-ac: SUBI2(ac,conB) "%0SUBI(%1);" 28
-ac: SUBU2(ac,conB) "%0SUBI(%1);" 28
-ac: SUBP2(ac,conB) "%0SUBI(%1);" 28
-ac: SUBI2(ac,conBn) "%0ADDI(-(%1));" 28
-ac: SUBU2(ac,conBn) "%0ADDI(-(%1));" 28
-ac: SUBP2(ac,conBn) "%0ADDI(-(%1));" 28
+ac: SUBI2(ac,conB) "%0SUBI(%1);" 27
+ac: SUBU2(ac,conB) "%0SUBI(%1);" 27
+ac: SUBP2(ac,conB) "%0SUBI(%1);" 27
+ac: SUBI2(ac,conBn) "%0ADDI(-(%1));" 27
+ac: SUBU2(ac,conBn) "%0ADDI(-(%1));" 27
+ac: SUBP2(ac,conBn) "%0ADDI(-(%1));" 27
 ac: NEGI2(ac)   "%0STW(T3);LDI(0);SUBW(T3);" 68
 ac: NEGI2(reg ) "LDI(0);SUBW(%0);" 48
 ac: LSHI2(ac, con1) "%0LSLW();" 28
@@ -771,6 +773,9 @@ stmt: ASGNI2(zddr, ADDI2(INDIRI2(zddr), con1)) "\tINCW(%1);\n" mincpu6(if_rmw2(a
 stmt: ASGNP2(zddr, SUBP2(INDIRP2(zddr), con1)) "\tDECW(%1);\n" mincpu6(if_rmw2(a, 26))
 stmt: ASGNU2(zddr, SUBU2(INDIRU2(zddr), con1)) "\tDECW(%1);\n" mincpu6(if_rmw2(a, 26))
 stmt: ASGNI2(zddr, SUBI2(INDIRI2(zddr), con1)) "\tDECW(%1);\n" mincpu6(if_rmw2(a, 26))
+stmt: ASGNP2(zddr, ADDP2(INDIRP2(zddr), con1n)) "\tDECW(%1);\n" mincpu6(if_rmw2(a, 26))
+stmt: ASGNU2(zddr, ADDU2(INDIRU2(zddr), con1n)) "\tDECW(%1);\n" mincpu6(if_rmw2(a, 26))
+stmt: ASGNI2(zddr, ADDI2(INDIRI2(zddr), con1n)) "\tDECW(%1);\n" mincpu6(if_rmw2(a, 26))
 stmt: ASGNI2(zddr, NEGI2(INDIRI2(zddr))) "\tNEGW(%1);\n" mincpu6(if_rmw2(a, 26))
 stmt: ASGNI2(zddr, BCOMI2(INDIRI2(zddr))) "\tNOTW(%1);\n" mincpu6(if_rmw2(a, 26))
 stmt: ASGNU2(zddr, BCOMU2(INDIRU2(zddr))) "\tNOTW(%1);\n" mincpu6(if_rmw2(a, 26))

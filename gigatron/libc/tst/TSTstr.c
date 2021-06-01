@@ -5,8 +5,6 @@ const char *str1 = "The quick brown fox jumps over the lazy dog";
 char str2[512];
 char str3[512];
 
-
-
 void fill_str2()
 {
 	int i;
@@ -15,10 +13,9 @@ void fill_str2()
 	str2[489] = 0;
 	str2[123] = 'A';
 	str2[258] = 'B';
+	str2[259] = 'B';
 	str2[358] = 'A';
 }
-
-
 
 int main()
 {
@@ -29,9 +26,15 @@ int main()
 	printf("strlen(str1+3)=%d\n", strlen(str1+3));
 	printf("strlen(str2+255)=%d\n", strlen(str2+255));
 
+	printf("strchr(str1,'o')=str1+%d\n", strchr(str1,'o')-str1);
 	printf("strchr(str2,'A')=str2+%d\n", strchr(str2,'A')-str2);
 	printf("strchr(str2,'B')=str2+%d\n", strchr(str2,'B')-str2);
 	printf("strchr(str2,'C')=%p\n", strchr(str2,'C'));
+
+	printf("strrchr(str1,'o')=str1+%d\n", strrchr(str1,'o')-str1);
+	printf("strrchr(str2,'A')=str2+%d\n", strrchr(str2,'A')-str2);
+	printf("strrchr(str2,'B')=str2+%d\n", strrchr(str2,'B')-str2);
+	printf("strrchr(str2,'C')=%p\n", strrchr(str2,'C'));
 
 	return 0;
 }

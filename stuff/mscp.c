@@ -1232,7 +1232,8 @@ static void load_book(char *filename)
         fp = fopen(filename, "r");
         if (!fp) {
                 printf("no opening book: %s\n", filename);
-                exit(EXIT_FAILURE);     /* no mercy */
+                //exit(EXIT_FAILURE);     /* no mercy */
+		return;
         }
         while (readline(line, sizeof(line), fp) >= 0) {
                 s = line;

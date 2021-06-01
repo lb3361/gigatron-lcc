@@ -21,8 +21,9 @@ def code2():
    LDW(LAC);STW(T0);LDW(LAC+2);STW(T0+2);
    LDI(0);STW(LAC);STW(LAC+2);
    _CALLJ('__@mac32x16')
-   LDW(B0);ADDI(2);DEEK();STW(T2)
+   LDW(B0);ADDI(2);DEEK();STW(T2);BEQ('.skip')
    _CALLJ('__@mac32x16')
+   label('.skip')
    tryhop(2);POP();RET()
 
 

@@ -32,6 +32,4 @@ sig_handler_t signal(int, sig_handler_t);
 
 int raise(int);
 
-int _raise(int, int);
-
 #endif /* __SIGNAL */

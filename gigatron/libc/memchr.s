@@ -1,7 +1,8 @@
 
 def scope():
     
-    code = [ ('EXPORT', '_memscan') ]
+    code = [ ('EXPORT', 'memchr'),
+             ('EXPORT', '_memchr2') ]
 
     if 'has_SYS_ScanMemory' in rominfo:
         info = rominfo['has_SYS_ScanMemory']
@@ -31,17 +32,18 @@ def scope():
             if args.cpu <= 5:
                 LDI(0);SUBW('sysArgs4');STW('sysArgs4')
                 label('.scanloop')
-                LDW('sysArgs0');PEEK();STW(T3)
-                LD('sysArgs2');XORW(T3);BEQ('.scanok')
-                LD('sysArgs3');XORW(T3);BEQ('.scanok')
+                LDW('sysArgs0');PEEK()
+                ST(vACH);XORW('sysArgs2');STW(T3)
+                LD(T3);BEQ('.scanok')
+                LD(T3+1);BEQ('.scanok')
                 INC('sysArgs0');INC('sysArgs4')
                 LD('sysArgs4');BNE('.scanloop')
             else:
                 label('.scanloop')
-                LDW('sysArgs0');PEEKA(T3)
-                LD('sysArgs2');XORW(T3);BEQ('.scanok')
-                LD('sysArgs3');XORW(T3);BEQ('.scanok')
-                INC('sysArgs0')
+                PEEK+('sysArgs0')
+                ST(vACH);XORW('sysArgs2');STW(T3)
+                LD(T3);BEQ('.scanok')
+                LD(T3+1);BEQ('.scanok')
                 DBNE('sysArgs4','_memscan0')
             LDI(0);RET()
             label('.scanok')
@@ -50,12 +52,16 @@ def scope():
         code.append(('CODE', '_memscan0', code0))
 
 
-    # void *_memscan(void *s, char c0, char c1, size_t n)
+    # void *memchr(const void *s, int c0, size_t n)
+    # void *_memchr2(const void *s, char c0, char c1, size_t n)
     # - scans at most n bytes from s until finding one equal to c0 or c1
     # - return pointer to the byte if found, 0 if not found.
 
     def code1():
-        label('_memscan');                          # R8=d, R9=c0 R10=c1, R11=l
+        label('memchr');
+        tryhop(16);
+        LDW(R10);STW(R11);LDW(R9);STW(R10)
+        label('_memchr2');                          # R8=d, R9=c0 R10=c1, R11=l
         tryhop(4);LDW(vLR);STW(R22)
         LDW(R8);STW('sysArgs0')
         LD(R9);ST('sysArgs2');LD(R10);ST('sysArgs3')
@@ -78,11 +84,12 @@ def scope():
         label('.done')
         STW(R21);LDW(R22);tryhop(5);STW(vLR);LDW(R21);RET();
 
-    code.append(('CODE', '_memscan', code1))
+    code.append(('CODE', 'memchr', code1))
 
+    
     return code;
 
-module(code=scope(), name='memscan.s');
+module(code=scope(), name='memchr.s');
 
 # Local Variables:
 # mode: python

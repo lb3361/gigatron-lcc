@@ -44,12 +44,6 @@ def scope():
     
     # ==== Macros
 
-    genlabel_counter = 0
-    def genlabel():
-        global genlabel_counter
-        genlabel_counter += 1
-        return ".GL%d" % genlabel_counter
-
     def m_load(ptr = T3, exponent = AE, mantissa = AM, ext = True):
         '''Load float pointed by `ptr` into `exponent` and `mantissa`.
            Argument `ext` says whether `mantissa` is 32 or 40 bits.
@@ -85,8 +79,7 @@ def scope():
            Sign in bit 7 of vAC. Returns if `ret` is true. 
            May use a fast path if `fastpath` is true.
            Pointer `ptr` is not preserved.'''
-        ORI(127)
-        STLW(-2)
+        ORI(0x7f);STLW(-2)
         if args.cpu <= 5:
             if exponent:
                 LD(exponent);POKE(ptr)
@@ -185,7 +178,7 @@ def scope():
         nohop()
         label('_@_fldfac')
         m_load(T3, exponent=AE, mantissa=AM, ext=True)
-        ANDI(0x80);ST(SIGN)
+        XORW(SIGN);ANDI(0x80);XORW(SIGN);ST(SIGN)
         RET()
 
     module(name='rt_fldfac.s',
@@ -198,7 +191,7 @@ def scope():
         '''FAC->[T2]'''
         nohop()
         label('_@_fstfac')
-        LDW(SIGN);ANDI(0x80);ORI(0x7f)
+        LDW(SIGN);ANDI(0x80)
         m_store(T2, exponent=AE, mantissa=AM, ret=True)
 
     module(name='rt_fstfac.s',
@@ -221,11 +214,13 @@ def scope():
         LDW(r+2);LSLW();ORI(1);STW(r+2)
         RET() if ret else label(lbl2)
 
-    def macro_shl16(r, ext=True):
+    def macro_shl4(r, ext=True):
+        LDWI('SYS_LSLW4_46');STW('sysFn')
         if ext:
-            LD(r+2);ST(r+4)
-        LDW(r);STW(r+2)
-        LDI(0);STW(r)
+            LDW(r+3);SYS(46);LD(vACH);ST(r+4)
+        LDW(r+2);SYS(46);LD(vACH);ST(r+3)
+        LDW(r+1);SYS(46);LD(vACH);ST(r+2)
+        LDW(r);SYS(46);STW(r)
 
     def macro_shl8(r, ext=True):
         if ext:
@@ -235,13 +230,11 @@ def scope():
         LDW(r);STW(r+1)
         LDI(0);ST(r)
 
-    def macro_shl4(r, ext=True):
-        LDWI('SYS_LSLW4_46');STW('sysFn')
+    def macro_shl16(r, ext=True):
         if ext:
-            LDW(r+3);SYS(46);LD(vACH);ST(r+4)
-        LDW(r+2);SYS(46);LD(vACH);ST(r+3)
-        LDW(r+1);SYS(46);LD(vACH);ST(r+2)
-        LDW(r);SYS(46);STW(r)
+            LD(r+2);ST(r+4)
+        LDW(r);STW(r+2)
+        LDI(0);STW(r)
 
     def code_am32shl1():  # AM32 >>= 1
         nohop()
@@ -254,11 +247,28 @@ def scope():
         macro_shl4(AM, ext=False)
         RET()
 
+    def code_am32shl8():
+        nohop()
+        label('__@am32shl8')
+        macro_shl8(AM, ext=False)
+        RET()
+
+    def code_am32shl16():
+        nohop()
+        label('__@am32shl16')
+        macro_shl16(AM, ext=False)
+        RET()
+
     module(name='rt_fshl.s',
            code=[ ('EXPORT', '__@am32shl1'),
                   ('EXPORT', '__@am32shl4'),
+                  ('EXPORT', '__@am32shl8'),
+                  ('EXPORT', '__@am32shl16'),
                   ('CODE', '__@am32shl1', code_am32shl1),
-                  ('CODE', '__@am32shl4', code_am32shl4), ])
+                  ('CODE', '__@am32shl4', code_am32shl4),
+                  ('CODE', '__@am32shl8', code_am32shl8),
+                  ('CODE', '__@am32shl16', code_am32shl16) ] )
+                  
 
     # ==== shift right
 
@@ -276,20 +286,42 @@ def scope():
         else:
             LD(r+3);STW(r+2)
 
+    def code_am40shr8():
+        nohop()
+        label('__@am40shr8')
+        macro_shr8(AM, ext=True)
+        RET()
+
+    module(name='rt_fam40shr8.s',
+           code=[ ('EXPORT', '__@am40shr8'),
+                  ('CODE', '__@am40shr8', code_am40shr8) ]  )
+
     def code_am40shr1():
         nohop()
         label('__@am40shr1')  # AM40 >>= 1
         _LDI('SYS_LSRW1_48');STW('sysFn')
-        LDW(AM);SYS(52);ST(AM)
-        LDW(AM+1);SYS(52);ST(AM+1)
-        LDW(AM+2);SYS(52);ST(AM+2)
-        LDW(AM+3);SYS(52);STW(AM+3)
+        LDW(AM);SYS(48);ST(AM)
+        LDW(AM+1);SYS(48);ST(AM+1)
+        LDW(AM+2);SYS(48);ST(AM+2)
+        LDW(AM+3);SYS(48);STW(AM+3)
         RET()
 
     module(name='rt_fam40shr1.s',
            code=[ ('EXPORT', '__@am40shr1'),
                   ('CODE', '__@am40shr1', code_am40shr1) ]  )
 
+    def code_am32shr16():
+        nohop()
+        label('__@am32shr16')
+        macro_shr16(AM, ext=False)
+        RET()
+
+    def code_am32shr8():
+        nohop()
+        label('__@am32shr8')
+        macro_shr8(AM, ext=False)
+        RET()
+    
     def code_am32shra():
         nohop()
         label('__#@am32shra') # AM30 >>= vAC
@@ -304,12 +336,13 @@ def scope():
         LDLW(-2)
         ANDI(16)
         BEQ('.shra8')
+        _CALLJ('__@am32shr16')
         macro_shr16(AM, ext=False)
         label('.shra8')
         LDLW(-2)
         ANDI(8)
         BEQ('.shra1to7')
-        macro_shr8(AM, ext=False)
+        _CALLJ('__@am32shr8')
         label('.shra1to7')
         LDLW(-2)
         ANDI(7)
@@ -324,20 +357,129 @@ def scope():
     module(name='rt_fam32shra.s',
            code=[ ('EXPORT', '__@am32shra'),
                   ('IMPORT', '__@shrsysfn'),
+                  ('CODE', '__@am32shr8', code_am32shr16),                  
+                  ('CODE', '__@am32shr8', code_am32shr8),
                   ('CODE', '__@am32shra', code_am32shra) ]  )
+
 
     # ==== normalization
 
+    def code_am40neg():
+        nohop()
+        label('__@am40neg')
+        LDI(0xff);XORW(AM+4);ST(AM+4)
+        _LDI(0xffff);XORW(AM+2);STW(AM+2)
+        _LDI(0xffff);XORW(AM);ADDI(1);STW(AM);BNE('.ret')
+        LDI(1);ADDW(AM+2);STW(AM+2);BNE('.ret')
+        INC(AM+4)
+        label('.ret')
+        RET()
 
+    module(name='rt_fam40neg.s',
+           code=[ ('EXPORT', '__@am40neg'),
+                  ('CODE', '__@am40neg', code_am40neg) ])
 
+    def code_fnorm3():
+        '''There are three normalization levels.
+           -- __@fnorm3 just shifts am32 left until normalized.
+           -- __@fnorm2 can shift am40 right (occasionally happens once after addition, can overflow).
+           -- __@fnorm1 can also two-complement am40 (happens after addition).'''
+        # entry point for fnorm3
+        label('__@fnorm3')
+        PUSH()
+        LD(AM+4);_BEQ('.norm1')
+        ST(vACH);_BGT('.norm2')
+        LD(SIGN);XORI(128);ST(SIGN)
+        _CALLJ('__@am40neg');_BRA('.norm2')
+        # entry point for fnorm2
+        label('__@fnorm2')
+        PUSH()
+        label('.norm2')
+        LD(AM+4);_BEQ('.norm1')
+        _CALLJ('__@am40shr1')
+        INC(AE);LD(AE);_BNE('.norm2')
+        _CALLJ('__@foverflow')
+        label('.norm1')
+        _CALLJ('__@fnorm1')
+        tryhop(2);POP();RET()
 
+    def code_fnorm1():
+        label('__@fnorm1')
+        PUSH()
+        LDW(AM+2);_BNE('.norm1b')
+        ORW(AM);_BEQ('.norm0')
+        LD(AE);SUBI(16);_BLT('.norm0');ST(AE)
+        _CALLJ('__@am32shl16')
+        label('.norm1b')
+        LD(AM+3);_BNE('.norm1c')
+        LD(AE);SUBI(8);_BLT('.norm0');ST(AE)
+        _CALLJ('__@am32shl8')
+        label('.norm1c')
+        LD(AM+3);ANDI(0xf0);_BNE('.norm1d')
+        LD(AE);SUBI(4);_BLT('.norm0');ST(AE)
+        _CALLJ('__@am32shl4')
+        label('.norm1d')
+        LDW(AM+2);_BLT('.normok')
+        LD(AE);SUBI(1);_BLT('.norm0');ST(AE)
+        _CALLJ('__@am32shl1');_BRA('.norm1d')
+        label('.norm0')
+        LDI(0);STW(AM);STW(AM+2);STW(AE)
+        LD(SIGN);ANDI(127);ST(SIGN)
+        label('.normok')
+        tryhop(2);POP();RET()
+
+    module(name='rt_fnorm.s',
+           code=[ ('EXPORT', '__@fnorm1'),
+                  ('EXPORT', '__@fnorm2'),
+                  ('EXPORT', '__@fnorm3'),
+                  ('IMPORT', '__@am40neg'),
+                  ('IMPORT', '__@am40shr1'),
+                  ('IMPORT', '__@am32shl16'),
+                  ('IMPORT', '__@am32shl8'),
+                  ('IMPORT', '__@am32shl4'),
+                  ('IMPORT', '__@am32shl1'),
+                  ('IMPORT', '__@foverflow'),
+                  ('CODE', '__@fnorm3', code_fnorm3),
+                  ('CODE', '__@fnorm1', code_fnorm1) ] )
 
     # ==== conversions
 
     #    extern('_@_ftou')
     #    extern('_@_ftoi')
-    #    extern('_@_fcvi')
-    #    extern('_@_fcvu')
+
+    def code_fcvu():
+        label('_@_fcvu')
+        PUSH()
+        # _CALLJ('__@fsavevsp')  # should not throw
+        _CALLJ('__@am40shr8')
+        LDI(160);ST(AE)
+        LDI(0);ST(SIGN);ST(AM+4)
+        _CALLJ('__@fnorm1')
+        tryhop(2);POP();RET()
+
+    module(name='rt_fcvu.s',
+           code=[ ('EXPORT', '_@_fcvu'),
+                  ('IMPORT', '__@fnorm1'),
+                  ('IMPORT', '__@am40shr8'),
+                  ('CODE', '_@_fcvu', code_fcvu) ] )
+
+    def code_fcvi():
+        label('_@_fcvi')
+        PUSH()
+        # _CALLJ('__@fsavevsp')  # should not throw
+        _CALLJ('__@am40shr8')
+        LD(AM+3);XORI(128);SUBI(128);STW(AM+3)
+        LDI(160);ST(AE)
+        LDI(0);ST(SIGN)
+        _CALLJ('__@fnorm3')
+        tryhop(2);POP();RET()
+
+    module(name='rt_fcvi.s',
+           code=[ ('EXPORT', '_@_fcvi'),
+                  ('IMPORT', '__@fnorm3'),
+                  ('IMPORT', '__@am40shr8'),
+                  ('CODE', '_@_fcvi', code_fcvi) ] )
+    
 
     # ==== additions and subtractions
 

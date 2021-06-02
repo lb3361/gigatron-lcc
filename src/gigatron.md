@@ -750,7 +750,7 @@ fac: CVUF5(ac)  "%0STW(LAC);LDI(0);STW(LAC+2);_FCVU();" if_cv_from(a,2,180)
 fac: CVUF5(lac) "%0_FCVU();" if_cv_from(a,4,200)
 ac: CVFI2(fac)  "%0_FTOI();LDW(LAC);" 200
 lac: CVFI4(fac) "%0_FTOI();" 200
-fac: CVIF5(ac)  "%0STW(LAC);LDI(0);STW(LAC+2);_FCVI();" if_cv_from(a,2,180)
+fac: CVIF5(ac)  "%0STW(LAC);LD(vACH);XORI(128);SUBI(128);LD(vACH);ST(LAC+2);ST(LAC+3);_FCVI();" if_cv_from(a,2,180)
 fac: CVIF5(lac) "%0_FCVI();" if_cv_from(a,4,200)
 
 # Labels and jumps

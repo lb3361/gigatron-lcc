@@ -144,14 +144,6 @@ def is_not_pcpage(x):
         return int(x) & 0xff00 != pc() & 0xff00
     return False
 
-def genlabel():
-    '''Generate a label for use in a pseudo-instruction.
-       One should make sure to request the same number
-       of labels regardless of the code path.'''
-    global genlabel_counter
-    genlabel_counter += 1
-    return f".LL{genlabel_counter}"
-
 def check_zp(x):
     x = v(x)
     if final_pass and is_not_zeropage(x):
@@ -227,7 +219,7 @@ class Module:
                 error(f"multiple definitions of label '{sym}'", dedup=True)
             else:
                 if sym in self.symdefs and args.d >= 3:
-                    debug(f"symbol '{sym}' went from {hex(self.symdefs[sym])} to {hex(val)}")
+                    debug(f"pass {the_pass}: symbol '{sym}' went from {hex(self.symdefs[sym])} to {hex(val)}")
                 global labelchange_counter
                 labelchange_counter += 1
                 self.symdefs[sym] = val
@@ -446,6 +438,15 @@ def module(code=None,name=None,cpu=None):
         warning("module() should not be called from a code fragment")
     else:
         new_modules.append(Module(name,cpu,code))
+
+@vasm
+def genlabel():
+    '''Generate a label for use in a pseudo-instruction.
+       One should make sure to request the same number
+       of labels regardless of the code path.'''
+    global genlabel_counter
+    genlabel_counter += 1
+    return f".LL{genlabel_counter}"
 
 @vasm
 def pc():
@@ -1534,7 +1535,7 @@ def assemble_code_fragments(m, placed=False):
             funcsize = frag[3]
             the_segment = None
             sfst = min(256, args.sfst or 96)
-            if shortonly or funcsize < sfst:
+            if shortonly or funcsize <= sfst:
                 short_function = True
                 hops_enabled = False
                 the_segment = find_code_segment(funcsize, addr)

@@ -205,9 +205,60 @@ def scope():
            code=[ ('EXPORT', '_@_fstfac'),
                   ('CODE', '_@_fstfac', code_fstfac) ] )
 
-
-
     # ==== shift left
+
+    def macro_shl1(r, ext=True, ret=False):
+        if ext:
+            LDW(r+3);LSLW();LD(vACH);ST(r+4)
+        lbl1 = genlabel()
+        lbl2 = genlabel()
+        LDW(r);_BLT(lbl1)
+        LSLW();STW(r)
+        LDW(r+2);LSLW();STW(r+2)
+        RET() if ret else _BRA(lbl2)
+        label(lbl1)
+        LSLW();STW(r)
+        LDW(r+2);LSLW();ORI(1);STW(r+2)
+        RET() if ret else label(lbl2)
+
+    def macro_shl16(r, ext=True):
+        if ext:
+            LD(r+2);ST(r+4)
+        LDW(r);STW(r+2)
+        LDI(0);STW(r)
+
+    def macro_shl8(r, ext=True):
+        if ext:
+            LDW(r+2);STW(r+3)
+        else:
+            LD(r+2);ST(r+3)
+        LDW(r);STW(r+1)
+        LDI(0);ST(r)
+
+    def macro_shl4(r, ext=True):
+        LDWI('SYS_LSLW4_46');STW('sysFn')
+        if ext:
+            LDW(r+3);SYS(46);LD(vACH);ST(r+4)
+        LDW(r+2);SYS(46);LD(vACH);ST(r+3)
+        LDW(r+1);SYS(46);LD(vACH);ST(r+2)
+        LDW(r);SYS(46);STW(r)
+
+    def code_am32shl1():  # AM32 >>= 1
+        nohop()
+        label('__@am32shl1')
+        macro_shl1(AM, ext=False, ret=True)
+
+    def code_am32shl4():  # AM32 >>= 4
+        nohop()
+        label('__@am32shl4')
+        macro_shl4(AM, ext=False)
+        RET()
+
+    module(name='rt_fshl.s',
+           code=[ ('EXPORT', '__@am32shl1'),
+                  ('EXPORT', '__@am32shl4'),
+                  ('CODE', '__@am32shl1', code_am32shl1),
+                  ('CODE', '__@am32shl4', code_am32shl4), ])
 
     # ==== shift right
 
@@ -225,51 +276,60 @@ def scope():
         else:
             LD(r+3);STW(r+2)
 
-    def code_amshr8():
+    def code_am40shr1():
         nohop()
-        label('.amshr7')    # coming from __@amshr
-        CALLJ('__@amshl1')
-        POP()
-        label('.amshr8')    # AM >>= 8
-        macro_shr8(AM)
-        RET()
-            
-    def code_amshr1():
-        nohop()
-        label('__@amshr1')  # AM >>= 1
-        _LDI('SYS_LSRW1_48')
-        label('.amshrx')
-        STW('sysFn')
+        label('__@am40shr1')  # AM40 >>= 1
+        _LDI('SYS_LSRW1_48');STW('sysFn')
         LDW(AM);SYS(52);ST(AM)
         LDW(AM+1);SYS(52);ST(AM+1)
         LDW(AM+2);SYS(52);ST(AM+2)
         LDW(AM+3);SYS(52);STW(AM+3)
-        label('.amshrdone')
         RET()
-        label('.amshra')  # AM >>= vAC for 0<vAC<=8 no check
-        XORI(7)
-        BNE('.amshr1to6')
+
+    module(name='rt_fam40shr1.s',
+           code=[ ('EXPORT', '__@am40shr1'),
+                  ('CODE', '__@am40shr1', code_am40shr1) ]  )
+
+    def code_am32shra():
+        nohop()
+        label('__#@am32shra') # AM30 >>= vAC
+        STLW(-2)
+        ANDI(0xe0)
+        BNE('.shra16')
+        STW(AM)
+        STW(AM+2)
+        label('.shraret')
+        RET()
+        label('.shra16')
+        LDLW(-2)
+        ANDI(16)
+        BEQ('.shra8')
+        macro_shr16(AM, ext=False)
+        label('.shra8')
+        LDLW(-2)
+        ANDI(8)
+        BEQ('.shra1to7')
+        macro_shr8(AM, ext=False)
+        label('.shra1to7')
+        LDLW(-2)
+        ANDI(7)
+        BEQ('.shraret')
         PUSH()
-        CALLJ('.amshr7')
-        label('.amshr1to6')
-        # try not overwriting T2
-        LSRW();STW(T2)
-        _LDI(v('.shrtable')-2);ADDW(T2);DEEK()
-        BRA('.amshrx')
+        _CALLI('__@shrsysfn')
+        LDW(AM);SYS(52);ST(AM)
+        LDW(AM+1);SYS(52);ST(AM+1)
+        LDW(AM+2);SYS(52);STW(AM+2)
+        POP();RET()
 
+    module(name='rt_fam32shra.s',
+           code=[ ('EXPORT', '__@am32shra'),
+                  ('IMPORT', '__@shrsysfn'),
+                  ('CODE', '__@am32shra', code_am32shra) ]  )
 
-    def code_shrtable():
-        label(".shrtable")
-        words("SYS_LSRW6_48")
-        words("SYS_LSRW5_50")
-        words("SYS_LSRW4_50")
-        words("SYS_LSRW3_52")
-        words("SYS_LSRW2_52")
-        words("SYS_LSRW1_48")
-
-    
-    
     # ==== normalization
+
+
+
 
 
     # ==== conversions

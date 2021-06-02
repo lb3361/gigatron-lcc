@@ -13,10 +13,10 @@ def code0():
     LD(B0);ANDI(8);_BEQ('.l5')
     LD(LAC+1);ST(LAC);LD(LAC+2);ST(LAC+1);LD(LAC+3);ST(LAC+2);LDI(0);ST(LAC+3)
     label('.l5')
-    LD(B0);ANDI(7);_BEQ('.ret');ST(B0)
-    LDW(LAC);STW(T3);LD(B0);STW(T2);_CALLJ('_@_shru');STW(LAC)
-    LDW(LAC+1);ORI(255);XORI(255);STW(T3);LD(B0);STW(T2);_CALLJ('_@_shru');ORW(LAC+1);ST(LAC+1)
-    LDW(LAC+2);STW(T3);LD(B0);STW(T2);_CALLJ('_@_shru');STW(LAC+2)
+    LD(B0);ANDI(7);_BEQ('.ret');_CALLI('__@shrsysfn')
+    LDW(LAC);SYS(52);ST(LAC)
+    LDW(LAC+1);SYS(52);ST(LAC+1)
+    LDW(LAC+2);SYS(52);STW(LAC+2)
     label('.ret')
     tryhop(2);POP();RET()
 
@@ -39,7 +39,7 @@ def code1():
 
 code= [ ('EXPORT', '_@_lshru'),
         ('EXPORT', '_@_lshrs'),
-        ('IMPORT', '_@_shru'),
+        ('IMPORT', '__@shrsysfn'),
         ('CODE', '_@_lshru', code0),
         ('CODE', '_@_lshrs', code1) ]
 

@@ -12,17 +12,22 @@ def code1():
     LD(B0);ANDI(8);_BEQ('.l5')
     LD(LAC+2);ST(LAC+3);LD(LAC+1);ST(LAC+2);LD(LAC);ST(LAC+1);LDI(0);ST(LAC)
     label('.l5')
-    LD(B0);ANDI(7);_BEQ('.ret');ST(B0)
-    LDW(LAC+2);STW(T3);LD(B0);STW(T2);_CALLJ('_@_shl');STW(LAC+2)
-    LD(LAC+1);STW(T3);LD(B0);STW(T2);_CALLJ('_@_shl');LD(vACH);ORW(LAC+2);STW(LAC+2)
-    LDW(LAC);STW(T3);LD(B0);STW(T2);_CALLJ('_@_shl');STW(LAC)
+    LD(B0);ANDI(4);_BEQ('.l6')
+    LDWI('SYS_LSLW4_46');STW('sysFn')
+    LDW(LAC+2);SYS(46);LD(vACH);ST(LAC+3)
+    LDW(LAC+1);SYS(46);LD(vACH);ST(LAC+2)
+    LDW(LAC);SYS(46);STW(LAC)
+    label('.l6')
+    LD(B0);ANDI(3);_BEQ('.ret')
+    label('.l7')
+    ST(B0);_CALLJ('_@_lshl1')
+    LD(B0);SUBI(1);_BNE('.l7')
     label('.ret')
     tryhop(2);POP();RET()
 
 
 code= [ ('EXPORT', '_@_lshl'),
         ('IMPORT', '_@_lshl1'),
-        ('IMPORT', '_@_shl'),
         ('CODE', '_@_lshl', code1) ]
 
 module(code=code, name='rt_lshl.s');

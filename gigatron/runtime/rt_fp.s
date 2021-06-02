@@ -82,9 +82,10 @@ def scope():
     def m_store(ptr = T3, exponent = AE, mantissa = AM, ret = False, fastpath = False):
         '''Save float at location `ptr`.
            Exponent and mantissa are taken from the specified locations.
-           vAC is expected to be 0x7f for a positive number, 0xff for a negative one.
-           Returns if `ret` is true. May use a fast path if `fastpath` is true.
+           Sign in bit 7 of vAC. Returns if `ret` is true. 
+           May use a fast path if `fastpath` is true.
            Pointer `ptr` is not preserved.'''
+        ORI(127)
         STLW(-2)
         if args.cpu <= 5:
             if exponent:
@@ -204,6 +205,69 @@ def scope():
            code=[ ('EXPORT', '_@_fstfac'),
                   ('CODE', '_@_fstfac', code_fstfac) ] )
 
+
+
+    # ==== shift left
+
+    # ==== shift right
+
+    def macro_shr16(r, ext=True):
+        LDW(r+2);STW(r)
+        if ext:
+            LD(r+4);STW(r+2);LDI(0);ST(r+4)
+        else:
+            LDI(0);STW(r+2)
+
+    def macro_shr8(r, ext=True):
+        LDW(r+1);STW(r);
+        if ext:
+            LDW(r+3);STW(r+2);LDI(0);ST(r+4)
+        else:
+            LD(r+3);STW(r+2)
+
+    def code_amshr8():
+        nohop()
+        label('.amshr7')    # coming from __@amshr
+        CALLJ('__@amshl1')
+        POP()
+        label('.amshr8')    # AM >>= 8
+        macro_shr8(AM)
+        RET()
+            
+    def code_amshr1():
+        nohop()
+        label('__@amshr1')  # AM >>= 1
+        _LDI('SYS_LSRW1_48')
+        label('.amshrx')
+        STW('sysFn')
+        LDW(AM);SYS(52);ST(AM)
+        LDW(AM+1);SYS(52);ST(AM+1)
+        LDW(AM+2);SYS(52);ST(AM+2)
+        LDW(AM+3);SYS(52);STW(AM+3)
+        label('.amshrdone')
+        RET()
+        label('.amshra')  # AM >>= vAC for 0<vAC<=8 no check
+        XORI(7)
+        BNE('.amshr1to6')
+        PUSH()
+        CALLJ('.amshr7')
+        label('.amshr1to6')
+        # try not overwriting T2
+        LSRW();STW(T2)
+        _LDI(v('.shrtable')-2);ADDW(T2);DEEK()
+        BRA('.amshrx')
+
+
+    def code_shrtable():
+        label(".shrtable")
+        words("SYS_LSRW6_48")
+        words("SYS_LSRW5_50")
+        words("SYS_LSRW4_50")
+        words("SYS_LSRW3_52")
+        words("SYS_LSRW2_52")
+        words("SYS_LSRW1_48")
+
+    
     
     # ==== normalization
 

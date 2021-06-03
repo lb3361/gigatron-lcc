@@ -148,7 +148,7 @@ def scope():
         label('__@fsavevsp')
         if args.cpu <= 5:
             LDWI('.vspfpe');STW(T2)
-            LD(vSP);DOKE(T2)
+            LD(vSP);POKE(T2)
         else:
             LDWI('.vspfpe');POKEA(vSP)
         RET()
@@ -285,6 +285,15 @@ def scope():
                   ('CODE', '__@am32shl4', code_am32shl4),
                   ('CODE', '__@am32shl8', code_am32shl8),
                   ('CODE', '__@am32shl16', code_am32shl16) ] )
+
+    def code_bm40shl1():
+        nohop()
+        label('__@bm40shl1')
+        macro_shl1(BM, ext=True, ret=True)
+
+    module(name='rt_bm40shl1.s',
+           code=[ ('EXPORT', '__@bm40shl1'),
+                  ('CODE', '__@bm40shl1', code_bm40shl1) ] )
     
     # ==== shift right
 
@@ -308,9 +317,19 @@ def scope():
         macro_shr8(AM, ext=True)
         RET()
 
-    module(name='rt_fam40shr8.s',
+    module(name='rt_am40shr8.s',
            code=[ ('EXPORT', '__@am40shr8'),
                   ('CODE', '__@am40shr8', code_am40shr8) ]  )
+
+    def code_bm40shr8():
+        nohop()
+        label('__@bm40shr8')
+        macro_shr8(BM, ext=True)
+        RET()
+        
+    module(name='rt_bm40shr8.s',
+           code=[ ('EXPORT', '__@bm40shr8'),
+                  ('CODE', '__@bm40shr8', code_bm40shr8) ]  )
 
     def code_am40shr1():
         '''shift am40 right by one position'''
@@ -621,7 +640,72 @@ def scope():
 
     # ==== multiplication
 
-    #    extern('_@_fmul')
+
+    def code_macbm32x8():
+        '''Adds BM32 x T2H to AM40, then AM40>>=8'''
+        nohop()
+        label('__@macbm32x8')
+        PUSH();ALLOC(-2)
+        LDI(0);ST(BM+4)
+        LDI(1)
+        label('.loop')
+        STLW(0);ANDW(T2H);BEQ('.skip')
+        _CALLJ('__@am40addbm40')
+        label('.skip')
+        _CALLJ('__@bm40shl1')
+        LDLW(0);LSLW();LD(vAC);_BNE('.loop')
+        _CALLJ('__@bm40shr8') # restore BM32
+        _CALLJ('__@am40shr8') # shifts AM40
+        ALLOC(2);POP();RET()
+
+    def code_fmulmac():
+           label('__@fmulmac')
+           PUSH()
+           LDW(AM);STW(BM);LDW(AM+2);STW(BM+2);
+           LDI(0);STW(AM);STW(AM+2);ST(AM+4);ST(BM+4)
+           LDI(4);ADDW(T3);PEEK();ST(T2H);_CALLJ('__@macbm32x8')
+           LDI(3);ADDW(T3);PEEK();ST(T2H);_CALLJ('__@macbm32x8')
+           LDI(2);ADDW(T3);PEEK();ST(T2H);_CALLJ('__@macbm32x8')
+           LDI(1);ADDW(T3);PEEK();ORI(128);ST(T2H);_CALLJ('__@macbm32x8')
+           tryhop(2);POP();RET()
+
+    module(name='__@macbm32x8.s',
+           code=[ ('EXPORT', '__@macbm32x8'),
+                  ('EXPORT', '__@fmulmac'),
+                  ('IMPORT', '__@am40addbm40'),
+                  ('IMPORT', '__@bm40shl1'),
+                  ('IMPORT', '__@bm40shr8'),
+                  ('IMPORT', '__@am40shr8'),
+                  ('CODE', '__@macbm32x8', code_macbm32x8),
+                  ('CODE', '__@fmulmac', code_fmulmac) ] )
+           
+    def code_fmul():
+           label('_@_fmul')
+           PUSH();STW(T3)
+           _CALLJ('__@fsavevsp')
+           LDW(T3);PEEK();SUBI(128);STW(T2);
+           LD(AE);ADDW(T2);_BGT('.fmul1')
+           _CALLJ('__@clrfac')
+           tryhop(2);POP();RET()
+           label('.fmul1')
+           ST(AE);LD(vACH);_BEQ('.fmul2')
+           _CALLJ('__@foverflow')
+           label('.fmul2')
+           LDI(1);ADDW(T3);PEEK();ANDI(128)
+           XORW(SIGN);ST(SIGN)
+           _CALLJ('__@fmulmac')
+           _CALLJ('__@fnorm1')
+           tryhop(2);POP();RET()
+    
+    module(name='_@_fmul',
+           code=[ ('EXPORT', '_@_fmul'),
+                  ('IMPORT', '__@fsavevsp'),
+                  ('IMPORT', '__@clrfac'),
+                  ('IMPORT', '__@foverflow'),
+                  ('IMPORT', '__@fmulmac'),
+                  ('IMPORT', '__@fnorm1'),
+                  ('CODE', '_@_fmul', code_fmul) ] )
+
 
     # ==== division
 

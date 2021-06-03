@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <signal.h>
 
 #ifdef __gigatron__
 # define word int
@@ -24,10 +25,16 @@ double ldexp(double x, int i)
 	*(unsigned char*)&x = i;
 	return x;
 }
-#endif
 
+double sigfpe(int signo, int fpeinfo)
+{
+	printf("[SIGFPE %d %d] ", signo, fpeinfo);
+	signal(SIGFPE, (sig_handler_t)sigfpe);
+	return 123456789.0;
+}
 
-#ifndef __gigatron__
+#else /* not __gigatron */
+
 /* cut ieee double to gigatron precision.
    note that there are still carry effects. */
 double c(double x)
@@ -38,11 +45,13 @@ double c(double x)
 	if (exponent <= -128)
 		return 0;
 	if (exponent > 127)
-		abort();
+		return 123456789.0;
 	y *= ldexp((double)mantissa, exponent-32);
 	//printf("((%e -> e=%d m=%lx -> %e))\n", x, exponent, mantissa, y);
 	return y;
 }
+
+
 #endif
 
 
@@ -59,6 +68,7 @@ double drand()
 	e = 40 - ((whatever>>16)&0x7f);
 	return c(ldexp(x, e));
 }
+
 
 int main()
 {
@@ -108,6 +118,19 @@ int main()
 		printf("%+.6e != %+.6e = %d\n", x, y, (x != y));
 		x = y;
 	}
-		
+
+	printf("------------ fmul\n");
+#ifdef __gigatron__
+	signal(SIGFPE, (sig_handler_t)sigfpe);
+#endif
+	x = 0;
+	for (i=0; i<100; i++) {
+		y = drand();
+		printf("%+.6e * %+.6e = ", x, y);
+		printf("%+.6e\n", c(x * y));
+		x = y;
+	}
+	signal(SIGFPE, SIG_DFL);
+	
 	return 0;
 }

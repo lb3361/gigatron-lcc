@@ -489,9 +489,9 @@ def scope():
 
     # ==== additions and subtractions
 
-    def code_addam40bm40():
+    def code_am40addbm40():
         nohop()
-        label('__@addam40bm40')
+        label('__@am40addbm40')
         if args.cpu <= 5:
             LD(AM);ADDW(BM);ST(AM);LD(vACH)
             BNE('a1');LD(BM+1);BEQ('a1');LDWI(0x100);label('a1')
@@ -510,9 +510,9 @@ def scope():
             ADDBA(BM+4);ADDBA(AM+4);ST(AM+4)
         RET()
 
-    module(name='rt_addam40bm40.s',
-           code=[ ('EXPORT', '__@addam40bm40'),
-                  ('CODE', '__@addam40bm40', code_addam40bm40) ])
+    module(name='rt_am40addbm40.s',
+           code=[ ('EXPORT', '__@am40addbm40'),
+                  ('CODE', '__@am40addbm40', code_am40addbm40) ])
 
     def code_amload():
         nohop()
@@ -549,7 +549,7 @@ def scope():
         LDI(0xff)
         label('.faddx3')
         ST(BM+4)                       # - overwrites T2L
-        _CALLJ('__@addam40bm40')
+        _CALLJ('__@am40addbm40')
         _CALLJ('__@fnorm3')
         label('.faddx4')
         tryhop(2);POP();RET()
@@ -558,7 +558,7 @@ def scope():
            code=[ ('EXPORT', '__@fadd_t3'),
                   ('IMPORT', '__@am32shra'),
                   ('IMPORT', '__@lneg_t0t1'),
-                  ('IMPORT', '__@addam40bm40'),
+                  ('IMPORT', '__@am40addbm40'),
                   ('CODE', '__@amload', code_amload),
                   ('CODE', '__@bmload', code_bmload),
                   ('CODE', '__@fadd_t3', code_fadd_t3) ] )

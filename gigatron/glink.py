@@ -1329,9 +1329,17 @@ def read_rominfo(rom):
 
 def find_exporters(sym):
     elist = []
+    # collect all modules that export sym
     for m in module_list:
         if sym in m.exports:
             elist.append(m)
+    if not elist:
+        # otherwise find an input file(not a library) that has a common named sym.
+        for m in module_list:
+            if not m.library:
+                for f in m.code:
+                    if f[0] == 'COMMON' and f[1] == sym:
+                        return [ m ]
     return elist
 
 def measure_data_fragment(m, frag):

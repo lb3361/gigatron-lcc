@@ -50,7 +50,8 @@ def scope():
            code=[ ('EXPORT', '__@ldivworker'),
                   ('IMPORT', '__@lsub_t0t1'),
                   ('IMPORT', '__@lcmpu_t0t1'),
-                  ('IMPORT', '__@lshl1'),
+                  ('IMPORT', '__@lshl1_t2t3'),
+                  ('IMPORT', '_@_lshl1'),
                   ('IMPORT', '__@lshl1_t0t1'),
                   ('CODE', '__@ldivworker', code2) ])
 
@@ -107,8 +108,7 @@ def scope():
         tryhop(2);POP();RET()
 
     module(name='rt_ldivut0t1.s',
-           code=[ ('EXPORT', '_@_ldivu_t0t1'),
-                  ('IMPORT', '__@ldivu_t0t1'),
+           code=[ ('EXPORT', '__@ldivu_t0t1'),
                   ('IMPORT', '__@lsub_t0t1'),
                   ('IMPORT', '__@lshl1_t0t1'),
                   ('IMPORT', '__@lcmpu_t0t1'),

@@ -1,9 +1,9 @@
 #include <stdio.h>
 
-#ifdef __GNUC__
-# define dword int
-#else
+#ifdef __gigatron__
 # define dword long
+#else
+# define dword int
 #endif
 
 

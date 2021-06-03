@@ -37,7 +37,7 @@ def scope():
 
     SIGN = 0x81   # sign byte
                   #  bit7 = sign(FAC)
-    
+   
     # naming convention for exported symbols
     # '_@_xxxx' are the public api.
     # '__@xxxx' are private.
@@ -488,36 +488,40 @@ def scope():
 
     # ==== additions and subtractions
 
+    def code_addam40bm40():
+        nohop()
+        label('__@addam40bm40')
+        if args.cpu <= 5:
+            LD(AM);ADDW(BM);ST(AM);LD(vACH)
+            BNE('a1');LD(BM+1);BEQ('a1');LDWI(0x100);label('a1')
+            ADDW(AM+1);ST(AM+1);LD(vACH)
+            BNE('a2');LD(AM+2);BEQ('a2');LDWI(0x100);label('a2')
+            ADDW(BM+2);ST(AM+2);LD(vACH)
+            BNE('a3');LD(BM+3);BEQ('a3');LDWI(0x100);label('a3')
+            ADDW(AM+3);ST(AM+3);LD(vACH)
+            ADDW(BM+4);ST(AM+4)
+        else:
+            # untested but sensible
+            LD(BM);ADDBA(AM);ST(AM);LD(vACH)
+            ADDBA(BM+1);ADDBA(AM+1);ST(AM+1);LD(vACH)
+            ADDBA(BM+2);ADDBA(AM+2);ST(AM+2);LD(vACH)
+            ADDBA(BM+3);ADDBA(AM+3);ST(AM+3);LD(vACH)
+            ADDBA(BM+4);ADDBA(AM+4);ST(AM+4)
+        RET()
+
+    module(name='rt_addam40bm40.s',
+           code=[ ('EXPORT', '__@addam40bm40'),
+                  ('CODE', '__@addam40bm40', code_addam40bm40) ])
+
     def code_amload():
         nohop()
         label('__@amload')
         m_load(ptr=T3, exponent=None, mantissa=AM, ret=True, ext=True)
 
-    def code_t0load():
+    def code_bmload():
         nohop()
-        label('__@t0load')
-        m_load(ptr=T3, exponent=None, mantissa=T0, ret=True, ext=True)
-
-    def code_add40():
-        nohop()
-        label('__@add40')
-        if args.cpu <= 5:
-            LD(AM);ADDW(T0);ST(AM);LD(vACH)
-            BNE('a1');LD(T0+1);BEQ('a1');LDWI(0x100);label('a1')
-            ADDW(AM+1);ST(AM+1);LD(vACH)
-            BNE('a2');LD(AM+2);BEQ('a2');LDWI(0x100);label('a2')
-            ADDW(T0+2);ST(AM+2);LD(vACH)
-            BNE('a3');LD(T0+3);BEQ('a3');LDWI(0x100);label('a3')
-            ADDW(AM+3);ST(AM+3);LD(vACH)
-            ADDW(T0+4);ST(AM+4)
-        else:
-            # untested but sensible
-            LD(T0);ADDBA(AM);ST(AM);LD(vACH)
-            ADDBA(T0+1);ADDBA(AM+1);ST(AM+1);LD(vACH)
-            ADDBA(T0+2);ADDBA(AM+2);ST(AM+2);LD(vACH)
-            ADDBA(T0+3);ADDBA(AM+3);ST(AM+3);LD(vACH)
-            ADDBA(T0+4);ADDBA(AM+4);ST(AM+4)
-        RET()
+        label('__@bmload')
+        m_load(ptr=T3, exponent=None, mantissa=BM, ret=True, ext=True)
 
     def code_fadd_t3():
         label('__@fadd_t3')
@@ -525,26 +529,26 @@ def scope():
         LD(AE);SUBW(T2);_BGT('.faddx1')
         XORI(255);INC(vAC);ANDI(255)   # FAC exponent <= arg exponent
         _CALLI('__@am32shra')          # - align (rounded)
-        LD(T2);ST(AE)                  # - assume arg exponent
-        _CALLJ('__@t0load')            # - load arg mantissa
+        LD(T2L);ST(AE)                 # - assume arg exponent
+        _CALLJ('__@bmload')            # - load arg mantissa
         XORW(SIGN);ANDI(128)           # - zero if same sign, nonzero otherwise
         _BRA('.faddx2')
         label('.faddx1')               # FAC exponent > arg exponent
-        ST(T2)
-        LDW(AM);STW(T0);               # - move fac mantissa into t0t1
+        ST(T2L)
+        LDW(AM);STW(BM);               # - move fac mantissa into t0t1
         LDW(AM+2);STW(T1);
         _CALLJ('__@amload')            # - load arg mantissa into am
-        XORW(SIGN);ANDI(128);ST(T2+1)  # - are signs different?
+        XORW(SIGN);ANDI(128);ST(T2H)   # - are signs different?
         XORW(SIGN);ST(SIGN)            # - assume arg sign
-        LD(T2);_CALLI('__@am32shra')   # - align (rounded)
-        LD(T2+1);                      # - zero if same sign, nonzero otherwise
+        LD(T2L);_CALLI('__@am32shra')  # - align (rounded)
+        LD(T2H);                       # - zero if same sign, nonzero otherwise
         label('.faddx2')
         _BEQ('.faddx3')
         _CALLJ('__@lneg_t0t1')
         LDI(0xff)
         label('.faddx3')
-        ST(T2)
-        _CALLJ('__@add40')
+        ST(BM+4)                       # - overwrites T2L
+        _CALLJ('__@addam40bm40')
         _CALLJ('__@fnorm3')
         label('.faddx4')
         tryhop(2);POP();RET()
@@ -553,9 +557,9 @@ def scope():
            code=[ ('EXPORT', '__@fadd_t3'),
                   ('IMPORT', '__@am32shra'),
                   ('IMPORT', '__@lneg_t0t1'),
+                  ('IMPORT', '__@addam40bm40'),
                   ('CODE', '__@amload', code_amload),
-                  ('CODE', '__@t0load', code_t0load),
-                  ('CODE', '__@add40', code_add40),
+                  ('CODE', '__@bmload', code_bmload),
                   ('CODE', '__@fadd_t3', code_fadd_t3) ] )
 
     def code_fadd():
@@ -616,7 +620,7 @@ def scope():
         nohop()
         label('_@_fscalb')
         PUSH()
-        STW(T0);LD(AE);ADDW(T0);BLT('.fscalund')
+        STW(BM);LD(AE);ADDW(BM);BLT('.fscalund')
         ST(AE);LD(vACH);BNE('.fscalovf')
         POP();RET()
         label('.fscalund')

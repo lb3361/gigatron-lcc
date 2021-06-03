@@ -67,6 +67,7 @@ def scope():
     module(name='rt_divu.s',
            code=[ ('CODE', '_@_divu', code1),
                   ('IMPORT', '_@_raise'),
+                  ('IMPORT', '__@divworker'),
                   ('EXPORT', '_@_divu') ])
 
     # DIVS:  T3/T2 -> vAC
@@ -97,9 +98,10 @@ def scope():
         tryhop(2);POP();RET()
    
     module(name='rt_divs.a',
-           code= [ ('CODE', '_@_divs', code2),
-                   ('IMPORT', '_@_raise'),
-                   ('EXPORT', '_@_divs') ] )
+           code=[ ('CODE', '_@_divs', code2),
+                  ('IMPORT', '_@_raise'),
+                  ('IMPORT', '__@divworker'),
+                  ('EXPORT', '_@_divs') ] )
 
     # T3 % T2 -> AC   [and T3 / T2 -> T1]
     #  clobbers B0-B2, T1
@@ -112,11 +114,11 @@ def scope():
         tryhop(2);POP();RET()
 
     module(name='rt_modu.s',
-           code= [ ('CODE', '_@_modu', code1),
-                   ('EXPORT', '_@_modu'),
-                   ('IMPORT', '_@_shru'),
-                   ('IMPORT', '_@_divu') ])
-
+           code=[ ('CODE', '_@_modu', code1),
+                  ('EXPORT', '_@_modu'),
+                  ('IMPORT', '_@_shru'),
+                  ('IMPORT', '_@_divu') ])
+    
     # T3 % T2 -> AC   [and T3 / T2 -> T1]
     #  clobbers B0-B2, T1
 

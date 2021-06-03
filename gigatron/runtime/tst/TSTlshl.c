@@ -2,10 +2,10 @@
 
 #define NELEMS(a) (sizeof(a)/sizeof(a[0]))
 
-#ifdef __GNUC__
-# define dword int
-#else
+#ifdef __gigatron__
 # define dword long
+#else
+# define dword int
 #endif
 
 

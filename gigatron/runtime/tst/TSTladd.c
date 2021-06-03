@@ -2,10 +2,10 @@
 
 #define NELEMS(a) (sizeof(a)/sizeof(a[0]))
 
-#ifdef __GNUC__
-# define dword unsigned int
-#else
+#ifdef __gigatron__
 # define dword unsigned long
+#else
+# define dword unsigned int
 #endif
 
 typedef unsigned long ul;

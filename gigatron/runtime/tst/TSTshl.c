@@ -1,11 +1,10 @@
 #include <stdio.h>
 
-#ifdef __GNUC__
-typedef unsigned short word;
+#ifdef __gigatron__
+# define word unsigned int
 #else
-typedef unsigned int word;
+# define word unsigned short
 #endif
-
 
 int main()
 {

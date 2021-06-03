@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#ifdef __GNUC__
+#ifndef __gigatron__
 # define int short
 #endif
 

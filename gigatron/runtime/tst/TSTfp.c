@@ -1,15 +1,52 @@
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 
-#ifdef __GNUC__
-# define word short
-# define dword int
-#else
+#ifdef __gigatron__
 # define word int
 # define dword long
+# define c(x) x
+#else
+# define word short
+# define dword int
 #endif
 
-double rand()
+
+#ifdef __gigatron__
+/* quick ldexp to avoid -lm in test file */
+double ldexp(double x, int i)
+{
+	i = i + *(unsigned char*)&x;
+	if (i <= 0)
+		return 0;
+	if (i > 255)
+		abort();
+	*(unsigned char*)&x = i;
+	return x;
+}
+#endif
+
+
+#ifndef __gigatron__
+/* cut ieee double to gigatron precision.
+   note that there are still carry effects. */
+double c(double x)
+{
+	int exponent;
+	double y = copysign(1.0, x);
+	long mantissa = (long)floor(ldexp(frexp(fabs(x), &exponent), 32));
+	if (exponent <= -128)
+		return 0;
+	if (exponent > 127)
+		abort();
+	y *= ldexp((double)mantissa, exponent-32);
+	//printf("((%e -> e=%d m=%lx -> %e))\n", x, exponent, mantissa, y);
+	return y;
+}
+#endif
+
+
+double drand()
 {
 	static unsigned dword whatever = 0;
 	double x;
@@ -19,23 +56,9 @@ double rand()
 	x = (double)whatever;
 	if (whatever & 0x200)
 		x = -x;
-	e = 80 - ((whatever>>16)&0xff);
-#ifdef __GNUC__
-	x = ldexp(x, e);
-	frexp(x, &e);
-	if (e <= -128)
-		x = 0;
-#else
-	e = (*(char*)&x) + e;
-	if (e > 0)
-		(*(char*)&x) = e;
-	else
-		x = 0;
-#endif
-	return x;
+	e = 40 - ((whatever>>16)&0x7f);
+	return c(ldexp(x, e));
 }
-
-
 
 int main()
 {
@@ -61,9 +84,9 @@ int main()
 	printf("------------ fadd/fsub\n");
 	x = 0;
 	for (i=0; i<100; i++) {
-		y = rand();
-		printf("a=%.6e b=%.6e ", x, y);
-		printf("a+b=%.6e a-b=%.6e\n", x+y, x-y);
+		y = drand();
+		printf("a=%+.6e b=%+.6e ", x, y);
+		printf("a+b=%+.6e a-b=%+.6e\n", c(x+y), c(x-y));
 		x = y;
 	}
 

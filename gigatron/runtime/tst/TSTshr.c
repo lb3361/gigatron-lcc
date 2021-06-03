@@ -1,12 +1,12 @@
 #include <stdio.h>
 
 
-#ifdef __GNUC__
-typedef unsigned short word;
-typedef short sword;
-#else
+#ifdef __gigatron__
 typedef unsigned int word;
 typedef int sword;
+#else
+typedef unsigned short word;
+typedef short sword;
 #endif
 
 int main()

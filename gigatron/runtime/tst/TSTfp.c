@@ -67,19 +67,27 @@ int main()
 	dword l; unsigned dword ul;
 	double x, y;
 
-	printf("----------- fcvu\n");
-	for (i=1, ud = 1; i!=12; i++, ud *= 17)
-		printf("%u -> %f\n", ud, (double)ud);
-	for (i=1, ul = 1; i!=12; i++, ul *= 13)
-		printf("%lu -> %f\n", (long)ul, (double)ul);
+	printf("----------- fcvu/ftou\n");
+	for (i=1, ud = 1; i!=12; i++, ud *= 17) {
+		x = (double)ud;
+		printf("%u -> %f -> %u\n", ud, x, (unsigned word)x);
+	}
+	for (i=1, ul = 1; i!=12; i++, ul *= 13) {
+		x = (double)ul;
+		printf("%lu -> %f -> %lu\n", (long)ul, x, (long)(unsigned dword)x);
+	}
 
-	printf("----------- fcvi\n");
+	printf("----------- fcvi/ftoi\n");
 	d = 0;
 	printf("%u -> %f\n", d, (float)d);
-	for (i=1, d = 1; i!=12; i++, d *= -13)
-		printf("%d -> %f\n", d, (double)d);
-	for (i=1, l = 1; i!=12; i++, l *= -17)
-		printf("%ld -> %f\n", (long)l, (double)l);
+	for (i=1, d = 1; i!=12; i++, d *= -13) {
+		x = (double)d;
+		printf("%d -> %f -> %d\n", d, x, (word)x);
+	}
+	for (i=1, l = 1; i!=12; i++, l *= -17) {
+		x = (double)l;
+		printf("%ld -> %f -> %ld\n", (long)l, x, (long)(dword)x);
+	}
 	
 	printf("------------ fadd/fsub\n");
 	x = 0;

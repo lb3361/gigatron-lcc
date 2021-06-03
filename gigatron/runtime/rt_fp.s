@@ -482,10 +482,34 @@ def scope():
                   ('IMPORT', '__@am40shr8'),
                   ('CODE', '_@_fcvi', code_fcvi) ] )
 
-
-    #    extern('_@_ftou')
-    #    extern('_@_ftoi')
-
+    def code_ftoi():
+        label('_@_ftoi')
+        PUSH()
+        LD(AE);SUBI(160);_BLT('.ok')
+        label('.ovf')
+        _CALLJ('__@clrfac')
+        LDI(128);ST(LAC+3)
+        tryhop(2);POP();RET()
+        label('_@_ftou')
+        PUSH()
+        LD(SIGN);ANDI(128);BNE('.ovf')
+        LD(AE);SUBI(160);_BGT('.ovf')
+        label('.ok')
+        XORI(255);ANDI(255);INC(vAC)
+        _CALLI('__@am32shra')
+        LDW(AM+2);STW(LAC+2);
+        LDW(AM);STW(LAC);
+        LD(SIGN);ANDI(128);BEQ('.ret')
+        _LNEG()
+        label('.ret')
+        tryhop(2);POP();RET()
+        
+    module(name='rt_ftoi.s',
+           code=[ ('EXPORT', '_@_ftoi'),
+                  ('EXPORT', '_@_ftou'),
+                  ('IMPORT', '__@am32shra'),
+                  ('IMPORT', '__@clrfac'),
+                  ('CODE', '_@_ftoi', code_ftoi) ] )
 
     # ==== additions and subtractions
 
@@ -640,12 +664,13 @@ def scope():
                     ('CODE', '_@_fscalb', code_fscalb) ] )
 
     def code_frndz():
+        '''Make integer by rounding towards zero'''
         label('_@_frndz')
         PUSH()
         LDW(AM);STW(BM);LDW(AM+2);STW(BM+2)
         LDWI(0xffff);STW(T3);STW(AM);STW(AM+2)
         LD(AE);SUBI(128);_BLE('.zero')
-        _CALLJ('__@am32shra')
+        _CALLI('__@am32shra')
         LDW(T3);XORW(AM);ANDW(BM);STW(AM)
         LDW(T3);XORW(AM+2);ANDW(BM+2);STW(AM+2)
         ORW(AM);_BNE('.done')

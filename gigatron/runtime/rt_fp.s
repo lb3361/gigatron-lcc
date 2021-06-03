@@ -152,40 +152,41 @@ def scope():
             LDWI('.vspfpe');POKEA(vSP)
         RET()
         
+    module(name='rt_fexception.s',
+           code=[ ('IMPORT', '_@_raise'),
+                  ('EXPORT', '__@fexception'),
+                  ('EXPORT', '__@foverflow'),
+                  ('EXPORT', '__@fsavevsp'),
+                  ('CODE', '__@fexception', code_fexception),
+                  ('CODE', '__@fsavevsp', code_fsavevsp) ] )
+
     def code_clrfac():
         nohop()
         label('__@clrfac')
         LDI(0);ST(AE);STW(AM);STW(AM+2);ST(AM+4);ST(SIGN)
         RET()
 
-    def code_fzero():
-        label('_@_fzero')
-        bytes(0,0,0,0,0) # 0.0F
+    module(name='rt_clrfac.s',
+           code=[ ('EXPORT', '__@clrfac'),
+                  ('CODE', '__@clrfac', code_clrfac) ] )
 
     def code_fone():
         label('_@_fone')
         bytes(129,0,0,0,0) # 1.0F
 
+    module(name='rt_fone.s',
+           code=[ ('EXPORT', '_@_fone'),
+                  ('DATA', '_@_fone', code_fone, 5, 1) ] )
+
     def code_fhalf():
         label('_@_fhalf')
         bytes(128,0,0,0,0) # 0.5F
-        
-    module(name='rt_fexception.s',
-           code=[ ('IMPORT', '_@_raise'),
-                  ('EXPORT', '__@fexception'),
-                  ('EXPORT', '__@foverflow'),
-                  ('EXPORT', '__@fsavevsp'),
-                  ('EXPORT', '__@clrfac'),
-                  ('EXPORT', '_@_fzero'),
-                  ('EXPORT', '_@_fone'),
-                  ('EXPORT', '_@_fhalf'),
-                  ('CODE', '__@fexception', code_fexception),
-                  ('CODE', '__@fsavevsp', code_fsavevsp),
-                  ('CODE', '__@clrfac', code_clrfac),
-                  ('DATA', '_@_fzero', code_fzero, 5, 1),
-                  ('DATA', '_@_fone', code_fone, 5, 1),
+
+    module(name='rt_fhalf.s',
+           code=[ ('EXPORT', '_@_fhalf'),
                   ('DATA', '_@_fhalf', code_fhalf, 5, 1) ] )
-    
+
+
     # ==== load FAC 
 
     def code_fldfac():

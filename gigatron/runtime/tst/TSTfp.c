@@ -98,5 +98,16 @@ int main()
 		x = y;
 	}
 
+	printf("------------ fcmp\n");
+	x = 0;
+	for (i=0; i<100; i++) {
+		if (i % 12)
+			y = drand();
+		printf("%+.6e > %+.6e = %d\n", x, y, (x > y));
+		printf("%+.6e >= %+.6e = %d\n", x, y, (x >= y));
+		printf("%+.6e != %+.6e = %d\n", x, y, (x != y));
+		x = y;
+	}
+		
 	return 0;
 }

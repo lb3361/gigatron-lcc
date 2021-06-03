@@ -44,28 +44,29 @@ def scope():
     
     # ==== Macros
 
-    def m_load(ptr = T3, exponent = AE, mantissa = AM, ret = False, ext = True):
+    def m_load(ptr = T3, exponent = AE, mantissa = AM, ret = False, ext = True, checkzero = True):
         '''Load float pointed by `ptr` into `exponent` and `mantissa`.
            Argument `ext` says whether `mantissa` is 32 or 40 bits.
            Preserve the value of pointer `ptr`.
            Argument `exponent` might be None to ignore it.
            Returns sign in bit 7 of vAC.'''
-        lbl = genlabel()
-        lbr = genlabel()
-        LDW(ptr);PEEK()
-        if exponent:
-            ST(exponent)
-        _BNE(lbl)
-        LDI(0)
-        if mantissa:
-            STW(mantissa);STW(mantissa+2)
-        if ext:
-            ST(mantissa+4)
-        if ret:
-            RET();
-        else:
-            _BRA(lbr)
-        label(lbl)
+        if exponent or checkzero:
+            lbl = genlabel()
+            lbr = genlabel()
+            LDW(ptr);PEEK()
+            if exponent:
+                ST(exponent)
+            _BNE(lbl)
+            LDI(0)
+            if mantissa:
+                STW(mantissa);STW(mantissa+2)
+            if ext:
+                ST(mantissa+4)
+            if ret:
+                RET();
+            else:
+                _BRA(lbr)
+            label(lbl)
         if args.cpu <= 5:
             LDI(1);ADDW(ptr);PEEK();STLW(-2);ORI(128);ST(mantissa+3)
             LDI(2);ADDW(ptr);PEEK();ST(mantissa+2)
@@ -85,7 +86,7 @@ def scope():
             ORBI(mantissa+3, 0x80)
         if ret:
             RET()
-        else:
+        elif exponent or checkzero:
             label(lbr)
 
     def m_store(ptr = T3, exponent = AE, mantissa = AM, ret = False, fastpath = False):
@@ -629,6 +630,53 @@ def scope():
     # ==== comparisons
 
     #    extern('_@_fcmp')
+
+    def code_bm32only():
+        label('__@bm32only')
+        PUSH()
+        m_load(ptr=T3, exponent=None, mantissa=BM, checkzero=False, ext=False)
+        tryhop(2);POP();RET()
+        
+    def code_fcmp():
+        label('_@_fcmp')
+        PUSH();STW(T3)
+        ADDI(1);PEEK();XORW(SIGN);ANDI(128);_BEQ('.fcmp1')
+        label('.plus')
+        LD(SIGN);XORI(128);ANDI(128);PEEK();LSLW();SUBI(1)
+        tryhop(2);POP();RET()
+        label('.minus')
+        LD(SIGN);ANDI(128);PEEK();LSLW();SUBI(1)
+        tryhop(2);POP();RET()
+        label('.fcmp1')
+        LDW(T3);PEEK();STW(T2)
+        LD(AE);SUBW(T2);_BLT('.minus');_BGT('.plus')
+        LD(AE);_BEQ('.zero')
+        _CALLJ('__@bm32only')
+        LDW(AM+2);_CMPWU(BM+2);_BLT('.minus');_BGT('.plus')
+        LDW(AM);_CMPWU(BM);_BLT('.minus');_BGT('.plus')
+        label('.zero')
+        LDI(0);tryhop(2);POP();RET()
+
+    module(name='rt_fcmp.s',
+           code=[ ('EXPORT', '_@_fcmp'),
+                  ('CODE', '__@bm32only', code_bm32only),
+                  ('CODE', '_@_fcmp', code_fcmp) ] )
+
+    def code_fsign():
+        '''returns sign of FAC into AC (-1/0/+1)'''
+        nohop()
+        label('_@_fsign')
+        LD(AE);BEQ('.done')
+        LD(SIGN);ANDI(128);BEQ('.plus')
+        _LDI(-1);RET()
+        label('.plus')
+        LDI(1)
+        label('.done')
+        RET()
+
+    module(name='rt_fsign.s',
+           code=[ ('EXPORT', '_@_fsign'),
+                  ('CODE', '_@_fsign', code_fsign) ] )
 
     # ==== misc
 

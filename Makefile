@@ -30,7 +30,7 @@ clean: lcc-clean gigatron-clean subdirs-clean build-dir-clean
 
 install: all gigatron-install subdirs-install
 
-test: glcc-test subdirs-test
+test: all glcc-test subdirs-test
 
 build-dir: FORCE
 	-mkdir -p ${BUILDDIR}

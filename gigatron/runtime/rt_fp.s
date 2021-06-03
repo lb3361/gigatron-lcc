@@ -155,7 +155,7 @@ def scope():
     def code_clrfac():
         nohop()
         label('__@clrfac')
-        LDI(0);ST(AE);STW(AM);STW(AM+2);ST(AM+4)
+        LDI(0);ST(AE);STW(AM);STW(AM+2);ST(AM+4);ST(SIGN)
         RET()
 
     def code_fzero():
@@ -428,8 +428,7 @@ def scope():
         LD(AE);SUBI(1);_BLE('.norm0');ST(AE)
         _CALLJ('__@am32shl1');_BRA('.norm1d')
         label('.norm0')
-        LDI(0);STW(AM);STW(AM+2);STW(AE);ST(SIGN)
-        LD(SIGN);ANDI(127);ST(SIGN)
+        _CALLJ('__@clrfac')
         label('.normok')
         tryhop(2);POP();RET()
 
@@ -444,6 +443,7 @@ def scope():
                   ('IMPORT', '__@am32shl4'),
                   ('IMPORT', '__@am32shl1'),
                   ('IMPORT', '__@foverflow'),
+                  ('IMPORT', '__@clrfac'),
                   ('CODE', '__@fnorm3', code_fnorm3),
                   ('CODE', '__@fnorm1', code_fnorm1) ] )
 

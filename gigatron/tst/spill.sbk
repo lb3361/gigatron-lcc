@@ -176,7 +176,7 @@ def code15():
 # ======== ('DATA', '.12', code16, 0, 1)
 def code16():
 	label('.12');
-	bytes(0,0,0,0,0); # 0.000000
+	bytes(0,0,0,0,0); # 0
 # ======== (epilog)
 code=[
 	('EXPORT', 'main'),

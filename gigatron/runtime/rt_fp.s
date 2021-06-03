@@ -284,8 +284,7 @@ def scope():
                   ('CODE', '__@am32shl4', code_am32shl4),
                   ('CODE', '__@am32shl8', code_am32shl8),
                   ('CODE', '__@am32shl16', code_am32shl16) ] )
-                  
-
+    
     # ==== shift right
 
     def macro_shr16(r, ext=True):
@@ -450,9 +449,6 @@ def scope():
 
     # ==== conversions
 
-    #    extern('_@_ftou')
-    #    extern('_@_ftoi')
-
     def code_fcvu():
         label('_@_fcvu')
         PUSH()
@@ -485,7 +481,11 @@ def scope():
                   ('IMPORT', '__@fnorm3'),
                   ('IMPORT', '__@am40shr8'),
                   ('CODE', '_@_fcvi', code_fcvi) ] )
-    
+
+
+    #    extern('_@_ftou')
+    #    extern('_@_ftoi')
+
 
     # ==== additions and subtractions
 
@@ -559,6 +559,7 @@ def scope():
                   ('IMPORT', '__@am32shra'),
                   ('IMPORT', '__@lneg_t0t1'),
                   ('IMPORT', '__@am40addbm40'),
+                  ('IMPORT', '__@fnorm3'),
                   ('CODE', '__@amload', code_amload),
                   ('CODE', '__@bmload', code_bmload),
                   ('CODE', '__@fadd_t3', code_fadd_t3) ] )
@@ -573,6 +574,7 @@ def scope():
     module(name='rt_fadd.s',
            code=[ ('EXPORT', '_@_fadd'),
                   ('CODE', '_@_fadd', code_fadd),
+                  ('IMPORT', '__@fsavevsp'),
                   ('IMPORT', '__@fadd_t3') ] )
 
     def code_fsub():
@@ -587,6 +589,7 @@ def scope():
     module(name='rt_fsub.s',
            code=[ ('EXPORT', '_@_fsub'),
                   ('CODE', '_@_fsub', code_fsub),
+                  ('IMPORT', '__@fsavevsp'),
                   ('IMPORT', '_@_fneg'),
                   ('IMPORT', '__@fadd_t3') ] )
 
@@ -636,8 +639,26 @@ def scope():
                     ('EXPORT', '_@_fscalb'),
                     ('CODE', '_@_fscalb', code_fscalb) ] )
 
+    def code_frndz():
+        label('_@_frndz')
+        PUSH()
+        LDW(AM);STW(BM);LDW(AM+2);STW(BM+2)
+        LDWI(0xffff);STW(T3);STW(AM);STW(AM+2)
+        LD(AE);SUBI(128);_BLE('.zero')
+        _CALLJ('__@am32shra')
+        LDW(T3);XORW(AM);ANDW(BM);STW(AM)
+        LDW(T3);XORW(AM+2);ANDW(BM+2);STW(AM+2)
+        ORW(AM);_BNE('.done')
+        label('.zero')
+        _CALLJ('__@clrfac')
+        label('.done')
+        tryhop(2);POP();RET()
 
-
+    module(name = 'rt_frndz.s',
+           code = [ ('IMPORT', '__@clrfac'),
+                    ('IMPORT', '__@am32shra'),
+                    ('EXPORT', '_@_frndz'),
+                    ('CODE', '_@_frndz', code_frndz) ] )
 
 # create all the modules
 scope()

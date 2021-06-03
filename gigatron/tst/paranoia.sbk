@@ -3,59 +3,59 @@
 # ======== ('DATA', 'Zero', code0, 5, 1)
 def code0():
 	label('Zero');
-	bytes(0,0,0,0,0); # 0.000000
+	bytes(0,0,0,0,0); # 0
 # ======== ('DATA', 'Half', code1, 5, 1)
 def code1():
 	label('Half');
-	bytes(128,0,0,0,0); # 0.500000
+	bytes(128,0,0,0,0); # 0.5
 # ======== ('DATA', 'One', code2, 5, 1)
 def code2():
 	label('One');
-	bytes(129,0,0,0,0); # 1.000000
+	bytes(129,0,0,0,0); # 1
 # ======== ('DATA', 'Two', code3, 5, 1)
 def code3():
 	label('Two');
-	bytes(130,0,0,0,0); # 2.000000
+	bytes(130,0,0,0,0); # 2
 # ======== ('DATA', 'Three', code4, 5, 1)
 def code4():
 	label('Three');
-	bytes(130,64,0,0,0); # 3.000000
+	bytes(130,64,0,0,0); # 3
 # ======== ('DATA', 'Four', code5, 5, 1)
 def code5():
 	label('Four');
-	bytes(131,0,0,0,0); # 4.000000
+	bytes(131,0,0,0,0); # 4
 # ======== ('DATA', 'Five', code6, 5, 1)
 def code6():
 	label('Five');
-	bytes(131,32,0,0,0); # 5.000000
+	bytes(131,32,0,0,0); # 5
 # ======== ('DATA', 'Eight', code7, 5, 1)
 def code7():
 	label('Eight');
-	bytes(132,0,0,0,0); # 8.000000
+	bytes(132,0,0,0,0); # 8
 # ======== ('DATA', 'Nine', code8, 5, 1)
 def code8():
 	label('Nine');
-	bytes(132,16,0,0,0); # 9.000000
+	bytes(132,16,0,0,0); # 9
 # ======== ('DATA', 'TwentySeven', code9, 5, 1)
 def code9():
 	label('TwentySeven');
-	bytes(133,88,0,0,0); # 27.000000
+	bytes(133,88,0,0,0); # 27
 # ======== ('DATA', 'ThirtyTwo', code10, 5, 1)
 def code10():
 	label('ThirtyTwo');
-	bytes(134,0,0,0,0); # 32.000000
+	bytes(134,0,0,0,0); # 32
 # ======== ('DATA', 'TwoForty', code11, 5, 1)
 def code11():
 	label('TwoForty');
-	bytes(136,112,0,0,0); # 240.000000
+	bytes(136,112,0,0,0); # 240
 # ======== ('DATA', 'MinusOne', code12, 5, 1)
 def code12():
 	label('MinusOne');
-	bytes(129,128,0,0,0); # -1.000000
+	bytes(129,128,0,0,0); # -1
 # ======== ('DATA', 'OneAndHalf', code13, 5, 1)
 def code13():
 	label('OneAndHalf');
-	bytes(129,64,0,0,0); # 1.500000
+	bytes(129,64,0,0,0); # 1.5
 # ======== ('DATA', 'NoTrials', code14, 2, 2)
 def code14():
 	align(2);
@@ -4450,11 +4450,11 @@ def code126():
 # ======== ('DATA', '.1003', code127, 0, 1)
 def code127():
 	label('.1003');
-	bytes(130,0,0,0,0); # 2.000000
+	bytes(130,0,0,0,0); # 2
 # ======== ('DATA', '.1002', code128, 0, 1)
 def code128():
 	label('.1002');
-	bytes(128,0,0,0,0); # 0.500000
+	bytes(128,0,0,0,0); # 0.5
 # ======== ('DATA', '.997', code129, 0, 2)
 def code129():
 	align(2);
@@ -4468,11 +4468,11 @@ def code130():
 # ======== ('DATA', '.983', code131, 0, 1)
 def code131():
 	label('.983');
-	bytes(139,9,128,0,0); # 1100.000000
+	bytes(139,9,128,0,0); # 1100
 # ======== ('DATA', '.982', code132, 0, 1)
 def code132():
 	label('.982');
-	bytes(139,246,128,0,0); # -1100.000000
+	bytes(139,137,128,0,0); # -1100
 # ======== ('DATA', '.975', code133, 0, 1)
 def code133():
 	label('.975');
@@ -5237,7 +5237,7 @@ def code218():
 # ======== ('DATA', '.814', code219, 0, 1)
 def code219():
 	label('.814');
-	bytes(111,39,197,172,71); # 0.000005
+	bytes(111,39,197,172,71); # 5e-06
 # ======== ('DATA', '.812', code220, 0, 1)
 def code220():
 	label('.812');
@@ -5277,7 +5277,7 @@ def code226():
 # ======== ('DATA', '.799', code227, 0, 1)
 def code227():
 	label('.799');
-	bytes(129,128,0,0,0); # -1.000000
+	bytes(129,128,0,0,0); # -1
 # ======== ('DATA', '.795', code228, 0, 1)
 def code228():
 	label('.795');
@@ -6335,7 +6335,7 @@ def code362():
 # ======== ('DATA', '.301', code363, 0, 1)
 def code363():
 	label('.301');
-	bytes(130,64,0,0,0); # 3.000000
+	bytes(130,64,0,0,0); # 3
 # ======== ('DATA', '.300', code364, 0, 1)
 def code364():
 	label('.300');
@@ -6877,7 +6877,7 @@ def code425():
 # ======== ('DATA', '.85', code426, 0, 1)
 def code426():
 	label('.85');
-	bytes(132,32,0,0,0); # 10.000000
+	bytes(132,32,0,0,0); # 10
 # ======== ('DATA', '.80', code427, 0, 1)
 def code427():
 	label('.80');
@@ -6910,7 +6910,7 @@ def code430():
 # ======== ('DATA', '.72', code431, 0, 1)
 def code431():
 	label('.72');
-	bytes(122,35,215,10,61); # 0.010000
+	bytes(122,35,215,10,61); # 0.01
 # ======== ('DATA', '.71', code432, 0, 1)
 def code432():
 	label('.71');
@@ -7024,7 +7024,7 @@ def code444():
 # ======== ('DATA', '.19', code445, 0, 1)
 def code445():
 	label('.19');
-	bytes(119,3,18,110,151); # 0.001000
+	bytes(119,3,18,110,151); # 0.001
 # ======== ('DATA', '.18', code446, 0, 1)
 def code446():
 	label('.18');
@@ -7055,11 +7055,11 @@ def code448():
 # ======== ('DATA', '.8', code449, 0, 1)
 def code449():
 	label('.8');
-	bytes(129,0,0,0,0); # 1.000000
+	bytes(129,0,0,0,0); # 1
 # ======== ('DATA', '.7', code450, 0, 1)
 def code450():
 	label('.7');
-	bytes(0,0,0,0,0); # 0.000000
+	bytes(0,0,0,0,0); # 0
 # ======== ('DATA', '.2', code451, 0, 1)
 def code451():
 	label('.2');

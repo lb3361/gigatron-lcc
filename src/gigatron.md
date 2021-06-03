@@ -1386,14 +1386,16 @@ static void defconst(int suffix, int size, Value v)
     unsigned long mantissa;
     assert(size == 5);
     assert(isfinite(d));
-    mantissa = (unsigned long)(frexp(d,&exp) * pow(2.0, 32));
-    if (mantissa == 0 || exp < -128)
+    mantissa = (unsigned long)(frexp(fabs(d),&exp) * pow(2.0, 32));
+    if (mantissa == 0 || exp <= -128)
       xprint("\tbytes(0,0,0,0,0);");
+    else if (exp > 127)
+      error("floating point constant overflow\n");
     else
       xprint("\tbytes(%d,%d,%d,%d,%d);",
              exp+128, ((mantissa>>24)&0x7f)|((d<0.0)?0x80:0x00),
              (mantissa>>16)&0xff, (mantissa>>8)&0xff, (mantissa&0xff) );
-    xprint(" # %f\n", d);
+    xprint(" # %g\n", d);
   } else {
     unsigned long x = (suffix == P) ? (unsigned)(size_t)v.p : (suffix == I) ? v.i : v.u;
     if (size == 1) 

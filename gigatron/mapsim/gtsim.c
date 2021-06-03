@@ -347,7 +347,7 @@ void sys_printf(void)
               if (i+1 < sizeof(spec))
                 {
                   spec[i+1] = 0;
-                  if (strchr("eEfFgG", conv)) 
+                  if (strchr("eEfFgGaA", conv))
                     { n += printf(spec, feek(ap)); ap += 5; }
                   else if (strchr("sS", conv))
                     { ap = (ap+1)&~1; n += printf(spec, &RAM[deek(ap)]); ap += 2; }

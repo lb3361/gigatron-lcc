@@ -14,22 +14,6 @@ def scope():
            code=[ ('EXPORT', '__@lshl1_t2t3'),
                   ('CODE', '__@lshl1_t2t3', code0) ])
 
-    # LNEG_T0T1 : -LAC --> LAC
-    def code1():
-        nohop()
-        label('__@lneg_t0t1')
-        _LDI(0xffff);XORW(T1);STW(T1)
-        _LDI(0xffff);XORW(T0);ADDI(1);STW(T0)
-        BNE('.lneg1')
-        LDI(1);ADDW(T1);STW(T1)
-        label('.lneg1')
-        RET()
-
-    module(name='rt_lnegt0t1.s',
-           code=[ ('EXPORT', '__@lneg_t0t1'),
-                  ('CODE', '__@lshl1_t0t1', code1) ])
-
-
     # worker
     #  LAC:    a  dividend  [0x0-0x8000000]
     #  T0T1:   d  divisor   [0x1-0x8000000]

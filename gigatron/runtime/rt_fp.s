@@ -44,15 +44,29 @@ def scope():
     
     # ==== Macros
 
-    def m_load(ptr = T3, exponent = AE, mantissa = AM, ext = True):
+    def m_load(ptr = T3, exponent = AE, mantissa = AM, ret = False, ext = True):
         '''Load float pointed by `ptr` into `exponent` and `mantissa`.
            Argument `ext` says whether `mantissa` is 32 or 40 bits.
            Preserve the value of pointer `ptr`.
            Argument `exponent` might be None to ignore it.
            Returns sign in bit 7 of vAC.'''
+        lbl = genlabel()
+        lbr = genlabel()
+        LDW(ptr);PEEK()
+        if exponent:
+            ST(exponent)
+        _BNE(lbl)
+        LDI(0)
+        if mantissa:
+            STW(mantissa);STW(mantissa+2)
+        if ext:
+            ST(mantissa+4)
+        if ret:
+            RET();
+        else:
+            _BRA(lbr)
+        label(lbl)
         if args.cpu <= 5:
-            if exponent:
-                LDW(ptr);PEEK();ST(exponent)
             LDI(1);ADDW(ptr);PEEK();STLW(-2);ORI(128);ST(mantissa+3)
             LDI(2);ADDW(ptr);PEEK();ST(mantissa+2)
             LDI(3);ADDW(ptr);PEEK();ST(mantissa+1)
@@ -61,9 +75,6 @@ def scope():
                 LDI(0);ST(mantissa+4)
             LDLW(-2)
         else:
-            LDW(ptr)
-            if exponent:
-                PEEKA(exponent)
             INCW(vAC);PEEKA(mantissa+3)
             INCW(vAC);PEEKA(mantissa+2)
             INCW(vAC);PEEKA(mantissa+1)
@@ -72,6 +83,10 @@ def scope():
                 MOVQ(mantissa+4, 0x00)
             LD(mantissa+3); 
             ORBI(mantissa+3, 0x80)
+        if ret:
+            RET()
+        else:
+            label(lbr)
 
     def m_store(ptr = T3, exponent = AE, mantissa = AM, ret = False, fastpath = False):
         '''Save float at location `ptr`.
@@ -134,7 +149,7 @@ def scope():
             LDWI('.vspfpe');STW(T2)
             LD(vSP);DOKE(T2)
         else:
-            LDWI('.vspfpe');POKEA(vLR)
+            LDWI('.vspfpe');POKEA(vSP)
         RET()
         
     def code_clrfac():
@@ -177,8 +192,8 @@ def scope():
         '''[T3]->FAC'''
         nohop()
         label('_@_fldfac')
-        m_load(T3, exponent=AE, mantissa=AM, ext=True)
-        XORW(SIGN);ANDI(0x80);XORW(SIGN);ST(SIGN)
+        m_load(T3, exponent=AE, mantissa=AM, ret=False, ext=True)
+        ANDI(0x80);ST(SIGN)
         RET()
 
     module(name='rt_fldfac.s',
@@ -191,7 +206,7 @@ def scope():
         '''FAC->[T2]'''
         nohop()
         label('_@_fstfac')
-        LDW(SIGN);ANDI(0x80)
+        LD(SIGN);ANDI(0x80)
         m_store(T2, exponent=AE, mantissa=AM, ret=True)
 
     module(name='rt_fstfac.s',
@@ -297,6 +312,7 @@ def scope():
                   ('CODE', '__@am40shr8', code_am40shr8) ]  )
 
     def code_am40shr1():
+        '''shift am40 right by one position'''
         nohop()
         label('__@am40shr1')  # AM40 >>= 1
         _LDI('SYS_LSRW1_48');STW('sysFn')
@@ -323,36 +339,26 @@ def scope():
         RET()
     
     def code_am32shra():
-        nohop()
-        label('__#@am32shra') # AM30 >>= vAC
-        STLW(-2)
-        ANDI(0xe0)
-        BNE('.shra16')
-        STW(AM)
-        STW(AM+2)
+        '''shift am32 right by vAC positions'''
+        label('__@am32shra') # AM30 >>= vAC
+        PUSH();STLW(-2)
+        ANDI(0xe0);_BEQ('.shra16')
+        LDI(0);STW(AM);STW(AM+2)
         label('.shraret')
-        RET()
+        tryhop(2);POP();RET()
         label('.shra16')
-        LDLW(-2)
-        ANDI(16)
-        BEQ('.shra8')
+        LDLW(-2);ANDI(16);_BEQ('.shra8')
         _CALLJ('__@am32shr16')
-        macro_shr16(AM, ext=False)
         label('.shra8')
-        LDLW(-2)
-        ANDI(8)
-        BEQ('.shra1to7')
+        LDLW(-2);ANDI(8);_BEQ('.shra1to7')
         _CALLJ('__@am32shr8')
         label('.shra1to7')
-        LDLW(-2)
-        ANDI(7)
-        BEQ('.shraret')
-        PUSH()
+        LDLW(-2);ANDI(7);_BEQ('.shraret')
         _CALLI('__@shrsysfn')
         LDW(AM);SYS(52);ST(AM)
         LDW(AM+1);SYS(52);ST(AM+1)
         LDW(AM+2);SYS(52);STW(AM+2)
-        POP();RET()
+        tryhop(2);POP();RET()
 
     module(name='rt_fam32shra.s',
            code=[ ('EXPORT', '__@am32shra'),
@@ -360,7 +366,6 @@ def scope():
                   ('CODE', '__@am32shr8', code_am32shr16),                  
                   ('CODE', '__@am32shr8', code_am32shr8),
                   ('CODE', '__@am32shra', code_am32shra) ]  )
-
 
     # ==== normalization
 
@@ -408,22 +413,22 @@ def scope():
         PUSH()
         LDW(AM+2);_BNE('.norm1b')
         ORW(AM);_BEQ('.norm0')
-        LD(AE);SUBI(16);_BLT('.norm0');ST(AE)
+        LD(AE);SUBI(16);_BLE('.norm0');ST(AE)
         _CALLJ('__@am32shl16')
         label('.norm1b')
         LD(AM+3);_BNE('.norm1c')
-        LD(AE);SUBI(8);_BLT('.norm0');ST(AE)
+        LD(AE);SUBI(8);_BLE('.norm0');ST(AE)
         _CALLJ('__@am32shl8')
         label('.norm1c')
         LD(AM+3);ANDI(0xf0);_BNE('.norm1d')
-        LD(AE);SUBI(4);_BLT('.norm0');ST(AE)
+        LD(AE);SUBI(4);_BLE('.norm0');ST(AE)
         _CALLJ('__@am32shl4')
         label('.norm1d')
         LDW(AM+2);_BLT('.normok')
-        LD(AE);SUBI(1);_BLT('.norm0');ST(AE)
+        LD(AE);SUBI(1);_BLE('.norm0');ST(AE)
         _CALLJ('__@am32shl1');_BRA('.norm1d')
         label('.norm0')
-        LDI(0);STW(AM);STW(AM+2);STW(AE)
+        LDI(0);STW(AM);STW(AM+2);STW(AE);ST(SIGN)
         LD(SIGN);ANDI(127);ST(SIGN)
         label('.normok')
         tryhop(2);POP();RET()
@@ -483,8 +488,103 @@ def scope():
 
     # ==== additions and subtractions
 
-    #    extern('_@_fadd')
-    #    extern('_@_fsub')
+    def code_amload():
+        nohop()
+        label('__@amload')
+        m_load(ptr=T3, exponent=None, mantissa=AM, ret=True, ext=True)
+
+    def code_t0load():
+        nohop()
+        label('__@t0load')
+        m_load(ptr=T3, exponent=None, mantissa=T0, ret=True, ext=True)
+
+    def code_add40():
+        nohop()
+        label('__@add40')
+        if args.cpu <= 5:
+            LD(AM);ADDW(T0);ST(AM);LD(vACH)
+            BNE('a1');LD(T0+1);BEQ('a1');LDWI(0x100);label('a1')
+            ADDW(AM+1);ST(AM+1);LD(vACH)
+            BNE('a2');LD(AM+2);BEQ('a2');LDWI(0x100);label('a2')
+            ADDW(T0+2);ST(AM+2);LD(vACH)
+            BNE('a3');LD(T0+3);BEQ('a3');LDWI(0x100);label('a3')
+            ADDW(AM+3);ST(AM+3);LD(vACH)
+            ADDW(T0+4);ST(AM+4)
+        else:
+            # untested but sensible
+            LD(T0);ADDBA(AM);ST(AM);LD(vACH)
+            ADDBA(T0+1);ADDBA(AM+1);ST(AM+1);LD(vACH)
+            ADDBA(T0+2);ADDBA(AM+2);ST(AM+2);LD(vACH)
+            ADDBA(T0+3);ADDBA(AM+3);ST(AM+3);LD(vACH)
+            ADDBA(T0+4);ADDBA(AM+4);ST(AM+4)
+        RET()
+
+    def code_fadd_t3():
+        label('__@fadd_t3')
+        PUSH();LDW(T3);PEEK();STW(T2);_BEQ('.faddx4')
+        LD(AE);SUBW(T2);_BGT('.faddx1')
+        XORI(255);INC(vAC);ANDI(255)   # FAC exponent <= arg exponent
+        _CALLI('__@am32shra')          # - align (rounded)
+        LD(T2);ST(AE)                  # - assume arg exponent
+        _CALLJ('__@t0load')            # - load arg mantissa
+        XORW(SIGN);ANDI(128)           # - zero if same sign, nonzero otherwise
+        _BRA('.faddx2')
+        label('.faddx1')               # FAC exponent > arg exponent
+        ST(T2)
+        LDW(AM);STW(T0);               # - move fac mantissa into t0t1
+        LDW(AM+2);STW(T1);
+        _CALLJ('__@amload')            # - load arg mantissa into am
+        XORW(SIGN);ANDI(128);ST(T2+1)  # - are signs different?
+        XORW(SIGN);ST(SIGN)            # - assume arg sign
+        LD(T2);_CALLI('__@am32shra')   # - align (rounded)
+        LD(T2+1);                      # - zero if same sign, nonzero otherwise
+        label('.faddx2')
+        _BEQ('.faddx3')
+        _CALLJ('__@lneg_t0t1')
+        LDI(0xff)
+        label('.faddx3')
+        ST(T2)
+        _CALLJ('__@add40')
+        _CALLJ('__@fnorm3')
+        label('.faddx4')
+        tryhop(2);POP();RET()
+
+    module(name='rt_faddt3.s',
+           code=[ ('EXPORT', '__@fadd_t3'),
+                  ('IMPORT', '__@am32shra'),
+                  ('IMPORT', '__@lneg_t0t1'),
+                  ('CODE', '__@amload', code_amload),
+                  ('CODE', '__@t0load', code_t0load),
+                  ('CODE', '__@add40', code_add40),
+                  ('CODE', '__@fadd_t3', code_fadd_t3) ] )
+
+    def code_fadd():
+        label('_@_fadd')
+        PUSH();STW(T3)
+        _CALLJ('__@fsavevsp')
+        _CALLJ('__@fadd_t3')
+        tryhop(2);POP();RET()
+
+    module(name='rt_fadd.s',
+           code=[ ('EXPORT', '_@_fadd'),
+                  ('CODE', '_@_fadd', code_fadd),
+                  ('IMPORT', '__@fadd_t3') ] )
+
+    def code_fsub():
+        label('_@_fsub')
+        PUSH();STW(T3)
+        _CALLJ('__@fsavevsp')
+        _CALLJ('_@_fneg')
+        _CALLJ('__@fadd_t3')
+        _CALLJ('_@_fneg')
+        tryhop(2);POP();RET()
+
+    module(name='rt_fsub.s',
+           code=[ ('EXPORT', '_@_fsub'),
+                  ('CODE', '_@_fsub', code_fsub),
+                  ('IMPORT', '_@_fneg'),
+                  ('IMPORT', '__@fadd_t3') ] )
+
 
     # ==== multiplication
 
@@ -498,20 +598,20 @@ def scope():
 
     #    extern('_@_fcmp')
 
-    # ==== fneg
+    # ==== misc
 
     def code_fneg():
         nohop()
         label('_@_fneg')
+        LD(AE);BEQ('.ret')
         LD(SIGN);XORI(0x80);ST(SIGN)
+        label('.ret')
         RET()
 
     module(name = 'rt_fneg.s',
            code = [ ('EXPORT', '_@_fneg'),
                     ('CODE', '_@_fneg', code_fneg) ] )
 
-    # ===== fscalb
-    
     def code_fscalb():
         nohop()
         label('_@_fscalb')
@@ -531,7 +631,6 @@ def scope():
                     ('EXPORT', '_@_fscalb'),
                     ('CODE', '_@_fscalb', code_fscalb) ] )
 
-    return code
 
 
 

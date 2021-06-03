@@ -45,6 +45,22 @@ def scope():
            code= [ ('EXPORT', '_@_lneg'),
                    ('CODE', '_@_lneg', code1) ] )
 
+    # LNEG_T0T1 : -TOT1 --> TOT1
+    def code1():
+        nohop()
+        label('__@lneg_t0t1')
+        _LDI(0xffff);XORW(T1);STW(T1)
+        _LDI(0xffff);XORW(T0);ADDI(1);STW(T0)
+        BNE('.lneg1')
+        LDI(1);ADDW(T1);STW(T1)
+        label('.lneg1')
+        RET()
+
+    module(name='rt_lnegt0t1.s',
+           code=[ ('EXPORT', '__@lneg_t0t1'),
+                  ('CODE', '__@lshl1_t0t1', code1) ])
+
+
 scope()
 
 # Local Variables:

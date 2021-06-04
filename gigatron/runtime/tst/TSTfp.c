@@ -14,6 +14,7 @@
 
 
 #ifdef __gigatron__
+
 /* quick ldexp to avoid -lm in test file */
 double ldexp(double x, int i)
 {
@@ -21,7 +22,7 @@ double ldexp(double x, int i)
 	if (i <= 0)
 		return 0;
 	if (i > 255)
-		abort();
+		return 123456789.0;
 	*(unsigned char*)&x = i;
 	return x;
 }
@@ -50,7 +51,6 @@ double c(double x)
 	//printf("((%e -> e=%d m=%lx -> %e))\n", x, exponent, mantissa, y);
 	return y;
 }
-
 
 #endif
 

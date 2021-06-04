@@ -988,8 +988,8 @@ def _LMOV(s,d):
                 STW(T3)
             if d != [vAC] and d != [T2]:
                 _LDI(d); STW(T2)
-            if s != [vAC] and s != [T3]:               # call sequence
-                _LDI(s); STW(T3)                      # 5-13 bytes
+            if s != [vAC] and s != [T3]:              # call sequence
+                _LDI(s); STW(T3)                      # is 5-13 bytes long
             extern('_@_lcopy')
             _CALLJ('_@_lcopy')    # [T3..T3+4) --> [T2..T2+4)
 @vasm
@@ -1065,6 +1065,10 @@ def _LCMPX():
     extern('_@_lcmpx')
     _CALLI('_@_lcmpx')              # TST(LAC-[vAC]) --> vAC
 @vasm
+def _LCVI():
+    extern('_@_lcvi')
+    _CALLI('_@_lcvi')               # AC -> LAC (signed)
+@vasm
 def _FMOV(s,d):
     '''Move float from reg s to d with special cases when s or d is FAC.
        Also accepts [vAC] or [T3] for s and [vAC] or [T2] for d.'''
@@ -1077,7 +1081,7 @@ def _FMOV(s,d):
             elif s != [T3]:
                 _LDI(s); STW(T3)
             extern('_@_fldfac')
-            _CALLI('_@_fldfac')   # [T3..T3+5) --> FAC
+            _CALLJ('_@_fldfac')   # [T3..T3+5) --> FAC
         elif s == FAC:
             if d == [vAC]:
                 STW(T2)
@@ -1086,6 +1090,7 @@ def _FMOV(s,d):
             extern('_@_fstfac')
             _CALLJ('_@_fstfac')   # FAC --> [T2..T2+5)
         elif is_zeropage(d, 4) and is_zeropage(s, 4):
+            # is it worth 12 bytes of code?
             _LDW(s); STW(d); _LDW(s+2); STW(d+2); _LD(s+4); ST(d+4)
         else:
             maycross=False

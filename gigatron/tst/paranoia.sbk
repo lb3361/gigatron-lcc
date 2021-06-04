@@ -1658,7 +1658,7 @@ def code17():
 	_FMOV(F20,'X');
 	_FMOV('Radix',FAC);LDI(F20);_FMUL();_FMOV(FAC,'Y');
 	label('.322');
-	_LDI('NoTrials');DEEK();STW(LAC);LD(vACH);XORI(128);SUBI(128);LD(vACH);ST(LAC+2);ST(LAC+3);_FCVI();_FMOV(FAC,F20);
+	_LDI('NoTrials');DEEK();_LCVI();_FCVI();_FMOV(FAC,F20);
 	_FMOV('Y',FAC);_LDI('X');_FSUB();LDI(F20);_FCMP();_BLT('.321');
 	label('.319');
 	_FMOV('X',FAC);_LDI('U2');_FMUL();_FMOV(FAC,'OneUlp');
@@ -2736,7 +2736,7 @@ def code17():
 	_LDI('I');STW(R21);
 	LDW(R21);DEEK();ADDI(1);DOKE(R21);
 	LDW(R21);DEEK();STW(R21);
-	LDW(R21);ADDW(R21);STW(LAC);LD(vACH);XORI(128);SUBI(128);LD(vACH);ST(LAC+2);ST(LAC+3);_FCVI();_FMOV(FAC,F19);
+	LDW(R21);ADDW(R21);_LCVI();_FCVI();_FMOV(FAC,F19);
 	_FMOV('Y',FAC);LDI(F19);_FDIV();_FMOV(FAC,'Y');
 	_LDI('Q');STW(R21);
 	_FMOV('Y',FAC);LDW(R21);_FADD();_FMOV(FAC,'R');
@@ -3689,7 +3689,7 @@ def code30():
 	label('SR3980');
 	tryhop(4);LDW(vLR);DOKE(SP);_SP(-12);STW(SP);
 	label('.848');
-	_LDI('I');DEEK();STW(LAC);LD(vACH);XORI(128);SUBI(128);LD(vACH);ST(LAC+2);ST(LAC+3);_FCVI();_FMOV(FAC,'Q');
+	_LDI('I');DEEK();_LCVI();_FCVI();_FMOV(FAC,'Q');
 	_FMOV('Z',F8);
 	_SP(2);_FMOV(F8,[vAC]);
 	_FMOV('Q',F11);

@@ -79,6 +79,21 @@ def scope():
            code=[ ('EXPORT', '_@_wcopy'),
                   ('CODE', '_@_wcopy', code4) ])
 
+
+    # LCVI: AC to LAC with sign extension
+    def code5():
+        nohop()
+        label('_@_lcvi')
+        STW(LAC);
+        LD(vACH);XORI(128);SUBI(128)
+        LD(vACH);ST(LAC+2);ST(LAC+3)
+        RET()
+
+    module(name='rt_lcvi.s',
+           code=[ ('EXPORT', '_@_lcvi'),
+                  ('CODE', '_@_lcvi', code5) ])
+
+
 scope()
 
 # Local Variables:

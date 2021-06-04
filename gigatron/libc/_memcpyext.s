@@ -46,7 +46,7 @@ def scope():
                 INC(R19);INC('sysArgs2')
                 LD('sysArgs5');SUBI(1);ST('sysArgs5');BNE('.loop1')
             else:
-                PEEK+('sysArgs2');POKE+(R19)
+                PEEKpp('sysArgs2');POKEpp(R19)
                 DBNE('sysArgs5','.loop2')
             LDW(R17);SYS(40)
             _LDI('.memcpyextb');STW(R19)

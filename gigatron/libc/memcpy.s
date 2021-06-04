@@ -43,7 +43,7 @@ def scope():
                 LD('sysArgs4');SUBI(2);ST('sysArgs4');BNE('.cpy2loop')
             else:
                 label('.cpy2loop')
-                DEEK+('sysArgs0'); DOKE+('sysArgs2')
+                DEEKpp('sysArgs0'); DOKEpp('sysArgs2')
                 DEC('sysArgs4'); DBNE('sysArgs4', '.cpy2loop')
             label('.cpydone')
             RET()

@@ -44,7 +44,7 @@ def code0():
 	_LDI('f');STW(R22);
 	LDW(R7);LSLW();LSLW();ADDW(R7);ADDW(R22);_FMOV([vAC],F20);
 	_FMOV(F20,FAC);_LDI('.4');_FCMP();_BEQ('.19');
-	LDW(R6);STW(LAC);LD(vACH);XORI(128);SUBI(128);LD(vACH);ST(LAC+2);ST(LAC+3);_FCVI();_FMOV(FAC,F17);
+	LDW(R6);_LCVI();_FCVI();_FMOV(FAC,F17);
 	_FMOV(F20,FAC);LDI(F17);_FDIV();LDI(F2);_FCMP();_BLT('.19');
 	LDW(R7);_CMPIS(32);_BGT('.21');
 	_LDI('.23');STW(R8);
@@ -63,7 +63,7 @@ def code0():
 	_LDI('.25');STW(R8);
 	_SP(2);_MOV(R8,[vAC]);
 	_LDI('f');STW(R22);
-	LDW(R6);STW(LAC);LD(vACH);XORI(128);SUBI(128);LD(vACH);ST(LAC+2);ST(LAC+3);_FCVI();_FMOV(FAC,F19);
+	LDW(R6);_LCVI();_FCVI();_FMOV(FAC,F19);
 	LDW(R7);LSLW();LSLW();ADDW(R7);ADDW(R22);_FMOV([vAC],FAC);_LDI('.5');_FMUL();LDI(F19);_FDIV();_SP(4);_FMOV(FAC,[vAC]);
 	CALLI('printf');
 	label('.19');

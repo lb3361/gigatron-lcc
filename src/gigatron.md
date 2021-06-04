@@ -740,7 +740,7 @@ fac: LOADF5(fac) "%0"
 ac: CVII2(ac) "%0XORI(128);SUBI(128);" if_cv_from(a,1,48)
 ac: CVUI2(ac) "%0" if_cv_from(a,1,0)
 lac: CVIU4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);" 50
-lac: CVII4(ac) "%0STW(LAC);LD(vACH);XORI(128);SUBI(128);LD(vACH);ST(LAC+2);ST(LAC+3);" if_cv_from(a,2,120)
+lac: CVII4(ac) "%0_LCVI();" if_cv_from(a,2,120)
 lac: CVUU4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);"
 lac: CVUI4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);"
 # 3) floating point conversions
@@ -750,7 +750,7 @@ fac: CVUF5(ac)  "%0STW(LAC);LDI(0);STW(LAC+2);_FCVU();" if_cv_from(a,2,180)
 fac: CVUF5(lac) "%0_FCVU();" if_cv_from(a,4,200)
 ac: CVFI2(fac)  "%0_FTOI();LDW(LAC);" 200
 lac: CVFI4(fac) "%0_FTOI();" 200
-fac: CVIF5(ac)  "%0STW(LAC);LD(vACH);XORI(128);SUBI(128);LD(vACH);ST(LAC+2);ST(LAC+3);_FCVI();" if_cv_from(a,2,180)
+fac: CVIF5(ac)  "%0_LCVI();_FCVI();" if_cv_from(a,2,180)
 fac: CVIF5(lac) "%0_FCVI();" if_cv_from(a,4,200)
 
 # Labels and jumps

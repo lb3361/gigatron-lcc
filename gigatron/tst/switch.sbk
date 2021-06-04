@@ -33,7 +33,7 @@ def code0():
 	CALLI('big');
 	label('.9');
 	label('.11');
-	LDW(R6);STW(LAC);LD(vACH);XORI(128);SUBI(128);LD(vACH);ST(LAC+2);ST(LAC+3);_LDI('.13');_LAND();_LDI('.14');_LCMPX();_BNE('.8');
+	LDW(R6);_LCVI();_LDI('.13');_LAND();_LDI('.14');_LCMPX();_BNE('.8');
 	CALLI('limit');
 	LDI(0);
 	label('.1');

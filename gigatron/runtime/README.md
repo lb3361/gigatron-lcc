@@ -1,0 +1,49 @@
+
+# Runtime for Gigatron LCC code
+
+These files provide all the routines that are needed to implement
+things that are not provided by VCPU or that are simply eating too
+much code space.
+
+
+ * `rt_copy.s`: save/restore callee-saved registers
+ * `rt_mul.s`, `rt_div.s` : multiplication and division for ints (16 bits)
+ * `rt_shl.s`, `rt_shr.s` : left and right shifts for ints (16 bits)
+ * `rt_ladd.s`, `rt_lmul.s`, `rt_ldiv.s`: arithmetic on longs (32 bits)
+ * `rt_lbitops.s`: bitwise operations on longs (32 bits)
+ * `rt_lcmp.s` : comparison on longs (32 bits)
+ * `rt_lshl.s`, `rt_lshr.s`: left and right shifts on longs (32 bits)
+ * `rt_fp.s` : floating point routines (40 bits)
+
+## API
+
+Symbols named `_@_xxxx` are public API. Comments are scarse.
+Their function is best understood by looking how they are called
+by VCPU pseudo-instuctions defined inside `glink.py`.
+
+As explained in the main [`README.md`](../../README.md) file, these functions
+operate entirely using the `[0x81-0x8f]` block of zero page memory and 
+they only use the normal VCPU stack.
+
+The only runtime function that is not defined here is `_@_raise` which
+is used to raise an exception when dividing by zero or computing a
+floating point value that overflows. This function, defined in the
+libc file [`raise.s`](../libc/raise.s), takes then signal code in vACL
+and the fpe exception code in vACH.  These codes are defined in the
+include file [`signal.h`](../../include/gigatron/signal.h).
+
+Symbols named `__@xxxx` are private to the runtime.
+
+
+
+## Status
+
+This is missing only the floating point division.
+
+The long division code (rt_ldiv.s) could be refactored. 
+It was modeled after the 16 bits division which avoids
+the vCPU comparison problems. But it inherits its
+complexity without its benefits.
+
+
+

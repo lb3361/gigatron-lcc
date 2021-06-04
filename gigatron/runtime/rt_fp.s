@@ -568,12 +568,32 @@ def scope():
         label('__@bmload')
         m_load(ptr=T3, exponent=None, mantissa=BM, ret=True, ext=True)
 
+    def code_faddalign():
+        '''Plugin replacement for __@amshra that rounds the last bit. This
+           mildly increases computation time but halves the residual error.'''
+        label('__@faddalign')
+        PUSH();_BEQ('.aligned')
+        SUBI(1);_BEQ('.align1')
+        _CALLI('__@am32shra')
+        label('.align1')
+        _LDI('SYS_LSRW1_48');STW('sysFn')
+        LDI(1);ADDW(AM);STW(AM);_BNE('.align2')
+        LDI(1);ADDW(AM+2);STW(AM+2);_BRA('.align3')
+        label('.align2')
+        SYS(48);ST(AM)
+        label('.align3')
+        LDW(AM+1);SYS(48);ST(AM+1)
+        LDW(AM+2);SYS(48);STW(AM+2)
+        label('.aligned')
+        tryhop(2);POP();RET()
+
     def code_fadd_t3():
         label('__@fadd_t3')
         PUSH();LDW(T3);PEEK();STW(T2);_BEQ('.faddx4')
         LD(AE);SUBW(T2);_BGT('.faddx1')
         XORI(255);INC(vAC);ANDI(255)   # FAC exponent <= arg exponent
-        _CALLI('__@am32shra')          # - align (rounded)
+        #_CALLI('__@am32shra')         # - align (not rounded)
+        _CALLI('__@faddalign')         # - align (rounded)
         LD(T2L);ST(AE)                 # - assume arg exponent
         _CALLJ('__@bmload')            # - load arg mantissa
         XORW(SIGN);ANDI(128)           # - zero if same sign, nonzero otherwise
@@ -585,7 +605,9 @@ def scope():
         _CALLJ('__@amload')            # - load arg mantissa into am
         XORW(SIGN);ANDI(128);ST(T2H)   # - are signs different?
         XORW(SIGN);ST(SIGN)            # - assume arg sign
-        LD(T2L);_CALLI('__@am32shra')  # - align (rounded)
+        LD(T2L)
+        #_CALLI('__@am32shra')         # - align (not rounded)
+        _CALLI('__@faddalign')         # - align (rounded)
         LD(T2H);                       # - zero if same sign, nonzero otherwise
         label('.faddx2')
         _BEQ('.faddx3')
@@ -606,6 +628,7 @@ def scope():
                   ('IMPORT', '__@fnorm3'),
                   ('CODE', '__@amload', code_amload),
                   ('CODE', '__@bmload', code_bmload),
+                  ('CODE', '__@faddalign', code_faddalign),
                   ('CODE', '__@fadd_t3', code_fadd_t3) ] )
 
     def code_fadd():

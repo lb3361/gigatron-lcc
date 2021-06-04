@@ -536,7 +536,7 @@ void print_trace(CpuState *S)
     fprintf(stderr, " T[0-3]=%04x %04x %04x %04x",
             deek(T0), deek(T0+2), deek(T0+4), deek(T0+6));
   if (strchr(trace, 'f')) 
-    fprintf(stderr, "\n\t S=%02x AE=%02x AM=%02x%08x FAC=%e",
+    fprintf(stderr, "\n\t S=%02x AE=%02x AM=%02x%08x FAC=%.8g",
             peek(0x81), peek(0x82), peek(0x87), leek(0x83),
             scalb((double)(((long long)peek(0x87)<<32)|(long long)leek(0x83)),
                   peek(0x82)-160) * ((peek(0x81)&0x80)?-1:1) );

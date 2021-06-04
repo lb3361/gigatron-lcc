@@ -103,8 +103,8 @@ int main()
 	x = 0;
 	for (i=0; i<100; i++) {
 		y = drand();
-		printf("a=%+.6e b=%+.6e ", x, y);
-		printf("a+b=%+.6e a-b=%+.6e\n", c(x+y), c(x-y));
+		printf("a=%.8g b=%.8g ", x, y);
+		printf("a+b=%.8g a-b=%.8g\n", c(x+y), c(x-y));
 		x = y;
 	}
 
@@ -113,9 +113,9 @@ int main()
 	for (i=0; i<100; i++) {
 		if (i % 12)
 			y = drand();
-		printf("%+.6e > %+.6e = %d\n", x, y, (x > y));
-		printf("%+.6e >= %+.6e = %d\n", x, y, (x >= y));
-		printf("%+.6e != %+.6e = %d\n", x, y, (x != y));
+		printf("%.8g > %.8g = %d\n", x, y, (x > y));
+		printf("%.8g >= %.8g = %d\n", x, y, (x >= y));
+		printf("%.8g != %.8g = %d\n", x, y, (x != y));
 		x = y;
 	}
 
@@ -126,8 +126,8 @@ int main()
 	x = 0;
 	for (i=0; i<100; i++) {
 		y = drand();
-		printf("%+.6e * %+.6e = ", x, y);
-		printf("%+.6e\n", c(x * y));
+		printf("%.8g * %.8g = ", x, y);
+		printf("%.8g\n", c(x * y));
 		x = y;
 	}
 	signal(SIGFPE, SIG_DFL);

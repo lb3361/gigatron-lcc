@@ -42,7 +42,7 @@ def scope():
     # '_@_xxxx' are the public api.
     # '__@xxxx' are private.
     
-    # ==== Macros
+    # ==== Load/store
 
     def m_load(ptr = T3, exponent = AE, mantissa = AM, ret = False, ext = True, checkzero = True):
         '''Load float pointed by `ptr` into `exponent` and `mantissa`.
@@ -128,6 +128,48 @@ def scope():
             INCW(ptr);LD(mantissa);POKE(ptr)
             if ret:
                 RET()
+
+    def code_fldfac():
+        '''[T3]->FAC'''
+        nohop()
+        label('_@_fldfac')
+        m_load(T3, exponent=AE, mantissa=AM, ret=False, ext=True)
+        ANDI(0x80);ST(SIGN)
+        RET()
+
+    module(name='rt_fldfac.s',
+           code=[ ('EXPORT', '_@_fldfac'),
+                  ('CODE', '_@_fldfac', code_fldfac) ] )
+
+    def code_fstfac():
+        '''FAC->[T2]'''
+        nohop()
+        label('_@_fstfac')
+        LD(SIGN);ANDI(0x80)
+        m_store(T2, exponent=AE, mantissa=AM, ret=True)
+
+    module(name='rt_fstfac.s',
+           code=[ ('EXPORT', '_@_fstfac'),
+                  ('CODE', '_@_fstfac', code_fstfac) ] )
+
+    def code_am40load():
+        nohop()
+        label('__@am40load')
+        m_load(ptr=T3, exponent=None, mantissa=AM, ret=True, ext=True)
+
+    module(name='rt_am40load.s',
+           code=[ ('EXPORT', '__@am40load'),
+                  ('CODE', '__@am40load', code_am40load) ] )
+
+    def code_bm40load():
+        nohop()
+        label('__@bm40load')
+        m_load(ptr=T3, exponent=None, mantissa=BM, ret=True, ext=True)
+
+    module(name='rt_bm40load.s',
+           code=[ ('EXPORT', '__@bm40load'),
+                  ('CODE', '__@bm40load', code_bm40load) ] )
+
                 
     # ==== common things
 
@@ -136,9 +178,10 @@ def scope():
         label('__@fexception')   ### SIGFPE/exception
         LDWI(0x304);_BRA('.raise')
         label('__@foverflow')    ### SIGFPE/overflow
-        _LDI(0xffff);STW(AM);STW(AM+2);ST(AE);LDWI(0x204);
+        LDWI(0x204);
         label('.raise')
-        _CALLI('_@_raise')
+        STLW(-2);_LDI(0xffff);STW(AM);STW(AM+2);ST(AE)
+        LDLW(-2);_CALLI('_@_raise')
         label('.vspfpe',pc()+1)        
         LDI(0)  # this instruction is patched by fsavevsp.
         ST(vSP);POP();RET()
@@ -189,31 +232,6 @@ def scope():
 
 
     # ==== load FAC 
-
-    def code_fldfac():
-        '''[T3]->FAC'''
-        nohop()
-        label('_@_fldfac')
-        m_load(T3, exponent=AE, mantissa=AM, ret=False, ext=True)
-        ANDI(0x80);ST(SIGN)
-        RET()
-
-    module(name='rt_fldfac.s',
-           code=[ ('EXPORT', '_@_fldfac'),
-                  ('CODE', '_@_fldfac', code_fldfac) ] )
-
-    # ==== store FAC 
-
-    def code_fstfac():
-        '''FAC->[T2]'''
-        nohop()
-        label('_@_fstfac')
-        LD(SIGN);ANDI(0x80)
-        m_store(T2, exponent=AE, mantissa=AM, ret=True)
-
-    module(name='rt_fstfac.s',
-           code=[ ('EXPORT', '_@_fstfac'),
-                  ('CODE', '_@_fstfac', code_fstfac) ] )
 
     # ==== shift left
 
@@ -558,16 +576,6 @@ def scope():
            code=[ ('EXPORT', '__@am40addbm40'),
                   ('CODE', '__@am40addbm40', code_am40addbm40) ])
 
-    def code_amload():
-        nohop()
-        label('__@amload')
-        m_load(ptr=T3, exponent=None, mantissa=AM, ret=True, ext=True)
-
-    def code_bmload():
-        nohop()
-        label('__@bmload')
-        m_load(ptr=T3, exponent=None, mantissa=BM, ret=True, ext=True)
-
     def code_faddalign():
         '''Plugin replacement for __@amshra that rounds the last bit. This
            mildly increases computation time but halves the residual error.'''
@@ -595,14 +603,14 @@ def scope():
         #_CALLI('__@am32shra')         # - align (not rounded)
         _CALLI('__@faddalign')         # - align (rounded)
         LD(T2L);ST(AE)                 # - assume arg exponent
-        _CALLJ('__@bmload')            # - load arg mantissa
+        _CALLJ('__@bm40load')            # - load arg mantissa
         XORW(SIGN);ANDI(128)           # - zero if same sign, nonzero otherwise
         _BRA('.faddx2')
         label('.faddx1')               # FAC exponent > arg exponent
         ST(T2L)
         LDW(AM);STW(BM);               # - move fac mantissa into t0t1
         LDW(AM+2);STW(T1);
-        _CALLJ('__@amload')            # - load arg mantissa into am
+        _CALLJ('__@am40load')            # - load arg mantissa into am
         XORW(SIGN);ANDI(128);ST(T2H)   # - are signs different?
         XORW(SIGN);ST(SIGN)            # - assume arg sign
         LD(T2L)
@@ -626,8 +634,8 @@ def scope():
                   ('IMPORT', '__@lneg_t0t1'),
                   ('IMPORT', '__@am40addbm40'),
                   ('IMPORT', '__@fnorm3'),
-                  ('CODE', '__@amload', code_amload),
-                  ('CODE', '__@bmload', code_bmload),
+                  ('IMPORT', '__@am40load'),
+                  ('IMPORT', '__@bm40load'),
                   ('CODE', '__@faddalign', code_faddalign),
                   ('CODE', '__@fadd_t3', code_fadd_t3) ] )
 
@@ -734,11 +742,48 @@ def scope():
 
     #    extern('_@_fdiv')
 
+    def code_fdivworker():
+        '''work in progress'''
+        pass
+
+    def code_fdiv():
+        label('_@_fdiv')
+        PUSH();STW(T3)
+        _CALLJ('__@fsavevsp')
+        LDW(T3);PEEK();_BNE('.fdiv1')
+        _CALLJ('__@fexception')          # divisor is zero
+        label('.fdiv1')
+        SUBI(128);STW(T2);
+        LD(AE);SUBW(T2);ST(AE);_BGT('.fdiv2')
+        _CALLJ('__@clrfac')              # result is zero
+        tryhop(2);POP();RET()
+        label('.fdiv2')
+        LD(vACH);_BEQ('fdiv3')
+        _CALLJ('__@foverflow')           # result is too large
+        label('.fdiv3')
+        LDI(1);ADDW(T3);PEEK();ANDI(128)
+        XORW(SIGN);ST(SIGN)              # set the sign
+        _CALLJ('__@bm40load')            # load divisor
+        LDI(0);STW(T2);STW(T3)           # init quotient
+        _CALLJ('__@fdivworker')
+        _CALLJ('__@fnorm1')
+        tryhop(2);POP();RET()
+
+    module(name='rt_fdiv.s',
+           code=[ ('EXPORT', '_@_fdiv'),
+                  ('CODE', '_@_fdiv', code_fdiv),
+                  ('IMPORT', '__@fsavevsp'),
+                  ('IMPORT', '__@fexception'),
+                  ('IMPORT', '__@fclrfac'),
+                  ('IMPORT', '__@foverflow'),
+                  ('IMPORT', '__@bm40load'),
+                  ('IMPORT', '__@fdivworker'),
+                  ('IMPORT', '__@fnorm1') ] )
+
     # ==== comparisons
 
-    #    extern('_@_fcmp')
-
     def code_bm32only():
+        '''just load the mantissa with any additional checks'''
         label('__@bm32only')
         PUSH()
         m_load(ptr=T3, exponent=None, mantissa=BM, checkzero=False, ext=False)

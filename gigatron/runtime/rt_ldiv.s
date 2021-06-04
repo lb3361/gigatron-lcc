@@ -1,19 +1,6 @@
 
 def scope():
 
-    # LSHL_T2T3 : T2T3 <<= 1
-    def code0():
-        nohop()
-        label('__@lshl1_t2t3')
-        LDW(T2);BLT('.lsl1')
-        LSLW();STW(T2);LDW(T3);LSLW();STW(T3);RET()
-        label('.lsl1')
-        LSLW();STW(T2);LDW(T3);LSLW();ORI(1);STW(T3);RET()
-
-    module(name='rt_lshl1t2t3.s',
-           code=[ ('EXPORT', '__@lshl1_t2t3'),
-                  ('CODE', '__@lshl1_t2t3', code0) ])
-
     # worker
     #  LAC:    a  dividend  [0x0-0x8000000]
     #  T0T1:   d  divisor   [0x1-0x8000000]
@@ -50,8 +37,8 @@ def scope():
            code=[ ('EXPORT', '__@ldivworker'),
                   ('IMPORT', '__@lsub_t0t1'),
                   ('IMPORT', '__@lcmpu_t0t1'),
-                  ('IMPORT', '__@lshl1_t2t3'),
                   ('IMPORT', '_@_lshl1'),
+                  ('IMPORT', '__@lshl1_t2t3'),
                   ('IMPORT', '__@lshl1_t0t1'),
                   ('CODE', '__@ldivworker', code2) ])
 

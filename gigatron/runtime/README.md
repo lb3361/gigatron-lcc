@@ -6,7 +6,8 @@ things that are not provided by VCPU or that are simply eating too
 much code space.
 
 
- * `rt_copy.s`: save/restore callee-saved registers
+ * `rt_save.s`: save/restore callee-saved registers
+ * `rt_copy.s`: various functions to copy longs, floats, or structs.
  * `rt_mul.s`, `rt_div.s` : multiplication and division for ints (16 bits)
  * `rt_shl.s`, `rt_shr.s` : left and right shifts for ints (16 bits)
  * `rt_ladd.s`, `rt_lmul.s`, `rt_ldiv.s`: arithmetic on longs (32 bits)
@@ -45,5 +46,7 @@ It was modeled after the 16 bits division which avoids
 the vCPU comparison problems. But it inherits its
 complexity without its benefits.
 
-
+The structure copy code (rt_copy.s) could benefit from the same level
+of optimization than [`memcpy`](../libc/memcpy.s).  This is hard
+because these functions must have low overhead for small sizes.
 

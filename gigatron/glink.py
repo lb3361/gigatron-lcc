@@ -753,27 +753,30 @@ def _LD(d):
         _LDI(d); PEEK()
 @vasm
 def _SHLI(imm):
+    '''Shift vAC left by imm positions'''
     imm &= 0xf
     if (imm & 0x8):
         ST('vACH');ORI(255);XORI(255)
         imm &= 0x7
-    # not worth calling SYS_LSLW8_24 or SYS_LSLW4_46
+    # too much overhead calling SYS_LSLW4_46
     for i in range(0, imm):
         LSLW()
 @vasm
 def _SHRIS(imm):
+    '''Shift vAC right (signed) by imm positions'''
     imm &= 0xf
     if imm == 8:
         LD(vACH);XORI(128); SUBI(128)
     elif imm == 1:
         extern("_@_shrs1")
-        _CALLI("_@_shrs1")
+        _CALLI("_@_shrs1")           # T3<<1 -> vAC
     else:
         STW(T3); LDI(imm); STW(T2);
         extern('_@_shrs')
         _CALLJ('_@_shrs')            # T3<<T2 -> vAC
 @vasm
 def _SHRIU(imm):
+    '''Shift vAC right (unsigned) by imm positions'''
     imm &= 0xf
     if imm == 8:
         LD(vACH)
@@ -783,19 +786,22 @@ def _SHRIU(imm):
     else:
         STW(T3); LDI(imm); STW(T2);
         extern('_@_shru')
-        _CALLJ('_@_shru')            # T3<<T2 -> vAC
+        _CALLJ('_@_shru')       # T3<<T2 -> vAC
 @vasm
 def _SHL(d):
+    '''Shift vAC left by [d] positions'''
     STW(T3); LDW(d); STW(T2)
     extern('_@_shl') 
     _CALLJ('_@_shl')            # T3<<T2 -> vAC
 @vasm
 def _SHRS(d):
+    '''Shift vAC right, signed, by [d] positions'''
     STW(T3); LDW(d); STW(T2)
     extern('_@_shrs')
     _CALLJ('_@_shrs')           # T3>>T2 --> vAC
 @vasm
 def _SHRU(d):
+    '''Shift vAC right, unsigned, by [d] positions'''
     STW(T3); LDW(d); STW(T2)
     extern('_@_shru')
     _CALLJ('_@_shru')           # T3>>T2 --> vAC

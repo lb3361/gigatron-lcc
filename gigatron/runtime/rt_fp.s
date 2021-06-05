@@ -267,11 +267,6 @@ def scope():
         LDW(r);STW(r+2)
         LDI(0);STW(r)
 
-    def code_am32shl1():  # AM32 <<= 1
-        nohop()
-        label('__@am32shl1')
-        macro_shl1(AM, ext=False, ret=True)
-
     def code_am32shl4():  # AM32 <<= 4
         nohop()
         label('__@am32shl4')
@@ -291,11 +286,9 @@ def scope():
         RET()
 
     module(name='rt_fshl.s',
-           code=[ ('EXPORT', '__@am32shl1'),
-                  ('EXPORT', '__@am32shl4'),
+           code=[ ('EXPORT', '__@am32shl4'),
                   ('EXPORT', '__@am32shl8'),
                   ('EXPORT', '__@am32shl16'),
-                  ('CODE', '__@am32shl1', code_am32shl1),
                   ('CODE', '__@am32shl4', code_am32shl4),
                   ('CODE', '__@am32shl8', code_am32shl8),
                   ('CODE', '__@am32shl16', code_am32shl16) ] )
@@ -762,8 +755,8 @@ def scope():
         nohop()
         label('__@am40cmpbm32')
         LD(BM+3);SUBW(AM+3);BLT('.gt');BGT('.lt')
-        LDW(BM+1);SUBW(AM+1);BLT('.gt');BGT('.lt')
-        LDW(BM);SUBW(AM);BLT('.gt');BGT('.lt')
+        LDW(BM+1);_CMPWU(AM+1);BLT('.gt');BGT('.lt')
+        LDW(BM);_CMPWU(AM);BLT('.gt');BGT('.lt')
         LDI(0);RET()
         label('.gt');LDI(1);RET()
         label('.lt');_LDI(-1);RET()
@@ -804,7 +797,10 @@ def scope():
         _CALLJ('__@fexception')          # divisor is zero
         label('.fdiv1')
         SUBI(129);STW(T2);
-        LD(AE);SUBW(T2);ST(AE);_BGT('.fdiv2')
+        LDI(1);ADDW(T3);PEEK();ANDI(128)
+        XORW(AS);ST(AS)                  # set the sign
+        LD(AE);_BEQ('.fdivzero')
+        SUBW(T2);ST(AE);_BGT('.fdiv2')   # set the exponent
         label('.fdivzero')
         _CALLJ('__@clrfac')              # result is zero
         tryhop(2);POP();RET()
@@ -812,13 +808,11 @@ def scope():
         LD(vACH);_BEQ('.fdiv3')
         _CALLJ('__@foverflow')           # result is too large
         label('.fdiv3')
-        LDI(1);ADDW(T3);PEEK();ANDI(128)
-        XORW(AS);ST(AS)              # set the sign
         _CALLJ('__@bm40load')            # load divisor
-        LDI(0);STW(T2);STW(T3)           # init quotient
+        LDI(0);STW(CM);STW(CM+2)         # init quotient
         _CALLJ('__@am40cmpbm32')         # compare dividend and divisor
-        _BGE('.fdivcont')                # dividend>=divisor. enter loop
-        LD(AE);SUBI(1);ST(AE)            # fix exponent to prepare for shift
+        _BGE('.fdivcont')                # if dividend>=divisor go to loop
+        LD(AE);SUBI(1);ST(AE)            # fix exponent to prepare for extra shift
         _BEQ('.fdivzero')                # possible underflow
         _CALLJ('__@am40shl1')            # now dividend>=divisor
         label('.fdivcont')               # entry point

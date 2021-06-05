@@ -77,6 +77,10 @@ int main()
 	dword l; unsigned dword ul;
 	double x, y;
 
+#ifdef __gigatron__
+	signal(SIGFPE, (sig_handler_t)sigfpe);
+#endif
+
 	printf("----------- fcvu/ftou\n");
 	for (i=1, ud = 1; i!=12; i++, ud *= 17) {
 		x = (double)ud;
@@ -120,9 +124,6 @@ int main()
 	}
 
 	printf("------------ fmul\n");
-#ifdef __gigatron__
-	signal(SIGFPE, (sig_handler_t)sigfpe);
-#endif
 	x = 0;
 	for (i=0; i<100; i++) {
 		y = drand();
@@ -131,6 +132,16 @@ int main()
 		x = y;
 	}
 	signal(SIGFPE, SIG_DFL);
-	
+
+
+	printf("------------ fdiv\n");
+	x = 0;
+	for (i=0; i<100; i++) {
+		y = drand();
+		printf("%.8g / %.8g = ", x, y);
+		printf("%.8g\n", c(x / y));
+		x = y;
+	}
+
 	return 0;
 }

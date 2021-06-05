@@ -21,9 +21,6 @@
 # locations 'sysFn' and 'sysArgs[0-7]' should be assumed preserved.
 
 def scope():
-    # generate a new scope to hide clobbered register names and
-    # temporarily define new register names.
-    code = []
 
     T2L = T2
     T2H = T2+1
@@ -32,11 +29,10 @@ def scope():
 
     AE = 0x82     # FAC exponent
     AM = 0x83     # FAC mantissa with an additional high byte
-    BE = T0+5     # same as T2H!    
-    BM = T0       # T0/T1/T2L
-
-    SIGN = 0x81   # sign byte
-                  #  bit7 = sign(FAC)
+    AS = 0x81     # FAC sign (bit7).
+    
+    BM = T0       # T0/T1/T2L. Fifth byte overlaps T2L and CM!
+    CM = T2       # T2/T3/---. No fifth byte
    
     # naming convention for exported symbols
     # '_@_xxxx' are the public api.
@@ -134,7 +130,7 @@ def scope():
         nohop()
         label('_@_fldfac')
         m_load(T3, exponent=AE, mantissa=AM, ret=False, ext=True)
-        ANDI(0x80);ST(SIGN)
+        ANDI(0x80);ST(AS)
         RET()
 
     module(name='rt_fldfac.s',
@@ -145,7 +141,7 @@ def scope():
         '''FAC->[T2]'''
         nohop()
         label('_@_fstfac')
-        LD(SIGN);ANDI(0x80)
+        LD(AS);ANDI(0x80)
         m_store(T2, exponent=AE, mantissa=AM, ret=True)
 
     module(name='rt_fstfac.s',
@@ -207,7 +203,7 @@ def scope():
     def code_clrfac():
         nohop()
         label('__@clrfac')
-        LDI(0);ST(AE);STW(AM);STW(AM+2);ST(AM+4);ST(SIGN)
+        LDI(0);ST(AE);STW(AM);STW(AM+2);ST(AM+4);ST(AS)
         RET()
 
     module(name='rt_clrfac.s',
@@ -271,24 +267,24 @@ def scope():
         LDW(r);STW(r+2)
         LDI(0);STW(r)
 
-    def code_am32shl1():  # AM32 >>= 1
+    def code_am32shl1():  # AM32 <<= 1
         nohop()
         label('__@am32shl1')
         macro_shl1(AM, ext=False, ret=True)
 
-    def code_am32shl4():  # AM32 >>= 4
+    def code_am32shl4():  # AM32 <<= 4
         nohop()
         label('__@am32shl4')
         macro_shl4(AM, ext=False)
         RET()
 
-    def code_am32shl8():
+    def code_am32shl8():  # AM32 <<=8
         nohop()
         label('__@am32shl8')
         macro_shl8(AM, ext=False)
         RET()
 
-    def code_am32shl16():
+    def code_am32shl16(): # AM32 <<= 16
         nohop()
         label('__@am32shl16')
         macro_shl16(AM, ext=False)
@@ -304,14 +300,38 @@ def scope():
                   ('CODE', '__@am32shl8', code_am32shl8),
                   ('CODE', '__@am32shl16', code_am32shl16) ] )
 
+    def code_am40shl1():
+        nohop()
+        label('__@am40shl1')
+        LDW(AM+3);LSLW();LD(vACH);ST(AM+4)
+        label('__@am32shl1')
+        macro_shl1(AM, ext=False, ret=True)
+
+    module(name='rt_am40shl1.s',
+           code=[ ('EXPORT', '__@am40shl1'),
+                  ('EXPORT', '__@am32shl1'),
+                  ('CODE', '__@am40shl1', code_am40shl1) ] )
+
     def code_bm40shl1():
         nohop()
         label('__@bm40shl1')
-        macro_shl1(BM, ext=True, ret=True)
+        LDW(BM+3);LSLW();LD(vACH);ST(BM+4)
+        label('__@bm32shl1')
+        macro_shl1(BM, ext=False, ret=True)
 
     module(name='rt_bm40shl1.s',
            code=[ ('EXPORT', '__@bm40shl1'),
+                  ('EXPORT', '__@bm32shl1'),
                   ('CODE', '__@bm40shl1', code_bm40shl1) ] )
+
+    def code_cm32shl1():
+        nohop()
+        label('__@cm32shl1')
+        macro_shl1(CM, ext=False, ret=True)
+
+    module(name='rt_cm32shl1.s',
+           code=[ ('EXPORT', '__@cm32shl1'),
+                  ('CODE', '__@cm40shl1', code_cm32shl1) ] )
     
     # ==== shift right
 
@@ -401,7 +421,7 @@ def scope():
     module(name='rt_fam32shra.s',
            code=[ ('EXPORT', '__@am32shra'),
                   ('IMPORT', '__@shrsysfn'),
-                  ('CODE', '__@am32shr8', code_am32shr16),                  
+                  ('CODE', '__@am32shr16', code_am32shr16),                  
                   ('CODE', '__@am32shr8', code_am32shr8),
                   ('CODE', '__@am32shra', code_am32shra) ]  )
 
@@ -432,7 +452,7 @@ def scope():
         PUSH()
         LD(AM+4);_BEQ('.norm1')
         ST(vACH);_BGT('.norm2')
-        LD(SIGN);XORI(128);ST(SIGN)
+        LD(AS);XORI(128);ST(AS)
         _CALLJ('__@am40neg');_BRA('.norm2')
         # entry point for fnorm2
         label('__@fnorm2')
@@ -493,7 +513,7 @@ def scope():
         # _CALLJ('__@fsavevsp')  # should not throw
         _CALLJ('__@am40shr8')
         LDI(160);ST(AE)
-        LDI(0);ST(SIGN);ST(AM+4)
+        LDI(0);ST(AS);ST(AM+4)
         _CALLJ('__@fnorm1')
         tryhop(2);POP();RET()
 
@@ -510,7 +530,7 @@ def scope():
         _CALLJ('__@am40shr8')
         LD(AM+3);XORI(128);SUBI(128);STW(AM+3)
         LDI(160);ST(AE)
-        LDI(0);ST(SIGN)
+        LDI(0);ST(AS)
         _CALLJ('__@fnorm3')
         tryhop(2);POP();RET()
 
@@ -530,14 +550,14 @@ def scope():
         tryhop(2);POP();RET()
         label('_@_ftou')
         PUSH()
-        LD(SIGN);ANDI(128);BNE('.ovf')
+        LD(AS);ANDI(128);BNE('.ovf')
         LD(AE);SUBI(160);_BGT('.ovf')
         label('.ok')
         XORI(255);ANDI(255);INC(vAC)
         _CALLI('__@am32shra')
         LDW(AM+2);STW(LAC+2);
         LDW(AM);STW(LAC);
-        LD(SIGN);ANDI(128);BEQ('.ret')
+        LD(AS);ANDI(128);BEQ('.ret')
         _LNEG()
         label('.ret')
         tryhop(2);POP();RET()
@@ -556,11 +576,11 @@ def scope():
         label('__@am40addbm40')
         if args.cpu <= 5:
             LD(AM);ADDW(BM);ST(AM);LD(vACH)
-            BNE('a1');LD(BM+1);BEQ('a1');LDWI(0x100);label('a1')
+            BNE('.a1');LD(BM+1);BEQ('.a1');LDWI(0x100);label('.a1')
             ADDW(AM+1);ST(AM+1);LD(vACH)
-            BNE('a2');LD(AM+2);BEQ('a2');LDWI(0x100);label('a2')
+            BNE('.a2');LD(AM+2);BEQ('.a2');LDWI(0x100);label('.a2')
             ADDW(BM+2);ST(AM+2);LD(vACH)
-            BNE('a3');LD(BM+3);BEQ('a3');LDWI(0x100);label('a3')
+            BNE('.a3');LD(BM+3);BEQ('.a3');LDWI(0x100);label('.a3')
             ADDW(AM+3);ST(AM+3);LD(vACH)
             ADDW(BM+4);ST(AM+4)
         else:
@@ -600,21 +620,19 @@ def scope():
         PUSH();LDW(T3);PEEK();STW(T2);_BEQ('.faddx4')
         LD(AE);SUBW(T2);_BGT('.faddx1')
         XORI(255);INC(vAC);ANDI(255)   # FAC exponent <= arg exponent
-        #_CALLI('__@am32shra')         # - align (not rounded)
         _CALLI('__@faddalign')         # - align (rounded)
         LD(T2L);ST(AE)                 # - assume arg exponent
         _CALLJ('__@bm40load')            # - load arg mantissa
-        XORW(SIGN);ANDI(128)           # - zero if same sign, nonzero otherwise
+        XORW(AS);ANDI(128)           # - zero if same sign, nonzero otherwise
         _BRA('.faddx2')
         label('.faddx1')               # FAC exponent > arg exponent
         ST(T2L)
         LDW(AM);STW(BM);               # - move fac mantissa into t0t1
         LDW(AM+2);STW(T1);
         _CALLJ('__@am40load')            # - load arg mantissa into am
-        XORW(SIGN);ANDI(128);ST(T2H)   # - are signs different?
-        XORW(SIGN);ST(SIGN)            # - assume arg sign
+        XORW(AS);ANDI(128);ST(T2H)   # - are signs different?
+        XORW(AS);ST(AS)            # - assume arg sign
         LD(T2L)
-        #_CALLI('__@am32shra')         # - align (not rounded)
         _CALLI('__@faddalign')         # - align (rounded)
         LD(T2H);                       # - zero if same sign, nonzero otherwise
         label('.faddx2')
@@ -723,7 +741,7 @@ def scope():
            _CALLJ('__@foverflow')
            label('.fmul2')
            LDI(1);ADDW(T3);PEEK();ANDI(128)
-           XORW(SIGN);ST(SIGN)
+           XORW(AS);ST(AS)
            _CALLJ('__@fmulmac')
            _CALLJ('__@fnorm1')
            tryhop(2);POP();RET()
@@ -740,11 +758,43 @@ def scope():
 
     # ==== division
 
-    #    extern('_@_fdiv')
+    def code_am40cmpbm32():
+        nohop()
+        label('__@am40cmpbm32')
+        LD(BM+3);SUBW(AM+3);BLT('.gt');BGT('.lt')
+        LDW(BM+1);SUBW(AM+1);BLT('.gt');BGT('.lt')
+        LDW(BM);SUBW(AM);BLT('.gt');BGT('.lt')
+        LDI(0);RET()
+        label('.gt');LDI(1);RET()
+        label('.lt');_LDI(-1);RET()
 
-    def code_fdivworker():
-        '''work in progress'''
-        pass
+    module(name='rt_am40cmpbm32.s',
+           code=[ ('EXPORT', '__@am40cmpbm32'),
+                  ('CODE', '__@am40cmpbm32', code_am40cmpbm32) ] )
+
+    def code_am40subbm32():
+        nohop()
+        label('__@am40subbm32')
+        if args.cpu <= 5:
+            # alternating pattern
+            LD(AM);SUBW(BM);ST(AM);LD(vACH)
+            BNE('.a1');LD(BM+1);XORI(255);BEQ('.a1');LDWI(0x100);label('.a1')
+            ADDW(AM+1);ST(AM+1);LD(vACH)
+            BNE('.a2');LD(AM+2);BEQ('.a2');LDWI(0x100);label('.a2')
+            SUBI(1);SUBW(BM+2);ST(AM+2);LD(vACH)
+            BNE('.a3');LD(BM+3);XORI(255);BEQ('.a3');LDWI(0x100);label('.a3')
+            ADDW(AM+3);ST(AM+3);LD(vACH);SUBI(1);ST(AM+4)
+        else:
+            # untested but sensible
+            LD(AM);SUBBA(BM);ST(AM);LD(vACH)
+            ADDBA(AM+1);SUBBA(BM+1);ST(LAC+1);LD(vACH)
+            ADDBA(AM+2);SUBBA(BM+2);ST(LAC+2);LD(vACH)
+            ADDW(AM+3);SUBBA(BM+3);ST(LAC+3)
+        RET()
+        
+    module(name='rt_am40subbm32.s',
+           code=[ ('EXPORT', '__@am40subbm32'),
+                  ('CODE', '__@am40subbm32', code_am40subbm32) ] )
 
     def code_fdiv():
         label('_@_fdiv')
@@ -753,32 +803,55 @@ def scope():
         LDW(T3);PEEK();_BNE('.fdiv1')
         _CALLJ('__@fexception')          # divisor is zero
         label('.fdiv1')
-        SUBI(128);STW(T2);
+        SUBI(129);STW(T2);
         LD(AE);SUBW(T2);ST(AE);_BGT('.fdiv2')
+        label('.fdivzero')
         _CALLJ('__@clrfac')              # result is zero
         tryhop(2);POP();RET()
         label('.fdiv2')
-        LD(vACH);_BEQ('fdiv3')
+        LD(vACH);_BEQ('.fdiv3')
         _CALLJ('__@foverflow')           # result is too large
         label('.fdiv3')
         LDI(1);ADDW(T3);PEEK();ANDI(128)
-        XORW(SIGN);ST(SIGN)              # set the sign
+        XORW(AS);ST(AS)              # set the sign
         _CALLJ('__@bm40load')            # load divisor
         LDI(0);STW(T2);STW(T3)           # init quotient
-        _CALLJ('__@fdivworker')
-        _CALLJ('__@fnorm1')
+        _CALLJ('__@am40cmpbm32')         # compare dividend and divisor
+        _BGE('.fdivcont')                # dividend>=divisor. enter loop
+        LD(AE);SUBI(1);ST(AE)            # fix exponent to prepare for shift
+        _BEQ('.fdivzero')                # possible underflow
+        _CALLJ('__@am40shl1')            # now dividend>=divisor
+        label('.fdivcont')               # entry point
+        _CALLJ('__@fdiv2')               # long jump to next piece
+
+    def code_fdiv2():
+        label('.fdivloop')
+        _CALLJ('__@cm32shl1')            # shift quotient
+        _CALLJ('__@am40shl1')            # shift dividend
+        _CALLJ('__@am40cmpbm32')
+        _BLE('.fdivloop1')
+        label('__@fdiv2')                # entry point from fdiv!
+        INC(T2)                          # set low bit of quotient
+        _CALLJ('__@am40subbm32')         # subtract divisor from dividend
+        label('.fdivloop1')
+        LDW(CM+2);_BGE('.fdivloop')
+        LDW(CM+2);STW(AM+2)              # quotient is now normalized!
+        LDW(CM);STW(AM);
         tryhop(2);POP();RET()
 
     module(name='rt_fdiv.s',
            code=[ ('EXPORT', '_@_fdiv'),
                   ('CODE', '_@_fdiv', code_fdiv),
+                  ('CODE', '_@_fdiv2', code_fdiv2),
                   ('IMPORT', '__@fsavevsp'),
                   ('IMPORT', '__@fexception'),
-                  ('IMPORT', '__@fclrfac'),
+                  ('IMPORT', '__@clrfac'),
                   ('IMPORT', '__@foverflow'),
+                  ('IMPORT', '__@cm32shl1'),
                   ('IMPORT', '__@bm40load'),
-                  ('IMPORT', '__@fdivworker'),
-                  ('IMPORT', '__@fnorm1') ] )
+                  ('IMPORT', '__@am40shl1'),
+                  ('IMPORT', '__@am40cmpbm32'),
+                  ('IMPORT', '__@am40subbm32') ] )
 
     # ==== comparisons
 
@@ -792,12 +865,12 @@ def scope():
     def code_fcmp():
         label('_@_fcmp')
         PUSH();STW(T3)
-        ADDI(1);PEEK();XORW(SIGN);ANDI(128);_BEQ('.fcmp1')
+        ADDI(1);PEEK();XORW(AS);ANDI(128);_BEQ('.fcmp1')
         label('.plus')
-        LD(SIGN);XORI(128);ANDI(128);PEEK();LSLW();SUBI(1)
+        LD(AS);XORI(128);ANDI(128);PEEK();LSLW();SUBI(1)
         tryhop(2);POP();RET()
         label('.minus')
-        LD(SIGN);ANDI(128);PEEK();LSLW();SUBI(1)
+        LD(AS);ANDI(128);PEEK();LSLW();SUBI(1)
         tryhop(2);POP();RET()
         label('.fcmp1')
         LDW(T3);PEEK();STW(T2)
@@ -819,7 +892,7 @@ def scope():
         nohop()
         label('_@_fsign')
         LD(AE);BEQ('.done')
-        LD(SIGN);ANDI(128);BEQ('.plus')
+        LD(AS);ANDI(128);BEQ('.plus')
         _LDI(-1);RET()
         label('.plus')
         LDI(1)
@@ -836,13 +909,13 @@ def scope():
         nohop()
         label('_@_fneg')
         LD(AE);BEQ('.ret')
-        LD(SIGN);XORI(0x80);ST(SIGN)
+        LD(AS);XORI(0x80);ST(AS)
         label('.ret')
         RET()
 
-    module(name = 'rt_fneg.s',
-           code = [ ('EXPORT', '_@_fneg'),
-                    ('CODE', '_@_fneg', code_fneg) ] )
+    module(name='rt_fneg.s',
+           code=[ ('EXPORT', '_@_fneg'),
+                  ('CODE', '_@_fneg', code_fneg) ] )
 
     def code_fscalb():
         nohop()
@@ -857,12 +930,12 @@ def scope():
         _CALLJ('__@fsavevsp')
         _CALLJ('__@foverflow');HALT()
 
-    module(name = 'rt_fscalb.s',
-           code = [ ('IMPORT', '__@clrfac'),
-                    ('IMPORT', '__@foverflow'),
-                    ('EXPORT', '_@_fscalb'),
-                    ('CODE', '_@_fscalb', code_fscalb) ] )
-
+    module(name='rt_fscalb.s',
+           code=[ ('IMPORT', '__@clrfac'),
+                  ('IMPORT', '__@foverflow'),
+                  ('EXPORT', '_@_fscalb'),
+                  ('CODE', '_@_fscalb', code_fscalb) ] )
+    
     def code_frndz():
         '''Make integer by rounding towards zero'''
         label('_@_frndz')
@@ -879,11 +952,11 @@ def scope():
         label('.done')
         tryhop(2);POP();RET()
 
-    module(name = 'rt_frndz.s',
-           code = [ ('IMPORT', '__@clrfac'),
-                    ('IMPORT', '__@am32shra'),
-                    ('EXPORT', '_@_frndz'),
-                    ('CODE', '_@_frndz', code_frndz) ] )
+    module(name='rt_frndz.s',
+           code=[ ('IMPORT', '__@clrfac'),
+                  ('IMPORT', '__@am32shra'),
+                  ('EXPORT', '_@_frndz'),
+                  ('CODE', '_@_frndz', code_frndz) ] )
 
 # create all the modules
 scope()

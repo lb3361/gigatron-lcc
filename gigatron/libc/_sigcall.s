@@ -28,7 +28,7 @@ def code1():
     # skip 2 stack bytes because a lot of code uses STLW(-2)/LDLW(2) to save AC
     ALLOC(-8);LDW(T1);STLW(0);LDW(T2);STLW(2);LDW(T3);STLW(4);PUSH()
     # clear virq vector (now that we can use T3)
-    LDWI('vIRQ_v5');STW(T3);LDI(0);DOKE(T3)  
+    LDWI('vIRQ_v5');STW(T3);LDI(0);DOKE(T3)
     # save sysFn/sysArgs[0-7]/B[0-2]/LAC/T0
     LDW(SP);SUBI(22);STW(SP);ADDI(2);STW(T2)
     LDI(B0-1);STW(T3);LDI(T1);STW(T1);_CALLJ('_@_wcopy')

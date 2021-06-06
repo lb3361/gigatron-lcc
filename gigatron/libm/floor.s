@@ -26,13 +26,8 @@ def scope():
         LDW(vLR);STW(R22)
         _FMOV(F8, FAC)
         _CALLJ('_@_frndz')
-        _FMOV(FAC, F19)
-        _FNEG();_LDI(F8);_FADD()
-        LD(EXP);BEQ('.done')
-        LD(SIGN);ANDI(0x80);BEQ('.done')
-        _FMOV(F19, FAC);_LDI('_@_fone');_FSUB();BRA('.ret')
-        label('.done')
-        _FMOV(F19, FAC);
+        LDI(F8);_FCMP();_BLE('.ret')
+        _LDI('_@_fone');_FSUB()
         label('.ret')
         LDW(R22);STW(vLR);RET()
     
@@ -48,13 +43,8 @@ def scope():
         LDW(vLR);STW(R22)
         _FMOV(F8, FAC)
         _CALLJ('_@_frndz')
-        _FMOV(FAC, F19)
-        _FNEG();_LDI(F8);_FADD()
-        LD(EXP);BEQ('.done')
-        LD(SIGN);ANDI(0x80);BNE('.done')
-        _FMOV(F19, FAC);_LDI('_@_fone');_FADD();BRA('.ret')
-        label('.done')
-        _FMOV(F19, FAC);
+        LDI(F8);_FCMP();_BGE('.ret')
+        _LDI('_@_fone');_FADD()
         label('.ret')
         LDW(R22);STW(vLR);RET()
     

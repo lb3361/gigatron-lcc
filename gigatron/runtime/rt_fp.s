@@ -847,10 +847,47 @@ def scope():
                   ('IMPORT', '__@am40cmpbm32'),
                   ('IMPORT', '__@am40subbm32') ] )
 
+
+    # ==== fmod
+
+    def code_fmod():
+        label('_@_fmod')
+        PUSH();STW(T3)
+        _CALLJ('__@fsavevsp')
+        LDW(T3);PEEK();_BNE('.fmod1')
+        _CALLJ('__@fexception')          # divisor is zero
+        label('.fmod1')
+        SUBI(128);STW(T2);
+        LD(AE);_BEQ('.ret')              # - 0/x: return zero
+        SUBW(T2);STW(T2);                # qexp should be in [128,160)
+        SUBI(128);_BGE('.ret')           # - <128: return dividend
+        LDI(160);SUBW(T2);_BGT('.fmod2')
+        _CALLJ('__@clrfac')              # - >=160: return zero
+        label('.ret')
+        tryhop(2);POP();RET()
+        label('.fmod2')
+
+
+        _BGT('.fdiv2')  # set the exponent
+        label('.fmodzero')
+        label('.fdiv2')
+        LD(vACH);_BEQ('.fdiv3')
+        _CALLJ('__@foverflow')           # result is too large
+        label('.fdiv3')
+        _CALLJ('__@bm40load')            # load divisor
+        LDI(0);STW(CM);STW(CM+2)         # init quotient
+        _CALLJ('__@am40cmpbm32')         # compare dividend and divisor
+        _BGE('.fdivcont')                # if dividend>=divisor go to loop
+        LD(AE);SUBI(1);ST(AE)            # fix exponent to prepare for extra shift
+        _BEQ('.fdivzero')                # possible underflow
+    
+    
+    
+
     # ==== comparisons
 
     def code_bm32only():
-        '''just load the mantissa with any additional checks'''
+        '''just load the mantissa with no additional checks'''
         label('__@bm32only')
         PUSH()
         m_load(ptr=T3, exponent=None, mantissa=BM, checkzero=False, ext=False)

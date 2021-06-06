@@ -885,6 +885,7 @@ def scope():
         _BLT('.fmodcont')
         INC(CM)                          # set low bit of quotient
         _CALLJ('__@am40subbm32')         # subtract divisor from dividend
+        label('.fmodcont')
         LDLW(0)
         _BEQ('.fmoddone')
         SUBI(1);STLW(0)
@@ -894,7 +895,7 @@ def scope():
         _BRA('.fmodloop')
         label('.fmoddone')
         ALLOC(2)
-        _CALLJ('fnorm1')
+        _CALLJ('__@fnorm1')
         tryhop(2);POP();RET()
         
     module(name='rt_fmod.s',
@@ -908,7 +909,8 @@ def scope():
                   ('IMPORT', '__@cm32shl1'),
                   ('IMPORT', '__@am40shl1'),
                   ('IMPORT', '__@am40cmpbm32'),
-                  ('IMPORT', '__@am40subbm32') ] )
+                  ('IMPORT', '__@am40subbm32'),
+                  ('IMPORT', '__@fnorm1') ] )
     
 
     # ==== comparisons

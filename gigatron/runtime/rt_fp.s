@@ -166,6 +166,18 @@ def scope():
            code=[ ('EXPORT', '__@bm40load'),
                   ('CODE', '__@bm40load', code_bm40load) ] )
 
+
+    def code_bm32loadx():
+        '''just load the mantissa with no additional checks'''
+        label('__@bm32loadx')
+        PUSH()
+        m_load(ptr=T3, exponent=None, mantissa=BM, checkzero=False, ext=False)
+        tryhop(2);POP();RET()
+        
+    module(name='rt_bm32loadx.s',
+           code=[ ('EXPORT', '__@bm32loadx'),
+                  ('CODE', '__@bm32loadx', code_bm32loadx) ] )
+
                 
     # ==== common things
 
@@ -825,7 +837,7 @@ def scope():
         _CALLJ('__@am40cmpbm32')
         _BLE('.fdivloop1')
         label('__@fdiv2')                # entry point from fdiv!
-        INC(T2)                          # set low bit of quotient
+        INC(CM)                          # set low bit of quotient
         _CALLJ('__@am40subbm32')         # subtract divisor from dividend
         label('.fdivloop1')
         LDW(CM+2);_BGE('.fdivloop')
@@ -854,45 +866,53 @@ def scope():
         label('_@_fmod')
         PUSH();STW(T3)
         _CALLJ('__@fsavevsp')
-        LDW(T3);PEEK();_BNE('.fmod1')
+        LDW(T3);PEEK();STW(T2);_BNE('.fmod1')
         _CALLJ('__@fexception')          # divisor is zero
         label('.fmod1')
-        SUBI(128);STW(T2);
-        LD(AE);_BEQ('.ret')              # - 0/x: return zero
-        SUBW(T2);STW(T2);                # qexp should be in [128,160)
-        SUBI(128);_BGE('.ret')           # - <128: return dividend
-        LDI(160);SUBW(T2);_BGT('.fmod2')
-        _CALLJ('__@clrfac')              # - >=160: return zero
+        LD(AE);_BEQ('.ret')              # if 0/x return zero
+        SUBW(T2);STW(T2);                # qexp should be in [0,32)
+        _BLT('.ret')                     # if qexp < 0 return dividend
+        SUBI(32);_BLT('.fmod2')
+        _CALLJ('__@clrfac')              # if qexp >=32 return zero
         label('.ret')
         tryhop(2);POP();RET()
         label('.fmod2')
-
-
-        _BGT('.fdiv2')  # set the exponent
-        label('.fmodzero')
-        label('.fdiv2')
-        LD(vACH);_BEQ('.fdiv3')
-        _CALLJ('__@foverflow')           # result is too large
-        label('.fdiv3')
-        _CALLJ('__@bm40load')            # load divisor
-        LDI(0);STW(CM);STW(CM+2)         # init quotient
+        _CALLJ('__@bm32loadx')           # load mantissa
+        ALLOC(-2);LDW(T2);STLW(0)        # save round counter
+        LDI(0);STW(CM);STW(CM+2)         # prepare quotient, overwriting T2 T3
+        label('.fmodloop')
         _CALLJ('__@am40cmpbm32')         # compare dividend and divisor
-        _BGE('.fdivcont')                # if dividend>=divisor go to loop
-        LD(AE);SUBI(1);ST(AE)            # fix exponent to prepare for extra shift
-        _BEQ('.fdivzero')                # possible underflow
-    
-    
+        _BLT('.fmodcont')
+        INC(CM)                          # set low bit of quotient
+        _CALLJ('__@am40subbm32')         # subtract divisor from dividend
+        LDLW(0)
+        _BEQ('.fmoddone')
+        SUBI(1);STLW(0)
+        _CALLJ('__@cm32shl1')            # shift quotient
+        _CALLJ('__@am40shl1')            # shift dividend
+        LD(AE);SUBI(1);ST(AE)            # adjust divident exponent
+        _BRA('.fmodloop')
+        label('.fmoddone')
+        ALLOC(2)
+        _CALLJ('fnorm1')
+        tryhop(2);POP();RET()
+        
+    module(name='rt_fmod.s',
+           code=[ ('EXPORT', '_@_fmod'),
+                  ('CODE', '_@_fmod', code_fmod),
+                  ('IMPORT', '__@fsavevsp'),
+                  ('IMPORT', '__@fexception'),
+                  ('IMPORT', '__@clrfac'),
+                  ('IMPORT', '__@foverflow'),
+                  ('IMPORT', '__@bm32loadx'),
+                  ('IMPORT', '__@cm32shl1'),
+                  ('IMPORT', '__@am40shl1'),
+                  ('IMPORT', '__@am40cmpbm32'),
+                  ('IMPORT', '__@am40subbm32') ] )
     
 
     # ==== comparisons
 
-    def code_bm32only():
-        '''just load the mantissa with no additional checks'''
-        label('__@bm32only')
-        PUSH()
-        m_load(ptr=T3, exponent=None, mantissa=BM, checkzero=False, ext=False)
-        tryhop(2);POP();RET()
-        
     def code_fcmp():
         label('_@_fcmp')
         PUSH();STW(T3)
@@ -907,7 +927,7 @@ def scope():
         LDW(T3);PEEK();STW(T2)
         LD(AE);SUBW(T2);_BLT('.minus');_BGT('.plus')
         LD(AE);_BEQ('.zero')
-        _CALLJ('__@bm32only')
+        _CALLJ('__@bm32loadx')
         LDW(AM+2);_CMPWU(BM+2);_BLT('.minus');_BGT('.plus')
         LDW(AM);_CMPWU(BM);_BLT('.minus');_BGT('.plus')
         label('.zero')
@@ -915,7 +935,7 @@ def scope():
 
     module(name='rt_fcmp.s',
            code=[ ('EXPORT', '_@_fcmp'),
-                  ('CODE', '__@bm32only', code_bm32only),
+                  ('IMPORT', '__@bm32loadx'),
                   ('CODE', '_@_fcmp', code_fcmp) ] )
 
     def code_fsign():

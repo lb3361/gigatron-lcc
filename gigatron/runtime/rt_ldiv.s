@@ -201,6 +201,7 @@ def scope():
         tryhop(2);POP();RET()
         label('.lmods1')
         _CALLI('__@ldivs_t0t1')
+        LDW(T2);STW(T0);LDW(T3);STW(T1)
         LD(B1);_CALLI('_@_lshru')
         LD(B2);ANDI(2);_BEQ('.m1');_CALLJ('_@_lneg');label('.m1')
         tryhop(2);POP();RET()

@@ -131,8 +131,6 @@ int main()
 		printf("%.8g\n", c(x * y));
 		x = y;
 	}
-	signal(SIGFPE, SIG_DFL);
-
 
 	printf("------------ fdiv\n");
 	x = 0;

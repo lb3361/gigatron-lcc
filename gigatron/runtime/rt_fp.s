@@ -769,7 +769,7 @@ def scope():
         LD(BM+3);SUBW(AM+3);BLT('.gt');BGT('.lt')
         LDW(BM+1);_CMPWU(AM+1);BLT('.gt');BGT('.lt')
         LDW(BM);_CMPWU(AM);BLT('.gt');BGT('.lt')
-        LDI(0);RET()
+        RET()
         label('.gt');LDI(1);RET()
         label('.lt');_LDI(-1);RET()
 

@@ -1,7 +1,7 @@
 #ifndef __MATH
 #define __MATH
 
-#define HUGE_VAL 1.7e+38
+#define HUGE_VAL 1.701411834209e+38
 
 extern double acos(double);
 extern double asin(double);

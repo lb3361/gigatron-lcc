@@ -46,6 +46,10 @@ extern void *_memchr2(void *s, char c0, char c1, size_t n);
    slow without SYS_CopyMemoryExt. Returns zero when no expansion. */
 extern void *_memcpyext(char bank, void *dst, const void* src, size_t n);
 
+/* Same as _strtod() but raises SIGFPE on overflow.
+   Function strtod() call this after setting the SIGFPE handler. */
+extern double _strtod(const char *nptr, char **endptr);
+
 
 
 

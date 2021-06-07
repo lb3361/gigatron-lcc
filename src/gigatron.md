@@ -294,11 +294,11 @@ stmt: ASGNP2(VREGP,reg)  "# write register\n"
 stmt: ASGNI4(VREGP,reg)  "# write register\n"
 stmt: ASGNU4(VREGP,reg)  "# write register\n"
 stmt: ASGNF5(VREGP,reg)  "# write register\n"
-reg: LOADI1(reg)  "\tLD(%0);ST(%c);\n"    move(a)
-reg: LOADU1(reg)  "\tLD(%0);ST(%c);\n"    move(a)
-reg: LOADI2(reg)  "\tLDW(%0);STW(%c);\n"  move(a)
-reg: LOADU2(reg)  "\tLDW(%0);STW(%c);\n"  move(a)
-reg: LOADP2(reg)  "\tLDW(%0);STW(%c);\n"  move(a)
+reg: LOADI1(reg)  "\t%{src!=vAC:LD(%0);}%{dst!=vAC:ST(%c);}\n"    move(a)
+reg: LOADU1(reg)  "\t%{src!=vAC:LD(%0);}%{dst!=vAC:ST(%c);}\n"    move(a)
+reg: LOADI2(reg)  "\t%{src!=vAC:LDW(%0);}%{dst!=vAC:STW(%c);}\n"  move(a)
+reg: LOADU2(reg)  "\t%{src!=vAC:LDW(%0);}%{dst!=vAC:STW(%c);}\n"  move(a)
+reg: LOADP2(reg)  "\t%{src!=vAC:LDW(%0);}%{dst!=vAC:STW(%c);}\n"  move(a)
 reg: LOADI4(reg)  "\t_LMOV(%0,%c);\n"     move(a)
 reg: LOADU4(reg)  "\t_LMOV(%0,%c);\n"     move(a)
 reg: LOADF5(reg)  "\t_FMOV(%0,%c);\n"     move(a)
@@ -374,8 +374,8 @@ zddr: conB "%0"
 
 stmt: reg ""
 stmt: ac1 "\t%0\n"
-reg: ac   "\t%0STW(%c);\n" 20
-ac: reg   "LDW(%0);" 20
+reg: ac   "\t%0%{dst!=vAC:STW(%c);}\n" 20
+ac: reg   "%{src!=vAC:LDW(%0);}" 20
 ac: conB  "LDI(%0);" 16
 ac: con   "_LDI(%0);" 21
 ac: zddr  "LDI(%0);" 16
@@ -383,7 +383,7 @@ ac: addr  "_LDI(%0);" 21
 ac: eac   "%0" 
 ac1: ac   "%0"
 ac: ac1   "%0LD(vACL);" 16
-eac: reg  "LDW(%0);" 20
+eac: reg  "%{src!=vAC:LDW(%0);}" 20
 eac: zddr "LDI(%0);" 16
 eac: addr "_LDI(%0);" 21
 eac: lddr "_SP(%0);"  50
@@ -586,12 +586,12 @@ stmt: lac "\t%0\n"
 larg: reg "LDI(%0);"
 larg: INDIRI4(eac) "%0" 
 larg: INDIRU4(eac) "%0" 
-reg: lac "\t%0_LMOV(LAC,%c);\n" 80
+reg: lac "\t%0%{dst!=LAC:_LMOV(LAC,%c);}\n" 80
 reg: INDIRI4(ac) "\t%0_LMOV([vAC],%c);\n" 150
 reg: INDIRU4(ac) "\t%0_LMOV([vAC],%c);\n" 150
 reg: INDIRI4(addr) "\t_LMOV(%0,%c);\n" 150
 reg: INDIRU4(addr) "\t_LMOV(%0,%c);\n" 150
-lac: reg "_LMOV(%0,LAC);" 80
+lac: reg "%{src!=LAC:_LMOV(%0,LAC);}" 80
 lac: INDIRI4(ac) "%0_LMOV([vAC],LAC);" 150
 lac: INDIRU4(ac) "%0_LMOV([vAC],LAC);" 150
 lac: INDIRI4(addr) "_LMOV(%0,LAC);" 150
@@ -654,10 +654,10 @@ stmt: ASGNU4(pdst,INDIRU4(psrc)) "\t%[0b]%[1b]_LMOV(%1,%0);\n" 160
 stmt: fac "\t%0\n"
 farg: reg "LDI(%0);"
 farg: INDIRF5(eac) "%0"
-reg: fac "\t%0_FMOV(FAC,%c);\n" 200
+reg: fac "\t%0%{dst!=FAC:_FMOV(FAC,%c);}\n" 200
 reg: INDIRF5(ac)   "\t%0_FMOV([vAC],%c);\n" 150
 reg: INDIRF5(addr) "\t_FMOV(%0,%c);\n" 150
-fac: reg            "_FMOV(%0,FAC);" 150
+fac: reg            "%{src!=FAC:_FMOV(%0,FAC);}" 150
 fac: INDIRF5(ac)    "%0_FMOV([vAC],FAC);" 150
 fac: INDIRF5(addr)  "_FMOV(%0,FAC);" 150
 fac: ADDF5(fac,farg) "%0%1_FADD();" 200
@@ -977,13 +977,17 @@ static void progbeg(int argc, char *argv[])
   /* Print header */
   print("#VCPUv%d\n\n",cpu);
   /* Prepare registers */
-  ireg[31] = mkreg("SP", 31, 1, IREG);
-  for (i=0; i<31; i++)
+  ireg[23] = mkreg("SP", 23, 1, IREG);
+  for (i=0; i<23; i++)
     ireg[i] = mkreg("R%d", i, 1, IREG);
-  for (i=0; i+1<31; i++)
+  for (i=0; i+1<23; i++)
     lreg[i] = mkreg("L%d", i, 3, IREG);
-  for (i=0; i+2<31; i++)
+  for (i=0; i+2<23; i++)
     freg[i] = mkreg("F%d", i, 7, IREG);
+  /* vAC/LAC/FAC */
+  ireg[31] = mkreg("vAC", 24, 1, IREG);
+  lreg[31] = mkreg("LAC", 26, 3, IREG);
+  freg[31] = mkreg("FAC", 25, 7, IREG);
   /* Prepare wildcards */
   iregw = mkwildcard(ireg);
   lregw = mkwildcard(lreg);
@@ -1136,10 +1140,27 @@ static void myemitfmt(const char *fmt, Node p, Node *kids, short *nts)
 
 static void emit3(const char *fmt, Node p, Node *kids, short *nts)
 {
-  /* %{mulC[:R]} -- multiplication by a small constant */
-  if (!strncmp(fmt,"mul", 3) && fmt[3] >= '0' && fmt[3] <= '9')
+  int i = 0;
+  while (fmt[i] && fmt[i++] != ':')
+    { }
+  /* %{dst!=XXX:YYY} */
+  if (!strncmp(fmt,"dst!=",5) && fmt[i])
     {
-      int i, c;
+      if (p->syms[RX]->x.name != stringn(fmt+5,i-6))
+        myemitfmt(fmt+i, p, kids, nts);
+      return;
+    }
+  /* %{src!=XXX:YYY} */
+  else if (!strncmp(fmt,"src!=", 5) && fmt[i])
+    {
+      if (!kids[0] || !kids[0]->syms[RX] || kids[0]->syms[RX]->x.name != stringn(fmt+5,i-6))
+        myemitfmt(fmt+i, p, kids, nts);
+      return;
+    }
+  /* %{mulC[:R]} -- multiplication by a small constant */
+  else if (!strncmp(fmt,"mul", 3) && fmt[3] >= '0' && fmt[3] <= '9')
+    {
+      int c;
       Node k;
       const char *r = "T3";
       i = fmt[3] - '0';

@@ -1050,8 +1050,8 @@ def code17():
 	label('.209');
 	_FMOV('AInvrse',F8);
 	_SP(2);_FMOV(F8,[vAC]);
-	CALLI('floor');_FMOV(FAC,F20);
-	_FMOV(F20,FAC);_LDI('AInvrse');_FCMP();_BEQ('.208');
+	CALLI('floor');
+	_LDI('AInvrse');_FCMP();_BEQ('.208');
 	_FMOV('X',FAC);_LDI('One');_FCMP();_BEQ('.213');
 	_FMOV('A1',FAC);_LDI('Three');_FCMP();_BLE('.211');
 	label('.213');
@@ -1424,8 +1424,8 @@ def code17():
 	_LDI('RAddSub');DEEK();XORI(1);_BNE('.275');
 	_FMOV('RadixD2',F8);
 	_SP(2);_FMOV(F8,[vAC]);
-	CALLI('floor');_FMOV(FAC,F20);
-	_FMOV(F20,FAC);_LDI('RadixD2');_FCMP();_BNE('.275');
+	CALLI('floor');
+	_LDI('RadixD2');_FCMP();_BNE('.275');
 	_LDI('.277');STW(R8);
 	CALLI('printf');
 	_FMOV('Half',F20);
@@ -2492,8 +2492,8 @@ def code17():
 	_FMOV('E1',F17);
 	_FMOV(F17,FAC);_LDI('E0');_FCMP();_BNE('.539');
 	_FMOV(F17,FAC);_LDI('E9');_FDIV();_FNEG();LDI(F20);_FADD();_SP(2);_FMOV(FAC,[vAC]);
-	CALLI('fabs');_FMOV(FAC,F20);
-	_FMOV(F20,FAC);_LDI('E1');_FCMP();_BGT('.539');
+	CALLI('fabs');
+	_LDI('E1');_FCMP();_BGT('.539');
 	_LDI('UfNGrad');STW(R22);
 	LDI(0);DOKE(R22);
 	_LDI('.541');STW(R8);
@@ -2526,8 +2526,8 @@ def code17():
 	_LDI('sigsave');STW(R22);
 	_LDI('sigfpe');DOKE(R22);
 	_LDI('ovfl_buf');STW(R8);
-	CALLI('setjmp');STW(R22);
-	LDW(R22);_BEQ('.549');
+	CALLI('setjmp');
+	_BEQ('.549');
 	_LDI('.551');STW(R8);
 	CALLI('printf');
 	_FMOV('H',F20);
@@ -2592,8 +2592,8 @@ def code17():
 	_LDI('sigsave');STW(R22);
 	_LDI('sigfpe');DOKE(R22);
 	_LDI('ovfl_buf');STW(R8);
-	CALLI('setjmp');STW(R22);
-	LDW(R22);_BEQ('.564');
+	CALLI('setjmp');
+	_BEQ('.564');
 	_LDI('.566');STW(R8);
 	CALLI('printf');
 	_BRA('.565');
@@ -2911,8 +2911,8 @@ def code17():
 	_LDI('sigsave');STW(R22);
 	_LDI('sigfpe');DOKE(R22);
 	_LDI('ovfl_buf');STW(R8);
-	CALLI('setjmp');STW(R22);
-	LDW(R22);_BEQ('.623');
+	CALLI('setjmp');
+	_BEQ('.623');
 	_LDI('I');STW(R22);
 	LDI(0);DOKE(R22);
 	_FMOV('Y','V9');
@@ -3229,8 +3229,8 @@ def code17():
 	_LDI('sigsave');STW(R22);
 	_LDI('sigfpe');DOKE(R22);
 	_LDI('ovfl_buf');STW(R8);
-	CALLI('setjmp');STW(R22);
-	LDW(R22);_BEQ('.715');
+	CALLI('setjmp');
+	_BEQ('.715');
 	_LDI('.717');STW(R8);
 	_FMOV('X',F9);
 	_SP(4);_FMOV(F9,[vAC]);
@@ -3285,8 +3285,8 @@ def code17():
 	_LDI('.725');STW(R8);
 	CALLI('printf');
 	_LDI('ovfl_buf');STW(R8);
-	CALLI('setjmp');STW(R22);
-	LDW(R22);_BNE('.726');
+	CALLI('setjmp');
+	_BNE('.726');
 	_LDI('.728');STW(R8);
 	_FMOV('One',FAC);_LDI('MyZero');_FDIV();_SP(4);_FMOV(FAC,[vAC]);
 	CALLI('printf');
@@ -3297,8 +3297,8 @@ def code17():
 	_LDI('.729');STW(R8);
 	CALLI('printf');
 	_LDI('ovfl_buf');STW(R8);
-	CALLI('setjmp');STW(R22);
-	LDW(R22);_BNE('.730');
+	CALLI('setjmp');
+	_BNE('.730');
 	_LDI('.728');STW(R8);
 	_FMOV('Zero',FAC);_LDI('MyZero');_FDIV();_SP(4);_FMOV(FAC,[vAC]);
 	CALLI('printf');
@@ -3739,8 +3739,8 @@ def code32():
 	_LDI('sigsave');STW(R22);
 	_LDI('sigfpe');DOKE(R22);
 	_LDI('ovfl_buf');STW(R8);
-	CALLI('setjmp');STW(R22);
-	LDW(R22);_BEQ('.862');
+	CALLI('setjmp');
+	_BEQ('.862');
 	_BRA('.864');
 	label('.862');
 	_FMOV('Z',F20);
@@ -4018,8 +4018,8 @@ def code43():
 	_SP(2);_FMOV(F8,[vAC]);
 	CALLI('log');_FMOV(FAC,F20);
 	_FMOV(F2,FAC);LDI(F20);_FMUL();_SP(2);_FMOV(FAC,[vAC]);
-	CALLI('exp');_FMOV(FAC,F20);
-	_FMOV(F20,FAC);
+	CALLI('exp');
+	
 	_BRA('.976');
 	label('.979');
 	_FMOV(F2,FAC);_LDI('.7');_FCMP();_BGE('.984');
@@ -4031,8 +4031,8 @@ def code43():
 	_SP(2);_FMOV(F8,[vAC]);
 	_SP(-17+44);STW(R11);
 	_SP(8);_MOV(R11,[vAC]);
-	CALLI('modf');_FMOV(FAC,F20);
-	_FMOV(F20,F2);
+	CALLI('modf');
+	_FMOV(FAC,F2);
 	_FMOV(F2,FAC);_LDI('.7');_FCMP();_BEQ('.986');
 	_FMOV(F5,F8);
 	_SP(2);_FMOV(F8,[vAC]);
@@ -4048,8 +4048,8 @@ def code43():
 	_SP(2);_FMOV(F8,[vAC]);
 	_SP(-2+44);STW(R11);
 	_SP(8);_MOV(R11,[vAC]);
-	CALLI('frexp');_FMOV(FAC,F20);
-	_FMOV(F20,F5);
+	CALLI('frexp');
+	_FMOV(FAC,F5);
 	_SP(-17+44);_FMOV([vAC],FAC);_FTOI();_LMOV(LAC,L21);
 	_LMOV(L21,L0);
 	_LMOV(L21,LAC);_LDI('.990');_LCMPX();_BEQ('.988');
@@ -4084,8 +4084,8 @@ def code43():
 	_SP(2);_FMOV(F8,[vAC]);
 	_SP(-10+44);DEEK();STW(R11);
 	_SP(8);_MOV(R11,[vAC]);
-	CALLI('ldexp');_FMOV(FAC,F20);
-	_FMOV(F20,FAC);
+	CALLI('ldexp');
+	
 	label('.976');
 	_RESTORE(10, 0xff); # R0-7
 	_SP(44);STW(SP);DEEK();tryhop(3);STW(vLR);RET();

@@ -58,6 +58,7 @@ static void emit3(const char*, Node, Node*, short*);
 static void myemitfmt(const char*, Node, Node*, short*);
 static void export(Symbol);
 static void clobber(Node);
+static void preralloc(Node);
 static void function(Symbol, Symbol [], Symbol [], int);
 static void global(Symbol);
 static void import(Symbol);
@@ -1084,7 +1085,71 @@ static void clobber(Node p)
     argmask = 0;
   }
 }
-  
+
+static void preralloc(Node p)
+{
+  Symbol sym = p->syms[RX];
+  /* Try to eliminate useless data moving operations between
+     successive trees in the same forest, by using vAC/LAC/FAC instead
+     of allocating a register, which, otherwise, is the only way to
+     pass data from one tree to the next. */
+  if (sym->temporary)
+    {
+      int rulenum = (*IR->x._rule)(p->x.state, p->x.inst);
+      short *nts = IR->x._nts[rulenum];
+      Symbol r = 0;
+      Node q = p->x.next;
+      /* Allocating temporary reg for something already in vAC/LAC/FAC */
+      if (nts[0] == _ac_NT && !nts[1])
+        r = ireg[31];
+      else if (nts[0] == _lac_NT && !nts[1])
+        r = lreg[31];
+      else if (nts[0] == _fac_NT && !nts[1])
+        r = freg[31];
+      if (r && q && generic(q->op) == ASGN && q->kids[0]->op == VREG+P)
+        {
+          /* check that vAC/LAC/FAC is still valid when the data is used. 
+             TODO: be aware of instrutions that preserve vAC/LAC/FAC.
+             DONE: only for single INDIR(VREGP) by the next instruction. */
+          q = q->x.next;
+          if (q == sym->x.lastuse && generic(q->op)==INDIR && q->kids[0]->op == VREG+P) {
+            /* Not done: INDIR(VREGP) does not generate code.
+               We have to make sure that actual code uses this data right away. */
+            Node n = q->x.next;
+            int nt = n->x.inst;
+            while (n) {
+              Node kids[10];
+              int rulenum = (*IR->x._rule)(n->x.state, nt);
+              const short *nts = IR->x._nts[rulenum];
+              const char *template = IR->x._templates[rulenum];
+              (*IR->x._kids)(n, rulenum, kids);
+              while (isspace(template[0]))
+                template += 1;
+              if (template[0]=='%' && template[1]>='0' && template[1]<='9') {
+                /* Follow template expansion */
+                n = kids[template[1]-'0'];
+                nt = nts[template[1]-'0'];
+                continue;
+              }
+              /* Did we find lastuse? */
+              if (nts[0] && !nts[1] && kids[0] == sym->x.lastuse) {
+                /* Does the template use this datum first thing. Ad-hoc code :-( */
+                const char *p0 = strstr(template,"%0");
+                const char *p1 = strchr(template,';');
+                if (p0 && p1 && p0 < p1) {
+                  r->x.lastuse = sym->x.lastuse;
+                  for (q = sym->x.lastuse; q; q = q->x.prevuse) {
+                    q->syms[RX] = r;
+                    q->x.registered = 1;
+                  }
+                }
+              }
+              break;
+            }
+          }
+        }
+    }
+}
 
 static void myemitfmt(const char *fmt, Node p, Node *kids, short *nts)
 {
@@ -1568,6 +1633,7 @@ Interface gigatronIR = {
           doarg,
           target,
           clobber,
+          preralloc,
         }
 };
 

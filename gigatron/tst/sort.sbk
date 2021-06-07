@@ -107,8 +107,8 @@ def code4():
 	_SP(4);_MOV(R9,[vAC]);
 	LDW(R5);STW(R10);
 	_SP(6);_MOV(R10,[vAC]);
-	CALLI('partition');STW(R22);
-	LDW(R22);STW(R4);
+	CALLI('partition');
+	STW(R4);
 	LDW(R7);STW(R8);
 	LDW(R6);STW(R9);
 	LDW(R4);SUBI(1);STW(R10);

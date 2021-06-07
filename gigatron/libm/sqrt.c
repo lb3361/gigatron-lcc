@@ -16,8 +16,9 @@ double sqrt(register double x)
 {
 	if (x > 0) {
 		int exp = 0;
-		register double u = frexp(x, &exp);
-		return sqrt1(x, ldexp(u, exp >> 1));
+		/* This relies on the left-to-right argument
+		   evaluation order but generates better code. */
+		return sqrt1(x, ldexp(frexp(x, &exp), exp>>2));
 	}
 	if (x < 0) {
 		return _fexception(-1.0);

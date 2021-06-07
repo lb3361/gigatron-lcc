@@ -191,8 +191,8 @@ def code10():
 	CALLI('printf');
 	_SP(2);STW(T2);_SP(-28+68);_BMOV([vAC],[T2],4);
 	_SP(6);STW(T2);_SP(-24+68);_BMOV([vAC],[T2],8);
-	CALLI('ptinrect');STW(R22);
-	LDW(R22);_BNE('.63');
+	CALLI('ptinrect');
+	_BNE('.63');
 	_LDI('.65');STW(R8);
 	_SP(2);_MOV(R8,[vAC]);
 	CALLI('printf');

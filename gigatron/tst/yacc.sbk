@@ -23,8 +23,8 @@ def code2():
 	_LDI(v('.17')+2);STW(R22);
 	LDW(R7);LSLW();ADDW(R22);DEEK();CALL(vAC);
 	label('.8');
-	CALLI('yywrap');STW(R22);
-	LDW(R22);_BEQ('.7');
+	CALLI('yywrap');
+	_BEQ('.7');
 	LDI(0);
 	_BRA('.1');
 	label('.11');
@@ -561,8 +561,8 @@ def code14():
 	LDW(R19);DOKE(R20);
 	LDW(R19);_BGE('.58');
 	_LDI('yyin');DEEK();STW(R8);
-	CALLI('_filbuf');STW(R20);
-	LDW(R20);STW(R21);
+	CALLI('_filbuf');
+	STW(R21);
 	_SP(-2+24);DEEK();STW(R22);
 	_BRA('.59');
 	label('.58');
@@ -748,8 +748,8 @@ def code14():
 	_SP(2);_MOV(R8,[vAC]);
 	_LDI('yyfnd');DEEK();DEEK();STW(T3);LDI(0);SUBW(T3);STW(R9);
 	_SP(4);_MOV(R9,[vAC]);
-	CALLI('yyback');STW(R22);
-	LDW(R22);XORI(1);_BEQ('.101');
+	CALLI('yyback');
+	XORI(1);_BEQ('.101');
 	_LDI('yylstate');STW(R22);
 	LDW(R6);_CMPWU(R22);_BGT('.96');
 	label('.101');
@@ -804,8 +804,8 @@ def code14():
 	LDW(R20);DOKE(R21);
 	LDW(R20);_BGE('.112');
 	_LDI('yyin');DEEK();STW(R8);
-	CALLI('_filbuf');STW(R21);
-	LDW(R21);STW(R22);
+	CALLI('_filbuf');
+	STW(R22);
 	_SP(-2+24);DEEK();STW(R22);
 	_BRA('.113');
 	label('.112');
@@ -895,8 +895,8 @@ def code16():
 	LDW(R20);DOKE(R21);
 	LDW(R20);_BGE('.133');
 	_LDI('yyin');DEEK();STW(R8);
-	CALLI('_filbuf');STW(R21);
-	LDW(R21);STW(R22);
+	CALLI('_filbuf');
+	STW(R22);
 	_SP(-2+6);DEEK();STW(R22);
 	_BRA('.134');
 	label('.133');

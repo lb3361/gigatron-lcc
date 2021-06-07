@@ -29,8 +29,8 @@ def code2():
 	CALLI('f');STW(R22);
 	LDW(R22);STW(T2);_SP(-2+6);STW(T3);LDW(T2);DOKE(T3);
 	LDW(R7);_BEQ('.4');
-	CALLI('f');STW(R21);
-	LDW(R21);STW(R22);
+	CALLI('f');
+	STW(R22);
 	_BRA('.5');
 	label('.4');
 	LDI(1);STW(R22);
@@ -65,8 +65,8 @@ def code3():
 	_SP(4+24);STW(R21);
 	LDI(2);ADDW(R22);DOKE(R21);
 	_SP(2+24);DEEK();_BEQ('.7');
-	CALLI('f');STW(R21);
-	LDW(R21);STW(R22);
+	CALLI('f');
+	STW(R22);
 	_BRA('.8');
 	label('.7');
 	LDI(0);STW(R22);

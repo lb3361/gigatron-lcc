@@ -36,21 +36,11 @@ include file [`signal.h`](../../include/gigatron/signal.h).
 Symbols named `__@xxxx` are private to the runtime.
 
 
-
 ## Status
 
 This is complete and passes the test suite.
 
-
-
 Improvement opportunities:
-
- * The long division code (`rt_ldiv.s`) could be refactored. 
-   It was modeled after the 16 bits division which avoids
-   the vCPU comparison problems. But it inherits its
-   complexity without its benefits.
-
- * One should add fast code for supporting function `fmod`.
 
  * One should investigate SYS calls to speedup these operations. 
    Sixteen bits multiplication and division are to be provided by at67's new rom.

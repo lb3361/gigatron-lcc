@@ -1,7 +1,7 @@
 
 def scope():
 
-    # LSHRU : LAC <-- LAC >> AC (clobbers B0, T2, T3)
+    # LSHRU : LAC <-- LAC >> AC (clobbers B0)
     def code0():
         tryhop(3)
         label('_@_lshru')
@@ -27,7 +27,7 @@ def scope():
                    ('IMPORT', '__@shrsysfn'),
                    ('CODE', '_@_lshru', code0) ])
 
-    # LSHRS : LAC <-- LAC >> AC (signed) (clobbers T0, B0, T2, T3)
+    # LSHRS : LAC <-- LAC >> AC (signed) (clobbers T0, B0)
     def code1():
         label('_@_lshrs')
         PUSH();ST(B0)

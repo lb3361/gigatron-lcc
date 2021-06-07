@@ -7,7 +7,7 @@
    If a signal handler for SIGFPE has been setup, these functions
    return what the signal handler returns. */
 
-extern double _fexcept(double defval);
+extern double _fexception(double defval);
 extern double _foverflow(double defval);
 
 

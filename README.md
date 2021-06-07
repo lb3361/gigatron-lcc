@@ -12,21 +12,34 @@ code generator is fundamentally different.
 
 ## Status
 
-What works:
+### What works
+
 * The compiler compiles
 * The linker/assembler assembles and links.
-* The runtime for INTS and LONGS works
+* The runtime is complete (including LONG and FP support)
 * The emulator (build/gtsim) can run gt1 files and redirect printf to stdout (compile with glcc -map=sim)
-* The runtime testsuite works
-* The C library is still very bare
 * signal(SIGVIRQ, xxx) captures vCPU interrupts
+* signal(SIGFPE, xxx) captures division by zero and floating point issues.
+* libc has optimized memset and memcpy
+* half of the standard libc functions are there.
+* sqrt() works
 
-What remains to be done:
-* Complete the runtime for FLOATs.
-* Complete the library to loosely match ANSI C.
-* Rewrite the driver 'glcc' to be pure python instead of calling lcc.c with hacks
-* Improve the code generation when it comes to passing AC between trees in the LCC forest. This is the main weak point at the moment. The code generation within a tree is quite good in fact. I have several ideas to do this and no time...
-* Debug.
+### What remains to be done:
+
+There is substantial work needed on the libraries
+
+* stdio
+* malloc (there is already support to collect a heap)
+* printf (but you can printf when using -map=sim)
+* transcendental functions in libm
+* writing to the gigatron screen
+* reading lines with a pluggy keyboard.
+* adding more gigatron SYS stubs
+
+The compiler could also be improved
+
+* Although the code generator uses vAC quite well within a tree, it cannot use vAC at all to pass data from one tree to the next. This was improved by adding a `preralloc` callback in the lcc code generator, but the current code does not know which instructions preserve vAC and is therefore very conservative. There are multiple ways to address this. One is to write a python peephole optimizer that runs as a separable pass. The correct way would be to make the lburg code selection aware of the input state of the registers. This is much harder.
+* One could rewrite the compiler driver `glcc` to be self-contained instead of delegating much work to the historical lcc driver `lcc`. That would make option processing simpler to understand. This is harder than it seems.
 
 
 ## Compiling and installing

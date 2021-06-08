@@ -829,7 +829,7 @@ def code17():
 	LDI(0);DOKE(R22);
 	LDI(1);STW(R8);
 	_SP(2);_MOV(R8,[vAC]);
-	_LDI(0);STW(R9);
+	LDI(0);STW(R9);
 	_SP(4);_MOV(R9,[vAC]);
 	_LDI('.176');STW(R10);
 	_SP(6);_MOV(R10,[vAC]);
@@ -921,7 +921,7 @@ def code17():
 	LDI(0);DOKE(R22);
 	LDI(1);STW(R8);
 	_SP(2);_MOV(R8,[vAC]);
-	_LDI(0);STW(R9);
+	LDI(0);STW(R9);
 	_SP(4);_MOV(R9,[vAC]);
 	_LDI('.185');STW(R10);
 	_SP(6);_MOV(R10,[vAC]);
@@ -997,7 +997,7 @@ def code17():
 	LDI(0);DOKE(R22);
 	LDI(1);STW(R8);
 	_SP(2);_MOV(R8,[vAC]);
-	_LDI(0);STW(R9);
+	LDI(0);STW(R9);
 	_SP(4);_MOV(R9,[vAC]);
 	_LDI('.194');STW(R10);
 	_SP(6);_MOV(R10,[vAC]);

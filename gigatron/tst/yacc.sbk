@@ -936,8 +936,7 @@ def code17():
 	LDW(R22);DEEK();SUBI(1);STW(R21);
 	LDW(R21);DOKE(R22);
 	LDW(R21);_BGE('.136');
-	LD(R7);ST(R22);
-	LDW(R22);STW(R8);
+	LDW(R7);LD(vACL);STW(R8);
 	_LDI('yyout');DEEK();STW(R9);
 	CALLI('_flsbuf');
 	_BRA('.137');
@@ -1403,7 +1402,7 @@ def code31():
 def code32():
 	label('yyparse');
 	tryhop(4);LDW(vLR);DOKE(SP);_SP(-324);STW(SP);_SAVE(6, 0xff); # R0-7
-	_LDI(0);STW(R6);
+	LDI(0);STW(R6);
 	_LDI('yychar');STW(R22);
 	_LDI(-1);DOKE(R22);
 	_LDI('yynerrs');STW(R22);

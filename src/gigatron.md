@@ -295,20 +295,20 @@ stmt: ASGNP2(VREGP,reg)  "# write register\n"
 stmt: ASGNI4(VREGP,reg)  "# write register\n"
 stmt: ASGNU4(VREGP,reg)  "# write register\n"
 stmt: ASGNF5(VREGP,reg)  "# write register\n"
-reg: LOADI1(reg)  "\t%{src!=vAC:LD(%0);}%{dst!=vAC:ST(%c);}\n"    move(a)
-reg: LOADU1(reg)  "\t%{src!=vAC:LD(%0);}%{dst!=vAC:ST(%c);}\n"    move(a)
-reg: LOADI2(reg)  "\t%{src!=vAC:LDW(%0);}%{dst!=vAC:STW(%c);}\n"  move(a)
-reg: LOADU2(reg)  "\t%{src!=vAC:LDW(%0);}%{dst!=vAC:STW(%c);}\n"  move(a)
-reg: LOADP2(reg)  "\t%{src!=vAC:LDW(%0);}%{dst!=vAC:STW(%c);}\n"  move(a)
-reg: LOADI4(reg)  "\t_LMOV(%0,%c);\n"     move(a)
-reg: LOADU4(reg)  "\t_LMOV(%0,%c);\n"     move(a)
-reg: LOADF5(reg)  "\t_FMOV(%0,%c);\n"     move(a)
+reg: LOADI1(reg)  "\t%{src!=vAC:LD(%0);}%{dst!=vAC:STW(%c);}\n"  move(a)+30
+reg: LOADU1(reg)  "\t%{src!=vAC:LD(%0);}%{dst!=vAC:STW(%c);}\n"  move(a)+30
+reg: LOADI2(reg)  "\t%{src!=vAC:LDW(%0);}%{dst!=vAC:STW(%c);}\n" move(a)+38
+reg: LOADU2(reg)  "\t%{src!=vAC:LDW(%0);}%{dst!=vAC:STW(%c);}\n" move(a)+38
+reg: LOADP2(reg)  "\t%{src!=vAC:LDW(%0);}%{dst!=vAC:STW(%c);}\n" move(a)+38
+reg: LOADI4(reg)  "\t_LMOV(%0,%c);\n"     move(a)+148
+reg: LOADU4(reg)  "\t_LMOV(%0,%c);\n"     move(a)+148
+reg: LOADF5(reg)  "\t_FMOV(%0,%c);\n"     move(a)+148
 # -- these were missing, really
-reg: LOADI1(conBs) "\tLDI(%0);ST(%c);\n"
-reg: LOADU1(conB)  "\tLDI(%0);ST(%c);\n"
-reg: LOADI2(con)   "\t_LDI(%0);STW(%c);\n"
-reg: LOADU2(con)   "\t_LDI(%0);STW(%c);\n"
-reg: LOADP2(con)   "\t_LDI(%0);STW(%c);\n"
+reg: LOADI1(conBs) "\tLDI(%0);ST(%c);\n" 36
+reg: LOADU1(conB)  "\tLDI(%0);ST(%c);\n" 36
+reg: LOADI2(con)   "\t_LDI(%0);STW(%c);\n" 41
+reg: LOADU2(con)   "\t_LDI(%0);STW(%c);\n" 41
+reg: LOADP2(con)   "\t_LDI(%0);STW(%c);\n" 41
 
 # -- constants
 # These non terminal represent constants in the tree grammar
@@ -731,8 +731,8 @@ ac1: LOADU1(ac) "%0"
 ac: LOADI2(ac) "%0"
 ac: LOADU2(ac) "%0"
 ac: LOADP2(ac) "%0"
-ac: LOADI2(lac) "%0LDW(LAC);" 28
-ac: LOADU2(lac) "%0LDW(LAC);" 28
+ac: LOADI2(lac) "%0LDW(LAC);" 20
+ac: LOADU2(lac) "%0LDW(LAC);" 20
 lac: LOADI4(lac) "%0"
 lac: LOADU4(lac) "%0"
 fac: LOADF5(fac) "%0"

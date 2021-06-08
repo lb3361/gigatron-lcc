@@ -1,14 +1,7 @@
 #include <signal.h>
-
-extern void _exits(int, int);
+#include <gigatron/libc.h>
 
 static sig_handler_t sigvec[8];
-
-extern void _sigcall0();
-extern void _sigvirq0();
-extern void _setvirq(void(*)());
-extern void (*_raiseptr)();
-extern void (*vIRQ_v5)();
 
 sig_handler_t signal(int signo, sig_handler_t h)
 {
@@ -20,9 +13,9 @@ sig_handler_t signal(int signo, sig_handler_t h)
 	old = sigvec[signo];
 	sigvec[signo] = h;
 	/* activate */
-	_raiseptr = _sigcall0;
+	_raise_disposition = RAISE_EMITS_SIGNAL;
 	if (signo == SIGVIRQ)
-		_setvirq( (~1u & (unsigned)h) ? _sigvirq0 : 0 );
+		_set_virq_handler((~1u & (unsigned)h) ? _virq_handler : 0 );
 	return old;
 }
 

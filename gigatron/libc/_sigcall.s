@@ -7,9 +7,9 @@
 
 def code0():
     '''Redirected from _@_raise with vLR saved in [SP].'''
-    label('_sigcall0')
+    label('_raise_emits_signal')
     STW(T0)
-    label('_sigcall1')
+    label('.sigcall1')
     # create a stack frame and save R8-R22
     _SP(-36);STW(SP);ADDI(6);STW(T2);LDI(R8);STW(T3);LDI(R23);STW(T1);_CALLJ('_@_wcopy')
     # call _sigcall(signo,fpeinfo)
@@ -23,7 +23,7 @@ def code0():
 def code1():
     '''vIRQ handler'''
     nohop()
-    label('_sigvirq0')
+    label('_virq_handler')
     # save vLR/T[1-3] without using registers
     # skip 2 stack bytes because a lot of code uses STLW(-2)/LDLW(2) to save AC
     ALLOC(-8);LDW(T1);STLW(0);LDW(T2);STLW(2);LDW(T3);STLW(4);PUSH()
@@ -33,7 +33,7 @@ def code1():
     LDW(SP);SUBI(22);STW(SP);ADDI(2);STW(T2)
     LDI(B0-1);STW(T3);LDI(T1);STW(T1);_CALLJ('_@_wcopy')
     LDI('sysFn');STW(T3);LDI(v('sysArgs7')+1);STW(T1);_CALLJ('_@_wcopy')
-    LDWI('.rti');DOKE(SP);LDI(7);STW(T0);_CALLJ('_sigcall1')  # call sigcall0
+    LDWI('.rti');DOKE(SP);LDI(7);STW(T0);_CALLJ('.sigcall1')  # call sigcall0
 
 def code2():
     '''vIRQ return'''
@@ -47,7 +47,7 @@ def code2():
 def code3():
     '''set vIRQ handler (provided rom supports it)'''
     nohop()
-    label('_setvirq')
+    label('_set_virq_handler')
     if 'has_vIRQ' in rominfo:
         LDWI('vIRQ_v5');STW(T3);LDW(R8);DOKE(T3)
     RET()
@@ -55,13 +55,13 @@ def code3():
 code=[
     ('IMPORT', '_sigcall'),
     ('IMPORT', '_@_wcopy'),
-    ('EXPORT', '_sigcall0'),
-    ('EXPORT', '_sigvirq0'),
-    ('EXPORT', '_setvirq'),
-    ('CODE', '_sigcall0', code0),
-    ('CODE', '_sigvirq0', code1),
+    ('EXPORT', '_raise_emits_signal'),
+    ('EXPORT', '_virq_handler'),
+    ('EXPORT', '_set_virq_handler'),
+    ('CODE', '_raise_emits_signal', code0),
+    ('CODE', '_virq_handler', code1),
     ('CODE', '.rti', code2),
-    ('CODE', '_setvirq', code3) ]
+    ('CODE', '_set_virq_handler', code3) ]
 
 module(code=code, name='_sigcall.s');
 

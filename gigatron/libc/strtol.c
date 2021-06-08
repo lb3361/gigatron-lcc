@@ -3,6 +3,8 @@
 #include <errno.h>
 #include <stdlib.h>
 
+#define NEXTCHAR(s) (s++,*s)  /* generates better code :-( */
+
 static unsigned long _basen(const char **sptr, char *ovf, int base)
 {
 	register const char *s = *sptr;
@@ -29,7 +31,7 @@ static unsigned long _basen(const char **sptr, char *ovf, int base)
 				x = (unsigned int)x + (y << 16);
 		} else 
 			x = base * x + c;
-		c = *++s;
+		c = NEXTCHAR(s);
 	}
 	*sptr = s;
 	return x;
@@ -59,12 +61,12 @@ static unsigned long _strtoul(const char *nptr, char **endptr, register int base
 	const char *ss;
 
 	while (isspace(c))
-		c = *++s;
+		c = NEXTCHAR(s);
 	if (c == '-') {
 		*neg = 1;
-		c = *++s;
+		c = NEXTCHAR(s);
 	} else if (c == '+')
-		c = *++s;
+		c = NEXTCHAR(s);
 	ss = s;
 	if (base == 0)
 		x = _base0(&ss, ovf);

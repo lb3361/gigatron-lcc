@@ -189,7 +189,7 @@ def scope():
         LDWI(0x204);
         label('.raise')
         STLW(-2);_LDI(0xffff);STW(AM);STW(AM+2);ST(AE)
-        LDLW(-2);_CALLI('_@_raise')
+        LDLW(-2);_CALLI('_@_raisefpe')
         label('.vspfpe',pc()+1)        
         LDI(0)  # this instruction is patched by fsavevsp.
         ST(vSP);POP();RET()
@@ -205,7 +205,7 @@ def scope():
         RET()
         
     module(name='rt_fexception.s',
-           code=[ ('IMPORT', '_@_raise'),
+           code=[ ('IMPORT', '_@_raisefpe'),
                   ('EXPORT', '__@fexception'),
                   ('EXPORT', '__@foverflow'),
                   ('EXPORT', '__@fsavevsp'),

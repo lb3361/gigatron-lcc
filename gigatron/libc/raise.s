@@ -11,11 +11,12 @@ def scope():
         label('_@_raise')
         STLW(-2);
         label('_raise_disposition', pc()+1)
-        LDWI(0)                          # calling signal() patches this instruction
+        LDWI(0)
         BEQ('.raise2')
-        STW(T3);LDW(vLR);DOKE(SP);LDLW(-2);CALL(T3);         # dispatcher (no return)
+        STW(T3);LDW(vLR);DOKE(SP);LDLW(-2);CALL(T3);   # dispatcher (no return)
         label('.raise2')
-        LDLW(-2);ST(R8);LD(vACH);STW(R9);_CALLJ('_exits')     # exit (no return)
+        LDLW(-2);ST(R8);LD(vACH);STW(R9);
+        LD(R8);STW(R8);_CALLJ('_exits')                # exit (no return)
 
     module(name='raise.s',
            code=[ ('IMPORT', '_exits'),

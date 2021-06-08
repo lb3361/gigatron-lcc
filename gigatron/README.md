@@ -7,7 +7,6 @@ This directory contains files that accompany the lcc proper to support the gigat
  * `interface.json`: the standard Gigatron interface file which is read by `glink` to define well known symbols.
  * `roms.json`: rom capability description file, which is read by both `glink` and `glcc`.
  * `libc`: intended to contain an implementation of the ANSI C libary. The driver `glcc` uses this library by default.
- * `libm` : a library for math and floating point functions. Also overrides some standard routines (e.g. `printf`) to include floating point support.
  * `runtime` : assembly routines that support the compiler (multiplications, divisions, long support, fp support.)
  * `map32k`, `map64k`, etc : directories that define linker maps. Use `glcc -map=64k --info` for a description of each of them.
  * `mapsim` : contains a gigatron emulator [`gtsim`](mapsim/gtsim.c) that redirects the gigatron program stdio to the simulator stdio. Useful for testing.

@@ -576,6 +576,17 @@ def scope():
 
     # ==== additions and subtractions
 
+    # Notes: This code uses an extended mantissa with an additional
+    # high byte (am40) However it still aligns the numbers inside the
+    # four low bytes, meaning that the high byte is only used for an
+    # eventual carry.  One could gain some precision by moving the top
+    # mantissa bit inside the extension byte, therefore creating more
+    # low bits for the operand with the lowest absolute value.  We
+    # would need to replace __@am32shra by __@am40shra and improve
+    # fnorm2 for speed. Instead we use __@faddalign to round the
+    # bottom bit of the operant with the lowest absolute value, and
+    # this seems to work well enough.
+
     def code_am40addbm40():
         nohop()
         label('__@am40addbm40')
@@ -627,16 +638,16 @@ def scope():
         XORI(255);INC(vAC);ANDI(255)   # FAC exponent <= arg exponent
         _CALLI('__@faddalign')         # - align (rounded)
         LD(T2L);ST(AE)                 # - assume arg exponent
-        _CALLJ('__@bm40load')            # - load arg mantissa
-        XORW(AS);ANDI(128)           # - zero if same sign, nonzero otherwise
+        _CALLJ('__@bm40load')          # - load arg mantissa
+        XORW(AS);ANDI(128)             # - zero if same sign, nonzero otherwise
         _BRA('.faddx2')
         label('.faddx1')               # FAC exponent > arg exponent
         ST(T2L)
         LDW(AM);STW(BM);               # - move fac mantissa into t0t1
         LDW(AM+2);STW(T1);
-        _CALLJ('__@am40load')            # - load arg mantissa into am
-        XORW(AS);ANDI(128);ST(T2H)   # - are signs different?
-        XORW(AS);ST(AS)            # - assume arg sign
+        _CALLJ('__@am40load')          # - load arg mantissa into am
+        XORW(AS);ANDI(128);ST(T2H  )   # - are signs different?
+        XORW(AS);ST(AS)                # - assume arg sign
         LD(T2L)
         _CALLI('__@faddalign')         # - align (rounded)
         LD(T2H);                       # - zero if same sign, nonzero otherwise

@@ -700,12 +700,12 @@ ac: CALLP2(ac)    "%0CALL(vAC);" 26
 stmt: CALLV(addr) "\tCALLI(%0);\n" mincpu5(28)
 stmt: CALLV(reg)  "\tCALL(%0);\n" 26
 stmt: CALLV(ac)   "\t%0CALL(vAC);\n" 26
-stmt: ARGF5(vsrc) "\t%[0b]_SP(%c);_FMOV(%0,[vAC]);\n"  if_arg_stk(a)
-stmt: ARGI4(vsrc) "\t%[0b]_SP(%c);_LMOV(%0,[vAC]);\n"  if_arg_stk(a)
-stmt: ARGU4(vsrc) "\t%[0b]_SP(%c);_LMOV(%0,[vAC]);\n"  if_arg_stk(a)
-stmt: ARGI2(reg)  "\t_SP(%c);_MOV(%0,[vAC]);\n"        if_arg_stk(a)
-stmt: ARGU2(reg)  "\t_SP(%c);_MOV(%0,[vAC]);\n"        if_arg_stk(a)
-stmt: ARGP2(reg)  "\t_SP(%c);_MOV(%0,[vAC]);\n"        if_arg_stk(a)
+stmt: ARGF5(reg) "\t%_SP(%c);_FMOV(%0,[vAC]);\n"  if_arg_stk(a)
+stmt: ARGI4(reg) "\t%_SP(%c);_LMOV(%0,[vAC]);\n"  if_arg_stk(a)
+stmt: ARGU4(reg) "\t%_SP(%c);_LMOV(%0,[vAC]);\n"  if_arg_stk(a)
+stmt: ARGI2(reg)  "\t_SP(%c);_MOV(%0,[vAC]);\n"   if_arg_stk(a)
+stmt: ARGU2(reg)  "\t_SP(%c);_MOV(%0,[vAC]);\n"   if_arg_stk(a)
+stmt: ARGP2(reg)  "\t_SP(%c);_MOV(%0,[vAC]);\n"   if_arg_stk(a)
 stmt: ARGF5(reg)  "# arg\n"  if_arg_reg_only(a)
 stmt: ARGI4(reg)  "# arg\n"  if_arg_reg_only(a)
 stmt: ARGU4(reg)  "# arg\n"  if_arg_reg_only(a)

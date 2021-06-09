@@ -30,8 +30,10 @@ def code0():
 	_LDI('.5');STW(R8);
 	_SP(2);_MOV(R8,[vAC]);
 	_LMOV('.6',L21);
-	_LMOV(L21,LAC);_SP(4);_LMOV(LAC,[vAC]);
-	_LMOV(L21,LAC);_SP(8);_LMOV(LAC,[vAC]);
+	_LMOV(L21,L9);
+	_SP(4);_LMOV(L9,[vAC]);
+	_LMOV(L21,L11);
+	_SP(8);_LMOV(L11,[vAC]);
 	CALLI('printf');
 	_LDI('.7');STW(R8);
 	_SP(2);_MOV(R8,[vAC]);
@@ -66,8 +68,10 @@ def code0():
 	_LDI('.11');STW(R8);
 	_SP(2);_MOV(R8,[vAC]);
 	_LMOV('.12',L21);
-	_LMOV(L21,LAC);_SP(4);_LMOV(LAC,[vAC]);
-	_LMOV(L21,LAC);_SP(8);_LMOV(LAC,[vAC]);
+	_LMOV(L21,L9);
+	_SP(4);_LMOV(L9,[vAC]);
+	_LMOV(L21,L11);
+	_SP(8);_LMOV(L11,[vAC]);
 	CALLI('printf');
 	_LDI('.13');STW(R8);
 	_SP(2);_MOV(R8,[vAC]);
@@ -103,8 +107,10 @@ def code0():
 	_LDI('.17');STW(R8);
 	_SP(2);_MOV(R8,[vAC]);
 	_LMOV('.18',L21);
-	_LMOV(L21,LAC);_SP(4);_LMOV(LAC,[vAC]);
-	_LMOV(L21,LAC);_SP(8);_LMOV(LAC,[vAC]);
+	_LMOV(L21,L9);
+	_SP(4);_LMOV(L9,[vAC]);
+	_LMOV(L21,L11);
+	_SP(8);_LMOV(L11,[vAC]);
 	CALLI('printf');
 	LDI(0);
 	label('.1');

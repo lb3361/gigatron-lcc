@@ -175,7 +175,7 @@ def code17():
 	_SP(2);_MOV(R8,[vAC]);
 	_FMOV('Three',F20);
 	_FMOV('Two',F17);
-	_SP(-5+106);_FMOV(F17,[vAC]);
+	STW(T1);_SP(-5+106);_FMOV(F17,[vAC]);LDW(T1) #genspill
 	_FMOV('One',F14);
 	_FMOV(F17,FAC);LDI(F14);_FADD();_FMOV(FAC,F11);
 	_FMOV(F20,FAC);LDI(F11);_FCMP();_BNE('.21');
@@ -196,7 +196,7 @@ def code17():
 	_SP(6);_MOV(R10,[vAC]);
 	CALLI('TstCond');
 	_FMOV('MinusOne',F20);
-	_SP(-10+106);_FMOV(F20,[vAC]);
+	STW(T1);_SP(-10+106);_FMOV(F20,[vAC]);LDW(T1) #genspill
 	_FMOV('One',F17);
 	_FMOV('.7',FAC);LDI(F17);_FSUB();_FMOV(FAC,F14);
 	_FMOV(F20,FAC);LDI(F14);_FCMP();_BNE('.24');
@@ -272,12 +272,12 @@ def code17():
 	_FMOV('One',FAC);LDI(F17);_FADD();_FMOV(FAC,F14);
 	_FMOV(F20,FAC);LDI(F14);_FCMP();_BNE('.33');
 	_FMOV('TwoForty',F14);
-	_SP(-15+106);_FMOV(F14,[vAC]);
+	STW(T1);_SP(-15+106);_FMOV(F14,[vAC]);LDW(T1) #genspill
 	_FMOV('Three',F11);
 	_FMOV(F17,FAC);LDI(F20);_FMUL();LDI(F11);_FMUL();LDI(F17);_FMUL();_FMOV(FAC,F14);
 	_SP(-15+106);_FMOV([vAC],FAC);LDI(F14);_FCMP();_BNE('.33');
 	_FMOV('Zero',F14);
-	_SP(-20+106);_FMOV(F14,[vAC]);
+	STW(T1);_SP(-20+106);_FMOV(F14,[vAC]);LDW(T1) #genspill
 	_FMOV(F17,FAC);LDI(F17);_FMUL();LDI(F20);_FMUL();_FMOV(FAC,F14);
 	_SP(-15+106);_FMOV([vAC],FAC);LDI(F11);_FDIV();LDI(F14);_FSUB();_SP(-20+106);_FCMP();_BNE('.33');
 	_FMOV(F20,FAC);LDI(F11);_FMUL();LDI(F17);_FMUL();_FMOV(FAC,F14);
@@ -524,7 +524,7 @@ def code17():
 	_FMOV('U1',F8);
 	_SP(2);_FMOV(F8,[vAC]);
 	CALLI('log');_FMOV(FAC,F20);
-	_SP(-25+106);_FMOV(F20,[vAC]);
+	STW(T1);_SP(-25+106);_FMOV(F20,[vAC]);LDW(T1) #genspill
 	_FMOV('Radix',F8);
 	_SP(2);_FMOV(F8,[vAC]);
 	CALLI('log');_FMOV(FAC,F17);
@@ -553,7 +553,7 @@ def code17():
 	label('.97');
 	label('.93');
 	_FMOV('Precision',F20);
-	_SP(-25+106);_FMOV(F20,[vAC]);
+	STW(T1);_SP(-25+106);_FMOV(F20,[vAC]);LDW(T1) #genspill
 	_FMOV(F20,F8);
 	_SP(2);_FMOV(F8,[vAC]);
 	CALLI('floor');_FMOV(FAC,F17);
@@ -1125,7 +1125,7 @@ def code17():
 	_FMOV(F20,FAC);LDI(F17);_FADD();_FMOV(FAC,'Y2');
 	_FMOV(F20,FAC);LDI(F17);_FSUB();_FMOV(FAC,'Y1');
 	_FMOV('OneAndHalf',F20);
-	_SP(-30+106);_FMOV(F20,[vAC]);
+	STW(T1);_SP(-30+106);_FMOV(F20,[vAC]);LDW(T1) #genspill
 	_FMOV(F20,FAC);LDI(F17);_FSUB();_FMOV(FAC,'X');
 	_FMOV(F20,FAC);LDI(F17);_FADD();_FMOV(FAC,'Y');
 	_FMOV('X',F14);
@@ -1147,7 +1147,7 @@ def code17():
 	_FMOV('T',FAC);LDI(F20);_FCMP();_BGT('.226');
 	_FMOV('OneAndHalf',F20);
 	_FMOV('U2',F17);
-	_SP(-40+106);_FMOV(F17,[vAC]);
+	STW(T1);_SP(-40+106);_FMOV(F17,[vAC]);LDW(T1) #genspill
 	_FMOV(F20,FAC);LDI(F17);_FADD();_FMOV(FAC,F14);
 	_FMOV('Y2',F11);
 	_FMOV(F14,FAC);LDI(F11);_FMUL();_FMOV(FAC,'X');
@@ -1158,7 +1158,7 @@ def code17():
 	_FMOV(F20,FAC);LDI(F14);_FMUL();_FMOV(FAC,'T');
 	_FMOV('Z',F20);
 	_FMOV(F20,FAC);LDI(F17);_FADD();_FMOV(FAC,F8);
-	_SP(-35+106);_FMOV(F8,[vAC]);
+	STW(T1);_SP(-35+106);_FMOV(F8,[vAC]);LDW(T1) #genspill
 	_FMOV('X',FAC);LDI(F8);_FSUB();_FMOV(FAC,'X');
 	_LDI('StickyBit');STW(R10);
 	_FMOV('Y',F17);
@@ -1220,15 +1220,15 @@ def code17():
 	_FMOV(F20,FAC);LDI(F17);_FADD();_FMOV(FAC,'Y2');
 	_FMOV(F20,FAC);LDI(F17);_FSUB();_FMOV(FAC,'Y1');
 	_FMOV('OneAndHalf',F20);
-	_SP(-43+106);_FMOV(F20,[vAC]);
+	STW(T1);_SP(-43+106);_FMOV(F20,[vAC]);LDW(T1) #genspill
 	_FMOV(F20,FAC);LDI(F17);_FADD();_FMOV(FAC,F14);
-	_SP(-35+106);_FMOV(F14,[vAC]);
+	STW(T1);_SP(-35+106);_FMOV(F14,[vAC]);LDW(T1) #genspill
 	_FMOV(F14,FAC);LDI(F17);_FADD();_FMOV(FAC,'Z');
 	_FMOV('Z',F11);
 	_FMOV('Y2',F8);
 	_FMOV(F11,FAC);LDI(F8);_FDIV();_FMOV(FAC,'X');
 	_LDI('T');STW(R16);
-	LDW(R16);STW(T2);_SP(-38+106);STW(T3);LDW(T2);DOKE(T3);
+	STW(T1);_SP(-38+106);_MOV(R16,[vAC]);LDW(T1) #genspill
 	_FMOV(F20,FAC);LDI(F17);_FSUB();LDI(F17);_FSUB();_FMOV(FAC,'T');
 	_FMOV('T',F14);
 	_FMOV('Y1',F20);
@@ -1246,7 +1246,7 @@ def code17():
 	_FMOV('T',FAC);LDI(F20);_FCMP();_BGT('.238');
 	_FMOV('OneAndHalf',F20);
 	_FMOV('Y2',F17);
-	_SP(-48+106);_FMOV(F17,[vAC]);
+	STW(T1);_SP(-48+106);_FMOV(F17,[vAC]);LDW(T1) #genspill
 	_FMOV(F20,FAC);LDI(F17);_FDIV();_FMOV(FAC,'X');
 	_FMOV('U2',F14);
 	_FMOV(F20,FAC);LDI(F14);_FSUB();_FMOV(FAC,'Y');
@@ -1606,19 +1606,19 @@ def code17():
 	_LDI('.312');STW(R8);
 	CALLI('printf');
 	_FMOV('Zero',F20);
-	_SP(-48+106);_FMOV(F20,[vAC]);
+	STW(T1);_SP(-48+106);_FMOV(F20,[vAC]);LDW(T1) #genspill
 	_FMOV(F20,F8);
 	_SP(2);_FMOV(F8,[vAC]);
 	CALLI('sqrt');_FMOV(FAC,F17);
 	_SP(-48+106);_FMOV([vAC],FAC);LDI(F17);_FCMP();_BNE('.314');
 	_FMOV('Zero',FAC);_FNEG();_FMOV(FAC,F20);
-	_SP(-53+106);_FMOV(F20,[vAC]);
+	STW(T1);_SP(-53+106);_FMOV(F20,[vAC]);LDW(T1) #genspill
 	_FMOV(F20,F8);
 	_SP(2);_FMOV(F8,[vAC]);
 	CALLI('sqrt');_FMOV(FAC,F17);
 	_SP(-53+106);_FMOV([vAC],FAC);LDI(F17);_FCMP();_BNE('.314');
 	_FMOV('One',F20);
-	_SP(-58+106);_FMOV(F20,[vAC]);
+	STW(T1);_SP(-58+106);_FMOV(F20,[vAC]);LDW(T1) #genspill
 	_FMOV(F20,F8);
 	_SP(2);_FMOV(F8,[vAC]);
 	CALLI('sqrt');_FMOV(FAC,F17);
@@ -1855,7 +1855,7 @@ def code17():
 	_FMOV('X',F8);
 	_SP(2);_FMOV(F8,[vAC]);
 	CALLI('Sign');_FMOV(FAC,F20);
-	_SP(-63+106);_FMOV(F20,[vAC]);
+	STW(T1);_SP(-63+106);_FMOV(F20,[vAC]);LDW(T1) #genspill
 	_FMOV('OneUlp',F8);
 	_SP(2);_FMOV(F8,[vAC]);
 	CALLI('sqrt');_FMOV(FAC,F17);
@@ -1885,7 +1885,7 @@ def code17():
 	_LDI('.369');STW(R8);
 	CALLI('printf');
 	_FMOV('Precision',F20);
-	_SP(-63+106);_FMOV(F20,[vAC]);
+	STW(T1);_SP(-63+106);_FMOV(F20,[vAC]);LDW(T1) #genspill
 	_FMOV(F20,F8);
 	_SP(2);_FMOV(F8,[vAC]);
 	CALLI('floor');_FMOV(FAC,F17);
@@ -1902,13 +1902,13 @@ def code17():
 	_FMOV(F20,FAC);_LDI('Radix');_FDIV();_FMOV(FAC,'X');
 	_FMOV(F20,FAC);_LDI('A1');_FDIV();_FMOV(FAC,'Y');
 	_FMOV('X',F20);
-	_SP(-68+106);_FMOV(F20,[vAC]);
+	STW(T1);_SP(-68+106);_FMOV(F20,[vAC]);LDW(T1) #genspill
 	_FMOV(F20,F8);
 	_SP(2);_FMOV(F8,[vAC]);
 	CALLI('floor');_FMOV(FAC,F17);
 	_SP(-68+106);_FMOV([vAC],FAC);LDI(F17);_FCMP();_BNE('.372');
 	_FMOV('Y',F20);
-	_SP(-73+106);_FMOV(F20,[vAC]);
+	STW(T1);_SP(-73+106);_FMOV(F20,[vAC]);LDW(T1) #genspill
 	_FMOV(F20,F8);
 	_SP(2);_FMOV(F8,[vAC]);
 	CALLI('floor');_FMOV(FAC,F17);
@@ -1931,7 +1931,7 @@ def code17():
 	_FMOV('Y','Y1');
 	label('.378');
 	_FMOV('Q',F20);
-	_SP(-78+106);_FMOV(F20,[vAC]);
+	STW(T1);_SP(-78+106);_FMOV(F20,[vAC]);LDW(T1) #genspill
 	_FMOV(F20,FAC);_LDI('Y1');_FDIV();_FNEG();_LDI('Half');_FADD();_FMOV(FAC,F8);
 	_SP(2);_FMOV(F8,[vAC]);
 	CALLI('floor');_FMOV(FAC,F17);
@@ -1965,7 +1965,7 @@ def code17():
 	_FMOV(F14,FAC);LDI(F14);_FMUL();LDI(F17);_FADD();LDI(F20);_FDIV();_FMOV(FAC,'Q');
 	_FMOV(F17,FAC);_LDI('Eight');_FDIV();_FMOV(FAC,'X8');
 	_FMOV('Q',F20);
-	_SP(-78+106);_FMOV(F20,[vAC]);
+	STW(T1);_SP(-78+106);_FMOV(F20,[vAC]);LDW(T1) #genspill
 	_FMOV(F20,F8);
 	_SP(2);_FMOV(F8,[vAC]);
 	CALLI('floor');_FMOV(FAC,F17);
@@ -1979,7 +1979,7 @@ def code17():
 	label('.387');
 	_FMOV('Z1',FAC);_LDI('Z');_FMUL();_FMOV(FAC,'X');
 	_FMOV('X',F20);
-	_SP(-83+106);_FMOV(F20,[vAC]);
+	STW(T1);_SP(-83+106);_FMOV(F20,[vAC]);LDW(T1) #genspill
 	_FMOV(F20,FAC);_LDI('Radix');_FDIV();_FMOV(FAC,F8);
 	_SP(2);_FMOV(F8,[vAC]);
 	CALLI('floor');_FMOV(FAC,F17);
@@ -2175,7 +2175,7 @@ def code17():
 	_FMOV('W',F8);
 	_SP(2);_FMOV(F8,[vAC]);
 	CALLI('log');_FMOV(FAC,F20);
-	_SP(-63+106);_FMOV(F20,[vAC]);
+	STW(T1);_SP(-63+106);_FMOV(F20,[vAC]);LDW(T1) #genspill
 	_FMOV('A1',F8);
 	_SP(2);_FMOV(F8,[vAC]);
 	CALLI('log');_FMOV(FAC,F17);
@@ -2215,7 +2215,7 @@ def code17():
 	_FMOV('Two',FAC);LDW(R22);_FADD();_FMOV(FAC,'Z');
 	label('.447');
 	_FMOV('Three',F20);
-	_SP(-68+106);_FMOV(F20,[vAC]);
+	STW(T1);_SP(-68+106);_FMOV(F20,[vAC]);LDW(T1) #genspill
 	_FMOV('Z',FAC);LDI(F20);_FDIV();_FMOV(FAC,F8);
 	_SP(2);_FMOV(F8,[vAC]);
 	CALLI('floor');_FMOV(FAC,F17);
@@ -2250,7 +2250,7 @@ def code17():
 	CALLI('printf');
 	_FMOV('U1','D');
 	_FMOV('Precision',F20);
-	_SP(-68+106);_FMOV(F20,[vAC]);
+	STW(T1);_SP(-68+106);_FMOV(F20,[vAC]);LDW(T1) #genspill
 	_FMOV(F20,F8);
 	_SP(2);_FMOV(F8,[vAC]);
 	CALLI('floor');_FMOV(FAC,F17);
@@ -2684,7 +2684,7 @@ def code17():
 	_FMOV('UfThold',F8);
 	_SP(2);_FMOV(F8,[vAC]);
 	CALLI('log');_FMOV(FAC,F20);
-	_SP(-73+106);_FMOV(F20,[vAC]);
+	STW(T1);_SP(-73+106);_FMOV(F20,[vAC]);LDW(T1) #genspill
 	_FMOV('HInvrse',F8);
 	_SP(2);_FMOV(F8,[vAC]);
 	CALLI('log');_FMOV(FAC,F17);
@@ -2889,7 +2889,7 @@ def code17():
 	_FMOV('C',F8);
 	_SP(2);_FMOV(F8,[vAC]);
 	CALLI('log');_FMOV(FAC,F20);
-	_SP(-78+106);_FMOV(F20,[vAC]);
+	STW(T1);_SP(-78+106);_FMOV(F20,[vAC]);LDW(T1) #genspill
 	_FMOV('A1',F8);
 	_SP(2);_FMOV(F8,[vAC]);
 	CALLI('log');_FMOV(FAC,F17);
@@ -3628,7 +3628,7 @@ def code27():
 	_LDI('X');STW(R16);
 	_FMOV(F20,FAC);LDI(F17);_FMUL();LDW(R16);_FADD();_FMOV(FAC,'X');
 	_LDI('Q');STW(R22);
-	LDW(R22);STW(T2);_SP(-2+10);STW(T3);LDW(T2);DOKE(T3);
+	STW(T1);_SP(-2+10);_MOV(R22,[vAC]);LDW(T1) #genspill
 	_FMOV('X',F14);
 	_FMOV('Z',F11);
 	_FMOV('D',F8);

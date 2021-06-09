@@ -14,7 +14,7 @@ def code1():
 	_SP(2+4);STW(R22);
 	LDW(R8);DOKE(R22);
 	CALLI('f');STW(R22);
-	LDW(R22);STW(T2);_SP(-2+4);STW(T3);LDW(T2);DOKE(T3);
+	STW(T1);_SP(-2+4);_MOV(R22,[vAC]);LDW(T1) #genspill
 	CALLI('f');STW(R21);
 	_SP(2+4);STW(R22);
 	_SP(-2+4);DEEK();ADDW(R21);DOKE(R22);
@@ -27,7 +27,7 @@ def code2():
 	tryhop(4);LDW(vLR);DOKE(SP);_SP(-6);STW(SP);_SAVE(2, 0x80); # R7
 	LDW(R8);STW(R7);
 	CALLI('f');STW(R22);
-	LDW(R22);STW(T2);_SP(-2+6);STW(T3);LDW(T2);DOKE(T3);
+	STW(T1);_SP(-2+6);_MOV(R22,[vAC]);LDW(T1) #genspill
 	LDW(R7);_BEQ('.4');
 	CALLI('f');
 	STW(R22);
@@ -61,7 +61,7 @@ def code3():
 	_SP(-4+24);STW(R22);
 	LDI(0);DOKE(R22);
 	_SP(4+24);DEEK();STW(R22);
-	LDW(R22);STW(T2);_SP(-6+24);STW(T3);LDW(T2);DOKE(T3);
+	STW(T1);_SP(-6+24);_MOV(R22,[vAC]);LDW(T1) #genspill
 	_SP(4+24);STW(R21);
 	LDI(2);ADDW(R22);DOKE(R21);
 	_SP(2+24);DEEK();_BEQ('.7');
@@ -89,7 +89,7 @@ def code4():
 	_LDI('i');DEEK();STW(R22);
 	LDW(R22);LSLW();LSLW();ADDW(R22);STW(R21);
 	_LDI('a');ADDW(R21);_FMOV([vAC],F11);
-	_SP(-5+8);_FMOV(F11,[vAC]);
+	STW(T1);_SP(-5+8);_FMOV(F11,[vAC]);LDW(T1) #genspill
 	_LDI('b');ADDW(R21);_FMOV([vAC],F8);
 	_FMOV('.12',F11);
 	_SP(-5+8);_FMOV([vAC],FAC);LDI(F8);_FADD();LDI(F11);_FCMP();_BEQ('.10');

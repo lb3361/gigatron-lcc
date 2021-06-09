@@ -545,7 +545,7 @@ def code14():
 	label('.50');
 	label('.46');
 	LDW(R4);STW(R22);
-	LDW(R22);STW(T2);_SP(-4+24);STW(T3);LDW(T2);DOKE(T3);
+	STW(T1);_SP(-4+24);_MOV(R22,[vAC]);LDW(T1) #genspill
 	LDI(1);ADDW(R22);STW(R4);
 	_LDI('yysbuf');STW(R21);
 	_LDI('yysptr');DEEK();_CMPWU(R21);_BLE('.56');
@@ -553,7 +553,7 @@ def code14():
 	LDW(R21);DEEK();SUBI(-(-1));STW(R20);
 	LDW(R20);DOKE(R21);
 	LDW(R20);PEEK();STW(R21);
-	LDW(R21);STW(T2);_SP(-2+24);STW(T3);LDW(T2);DOKE(T3);
+	STW(T1);_SP(-2+24);_MOV(R21,[vAC]);LDW(T1) #genspill
 	_BRA('.57');
 	label('.56');
 	_LDI('yyin');DEEK();STW(R20);
@@ -796,7 +796,7 @@ def code14():
 	LDW(R22);DEEK();SUBI(-(-1));STW(R21);
 	LDW(R21);DOKE(R22);
 	LDW(R21);PEEK();STW(R22);
-	LDW(R22);STW(T2);_SP(-2+24);STW(T3);LDW(T2);DOKE(T3);
+	STW(T1);_SP(-2+24);_MOV(R22,[vAC]);LDW(T1) #genspill
 	_BRA('.111');
 	label('.110');
 	_LDI('yyin');DEEK();STW(R21);
@@ -887,7 +887,7 @@ def code16():
 	LDW(R22);DEEK();SUBI(-(-1));STW(R21);
 	LDW(R21);DOKE(R22);
 	LDW(R21);PEEK();STW(R22);
-	LDW(R22);STW(T2);_SP(-2+6);STW(T3);LDW(T2);DOKE(T3);
+	STW(T1);_SP(-2+6);_MOV(R22,[vAC]);LDW(T1) #genspill
 	_BRA('.132');
 	label('.131');
 	_LDI('yyin');DEEK();STW(R21);

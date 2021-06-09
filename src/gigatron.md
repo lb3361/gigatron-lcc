@@ -760,6 +760,15 @@ stmt: JUMPV(addr)  "\t_BRA(%0);\n"  14
 stmt: JUMPV(reg)   "\tCALL(%0);\n"  14
 stmt: JUMPV(ac)    "\t%0CALL(vAC);\n" 14
 
+# More about spills: we want to save/restore vAC when genspill() inserts
+# instructions because preralloc might have decided to use vAC at this
+# precise point. We use T1 because _[LF]MOV can use T2 and T3.
+stmt: ASGNI2(spill,reg) "\tSTW(T1);%0_MOV(%1,[vAC]);LDW(T1) #genspill\n" 0
+stmt: ASGNU2(spill,reg) "\tSTW(T1);%0_MOV(%1,[vAC]);LDW(T1) #genspill\n" 0
+stmt: ASGNP2(spill,reg) "\tSTW(T1);%0_MOV(%1,[vAC]);LDW(T1) #genspill\n" 0
+stmt: ASGNI4(spill,reg) "\tSTW(T1);%0_LMOV(%1,[vAC]);LDW(T1) #genspill\n" 0
+stmt: ASGNU4(spill,reg) "\tSTW(T1);%0_LMOV(%1,[vAC]);LDW(T1) #genspill\n" 0
+stmt: ASGNF5(spill,reg) "\tSTW(T1);%0_FMOV(%1,[vAC]);LDW(T1) #genspill\n" 0
 
 # More opcodes for cpu=5
 stmt: ASGNU1(zddr, LOADU1(ADDI2(CVUI2(INDIRU1(zddr)), con1))) "\tINC(%1);\n" if_rmw1(a,16)

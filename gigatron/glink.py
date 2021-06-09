@@ -832,8 +832,9 @@ def _MODU(d):
     _CALLJ('_@_modu')           # T3%T2 --> vAC
 @vasm
 def _MOV(s,d):
-    '''Move word from reg/addr s to d.
-       Also accepts [vAC] for s or d.'''
+    '''Move word from reg/addr s to d. 
+       Also accepts [vAC] for s or d.
+       Can trash T2 and T3'''
     s = v(s)
     d = v(d)
     if s != d:
@@ -959,7 +960,8 @@ def _BMOV(s,d,n):
 @vasm
 def _LMOV(s,d):
     '''Move long from reg/addr s to d.
-       Also accepts [vAC] as s, and [vAC] or [T2] as d.'''
+       Also accepts [vAC] as s, and [vAC] or [T2] as d.
+       Can trash T2 and T3'''
     s = v(s)
     d = v(d)
     if s != d:
@@ -1071,7 +1073,8 @@ def _LCVI():
 @vasm
 def _FMOV(s,d):
     '''Move float from reg s to d with special cases when s or d is FAC.
-       Also accepts [vAC] or [T3] for s and [vAC] or [T2] for d.'''
+       Also accepts [vAC] or [T3] for s and [vAC] or [T2] for d.
+       Can trash T2 and T3'''
     s = v(s)
     d = v(d)
     if s != d:
@@ -1161,7 +1164,7 @@ def _FSCALB():
 def _CALLI(d):
     '''Call subroutine at far location d.
        - For cpu >= 5. this function just emits a CALLI instruction
-       - For cpu < 5, this function trashes 'sysArgs6' and 'sysArgs7'.'''
+       - For cpu < 5, this function trashes 'sysArgs6', 'sysArgs7' and [SP-2].'''
     if args.cpu >= 5:
         CALLI(d)
     else:

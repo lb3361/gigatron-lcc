@@ -24,29 +24,29 @@ def code1():
 # ======== ('CODE', 'f2', code2)
 def code2():
 	label('f2');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-6);STW(SP);_SAVE(2, 0x80); # R7
+	tryhop(4);LDW(vLR);DOKE(SP);_SP(-8);STW(SP);_SAVE(2, 0xc0); # R6-7
 	LDW(R8);STW(R7);
 	CALLI('f');STW(R22);
-	STW(T1);_SP(-2+6);_MOV(R22,[vAC]);LDW(T1) #genspill
-	LDW(R7);_BEQ('.4');
+	STW(T1);_SP(-2+8);_MOV(R22,[vAC]);LDW(T1) #genspill
+	LDW(R7);_BEQ('.5');
 	CALLI('f');
-	STW(R22);
-	_BRA('.5');
-	label('.4');
-	LDI(1);STW(R22);
+	STW(R6);
+	_BRA('.6');
 	label('.5');
-	_SP(-2+6);DEEK();ADDW(R22);STW(R7);
+	LDI(1);STW(R6);
+	label('.6');
+	_SP(-2+8);DEEK();ADDW(R6);STW(R7);
 	LDI(0);
 	label('.3');
-	STW(R8);_RESTORE(2, 0x80); # R7
-	_SP(6);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	STW(R8);_RESTORE(2, 0xc0); # R6-7
+	_SP(8);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
 # ======== ('CODE', 'f3', code3)
 def code3():
 	label('f3');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-24);STW(SP);_SAVE(2, 0xff); # R0-7
-	_SP(2+24);STW(R22);
+	tryhop(4);LDW(vLR);DOKE(SP);_SP(-26);STW(SP);_SAVE(2, 0xff); # R0-7
+	_SP(2+26);STW(R22);
 	LDW(R8);DOKE(R22);
-	_SP(4+24);STW(R22);
+	_SP(4+26);STW(R22);
 	LDW(R9);DOKE(R22);
 	LDI(0);STW(R7);
 	LDI(0);STW(R6);
@@ -56,30 +56,32 @@ def code3():
 	LDI(0);STW(R2);
 	LDI(0);STW(R1);
 	LDI(0);STW(R0);
-	_SP(-2+24);STW(R22);
+	_SP(-2+26);STW(R22);
 	LDI(0);DOKE(R22);
-	_SP(-4+24);STW(R22);
+	_SP(-4+26);STW(R22);
 	LDI(0);DOKE(R22);
-	_SP(4+24);DEEK();STW(R22);
-	STW(T1);_SP(-6+24);_MOV(R22,[vAC]);LDW(T1) #genspill
-	_SP(4+24);STW(R21);
+	_SP(4+26);DEEK();STW(R22);
+	STW(T1);_SP(-8+26);_MOV(R22,[vAC]);LDW(T1) #genspill
+	_SP(4+26);STW(R21);
 	LDI(2);ADDW(R22);DOKE(R21);
-	_SP(2+24);DEEK();_BEQ('.7');
-	CALLI('f');
-	STW(R22);
-	_BRA('.8');
-	label('.7');
-	LDI(0);STW(R22);
-	label('.8');
-	LDW(R22);STW(T2);_SP(-6+24);DEEK();STW(T3);LDW(T2);DOKE(T3);
+	_SP(2+26);DEEK();_BEQ('.9');
+	CALLI('f');STW(R21);
+	_SP(-6+26);STW(R22);
+	LDW(R21);DOKE(R22);
+	_BRA('.10');
+	label('.9');
+	_SP(-6+26);STW(R22);
+	LDI(0);DOKE(R22);
+	label('.10');
+	_SP(-6+26);DEEK();STW(T2);_SP(-8+26);DEEK();STW(T3);LDW(T2);DOKE(T3);
 	LDI(0);
-	label('.6');
+	label('.7');
 	STW(R8);_RESTORE(2, 0xff); # R0-7
-	_SP(24);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_SP(26);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
 # ======== ('CODE', 'f4', code4)
 def code4():
 	label('f4');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-8);STW(SP);
+	tryhop(4);LDW(vLR);DOKE(SP);_SP(-12);STW(SP);
 	LDI(0);STW(R19);
 	LDI(0);STW(R18);
 	LDI(0);STW(R17);
@@ -88,23 +90,24 @@ def code4():
 	LDI(0);STW(R14);
 	_LDI('i');DEEK();STW(R22);
 	LDW(R22);LSLW();LSLW();ADDW(R22);STW(R21);
-	_LDI('a');ADDW(R21);_FMOV([vAC],F11);
-	STW(T1);_SP(-5+8);_FMOV(F11,[vAC]);LDW(T1) #genspill
-	_LDI('b');ADDW(R21);_FMOV([vAC],F8);
-	_FMOV('.12',F11);
-	_SP(-5+8);_FMOV([vAC],FAC);LDI(F8);_FADD();LDI(F11);_FCMP();_BEQ('.10');
-	LDW(R22);_BEQ('.10');
-	_SP(-5+8);_FMOV([vAC],FAC);LDI(F8);_FSUB();LDI(F11);_FCMP();_BEQ('.10');
-	LDI(1);STW(R22);
-	_BRA('.11');
-	label('.10');
-	LDI(0);STW(R22);
-	label('.11');
-	_LDI('i');STW(R21);
-	LDW(R22);DOKE(R21);
+	_LDI('a');ADDW(R21);_FMOV([vAC],F10);
+	STW(T1);_SP(-5+12);_FMOV(F10,[vAC]);LDW(T1) #genspill
+	_LDI('b');ADDW(R21);_FMOV([vAC],F10);
+	STW(T1);_SP(-10+12);_FMOV(F10,[vAC]);LDW(T1) #genspill
+	_FMOV('.15',F10);
+	_SP(-5+12);_FMOV([vAC],FAC);_SP(-10+12);_FADD();LDI(F10);_FCMP();_BEQ('.13');
+	LDW(R22);_BEQ('.13');
+	_SP(-5+12);_FMOV([vAC],FAC);_SP(-10+12);_FSUB();LDI(F10);_FCMP();_BEQ('.13');
+	LDI(1);STW(R13);
+	_BRA('.14');
+	label('.13');
+	LDI(0);STW(R13);
+	label('.14');
+	_LDI('i');STW(R22);
+	LDW(R13);DOKE(R22);
 	LDI(0);
-	label('.9');
-	STW(R8);_SP(8);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	label('.11');
+	STW(R8);_SP(12);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
 # ======== ('CODE', 'f5', code5)
 def code5():
 	label('f5');
@@ -124,7 +127,7 @@ def code5():
 	LDW(R22);_FMOV([vAC],FAC);LDW(R21);_FMUL();_FMOV(FAC,F16);
 	LDW(R19);_FMOV([vAC],FAC);LDW(R20);_FMUL();LDI(F16);_FSUB();_FMOV(FAC,'x');
 	LDI(0);
-	label('.13');
+	label('.16');
 	STW(R8);LDW(R15);tryhop(5);STW(vLR);LDW(R8);RET();
 # ======== ('COMMON', 'x', code6, 5, 1)
 def code6():
@@ -173,9 +176,9 @@ def code14():
 def code15():
 	label('a');
 	space(50);
-# ======== ('DATA', '.12', code16, 0, 1)
+# ======== ('DATA', '.15', code16, 0, 1)
 def code16():
-	label('.12');
+	label('.15');
 	bytes(0,0,0,0,0); # 0
 # ======== (epilog)
 code=[
@@ -201,7 +204,7 @@ code=[
 	('COMMON', 'i', code13, 2, 2),
 	('COMMON', 'b', code14, 50, 1),
 	('COMMON', 'a', code15, 50, 1),
-	('DATA', '.12', code16, 0, 1) ]
+	('DATA', '.15', code16, 0, 1) ]
 module(code=code, name='tst/spill.c', cpu=5);
 
 # Local Variables:

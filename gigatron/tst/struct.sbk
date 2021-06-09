@@ -18,41 +18,41 @@ def code1():
 	label('canonrect');
 	tryhop(4);LDW(vLR);DOKE(SP);_SP(-10);STW(SP);
 	_SP(8+10);DEEK();STW(R22);
-	_SP(4+10);DEEK();_CMPWS(R22);_BGE('.9');
-	_SP(4+10);DEEK();STW(R22);
-	_BRA('.10');
-	label('.9');
-	_SP(8+10);DEEK();STW(R22);
+	_SP(4+10);DEEK();_CMPWS(R22);_BGE('.10');
+	_SP(4+10);DEEK();STW(R19);
+	_BRA('.11');
 	label('.10');
-	_SP(-8+10);STW(R21);
-	LDW(R22);DOKE(R21);
+	_SP(8+10);DEEK();STW(R19);
+	label('.11');
+	_SP(-8+10);STW(R22);
+	LDW(R19);DOKE(R22);
 	_SP(10+10);DEEK();STW(R22);
-	_SP(6+10);DEEK();_CMPWS(R22);_BGE('.18');
-	_SP(6+10);DEEK();STW(R22);
-	_BRA('.19');
-	label('.18');
-	_SP(10+10);DEEK();STW(R22);
-	label('.19');
-	_SP(-6+10);STW(R21);
-	LDW(R22);DOKE(R21);
+	_SP(6+10);DEEK();_CMPWS(R22);_BGE('.20');
+	_SP(6+10);DEEK();STW(R18);
+	_BRA('.21');
+	label('.20');
+	_SP(10+10);DEEK();STW(R18);
+	label('.21');
+	_SP(-6+10);STW(R22);
+	LDW(R18);DOKE(R22);
 	_SP(8+10);DEEK();STW(R22);
-	_SP(4+10);DEEK();_CMPWS(R22);_BLE('.23');
-	_SP(4+10);DEEK();STW(R22);
-	_BRA('.24');
-	label('.23');
-	_SP(8+10);DEEK();STW(R22);
-	label('.24');
-	_SP(-4+10);STW(R21);
-	LDW(R22);DOKE(R21);
+	_SP(4+10);DEEK();_CMPWS(R22);_BLE('.26');
+	_SP(4+10);DEEK();STW(R17);
+	_BRA('.27');
+	label('.26');
+	_SP(8+10);DEEK();STW(R17);
+	label('.27');
+	_SP(-4+10);STW(R22);
+	LDW(R17);DOKE(R22);
 	_SP(10+10);DEEK();STW(R22);
-	_SP(6+10);DEEK();_CMPWS(R22);_BLE('.33');
-	_SP(6+10);DEEK();STW(R22);
-	_BRA('.34');
-	label('.33');
-	_SP(10+10);DEEK();STW(R22);
-	label('.34');
-	_SP(-2+10);STW(R21);
-	LDW(R22);DOKE(R21);
+	_SP(6+10);DEEK();_CMPWS(R22);_BLE('.37');
+	_SP(6+10);DEEK();STW(R16);
+	_BRA('.38');
+	label('.37');
+	_SP(10+10);DEEK();STW(R16);
+	label('.38');
+	_SP(-2+10);STW(R22);
+	LDW(R16);DOKE(R22);
 	LDW(R8);STW(T2);_SP(-8+10);_BMOV([vAC],[T2],8)
 	label('.5');
 	_SP(10);STW(SP);DEEK();tryhop(3);STW(vLR);RET();
@@ -65,7 +65,7 @@ def code2():
 	_SP(-2+6);STW(R22);
 	LDW(R10);DOKE(R22);
 	LDW(R8);STW(T2);_SP(-4+6);_BMOV([vAC],[T2],4)
-	label('.35');
+	label('.39');
 	_SP(6);STW(SP);DEEK();tryhop(3);STW(vLR);RET();
 # ======== ('CODE', 'makerect', code3)
 def code3():
@@ -77,7 +77,7 @@ def code3():
 	LDW(R7);STW(R8);
 	_SP(4);STW(T2);_SP(-8+22);_BMOV([vAC],[T2],8);
 	CALLI('canonrect');
-	label('.38');
+	label('.42');
 	_RESTORE(12, 0x80); # R7
 	_SP(22);STW(SP);DEEK();tryhop(3);STW(vLR);RET();
 # ======== ('CODE', 'ptinrect', code4)
@@ -86,20 +86,20 @@ def code4():
 	tryhop(4);LDW(vLR);STW(R20);
 	_SP(2+0);DEEK();STW(R22);
 	_SP(6+0);DEEK();STW(R21);
-	LDW(R22);_CMPWS(R21);_BLT('.48');
+	LDW(R22);_CMPWS(R21);_BLT('.53');
 	_SP(10+0);DEEK();STW(R21);
-	LDW(R22);_CMPWS(R21);_BGE('.48');
+	LDW(R22);_CMPWS(R21);_BGE('.53');
 	_SP(8+0);DEEK();STW(R22);
-	_SP(4+0);DEEK();_CMPWS(R22);_BLT('.48');
+	_SP(4+0);DEEK();_CMPWS(R22);_BLT('.53');
 	_SP(12+0);DEEK();STW(R22);
-	_SP(4+0);DEEK();_CMPWS(R22);_BGE('.48');
-	LDI(1);STW(R22);
-	_BRA('.49');
-	label('.48');
-	LDI(0);STW(R22);
-	label('.49');
-	LDW(R22);
-	label('.41');
+	_SP(4+0);DEEK();_CMPWS(R22);_BGE('.53');
+	LDI(1);STW(R19);
+	_BRA('.54');
+	label('.53');
+	LDI(0);STW(R19);
+	label('.54');
+	LDW(R19);
+	label('.45');
 	STW(R8);LDW(R20);tryhop(5);STW(vLR);LDW(R8);RET();
 # ======== ('DATA', 'y', code5, 3, 1)
 def code5():
@@ -111,30 +111,30 @@ def code6():
 	label('odd');
 	tryhop(4);LDW(vLR);DOKE(SP);_SP(-10);STW(SP);
 	_SP(-3+10);STW(T2);_SP(2+10);_BMOV([vAC],[T2],3)
-	_LDI('.51');STW(R8);
+	_LDI('.56');STW(R8);
 	_SP(2);_MOV(R8,[vAC]);
 	_SP(-3+10);STW(R9);
 	_SP(4);_MOV(R9,[vAC]);
 	CALLI('printf');
 	LDI(0);
-	label('.50');
+	label('.55');
 	STW(R8);_SP(10);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
-# ======== ('DATA', '.53', code7, 0, 2)
+# ======== ('DATA', '.58', code7, 0, 2)
 def code7():
 	align(2);
-	label('.53');
+	label('.58');
 	words(0); # 0
 	words(0); # 0
-# ======== ('DATA', '.54', code8, 0, 2)
+# ======== ('DATA', '.59', code8, 0, 2)
 def code8():
 	align(2);
-	label('.54');
+	label('.59');
 	words(320); # 320
 	words(320); # 320
-# ======== ('DATA', '.55', code9, 0, 2)
+# ======== ('DATA', '.60', code9, 0, 2)
 def code9():
 	align(2);
-	label('.55');
+	label('.60');
 	words(65535); # -1
 	words(65535); # -1
 	words(1); # 1
@@ -147,9 +147,9 @@ def code9():
 def code10():
 	label('main');
 	tryhop(4);LDW(vLR);DOKE(SP);_SP(-68);STW(SP);_SAVE(14, 0x80); # R7
-	_SP(-32+68);STW(T2);_BMOV('.53',[T2],4)
-	_SP(-36+68);STW(T2);_BMOV('.54',[T2],4)
-	_SP(-16+68);STW(T2);_BMOV('.55',[T2],16)
+	_SP(-32+68);STW(T2);_BMOV('.58',[T2],4)
+	_SP(-36+68);STW(T2);_BMOV('.59',[T2],4)
+	_SP(-16+68);STW(T2);_BMOV('.60',[T2],16)
 	_SP(-40+68);STW(R8);
 	_LDI(-10);STW(R22);
 	LDW(R22);STW(R9);
@@ -174,15 +174,15 @@ def code10():
 	_SP(8);STW(T2);_SP(-52+68);_BMOV([vAC],[T2],4);
 	CALLI('makerect');
 	LDI(0);STW(R7);
-	_BRA('.59');
-	label('.56');
+	_BRA('.64');
+	label('.61');
 	_SP(-28+68);STW(R8);
 	LDW(R7);_SHLI(2);STW(R22);
 	_SP(-16+68);ADDW(R22);DEEK();STW(R9);
 	_SP(-14+68);ADDW(R22);DEEK();STW(R10);
 	_SP(6);_MOV(R10,[vAC]);
 	CALLI('makepoint');
-	_LDI('.60');STW(R8);
+	_LDI('.65');STW(R8);
 	_SP(2);_MOV(R8,[vAC]);
 	_SP(-16+68);STW(R22);
 	LDW(R7);_SHLI(2);ADDW(R22);DEEK();STW(R9);
@@ -193,12 +193,12 @@ def code10():
 	_SP(2);STW(T2);_SP(-28+68);_BMOV([vAC],[T2],4);
 	_SP(6);STW(T2);_SP(-24+68);_BMOV([vAC],[T2],8);
 	CALLI('ptinrect');
-	_BNE('.63');
-	_LDI('.65');STW(R8);
+	_BNE('.68');
+	_LDI('.70');STW(R8);
 	_SP(2);_MOV(R8,[vAC]);
 	CALLI('printf');
-	label('.63');
-	_LDI('.66');STW(R8);
+	label('.68');
+	_LDI('.71');STW(R8);
 	_SP(2);_MOV(R8,[vAC]);
 	_SP(-24+68);DEEK();STW(R9);
 	_SP(4);_MOV(R9,[vAC]);
@@ -209,37 +209,37 @@ def code10():
 	_SP(-18+68);DEEK();STW(R12);
 	_SP(10);_MOV(R12,[vAC]);
 	CALLI('printf');
-	label('.57');
+	label('.62');
 	LDI(1);ADDW(R7);STW(R7);
-	label('.59');
-	LDW(R7);_CMPIU(4);_BLT('.56');
+	label('.64');
+	LDW(R7);_CMPIU(4);_BLT('.61');
 	_SP(2);STW(T2);_BMOV('y',[T2],3);
 	CALLI('odd');
 	LDI(0);STW(R8);
 	_SP(2);_MOV(R8,[vAC]);
 	CALLI('exit');
 	LDI(0);
-	label('.52');
+	label('.57');
 	STW(R8);_RESTORE(14, 0x80); # R7
 	_SP(68);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
-# ======== ('DATA', '.66', code11, 0, 1)
+# ======== ('DATA', '.71', code11, 0, 1)
 def code11():
-	label('.66');
+	label('.71');
 	bytes(119,105,116,104,105,110,32,91);
 	bytes(37,100,44,37,100,59,32,37);
 	bytes(100,44,37,100,93,10,0);
-# ======== ('DATA', '.65', code12, 0, 1)
+# ======== ('DATA', '.70', code12, 0, 1)
 def code12():
-	label('.65');
+	label('.70');
 	bytes(110,111,116,32,0);
-# ======== ('DATA', '.60', code13, 0, 1)
+# ======== ('DATA', '.65', code13, 0, 1)
 def code13():
-	label('.60');
+	label('.65');
 	bytes(40,37,100,44,37,100,41,32);
 	bytes(105,115,32,0);
-# ======== ('DATA', '.51', code14, 0, 1)
+# ======== ('DATA', '.56', code14, 0, 1)
 def code14():
-	label('.51');
+	label('.56');
 	bytes(37,115,10,0);
 # ======== (epilog)
 code=[
@@ -257,17 +257,17 @@ code=[
 	('DATA', 'y', code5, 3, 1),
 	('EXPORT', 'odd'),
 	('CODE', 'odd', code6),
-	('DATA', '.53', code7, 0, 2),
-	('DATA', '.54', code8, 0, 2),
-	('DATA', '.55', code9, 0, 2),
+	('DATA', '.58', code7, 0, 2),
+	('DATA', '.59', code8, 0, 2),
+	('DATA', '.60', code9, 0, 2),
 	('EXPORT', 'main'),
 	('CODE', 'main', code10),
 	('IMPORT', 'exit'),
 	('IMPORT', 'printf'),
-	('DATA', '.66', code11, 0, 1),
-	('DATA', '.65', code12, 0, 1),
-	('DATA', '.60', code13, 0, 1),
-	('DATA', '.51', code14, 0, 1) ]
+	('DATA', '.71', code11, 0, 1),
+	('DATA', '.70', code12, 0, 1),
+	('DATA', '.65', code13, 0, 1),
+	('DATA', '.56', code14, 0, 1) ]
 module(code=code, name='tst/struct.c', cpu=5);
 
 # Local Variables:

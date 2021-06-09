@@ -9,14 +9,14 @@
 */
 
 
-static wchar_t ctow(char c)
+static wchar_t ctow(register char c)
 {
 	if ((c & 0xfc) == 0x80)
 		return 0x2190u + (c & 3);
 	return c;
 }
 
-static int wtoc(wchar_t w)
+static int wtoc(register wchar_t w)
 {
 	if (w >> 8) {
 		if ((w & 0xfffcU) == 0x2190)
@@ -29,7 +29,7 @@ static int wtoc(wchar_t w)
 	}
 }
 
-int mblen(const char *s, size_t n)
+int mblen(register const char *s, register size_t n)
 {
 	if (s == 0 || *s == 0)
 		return 0;
@@ -38,7 +38,7 @@ int mblen(const char *s, size_t n)
 	return 1;
 }
 
-int mbtowc(wchar_t *pwc, const char *s, size_t n)
+int mbtowc(register wchar_t *pwc, register const char *s, register size_t n)
 {
 	if (n <= 0)
 		return -1;
@@ -49,7 +49,7 @@ int mbtowc(wchar_t *pwc, const char *s, size_t n)
 	return 1;
 }
 
-int wctomb(char *s, wchar_t wc)
+int wctomb(register char *s, register wchar_t wc)
 {
 	int c = wtoc(wc);
 	if (s == 0)
@@ -61,12 +61,12 @@ int wctomb(char *s, wchar_t wc)
 }
 
 
-size_t mbstowcs(wchar_t *d, const char *s, size_t n)
+size_t mbstowcs(register wchar_t *d, register const char *s, register size_t n)
 {
 	size_t r = 0;
 	if (s != 0) {
 		while (*s && r < n) {
-			if (d) { *d++ = ctow(*s); }
+			if (d) { *d = ctow(*s); d++; }
 			r += 1, s += 1;
 		}
 	}

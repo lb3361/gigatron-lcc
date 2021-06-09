@@ -384,7 +384,7 @@ Tree condtree(Tree e, Tree l, Tree r) {
 		else if (l && l->op == COND && l->u.sym)
 			t1 = l->u.sym;
 		else
-			t1 = temporary(REGISTER, unqual(ty));
+			t1 = genident(REGISTER, unqual(ty), level);
 		l = asgn(t1, l);
 		r = asgn(t1, r);
 	} else

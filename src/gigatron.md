@@ -762,12 +762,12 @@ stmt: JUMPV(ac)    "\t%0CALL(vAC);\n" 14
 
 
 # More opcodes for cpu=5
-stmt: ASGNU1(zddr, LOADU1(ADDI2(CVUI2(INDIRU1(zddr)), con1)))  "\tINC(%1);\n" if_rmw1(a,16)
-stmt: ASGNI1(zddr, LOADI1(ADDI2(CVII2(INDIRI1(zddr)), con1)))  "\tINC(%1);\n" if_rmw1(a,16)
+stmt: ASGNU1(zddr, LOADU1(ADDI2(CVUI2(INDIRU1(zddr)), con1))) "\tINC(%1);\n" if_rmw1(a,16)
+stmt: ASGNI1(zddr, LOADI1(ADDI2(CVII2(INDIRI1(zddr)), con1))) "\tINC(%1);\n" if_rmw1(a,16)
 
 # More opcodes for cpu=6
-stmt: ASGNU1(zddr, LOADU1(SUBI2(CVUI2(INDIRU1(zddr)), con1)))  "\tDEC(%1);\n" mincpu6(if_rmw1(a,16))
-stmt: ASGNI1(zddr, LOADI1(SUBI2(CVII2(INDIRI1(zddr)), con1)))  "\tDEC(%1);\n" mincpu6(if_rmw1(a,16))
+stmt: ASGNU1(zddr, LOADU1(SUBI2(CVUI2(INDIRU1(zddr)), con1))) "\tDEC(%1);\n" mincpu6(if_rmw1(a,16))
+stmt: ASGNI1(zddr, LOADI1(SUBI2(CVII2(INDIRI1(zddr)), con1))) "\tDEC(%1);\n" mincpu6(if_rmw1(a,16))
 stmt: ASGNP2(zddr, ADDP2(INDIRP2(zddr), con1)) "\tINCW(%1);\n" mincpu6(if_rmw2(a, 26))
 stmt: ASGNU2(zddr, ADDU2(INDIRU2(zddr), con1)) "\tINCW(%1);\n" mincpu6(if_rmw2(a, 26))
 stmt: ASGNI2(zddr, ADDI2(INDIRI2(zddr), con1)) "\tINCW(%1);\n" mincpu6(if_rmw2(a, 26))
@@ -1086,6 +1086,82 @@ static void clobber(Node p)
   }
 }
 
+/* Helper for preralloc */
+static int find_tempuse_in_cover(Node n, int nt, Symbol sym, const char **lefttpl)
+{
+  Node kids[10];
+  int rulenum = (*IR->x._rule)(n->x.state, nt);
+  const short *nts = IR->x._nts[rulenum];
+  const char *template = IR->x._templates[rulenum];
+  int leftkid = -1;
+  int count = 0;
+  int i;
+
+  (*IR->x._kids)(n, rulenum, kids);
+  while (isspace(template[0]))
+    template += 1;
+  if (template[0] == '%' && isdigit(template[1]))
+    leftkid = template[1] - '0';
+  for (i=0; nts[i] && i<NELEMS(kids); i++)
+    {
+      Node k = kids[i];
+      int knt = nts[i];
+      if (generic(k->op) == INDIR && specific(k->kids[0]->op) == VREG+P
+          && knt == k->x.inst && k->kids[0]->syms[0] == sym) {
+        count += 1;
+        if (lefttpl && i == 0 && leftkid < 0)
+          *lefttpl = template;
+      } else
+        count += find_tempuse_in_cover(k, knt, sym,
+                                       (i == leftkid) ? lefttpl : 0);
+    }
+  return count;
+}
+
+/* Helper for preralloc */
+static int scan_ac_preserving_instructions(Symbol sym, Symbol r, Node q)
+{
+  /* scan instructions until finding the last use of sym */
+  for(; q != sym->x.lastuse; q = q->x.next)
+    {
+      /* Acceptable instructions here fall in two categories:
+         instructions that leave vAC/LAC/FAC unchanged, and
+         instructions that load sym into vAC/LAC/FAC. Since
+         we do not have the infrastructure to do this generally,
+         we only recognize a couple common cases. */
+      if (! q)
+        return 0;
+      if (generic(q->op)==INDIR && specific(q->kids[0]->op) == VREG+P)
+        continue; /* no code generated */
+      if (generic(q->op)==ASGN && specific(q->kids[0]->op) == VREG+P)
+        continue; /* no code generated */
+      if (generic(q->op)==LOAD && generic(q->kids[0]->op) == INDIR
+          && specific(q->kids[0]->kids[0]->op) == VREG+P
+          && q->kids[0]->kids[0]->syms[0] == sym)
+        continue;
+      /* Otherwise fail */
+      return 0;
+    }
+  if (generic(q->op)==INDIR && q->kids[0]->op == VREG+P)
+    {
+      /* We have reached the last use of symbol sym and we are
+         about to declare success by returning 1. But we still
+         have to check how the code uses sym. */
+      Node n= q->x.next;
+      const char *template = 0;
+      int count = find_tempuse_in_cover(n, n->x.nt, sym, &template);
+      if (count == 1 && template) {
+        /* Template expansion refers to sym as %0.
+           Check that %0 appears only in the first opcode. */
+        const char *p0 = strstr(template,"%0");
+        const char *p1 = strchr(template,';');
+        if (count == 1 && p0 && p1 && p0 < p1 && !strstr(p1, "%0"))
+          return 1;
+      }
+    }
+  return 0;
+}
+
 static void preralloc(Node p)
 {
   Symbol sym = p->syms[RX];
@@ -1108,45 +1184,17 @@ static void preralloc(Node p)
         r = freg[31];
       if (r && q && generic(q->op) == ASGN && q->kids[0]->op == VREG+P)
         {
-          /* check that vAC/LAC/FAC is still valid when the data is used. 
-             TODO: be aware of instrutions that preserve vAC/LAC/FAC.
-             DONE: only for single INDIR(VREGP) by the next instruction. */
-          q = q->x.next;
-          if (q == sym->x.lastuse && generic(q->op)==INDIR && q->kids[0]->op == VREG+P) {
-            /* Not done: INDIR(VREGP) does not generate code.
-               We have to make sure that actual code uses this data right away. */
-            Node n = q->x.next;
-            int nt = n->x.inst;
-            while (n) {
-              Node kids[10];
-              int rulenum = (*IR->x._rule)(n->x.state, nt);
-              const short *nts = IR->x._nts[rulenum];
-              const char *template = IR->x._templates[rulenum];
-              (*IR->x._kids)(n, rulenum, kids);
-              while (isspace(template[0]))
-                template += 1;
-              if (template[0]=='%' && template[1]>='0' && template[1]<='9') {
-                /* Follow template expansion */
-                n = kids[template[1]-'0'];
-                nt = nts[template[1]-'0'];
-                continue;
+          /* In order to use vAC/LAC/FAC instead of allocating a
+             temporary register, we must be sure that the value of
+             vAC/LAC/FAC is unchanged whenever the code needs it.*/
+          if (scan_ac_preserving_instructions(sym, r, q->x.next))
+            {
+              r->x.lastuse = sym->x.lastuse;
+              for (q = sym->x.lastuse; q; q = q->x.prevuse) {
+                q->syms[RX] = r;
+                q->x.registered = 1;
               }
-              /* Did we find lastuse? */
-              if (nts[0] && !nts[1] && kids[0] == sym->x.lastuse) {
-                /* Does the template use this datum first thing. Ad-hoc code :-( */
-                const char *p0 = strstr(template,"%0");
-                const char *p1 = strchr(template,';');
-                if (p0 && p1 && p0 < p1) {
-                  r->x.lastuse = sym->x.lastuse;
-                  for (q = sym->x.lastuse; q; q = q->x.prevuse) {
-                    q->syms[RX] = r;
-                    q->x.registered = 1;
-                  }
-                }
-              }
-              break;
             }
-          }
         }
     }
 }

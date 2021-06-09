@@ -898,9 +898,9 @@ def code22():
 	CALLI('printf');
 	label('.424');
 	label('.416');
-	_LDI('.426');STW(R22);
-	LDW(R22);STW(R4);
-	LDW(R22);STW(R5);
+	_LDI('.426');
+	STW(R4);
+	STW(R5);
 	LDI(0);STW(R0);
 	LDI(0);STW(R6);
 	_BRA('.430');
@@ -7577,9 +7577,9 @@ def code59():
 	LDI(1);ADDW(R4);STW(R4);
 	LDI(1);ADDW(R4);STW(R4);
 	LDI(1);ADDW(R4);STW(R4);
-	LDI(1);ADDW(R4);STW(R22);
-	LDW(R22);STW(R4);
-	LDW(R22);XORI(6);_BEQ('.2333');
+	LDI(1);ADDW(R4);
+	STW(R4);
+	XORI(6);_BEQ('.2333');
 	LDI(28);ADDW(R7);DEEK();_BEQ('.2335');
 	_LDI('.2328');STW(R8);
 	_SP(2);_MOV(R8,[vAC]);

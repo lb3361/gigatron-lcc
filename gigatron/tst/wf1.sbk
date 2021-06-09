@@ -71,9 +71,9 @@ def code2():
 	label('.15');
 	LDW(R6);STW(R8);
 	_SP(2);_MOV(R8,[vAC]);
-	CALLI('isletter');STW(R22);
-	LDW(R22);STW(R6);
-	LDW(R22);_BNE('.12');
+	CALLI('isletter');
+	STW(R6);
+	_BNE('.12');
 	LDI(0);POKE(R5);
 	LDW(R5);_CMPWU(R7);_BLE('.16');
 	LDI(1);

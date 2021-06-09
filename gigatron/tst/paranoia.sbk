@@ -4050,9 +4050,9 @@ def code43():
 	_SP(8);_MOV(R11,[vAC]);
 	CALLI('frexp');
 	_FMOV(FAC,F5);
-	_SP(-17+44);_FMOV([vAC],FAC);_FTOI();_LMOV(LAC,L21);
-	_LMOV(L21,L0);
-	_LMOV(L21,LAC);_LDI('.990');_LCMPX();_BEQ('.988');
+	_SP(-17+44);_FMOV([vAC],FAC);_FTOI();
+	_LMOV(LAC,L0);
+	_LDI('.990');_LCMPX();_BEQ('.988');
 	label('.991');
 	_LMOV(L0,LAC);_LDI('.997');_LAND();_LDI('.990');_LCMPX();_BEQ('.995');
 	_SP(-7+44);_FMOV([vAC],FAC);LDI(F5);_FMUL();_SP(-7+44);_FMOV(FAC,[vAC]);
@@ -4060,9 +4060,9 @@ def code43():
 	_SP(-2+44);DEEK();STW(R21);
 	_SP(-10+44);DEEK();ADDW(R21);DOKE(R22);
 	label('.995');
-	_LMOV(L0,LAC);LDI(1);_LSHRS();_LMOV(LAC,L21);
-	_LMOV(L21,L0);
-	_LMOV(L21,LAC);_LDI('.990');_LCMPX();_BNE('.998');
+	_LMOV(L0,LAC);LDI(1);_LSHRS();
+	_LMOV(LAC,L0);
+	_LDI('.990');_LCMPX();_BNE('.998');
 	_BRA('.993');
 	label('.998');
 	_FMOV(F5,FAC);LDI(F5);_FMUL();_FMOV(FAC,F5);

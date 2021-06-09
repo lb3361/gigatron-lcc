@@ -5,8 +5,6 @@
 #include <math.h>
 #include <gigatron/libc.h>
 
-#define NEXTCHAR(s) (s++,*s)  /* generates better code :-( */
-
 int _exponent(register const char **sp)
 {
 	register const char *s = *sp;
@@ -15,14 +13,14 @@ int _exponent(register const char **sp)
 	char neg = 0;
 
 	if (c == 'e' || c == 'E') {
-		c = NEXTCHAR(s);
+		c = *++s;
 		if (c == '+' || (c == '-' && (neg = 1)))
-			c = NEXTCHAR(s);
+			c = *++s;
 		if (c >= '0' && c <= '9') {
 			while (c >= '0' && c <= '9') {
 				if (exp < 1000)
 					exp = exp * 10 + c - '0';
-				c = NEXTCHAR(s);
+				c = *++s;
 			}
 			*sp = s;
 			if (neg)
@@ -44,7 +42,7 @@ double _mantissa(register const char **sp, int *pe)
 	int d = 0;
 
 	/* leading zeroes */
-	for(;; c = NEXTCHAR(s)) {
+	for(;; c = *++s) {
 		if (c == '.')
 			d = 1;
 		else if (c == '0' && d)
@@ -53,7 +51,7 @@ double _mantissa(register const char **sp, int *pe)
 			break;
 	}
 	/* mantissa */
-	for(;; c = NEXTCHAR(s)) {
+	for(;; c = *++s) {
 		if (c == '.' && !d)
 			d = 1;
 		else if (c >= '0' && c <= '9') {
@@ -84,9 +82,9 @@ double strtod(const char *nptr, char **endptr)
 	_raise_disposition = RAISE_SETS_CODE;
 	/* skip space */
 	while (isspace(c))
-		c = NEXTCHAR(s);
+		c = *++s;
 	if ((c == '+') || ((c == '-') && (neg = 1)))
-		c = NEXTCHAR(s);
+		c = *++s;
 	/* parse number */
 	if (isdigit(c) || ((c == '.') && isdigit(s[1]))) {
 		nptr = s;

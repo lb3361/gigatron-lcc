@@ -33,10 +33,11 @@ clean: FORCE
 	-rmdir ${B}${MAPDIR}
 
 install: FORCE
-	-${INSTALL} -d "${libdir}/${MAPDIR}
-	${INSTALL} -m 0755 ${B}gtsim ${libdir}/
-	${INSTALL} -m 0644 ${B}${MAPDIR}/libsim.a ${libdir}/${MAPDIR}/
-	${INSTALL} -m 0644 ${B}${MAPDIR}/map.py ${libdir}/${MAPDIR}/
+	-${INSTALL} -d "${libdir}/${MAPDIR}"
+	${INSTALL} -m 0644 "${B}${MAPDIR}/libsim.a" "${libdir}/${MAPDIR}/"
+	${INSTALL} -m 0644 "${B}${MAPDIR}/map.py" "${libdir}/${MAPDIR}/"
+	${INSTALL} -m 0755 "${B}gtsim" "${libdir}/"
+	${LN_S} ${libdir}/gtsim ${bindir}/gtsim
 
 test: FORCE
 

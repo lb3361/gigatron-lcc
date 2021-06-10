@@ -31,6 +31,9 @@ clean: lcc-clean gigatron-clean subdirs-clean build-dir-clean
 install: all gigatron-install subdirs-install
 
 test: all glcc-test subdirs-test
+	@echo "+----------------------------------+"
+	@echo "|  Test sequence ran successfully! |"
+	@echo "+----------------------------------+"
 
 build-dir: FORCE
 	-mkdir -p ${BUILDDIR}
@@ -68,17 +71,17 @@ gigatron-clean: FORCE
 
 gigatron-install: FORCE
 	-${INSTALL} -d ${libdir}
-	${INSTALL} -m 755 ${B}cpp ${libdir}/cpp
-	${INSTALL} -m 755 ${B}rcc ${libdir}/rcc
-	${INSTALL} -m 755 ${B}lcc ${libdir}/lcc
+	${INSTALL} -m 755 "${B}cpp" "${libdir}/cpp"
+	${INSTALL} -m 755 "${B}rcc" "${libdir}/rcc"
+	${INSTALL} -m 755 "${B}lcc" "${libdir}/lcc"
 	for n in ${FILES}; do \
 	    mode=644; test -x "$$n" && mode=755 ; \
 	    ${INSTALL} -m $$mode "$$n" ${libdir}/ ; done
 	-${INSTALL} -d "${libdir}/include"
-	for n in "${B}include"/*,h ; do \
+	for n in "${B}include/"*.h ; do \
 	    ${INSTALL} -m 0644 "$$n" "${libdir}/include/" ; done
 	-${INSTALL} -d "${libdir}/include/gigatron"
-	for n in "${B}include/gigatron"/*,h ; do \
+	for n in "${B}include/gigatron/"*.h ; do \
 	    ${INSTALL} -m 0644 "$$n" "${libdir}/include/gigatron/" ; done
 	-${INSTALL} -d ${bindir}
 	${LN_S} ${libdir}/glcc ${bindir}/glcc

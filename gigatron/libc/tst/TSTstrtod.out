@@ -8,7 +8,7 @@ strtod("429496.7296") = 429496.73, delta=+11 errno=0
 strtod("-0377") = -377, delta=+5 errno=0
 strtod("+3000000000e10") = 3e+19, delta=+14 errno=0
 strtod("-3000000000e10") = -3e+19, delta=+14 errno=0
-strtod(" 17e499 overflow") = 1.7014118e+38, delta=+7 errno=34
+strtod(" 17e499 overflow") = 1.7014118e+38, delta=+7 errno=2
 strtod(" 17e-499 underflow (should set errno but doesn't)") = 0, delta=+8 errno=0
 strtod("83928038989809890809") = 8.3928039e+19, delta=+20 errno=0
 strtod("0.00000000000000000000000000000000000000001e30") = 9.9999999e-12, delta=+46 errno=0

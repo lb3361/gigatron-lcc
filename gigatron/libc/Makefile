@@ -24,7 +24,7 @@ O6FILES=${patsubst %.c,${BL}%_6.o,${CFILES}}
 OFILES=${O4FILES} ${O5FILES} ${O6FILES}
 RFILES=$(wildcard ../runtime/*.s)
 
-all: ${B}cpu4/libc.a ${B}cpu5/libc.a ${B}cpu6/libc.a
+all: ${B}cpu4/libc.a ${B}cpu5/libc.a 
 
 ${B}cpu4/libc.a: ${SFILES} ${O4FILES} ${RFILES}
 	-@mkdir -p ${B}cpu4
@@ -59,10 +59,10 @@ clean: FORCE
 	-rmdir ${BL}
 
 install: FORCE
-	for cpu in 4 5 6; do \
+	for cpu in 4 5 6; do if test -d ${B}cpu$$cpu; then \
 	  ${INSTALL} -d ${libdir}/cpu$$cpu/ ; \
 	  ${INSTALL} -m 644 ${B}cpu$$cpu/libc.a ${libdir}/cpu$$cpu/libc.a ; \
-	done
+	fi; done
 
 
 TSTCFILES=$(wildcard tst/TST*.c)

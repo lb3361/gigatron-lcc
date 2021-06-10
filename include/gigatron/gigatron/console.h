@@ -2,7 +2,7 @@
 #define __GIGATRON_CONSOLE
 
 /* default gigatron colors */
-#define CONSOLE_COLOR_DEFAULT 0x3f20
+#define CONSOLE_DEFAULT_FGBG 0x3f20
 
 /* for getkey/waitkey */
 #define KEY_LEFT     0x80
@@ -23,7 +23,7 @@ extern void console_set_fgbg(int fgbg);
 extern int  console_set_xy(int x, int y);
 
 extern void console_clear_screen(void);
-extern void console_clear_line(int y)
+extern void console_clear_line(int y);
 extern void console_scroll(int y1, int y2, int s);
 extern void console_printxy(int x, int y, const char *s, int len);
 extern void console_print(const char *s, int len);
@@ -34,10 +34,11 @@ extern int  console_readline(char *buffer, int n);
 
 /* -------- implementation ----------- */
 
-extern void  _console_setup(void);
-extern char* _console_addr(int x, int y);
-extern int   _console_printchars(char *addr, int len);
-extern int (*_console_ctrlfunc[32])(int);
+extern void   _console_setup(void);
+extern char  *_console_addr(int x, int y);
+extern int    _console_printchars(int fgbg, char *addr, const char *s, int len);
+extern void (*_console_nextfunc)(int);
+extern int  (*_console_ctrlfunc[32])(int);
 
 
 

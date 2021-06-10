@@ -1,6 +1,5 @@
 #include <string.h>
-
-extern const void* _memchr2(const void*, char, char, size_t);
+#include <gigatron/libc.h>
 
 char *
 strchr(register const char *p, register int ch)

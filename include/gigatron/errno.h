@@ -4,12 +4,16 @@
 extern int errno;
 
 /* ANSI C errors */
-#define EDOM	 33
-#define ERANGE	 34
+#define EDOM	 1
+#define ERANGE	 2
 
 /* Other errors */
-#define ENOTIMPL 35
-#define EINVAL   36
-
+#define EINVAL    3
+#define ENOENT    4
+#define ENOTDIR   5
+#define ENFILE    6
+#define ENOMEM    7
+#define EIO       8
+#define ENOTSUP   9
 
 #endif /* __ERRNO */

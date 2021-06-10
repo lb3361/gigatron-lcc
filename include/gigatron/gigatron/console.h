@@ -1,7 +1,6 @@
 #ifndef __GIGATRON_CONSOLE
 #define __GIGATRON_CONSOLE
 
-
 /* default gigatron colors */
 #define CONSOLE_COLOR_DEFAULT 0x3f20
 
@@ -18,15 +17,28 @@
 extern int  console_get_fgbg(void);
 extern int  console_get_x(void);
 extern int  console_get_y(void);
+extern void console_get_width(void);
+extern void console_get_height(void);
 extern void console_set_fgbg(int fgbg);
 extern int  console_set_xy(int x, int y);
-extern void console_home(void);
+
+extern void console_clear_screen(void);
 extern void console_clear_line(int y)
 extern void console_scroll(int y1, int y2, int s);
 extern void console_printxy(int x, int y, const char *s, int len);
 extern void console_print(const char *s, int len);
+
 extern int  console_waitkey();
 extern int  console_getkey();
-	
+extern int  console_readline(char *buffer, int n);
+
+/* -------- implementation ----------- */
+
+extern void  _console_setup(void);
+extern char* _console_addr(int x, int y);
+extern int   _console_printchars(char *addr, int len);
+extern int (*_console_ctrlfunc[32])(int);
+
+
 
 #endif

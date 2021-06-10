@@ -100,7 +100,6 @@
 #define ctrlBits_v5           (*(unsigned char*)(0x01f8))  // unsigned char  ctrlBits_v5;
 
 
-
 /* ---- Calling SYS functions ---- */
 
 /* All stubs are in gigatron/libc/gigatron.s */
@@ -109,16 +108,13 @@
 int SYS_Lup(unsigned int addr);
 #define has_SYS_Lup() 1
 
-
 /* -- SYS_Random -- */
 unsigned int SYS_Random(void);
 #define has_SYS_Random() 1
 
-
 /* -- SYS_VDrawBits -- */
 void SYS_VDrawBits(int fgbg, char bits, char *address);
 #define has_SYS_VDrawBits() 1
-
 
 /* -- SYS_ExpanderControl --
    Notes: Calling this from C is risky.
@@ -127,7 +123,6 @@ void SYS_VDrawBits(int fgbg, char bits, char *address);
 void SYS_ExpanderControl(unsigned int ctrl);
 #define has_SYS_ExpanderControl()					\
 	(((romType & 0xfc) >= romTypeValue_ROMv5) && (ctrlBits_v5 != 0))
-
 
 /* -- SYS_SpiExchangeBytes --
    Notes: This exists in v4 but depends on 0x81 containing ctrlBits.

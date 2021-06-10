@@ -1,8 +1,5 @@
 #include <string.h>
-
-    
-    
-extern void *_memchr2(const void *s, char c0, char c1, size_t n);
+#include <gigatron/libc.h>
 
 size_t strlen(register const char *s)
 {

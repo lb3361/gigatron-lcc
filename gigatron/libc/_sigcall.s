@@ -44,14 +44,6 @@ def code2():
     POP();LDLW(0);STW(T1);LDLW(2);STW(T2);LDLW(4);STW(T3);ALLOC(8)
     LDWI(0x400);LUP(0)
 
-def code3():
-    '''set vIRQ handler (provided rom supports it)'''
-    nohop()
-    label('_set_virq_handler')
-    if 'has_vIRQ' in rominfo:
-        LDWI('vIRQ_v5');STW(T3);LDW(R8);DOKE(T3)
-    RET()
-    
 code=[
     ('IMPORT', '_sigcall'),
     ('IMPORT', '_@_wcopy'),
@@ -60,8 +52,7 @@ code=[
     ('EXPORT', '_set_virq_handler'),
     ('CODE', '_raise_emits_signal', code0),
     ('CODE', '_virq_handler', code1),
-    ('CODE', '.rti', code2),
-    ('CODE', '_set_virq_handler', code3) ]
+    ('CODE', '.rti', code2) ] 
 
 module(code=code, name='_sigcall.s');
 

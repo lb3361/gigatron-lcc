@@ -1,6 +1,6 @@
 #include <math.h>
-#include <gigatron/math.h>
-
+#include <errno.h>
+#include <gigatron/libc.h>
 
 static double sqrt1(register double x, register double u)
 {
@@ -21,6 +21,7 @@ double sqrt(register double x)
 		return sqrt1(x, ldexp(frexp(x, &exp), exp>>2));
 	}
 	if (x < 0) {
+		errno = EDOM;
 		return _fexception(-1.0);
 	}
 	return 0.0;

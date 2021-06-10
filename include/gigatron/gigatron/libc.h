@@ -57,8 +57,12 @@ extern int _raise_code;
 /* This is the vIRQ handler than emits SIGIRQ. Do not call. */
 extern void _virq_handler(void);
 
-/* Convenience function to set virq on roms that support it. */
-extern void _set_virq_handler(void(*)(void));
+/* Raise a SIGFPE exception and return defval if the exception is ignored.
+   If a signal handler for SIGFPE has been setup, these functions
+   return what the signal handler returns. */
+extern double _fexception(double defval);
+extern double _foverflow(double defval);
+
 
 /* ---- Misc ---- */
 
@@ -68,7 +72,7 @@ extern void _srand(void);
 /* Scans memory region [s,s+n) and return a pointer to the first byte 
    equal to either c0 or c1. Return zero if not found. 
    This is fast when there is a SYS call. */
-extern void *_memchr2(void *s, char c0, char c1, size_t n);
+extern void *_memchr2(const void *s, char c0, char c1, size_t n);
 
 /* Copy a block of memory [src,src+n) from the current address space
    into block [dst,dst+n) in the address space one gets when the bits

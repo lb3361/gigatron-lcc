@@ -12,7 +12,7 @@ const struct console_info_s console_info = { 15, 26 };
 static void reset()
 {
 	int i;
-	unsigned int *table = videoTable;
+	unsigned int *table = (unsigned int*)videoTable;
 	unsigned int page = (unsigned int)screenMemory >> 8;
 	for (i=0; i!=120; i++, table++, page++)
 		*table = page;
@@ -21,10 +21,9 @@ static void reset()
 
 char  *_console_addr(int x, int y)
 {
-	register unsigned char *table = videoTable;
 	if (y >= 0 && y < console_info.nlines &&
 	    x >= 0 && x < console_info.ncolumns )
-		return (char*)(table[y*16]<<8) + 6 * x;
+		return (char*)(videoTable[y*16]<<8) + 6 * x;
 	return 0;
 }
 
@@ -51,7 +50,6 @@ void console_clear_line(register int y)
 
 static int scroll0(int y1, int y2, int n, int s)
 {
-	register char *table = videoTable;
 	register int d = y2 - y1;
 	if (n >= y1 && n < y2) {
 		n += s;
@@ -60,7 +58,7 @@ static int scroll0(int y1, int y2, int n, int s)
 		while (n - y2 >= 0)
 			n -= d;
 	}
-	return table[n * 16];
+	return videoTable[n * 16];
 }
 
 static void scroll1(char *pages, int y1, int y2, int s)

@@ -89,13 +89,13 @@
 #define v6502_X               (*(byte*)(0x002a)) // byte v6502_X;
 #define v6502_Y               (*(byte*)(0x002b)) // byte v6502_Y;
 
-#define videoTable            ( (void*)(0x0100)) // void *videoTable;
+#define videoTable            ( (byte*)(0x0100)) // byte *videoTable;
 #define vReset         ((void(*)(void))(0x01f0)) // void  vReset(void);
 #define vIRQ_v5               (*(word*)(0x01f6)) // word  vIRQ_v5;
 #define videoTop_v5           (*(byte*)(0x01f9)) // byte  videoTop_v5;
 #define userCode              ( (void*)(0x0200)) // void *userCode;
 #define soundTable            ( (void*)(0x0700)) // byte  soundTable[]
-#define screenMemory          ( (void*)(0x0800)) // void *screenMemory[]
+#define screenMemory          ( (byte*)(0x0800)) // byte *screenMemory[]
 
 #define channel1              ( (byte*)(0x0100)) // byte  channel1[]
 #define channel2              ( (byte*)(0x0200)) // byte  channel2[]

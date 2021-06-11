@@ -39,65 +39,73 @@
 
 /* ---- Well known memory locations from interface.json ---- */
 
-#define zeroConst             (*(unsigned char*)(0x0000)) // unsigned char zeroConst;
-#define memSize               (*(unsigned char*)(0x0001)) // unsigned char memSize;
-#define entropy               ( (unsigned char*)(0x0006)) // unsigned char entropy[3];
-#define videoY                (*(unsigned char*)(0x0009)) // unsigned char videoY;
-#define frameCount            (*(unsigned char*)(0x000e)) // unsigned char frameCount;
-#define serialRaw             (*(unsigned char*)(0x000f)) // unsigned char serialRaw;
-#define buttonState           (*(unsigned char*)(0x0011)) // unsigned char buttonState;
-#define xoutMask              (*(unsigned char*)(0x0014)) // unsigned char xoutMask;
-#define vPC                   (*(unsigned int* )(0x0016)) // unsigned int  vPC;
-#define vPCL                  (*(unsigned char*)(0x0016)) // unsigned char vPCL;
-#define vPCH                  (*(unsigned char*)(0x0017)) // unsigned char vPCH;
-#define vAC                   (*(unsigned int* )(0x0018)) // unsigned int  vAC;
-#define vACL                  (*(unsigned char*)(0x0018)) // unsigned char vACL;
-#define vACH                  (*(unsigned char*)(0x0019)) // unsigned char vACH;
-#define vLR                   (*(unsigned int* )(0x001a)) // unsigned int  vLR;
-#define vLRL                  (*(unsigned char*)(0x001a)) // unsigned char vLRL;
-#define vLRH                  (*(unsigned char*)(0x001b)) // unsigned char vLRH;
-#define vSP                   (*(unsigned char*)(0x001c)) // unsigned char vSP;
-#define romType               (*(unsigned char*)(0x0021)) // unsigned char romType;
-#define channelMask_v4        (*(unsigned char*)(0x0021)) // unsigned char channelMask_v4;
-#define sysFn                 (*(unsigned int *)(0x0022)) // unsigned int  sysFn;
-#define sysArgs0              (*(unsigned char*)(0x0024)) // unsigned char sysArgs0;
-#define sysArgs1              (*(unsigned char*)(0x0025)) // unsigned char sysArgs1;
-#define sysArgs2              (*(unsigned char*)(0x0026)) // unsigned char sysArgs2;
-#define sysArgs3              (*(unsigned char*)(0x0027)) // unsigned char sysArgs3;
-#define sysArgs4              (*(unsigned char*)(0x0028)) // unsigned char sysArgs4;
-#define sysArgs5              (*(unsigned char*)(0x0029)) // unsigned char sysArgs5;
-#define sysArgs6              (*(unsigned char*)(0x002a)) // unsigned char sysArgs6;
-#define sysArgs7              (*(unsigned char*)(0x002b)) // unsigned char sysArgs7;
-#define soundTimer            (*(unsigned char*)(0x002c)) // unsigned char soundTimer;
-#define ledState_v2           (*(unsigned char*)(0x002e)) // unsigned char ledState;
-#define ledTempo              (*(unsigned char*)(0x002f)) // unsigned char ledTempo;
-#define userVars              ( (unsigned char*)(0x0030)) // unsigned char *userVars;
-#define oneConst              (*(unsigned char*)(0x0080)) // unsigned char oneConst;
-#define userVars2             ( (unsigned char*)(0x0081)) // unsigned char *userVars2;
-#define v6502_PC              (*(unsigned int *)(0x001a)) // unsigned int  v6502_PC;
-#define v6502_PCL             (*(unsigned char*)(0x001a)) // unsigned char v6502_PCL;
-#define v6502_PCH             (*(unsigned char*)(0x001b)) // unsigned char v6502_PCH;
-#define v6502_A               (*(unsigned char*)(0x0018)) // unsigned char v6502_A;
-#define v6502_X               (*(unsigned char*)(0x002a)) // unsigned char v6502_X;
-#define v6502_Y               (*(unsigned char*)(0x002b)) // unsigned char v6502_Y;
+#ifdef __CHAR_UNSIGNED__
+# define byte char
+# define word unsigned int
+#else
+# define byte unsigned char
+# define word unsigned int
+#endif
 
-#define videoTable            ( (unsigned char*)(0x0100))  // unsigned char *videoTable;
-#define vReset                ( (void (*)(void))(0x01f0))  // void           vReset(void);
-#define vIRQ_v5               (*(unsigned int *)(0x01f6))  // unsigned int  *vIRQ_v5;
-#define videoTop_v5           (*(unsigned char*)(0x01f9))  // unsigned char  videoTop_v5;
-#define userCode              ( (unsigned char*)(0x0200))  // unsigned char *userCode;
-#define soundTable            ( (unsigned char*)(0x0700))  // unsigned char  soundTable[]
-#define screenMemory          ( (unsigned char*)(0x0800))  // unsigned char  screenMemory[]
+#define zeroConst             (*(byte*)(0x0000)) // byte zeroConst;
+#define memSize               (*(byte*)(0x0001)) // byte memSize;
+#define entropy               ( (byte*)(0x0006)) // byte entropy[3];
+#define videoY                (*(byte*)(0x0009)) // byte videoY;
+#define frameCount            (*(byte*)(0x000e)) // byte frameCount;
+#define serialRaw             (*(byte*)(0x000f)) // byte serialRaw;
+#define buttonState           (*(byte*)(0x0011)) // byte buttonState;
+#define xoutMask              (*(byte*)(0x0014)) // byte xoutMask;
+#define vPC                   (*(word*)(0x0016)) // word vPC;
+#define vPCL                  (*(byte*)(0x0016)) // byte vPCL;
+#define vPCH                  (*(byte*)(0x0017)) // byte vPCH;
+#define vAC                   (*(word*)(0x0018)) // word vAC;
+#define vACL                  (*(byte*)(0x0018)) // byte vACL;
+#define vACH                  (*(byte*)(0x0019)) // byte vACH;
+#define vLR                   (*(word*)(0x001a)) // word vLR;
+#define vLRL                  (*(byte*)(0x001a)) // byte vLRL;
+#define vLRH                  (*(byte*)(0x001b)) // byte vLRH;
+#define vSP                   (*(byte*)(0x001c)) // byte vSP;
+#define romType               (*(byte*)(0x0021)) // byte romType;
+#define channelMask_v4        (*(byte*)(0x0021)) // byte channelMask_v4;
+#define sysFn                 (*(word*)(0x0022)) // word sysFn;
+#define sysArgs0              (*(byte*)(0x0024)) // byte sysArgs0;
+#define sysArgs1              (*(byte*)(0x0025)) // byte sysArgs1;
+#define sysArgs2              (*(byte*)(0x0026)) // byte sysArgs2;
+#define sysArgs3              (*(byte*)(0x0027)) // byte sysArgs3;
+#define sysArgs4              (*(byte*)(0x0028)) // byte sysArgs4;
+#define sysArgs5              (*(byte*)(0x0029)) // byte sysArgs5;
+#define sysArgs6              (*(byte*)(0x002a)) // byte sysArgs6;
+#define sysArgs7              (*(byte*)(0x002b)) // byte sysArgs7;
+#define soundTimer            (*(byte*)(0x002c)) // byte soundTimer;
+#define ledState_v2           (*(byte*)(0x002e)) // byte ledState;
+#define ledTempo              (*(byte*)(0x002f)) // byte ledTempo;
+#define userVars              ( (byte*)(0x0030)) // byte *userVars;
+#define oneConst              (*(byte*)(0x0080)) // byte oneConst;
+#define userVars2             ( (byte*)(0x0081)) // byte *userVars2;
+#define v6502_PC              (*(word*)(0x001a)) // word v6502_PC;
+#define v6502_PCL             (*(byte*)(0x001a)) // byte v6502_PCL;
+#define v6502_PCH             (*(byte*)(0x001b)) // byte v6502_PCH;
+#define v6502_A               (*(byte*)(0x0018)) // byte v6502_A;
+#define v6502_X               (*(byte*)(0x002a)) // byte v6502_X;
+#define v6502_Y               (*(byte*)(0x002b)) // byte v6502_Y;
 
-#define channel1              ( (unsigned char*)(0x0100))  // unsigned char  channel1[]
-#define channel2              ( (unsigned char*)(0x0200))  // unsigned char  channel2[]
-#define channel3              ( (unsigned char*)(0x0300))  // unsigned char  channel3[]
-#define channel4              ( (unsigned char*)(0x0400))  // unsigned char  channel4[]
+#define videoTable            ( (void*)(0x0100)) // void *videoTable;
+#define vReset         ((void(*)(void))(0x01f0)) // void  vReset(void);
+#define vIRQ_v5               (*(word*)(0x01f6)) // word  vIRQ_v5;
+#define videoTop_v5           (*(byte*)(0x01f9)) // byte  videoTop_v5;
+#define userCode              ( (void*)(0x0200)) // void *userCode;
+#define soundTable            ( (void*)(0x0700)) // byte  soundTable[]
+#define screenMemory          ( (void*)(0x0800)) // void *screenMemory[]
+
+#define channel1              ( (byte*)(0x0100)) // byte  channel1[]
+#define channel2              ( (byte*)(0x0200)) // byte  channel2[]
+#define channel3              ( (byte*)(0x0300)) // byte  channel3[]
+#define channel4              ( (byte*)(0x0400)) // byte  channel4[]
 
 
 /* ---- Unofficial memory locations ---- */
 
-#define ctrlBits_v5           (*(unsigned char*)(0x01f8))  // unsigned char  ctrlBits_v5;
+#define ctrlBits_v5           (*(byte*)(0x01f8))  // byte  ctrlBits_v5;
 
 
 /* ---- Calling SYS functions ---- */

@@ -60,7 +60,7 @@ subdirs-%: FORCE
 		"CFLAGS=${CFLAGS}" \
 		"LDFLAGS=${LDFLAGS}" \
 		"ROM=${ROM}" \
-		`echo $@ | sed -e 's/^subdirs-//'`; \
+		`echo $@ | sed -e 's/^subdirs-//'` || exit; \
 	   done
 
 gigatron-all: gigatron-include ${FILES} 

@@ -15,10 +15,6 @@
 #define KEY_START    0xef
 #define KEY_SELECT   0xdf
 
-/* -------- misc ----------- */
-
-extern void console_init(void);
-
 /* -------- output ----------- */
 
 extern void console_print(const char *s, int len);
@@ -43,10 +39,8 @@ extern const struct console_info_s {
 extern struct console_state_s {
 	int fgbg;                    /* foreground and background colors */
 	int cx, cy;                  /* cursor coordinates */
-	int topm, botm;              /* top and bottom margin not touched by scrolling */
 	int reserved;                /* tbd */
 	void (*controlf)(int);       /* when not zero, called for unknown chars */
-	void (*capturef)(int);       /* when not zero, called for all chars */
 } console_state;
 
 extern void   _console_setup(void);

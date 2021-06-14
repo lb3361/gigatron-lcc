@@ -719,8 +719,12 @@ def scope():
         label('.skip')
         _CALLJ('__@bm40shl1')
         LDLW(0);LSLW();LD(vAC);_BNE('.loop')
-        _CALLJ('__@bm40shr8') # restore BM32
-        _CALLJ('__@am40shr8') # shifts AM40
+        _CALLJ('__@bm40shr8')    # restore BM32
+        LDW(AM-1);BGE('.nornd')  # round and shift AM40
+        LDI(1);ADDW(AM+1);STW(AM+1);BNE('.nornd')
+        LDI(1);ADDW(AM+3);STW(AM+3)
+        label('.nornd')
+        _CALLJ('__@am40shr8')
         ALLOC(2);POP();RET()
 
     def code_fmulmac():

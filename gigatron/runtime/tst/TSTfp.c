@@ -42,13 +42,12 @@ double c(double x)
 {
 	int exponent;
 	double y = copysign(1.0, x);
-	long mantissa = (long)floor(ldexp(frexp(fabs(x), &exponent), 32));
+	long mantissa = (long)floor(ldexp(frexp(fabs(x), &exponent), 32)+0.5);
 	if (exponent <= -128)
 		return 0;
 	if (exponent > 127)
 		return 123456789.0;
 	y *= ldexp((double)mantissa, exponent-32);
-	//printf("((%e -> e=%d m=%lx -> %e))\n", x, exponent, mantissa, y);
 	return y;
 }
 
@@ -105,7 +104,7 @@ int main()
 	
 	printf("------------ fadd/fsub\n");
 	x = 0;
-	for (i=0; i<100; i++) {
+	for (i=0; i<200; i++) {
 		y = drand();
 		printf("a=%.8g b=%.8g ", x, y);
 		printf("a+b=%.8g a-b=%.8g\n", c(x+y), c(x-y));
@@ -114,30 +113,30 @@ int main()
 
 	printf("------------ fcmp\n");
 	x = 0;
-	for (i=0; i<100; i++) {
+	for (i=0; i<200; i++) {
 		if (i % 12)
 			y = drand();
-		printf("%.8g > %.8g = %d\n", x, y, (x > y));
-		printf("%.8g >= %.8g = %d\n", x, y, (x >= y));
-		printf("%.8g != %.8g = %d\n", x, y, (x != y));
+		printf("%.9g > %.9g = %d\n", x, y, (x > y));
+		printf("%.9g >= %.9g = %d\n", x, y, (x >= y));
+		printf("%.9g != %.9g = %d\n", x, y, (x != y));
 		x = y;
 	}
 
 	printf("------------ fmul\n");
 	x = 0;
-	for (i=0; i<100; i++) {
+	for (i=0; i<200; i++) {
 		y = drand();
-		printf("%.8g * %.8g = ", x, y);
-		printf("%.8g\n", c(x * y));
+		printf("%.9g * %.9g = ", x, y);
+		printf("%.9g\n", c(x * y));
 		x = y;
 	}
 
 	printf("------------ fdiv\n");
 	x = 0;
-	for (i=0; i<100; i++) {
+	for (i=0; i<200; i++) {
 		y = drand();
-		printf("%.8g / %.8g = ", x, y);
-		printf("%.8g\n", c(x / y));
+		printf("%.9g / %.9g = ", x, y);
+		printf("%.9g\n", c(x / y));
 		x = y;
 	}
 

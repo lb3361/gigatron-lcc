@@ -1407,7 +1407,7 @@ def measure_fragments(m):
 def compute_closure():
     global module_list, exporters
     # compute closure from start symbol
-    implist = [ args.e ]
+    implist = [ args.e, '_gt1exec' ]
     for sym in implist:
         if sym in exporters:
             pass
@@ -1946,7 +1946,7 @@ def main(argv):
                 fatal(f"internal error: segment overflow in {s} (final pc={hex(s.pc)})")
         
         # output
-        save_gt1(args.o, v(args.e))
+        save_gt1(args.o, '_gt1exec')
         if (args.symbols):
             print_symbols(allsymbols=args.symbols>1)
         return 0

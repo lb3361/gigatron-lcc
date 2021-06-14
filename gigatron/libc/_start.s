@@ -6,10 +6,6 @@ def code0():
     label('_start');
     # save vLR, vSP
     PUSH();LDWI('_exitvsp');STW(T3);LD(vSP);POKE(T3)
-    # calls init0 in cpu4 compatible way
-    LDWI('_init0'); CALL(vAC); _BEQ('.init')
-    LDI(10); STW(R8); LDWI('.msg'); STW(R9); _BRA('.exitm')
-    label('.init')
     # call init chain
     LDWI('__glink_magic_init'); _CALLI('_callchain')
     # call main
@@ -52,9 +48,6 @@ def code3():
     label('__glink_magic_fini')
     words(0xBEEF)
 
-def code4():
-    label('.msg')
-    bytes(b'Machine check failed',0)
     
 # ======== (epilog)
 code=[
@@ -67,9 +60,7 @@ code=[
     ('CODE', '.callchain', code1),
     ('DATA', '__glink_magic_init', code2, 2, 2),
     ('DATA', '__glink_magic_fini', code3, 2, 2),
-    ('DATA', '.msg', code4, 0, 1),
     ('IMPORT', 'main'),
-    ('IMPORT', '_init0'),
     ('IMPORT', '_exitm'),
     ('IMPORT', '_exitvsp') ]
 

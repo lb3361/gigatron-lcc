@@ -60,6 +60,12 @@ void console_readline(char *buffer, int bufsiz)
 				*--s = 0;
 				continue;
 			}
+		} else if (ch == 0x3) {
+			while (s > buffer) {
+				console_print("\b \b", 3);
+				*--s = 0;
+			}
+			continue;
 		} else if (s < e || ch == '\n') {
 			echo(ch);
 			*s++ = ch;

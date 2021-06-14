@@ -23,12 +23,11 @@
 #define buttonB               64
 #define buttonA               128
 
-#define wavA                  250
-#define wavX                  251
-#define keyL                  252
-#define keyH                  253
-#define oscL                  254
-#define oscH                  255
+typedef struct channel_s {
+	char wavA, wavX;
+	char keyL, keyH;
+	char oscL, oscH;
+} channel_t;
 
 /* ---- Well known rom locations from interface.json ---- */
 
@@ -97,10 +96,10 @@
 #define soundTable            ( (void*)(0x0700)) // byte  soundTable[]
 #define screenMemory          ( (byte*)(0x0800)) // byte *screenMemory[]
 
-#define channel1              ( (byte*)(0x0100)) // byte  channel1[]
-#define channel2              ( (byte*)(0x0200)) // byte  channel2[]
-#define channel3              ( (byte*)(0x0300)) // byte  channel3[]
-#define channel4              ( (byte*)(0x0400)) // byte  channel4[]
+#define channel1         (*(channel_t*)(0x01fa)) // chanel_t channel1
+#define channel2         (*(channel_t*)(0x02fa)) // chanel_t channel2
+#define channel3         (*(channel_t*)(0x03fa)) // chanel_t channel3
+#define channel4         (*(channel_t*)(0x04fa)) // chanel_t channel4
 
 
 /* ---- Unofficial memory locations ---- */

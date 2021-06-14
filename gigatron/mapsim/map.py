@@ -53,8 +53,8 @@ def map_extra_modules(romtype):
         _LDI(v(args.e));CALL(vAC)
         label('.err')
         LDI(100);STW(R8)
-        LDI('.msg');STW(R9)
-        LDWI(0xff00);STW('sysFn');SYS(34);HALT()
+        LDWI('.msg');STW(R9)
+        LDWI(0xff00);STW('sysFn');SYS(34);HALT()  # sys_exitm
         label('.msg')
         bytes(b'Machine check failed',0)
 

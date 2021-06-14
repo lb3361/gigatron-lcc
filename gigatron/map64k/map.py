@@ -56,9 +56,9 @@ def map_extra_modules(romtype):
         label('_gt1exec')
         # Set stack
         _LDI(initsp);STW(SP);
-        # Check rom
-        LD('romType');ANDI(0xfc);SUBI(romtype or 0);BLT('.err')
-        # Check ram
+        # Check rom and ram
+        if romtype:
+            LD('romType');ANDI(0xfc);SUBI(romtype);BLT('.err')
         if minram == 0x100:
             LD('memSize');BNE('.err')
         else:

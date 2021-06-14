@@ -126,9 +126,10 @@ def scope():
                 RET()
 
     def code_fldfac():
-        '''[T3]->FAC'''
+        '''[vAC]->FAC'''
         nohop()
         label('_@_fldfac')
+        STW(T3)
         m_load(T3, exponent=AE, mantissa=AM, ret=False, ext=True)
         ANDI(0x80);ST(AS)
         RET()
@@ -138,10 +139,10 @@ def scope():
                   ('CODE', '_@_fldfac', code_fldfac) ] )
 
     def code_fstfac():
-        '''FAC->[T2]'''
+        '''FAC->[vAC]'''
         nohop()
         label('_@_fstfac')
-        LD(AS);ANDI(0x80)
+        STW(T2);LD(AS);ANDI(0x80)
         m_store(T2, exponent=AE, mantissa=AM, ret=True)
 
     module(name='rt_fstfac.s',

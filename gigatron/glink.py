@@ -769,11 +769,11 @@ def _SHRIS(imm):
         LD(vACH);XORI(128); SUBI(128)
     elif imm == 1:
         extern("_@_shrs1")
-        _CALLI("_@_shrs1")           # T3<<1 -> vAC
+        _CALLI("_@_shrs1")           # T3 << 1 -> vAC
     else:
-        STW(T3); LDI(imm); STW(T2);
+        STW(T3); LDI(imm)
         extern('_@_shrs')
-        _CALLJ('_@_shrs')            # T3<<T2 -> vAC
+        _CALLI('_@_shrs')            # T3 << AC -> vAC
 @vasm
 def _SHRIU(imm):
     '''Shift vAC right (unsigned) by imm positions'''
@@ -784,52 +784,52 @@ def _SHRIU(imm):
         extern("_@_shru1")
         _CALLI("_@_shru1")
     else:
-        STW(T3); LDI(imm); STW(T2);
+        STW(T3); LDI(imm)
         extern('_@_shru')
-        _CALLJ('_@_shru')       # T3<<T2 -> vAC
+        _CALLI('_@_shru')       # T3 << AC -> vAC
 @vasm
 def _SHL(d):
     '''Shift vAC left by [d] positions'''
-    STW(T3); LDW(d); STW(T2)
+    STW(T3); LDW(d)
     extern('_@_shl') 
-    _CALLJ('_@_shl')            # T3<<T2 -> vAC
+    _CALLI('_@_shl')            # T3 << AC -> vAC
 @vasm
 def _SHRS(d):
     '''Shift vAC right, signed, by [d] positions'''
-    STW(T3); LDW(d); STW(T2)
+    STW(T3); LDW(d)
     extern('_@_shrs')
-    _CALLJ('_@_shrs')           # T3>>T2 --> vAC
+    _CALLI('_@_shrs')           # T3 >> AC --> vAC
 @vasm
 def _SHRU(d):
     '''Shift vAC right, unsigned, by [d] positions'''
-    STW(T3); LDW(d); STW(T2)
+    STW(T3); LDW(d)
     extern('_@_shru')
-    _CALLJ('_@_shru')           # T3>>T2 --> vAC
+    _CALLI('_@_shru')           # T3 >> AC --> vAC
 @vasm
 def _MUL(d):
-    STW(T3); LDW(d); STW(T2)
+    STW(T3); LDW(d)
     extern('_@_mul')
-    _CALLJ('_@_mul')            # T3*T2 --> vAC
+    _CALLI('_@_mul')            # T3 * AC --> vAC
 @vasm
 def _DIVS(d):
-    STW(T3); LDW(d); STW(T2)
+    STW(T3); LDW(d)
     extern('_@_divs')
-    _CALLJ('_@_divs')           # T3/T2 --> vAC
+    _CALLI('_@_divs')           # T3 / AC --> vAC
 @vasm
 def _DIVU(d):
-    STW(T3); LDW(d); STW(T2)
+    STW(T3); LDW(d)
     extern('_@_divu')
-    _CALLJ('_@_divu')           # T3/T2 --> vAC
+    _CALLI('_@_divu')           # T3 / AC --> vAC
 @vasm
 def _MODS(d):
-    STW(T3); LDW(d); STW(T2)
+    STW(T3); LDW(d)
     extern('_@_mods')
-    _CALLJ('_@_mods')           # T3%T2 --> vAC
+    _CALLI('_@_mods')           # T3 % vAC --> vAC
 @vasm
 def _MODU(d):
-    STW(T3); LDW(d); STW(T2)
+    STW(T3); LDW(d)
     extern('_@_modu')
-    _CALLJ('_@_modu')           # T3%T2 --> vAC
+    _CALLI('_@_modu')           # T3 % vAC --> vAC
 @vasm
 def _MOV(s,d):
     '''Move word from reg/addr s to d. 
@@ -952,7 +952,7 @@ def _BMOV(s,d,n):
             STW(T3)
         if d != [vAC] and d != [T2]:
             _LDI(d); STW(T2)
-        if s != [vAC] and s != [T3]:
+        if s != [vAC]:
             _LDI(s); STW(T3)
         _LDI(n);ADDW(T3);STW(T1)
         extern('_@_bcopy')
@@ -960,29 +960,34 @@ def _BMOV(s,d,n):
 @vasm
 def _LMOV(s,d):
     '''Move long from reg/addr s to d.
-       Also accepts [vAC] as s, and [vAC] or [T2] as d.
+       Also accepts [vAC] as argument s or d.
+       Also accept [T2] as argument d.
        Can trash T2 and T3'''
     s = v(s)
     d = v(d)
     if s != d:
         if is_zeropage(d, 3):
             if is_zeropage(s, 3):
-                _LDW(s); STW(d); _LDW(s+2); STW(d+2)      # 8 bytes
+                LDWI(((d & 0xff) << 8) | (s & 0xff))
+                extern('_@_lcopyz')
+                _CALLI('_@_lcopyz')                  # z->z :  6 bytes
             elif args.cpu > 5:
                 if s != [vAC]:
                     _LDI(s)
-                DEEKA(d); ADDI(2); DEEKA(d+2)             # 6-9 bytes
+                DEEKA(d); ADDI(2); DEEKA(d+2)        # a|l->z: 6|9 bytes (cpu6)
             elif s != [vAC]:
-                _LDW(s); STW(d); _LDW(s+2); STW(d+2)      # 12 bytes
+                _LDW(s); STW(d);
+                _LDW(s+2); STW(d+2)                  # l->z:   12 bytes
             else:
-                STW(T3); DEEK(); STW(d)
-                _LDW(T3); ADDI(2); DEEK(); STW(d+2);      # 12 bytes
+                STW(T3); LDI(d); STW(T2);
+                extern('_@_lcopy')
+                _CALLI('_@_lcopy')                   # a->l:   9 bytes
         elif is_zeropage(s, 3) and args.cpu > 5:
             if d == [T2]:
-                _LDW(T2)
-            elif s != [vAC]:
-                _LDI(s)
-            DOKEA(s); ADDI(2); DOKEA(s+2)                 # 6-9 bytes
+                LDW(T2)
+            elif d != [vAC]:
+                _LDI(d)
+            DOKEA(s); ADDI(2); DOKEA(s+2)            # z->a|l: 6-9 bytes (cpu 6)
         else:
             if d == [vAC]:
                 STW(T2)
@@ -990,10 +995,10 @@ def _LMOV(s,d):
                 STW(T3)
             if d != [vAC] and d != [T2]:
                 _LDI(d); STW(T2)
-            if s != [vAC] and s != [T3]:              # call sequence
+            if s != [vAC]:                            # generic call sequence
                 _LDI(s); STW(T3)                      # is 5-13 bytes long
             extern('_@_lcopy')
-            _CALLJ('_@_lcopy')    # [T3..T3+4) --> [T2..T2+4)
+            _CALLJ('_@_lcopy')  # [T3..T3+4) --> [T2..T2+4)
 @vasm
 def _LADD():
     extern('_@_ladd')              
@@ -1073,28 +1078,26 @@ def _LCVI():
 @vasm
 def _FMOV(s,d):
     '''Move float from reg s to d with special cases when s or d is FAC.
-       Also accepts [vAC] or [T3] for s and [vAC] or [T2] for d.
+       Also accepts [vAC] as argument s or d.
+       Also accept [T2] as argument d.
        Can trash T2 and T3'''
     s = v(s)
     d = v(d)
     if s != d:
         if d == FAC:
-            if s == [vAC]:
-                STW(T3)
-            elif s != [T3]:
-                _LDI(s); STW(T3)
+            if s != [vAC]:
+                _LDI(s)
             extern('_@_fldfac')
-            _CALLJ('_@_fldfac')   # [T3..T3+5) --> FAC
+            _CALLI('_@_fldfac')   # [vAC..vAC+5) --> FAC
         elif s == FAC:
-            if d == [vAC]:
-                STW(T2)
-            elif d != [T2]:
-                _LDI(d); STW(T2)
+            if d != [vAC]:
+                _LDI(d)
             extern('_@_fstfac')
-            _CALLJ('_@_fstfac')   # FAC --> [T2..T2+5)
+            _CALLI('_@_fstfac')   # FAC --> [vAC..vAC+5)
         elif is_zeropage(d, 4) and is_zeropage(s, 4):
-            # is it worth 12 bytes of code?
-            _LDW(s); STW(d); _LDW(s+2); STW(d+2); _LD(s+4); ST(d+4)
+            LDWI(((d & 0xff) << 8) | (s & 0xff))
+            extern('_@_fcopyz')
+            _CALLI('_@_fcopyz')
         else:
             maycross=False
             if d == [vAC]:
@@ -1106,15 +1109,15 @@ def _FMOV(s,d):
             if d != [vAC] and d != [T2]:
                 _LDI(d); STW(T2)
                 maycross = maycross or (int(d) & 0xfc == 0xfc)
-            if s != [vAC] and s != [T3]:
+            if s != [vAC]:
                 _LDI(s); STW(T3)
                 maycross = maycross or (int(s) & 0xfc == 0xfc)
             if maycross:
                 extern('_@_fcopy')       # [T3..T3+5) --> [T2..]
                 _CALLJ('_@_fcopy')
             else:
-                extern('_@_fcopy_nc')    # [T3..T3+5) --> [T2..]
-                _CALLJ('_@_fcopy_nc')    # without page crossing!
+                extern('_@_fcopync')     # [T3..T3+5) --> [T2..]
+                _CALLJ('_@_fcopync')     # without page crossing!
 @vasm
 def _FADD():
     extern('_@_fadd')

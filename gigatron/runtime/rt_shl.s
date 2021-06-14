@@ -3,8 +3,8 @@ def scope():
     # T3<<T2 -> vAC
     def code0():
         label('_@_shl')
-        PUSH()
-        LD(T2);_BEQ('.ret');ANDI(0x8);_BEQ('.try4')
+        PUSH();STW(T2);_BEQ('.ret')
+        ANDI(0x8);_BEQ('.try4')
         LDW(T3-1);STW(T3) # high byte of T2 is zero!
         label('.try4')
         LD(T2);ANDI(0x4);_BEQ('.try2')

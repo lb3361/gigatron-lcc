@@ -33,11 +33,13 @@ def scope():
            code=[ ('CODE', '__@divworker', code0),
                   ('EXPORT', '__@divworker') ] )
 
-    # DIVU:  T3/T2 -> vAC
-    # clobbers B0-B2, T1
-
+    # DIVU:  T3/vAC -> vAC
+    # clobbers B0-B2, T1,T2
     def code1():
+        tryhop(3)
         label('_@_divu')
+        STW(T2)
+        label('__@divu_t2')
         PUSH()
         LDI(0);STW(T1);STW(B0)
         LDW(T2);_BGT('.divuA');_BNE('.divu1')
@@ -68,11 +70,16 @@ def scope():
            code=[ ('CODE', '_@_divu', code1),
                   ('IMPORT', '_@_raise'),
                   ('IMPORT', '__@divworker'),
-                  ('EXPORT', '_@_divu') ])
+                  ('EXPORT', '_@_divu'),
+                  ('EXPORT', '__@divu_t2')])
 
-    # DIVS:  T3/T2 -> vAC
+    # DIVS:  T3/vAC -> vAC
+    # clobbers B0-B2, T1,T2
     def code2():
+        tryhop(3)
         label('_@_divs')
+        STW(T2)
+        label('__@divs_t2')
         PUSH()
         LDI(0);STW(T1);STW(B0);ST(B2)
         LDW(T2);_BGT('.divs2');_BNE('.divs1')
@@ -101,33 +108,35 @@ def scope():
            code=[ ('CODE', '_@_divs', code2),
                   ('IMPORT', '_@_raise'),
                   ('IMPORT', '__@divworker'),
-                  ('EXPORT', '_@_divs') ] )
+                  ('EXPORT', '_@_divs'),
+                  ('EXPORT', '__@divs_t2')] )
 
-    # T3 % T2 -> AC   [and T3 / T2 -> T1]
-    #  clobbers B0-B2, T1
+    # MODU: T3 % vAC -> AC
+    #  saves T3 / vAC in T1
+    #  clobbers B0-B2, T1, T2
     def code1():
         label('_@_modu')
-        PUSH()
-        _CALLJ('_@_divu')
+        PUSH();STW(T2)
+        _CALLJ('__@divu_t2')
         STW(T1);
-        LD(B1);STW(T2);_CALLJ('_@_shru')
+        LD(B1);_CALLI('_@_shru')
         tryhop(2);POP();RET()
 
     module(name='rt_modu.s',
            code=[ ('CODE', '_@_modu', code1),
                   ('EXPORT', '_@_modu'),
                   ('IMPORT', '_@_shru'),
-                  ('IMPORT', '_@_divu') ])
+                  ('IMPORT', '__@divu_t2') ])
     
-    # T3 % T2 -> AC   [and T3 / T2 -> T1]
-    #  clobbers B0-B2, T1
-
+    # MODS: T3 % T2 -> AC
+    #  saves T3 / T2 in T1
+    #  clobbers B0-B2, T1, T2
     def code2():
         label('_@_mods')
-        PUSH()
-        _CALLJ('_@_divs')
+        PUSH();STW(T2)
+        _CALLJ('__@divs_t2')
         STW(T1);
-        LD(B1);STW(T2);_CALLJ('_@_shru');STW(T3)
+        LD(B1);_CALLI('_@_shru');STW(T3)
         LD(B2);ANDI(2);_BEQ('.mods1')
         LDI(0);SUBW(T3);_BRA('.mods2')
         label('.mods1')

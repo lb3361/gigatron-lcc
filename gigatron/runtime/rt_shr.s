@@ -22,23 +22,27 @@ def scope():
            code=[('EXPORT', '__@shrsysfn'),
                  ('CODE', '__@shrsysfn', code0) ] )
 
-    # SHRU: T3<<T2 -> vAC  (unsigned)
+    # SHRU: T3<<vAC -> vAC  (unsigned)
     def code1():
-       label('_@_shru')
-       PUSH()
-       LD(T2);ANDI(8);_BEQ('.shru7')
-       LD(T3+1);STW(T3)
-       label('.shru7')
-       LD(T2);ANDI(7);_BEQ('.shru1');
-       _CALLI('__@shrsysfn')
-       LDW(T3);SYS(52)
-       tryhop(2);POP();RET()
-       label('.shru1')
-       LDW(T3)
-       tryhop(2);POP();RET()
+        tryhop(3)
+        label('_@_shru')
+        ST(T2)
+        label('__@shru_t2')
+        PUSH()
+        LD(T2);ANDI(8);_BEQ('.shru7')
+        LD(T3+1);STW(T3)
+        label('.shru7')
+        LD(T2);ANDI(7);_BEQ('.shru1');
+        _CALLI('__@shrsysfn')
+        LDW(T3);SYS(52)
+        tryhop(2);POP();RET()
+        label('.shru1')
+        LDW(T3)
+        tryhop(2);POP();RET()
 
     module(name='rt_shru.s',
            code=[('EXPORT', '_@_shru'),
+                 ('EXPORT', '__@shru_t2'),
                  ('IMPORT', '__@shrsysfn'),
                  ('CODE', '_@_shru', code1) ] )
 
@@ -46,21 +50,21 @@ def scope():
     # clobbers T0
     def code2():
        label('_@_shrs')
-       PUSH();
+       PUSH();ST(T2)
        LDW(T3);_BGE('.shrs1')
        _LDI(0xffff);XORW(T3);STW(T3)
-       _CALLJ('_@_shru')
+       _CALLJ('__@shru_t2')
        STW(T3);_LDI(0xffff);XORW(T3)
        _BRA('.shrs2')
        label('.shrs1')
-       _CALLJ('_@_shru')
+       _CALLJ('__@shru_t2')
        label('.shrs2')
        tryhop(2);POP();RET()
 
     module(name='rt_shru.s',
            code=[('EXPORT', '_@_shrs'),
-                 ('IMPORT', '_@_shru'),
-                 ('CODE', '_@_shrs2', code2) ] )
+                 ('IMPORT', '__@shru_t2'),
+                 ('CODE', '_@_shrs', code2) ] )
 
     # SHRU1/SHRS1 : AC <-- AC >> 1 (unsigned)
     def code0():

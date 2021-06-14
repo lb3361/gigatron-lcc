@@ -4,6 +4,7 @@
 def code0():
    nohop()
    label('_@_mul')
+   STW(T2)
    # T3: a, T2: b, T1: mask, T0: res
    LDI(0);STW(T0)
    LDW(T2);_BEQ('.ret');_BGE('.go')

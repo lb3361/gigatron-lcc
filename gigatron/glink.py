@@ -296,7 +296,7 @@ def hop(sz, jump):
             lfss = args.lfss or 32
             ns = find_code_segment(max(lfss, sz))
             if not ns:
-                fatal(f"map memory exhausted while fitting function `{the_fragment[1]}'.")
+                fatal(f"map memory exhausted while fitting function `{the_fragment[1]}'")
             if jump:
                 emit_long_jump(ns.pc)
             hops_enabled = True            
@@ -1567,14 +1567,14 @@ def assemble_code_fragments(m, placed=False):
                 if shortonly and not the_segment:
                     error(f"cannot find a segment for short function '{frag[1]}' of length {funcsize}")
                 if the_segment and (args.d >= 2 or final_pass):
-                    debug(f"assembling short function '{frag[1]}' at {hex(the_segment.pc)} in {the_segment} .")
+                    debug(f"assembling short function '{frag[1]}' at {hex(the_segment.pc)} in {the_segment}")
             if not the_segment:
                 short_function = False
                 hops_enabled = True
                 lfss = args.lfss or 32
                 the_segment = find_code_segment(min(lfss, 256))
                 if not the_segment:
-                    fatal(f"map memory exhausted while fitting function '{frag[1]}'.")
+                    fatal(f"map memory exhausted while fitting function '{frag[1]}'")
                 if the_segment and (args.d >= 2 or final_pass):
                     debug(f"assembling function '{frag[1]}' at {hex(the_segment.pc)} in {the_segment}")
             the_pc = the_segment.pc
@@ -1593,7 +1593,7 @@ def assemble_data_fragments(m, cseg):
             hops_enabled = False
             the_segment = find_data_segment(frag[3], align=frag[4])
             if not the_segment:
-                fatal(f"map memory exhausted while fitting datum '{frag[1]}'.")
+                fatal(f"map memory exhausted while fitting datum '{frag[1]}'")
             elif args.d >= 2 or final_pass:
                 debug(f"assembling {cseg} item '{frag[1]}' at {hex(the_segment.pc)} in {the_segment}")
             the_pc = the_segment.pc
@@ -1877,7 +1877,7 @@ def main(argv):
         if args.info:
             print('================= ROM INFO')
             if rominfo and romtype and romcpu:
-                print(f"  Rom '{args.rom}' (romType={hex(romtype)}) implements cpu {romcpu}.")
+                print(f"  Rom '{args.rom}' (romType={hex(romtype)}) implements cpu {romcpu}")
                 print(f"  Keys: {[k for k in rominfo if k not in ('cpu', 'romType')]}")
             else:
                 print(f" No information found on rom '{args.rom}'")

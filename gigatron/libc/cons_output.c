@@ -67,6 +67,10 @@ static int cons_control(register int c)
 	case '\b': /* backspace */
 		if (console_state.cx > 0)
 			console_state.cx -= 1;
+		else if (console_state.cy > 0) {
+			console_state.cx = console_info.ncolumns-1;
+			console_state.cy -= 1;
+		}
 		break;
 	case '\t':  /* tab */
 		console_state.cx = (console_state.cx | 3) + 1;

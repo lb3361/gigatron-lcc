@@ -15,8 +15,9 @@ extern void console_printxy(int x, int y, const char *s, int len);
 
 /* -------- input ----------- */
 
-extern int  console_readline(char *buffer, int n);
-extern int  console_waitkey();
+extern void console_readline(char *buffer, int bufsiz);
+extern int console_waitkey(void);
+extern int console_getkey(void);
 
 /* -------- implementation ----------- */
 

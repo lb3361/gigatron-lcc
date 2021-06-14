@@ -40,10 +40,29 @@ static char *cons_addr(void)
 	}
 }
 
+static void cons_bell(void)
+{
+	static char note[] = { 0,1,77,21 };
+	register char *n = note;
+	register int r;
+	for (r=wavA; r!=oscL; r++) {
+		char c = *n;
+		channel1[r] = c;
+		if (channelMask_v4 & 1)
+			channel2[r] = c;
+		if (channelMask_v4 & 2)
+			channel3[r] = channel4[r] = c;
+		n += 1;
+	}
+	soundTimer = 4;
+}
+
 static int cons_control(register int c)
 {
+	int i;
 	switch(c) {
-	case '\a': /* bell (todo) */
+	case '\a':
+		cons_bell();
 		break;
 	case '\b': /* backspace */
 		if (console_state.cx > 0)

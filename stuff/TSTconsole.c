@@ -23,7 +23,7 @@ const char *itoa(int x)
 int main()
 {
 	int i;
-	console_print("\tHello World!\n\n", 256);
+	console_print("\tHello World!\n\a(bell)\n", 256);
 	for (i=0; i<100; i++) {
 		console_print(itoa(i), 256);
 		console_print("\n", 1);

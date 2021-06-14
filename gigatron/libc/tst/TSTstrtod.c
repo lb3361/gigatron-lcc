@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include <errno.h>
 
 const char * v[] =
@@ -31,6 +32,13 @@ const char * v[] =
 	  "4294967298",
 	  "4294967299",
 	  "4294967300",
+	  "1.701411834209e+38",
+	  "1.7014118349e+38",
+	  "1.701411835e+38",
+	  "2.938735877056e-39",
+	  "2.9387358801e-39",
+	  "4.656612873077e-10",
+	  "4.6566128786e-10",
 	  "   asdf",
 	  0 };
 
@@ -39,13 +47,17 @@ int main()
 	double x;
 	const char **vv = v;
 	const char *s;
+	unsigned long mant;
+	int exp;
 	char *e;
 	while (*vv) {
 		s = *vv;
 		printf("strtod(\"%s\") = ", s);
 		errno = 0;
 		x = strtod(s, &e);
-		printf("%.8g, delta=%+d errno=%d\n", x, e-s, errno);
+		mant = (unsigned long)ldexp(frexp(fabs(x),&exp),32);
+		printf("%.9g (0x0.%08lx*2^%d), delta=%+d errno=%d\n",
+		       x, mant, exp, e-s, errno);
 		vv += 1;
 	}
 	return 0;

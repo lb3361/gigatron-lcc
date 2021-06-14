@@ -999,6 +999,7 @@ def scope():
     module(name='rt_fscalb.s',
            code=[ ('IMPORT', '__@clrfac'),
                   ('IMPORT', '__@foverflow'),
+                  ('IMPORT', '__@fsavevsp'),
                   ('EXPORT', '_@_fscalb'),
                   ('CODE', '_@_fscalb', code_fscalb) ] )
     

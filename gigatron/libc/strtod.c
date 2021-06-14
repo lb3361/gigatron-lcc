@@ -23,7 +23,7 @@ static int _exponent(register const char **sp)
 		if (c >= '0' && c <= '9') {
 			while (c >= '0' && c <= '9') {
 				if (exp < 1000)
-					exp = exp * 10 + c - '0';
+					exp = _ldexp10(exp,1) + c - '0';
 				c = *++s;
 			}
 			*sp = s;

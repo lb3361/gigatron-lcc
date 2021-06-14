@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 #include <gigatron/console.h>
 #include <gigatron/libc.h>
 #include <gigatron/sys.h>
@@ -42,7 +41,7 @@ int console_waitkey()
 static void echo(int ch)
 {
 	char c = '?';
-	if (ch == '\n' || isprint(ch))
+	if (ch == '\n' || (ch >= ' ' && ch < 0x84))
 		c = ch;
 	console_print(&c, 1);
 }

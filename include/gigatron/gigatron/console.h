@@ -2,20 +2,10 @@
 #define __GIGATRON_CONSOLE
 
 
-/* default gigatron colors */
-#define CONSOLE_DEFAULT_FGBG 0x3f20
-
-/* for getkey/waitkey */
-#define KEY_LEFT     0x80
-#define KEY_UP       0x81
-#define KEY_RIGHT    0x82
-#define KEY_DOWN     0x83
-#define KEY_A        0x7f
-#define KEY_B        0xbf
-#define KEY_START    0xef
-#define KEY_SELECT   0xdf
 
 /* -------- output ----------- */
+
+#define CONSOLE_DEFAULT_FGBG 0x3f20
 
 extern void console_print(const char *s, int len);
 extern void console_clear_screen(void);
@@ -27,7 +17,6 @@ extern void console_printxy(int x, int y, const char *s, int len);
 
 extern int  console_readline(char *buffer, int n);
 extern int  console_waitkey();
-extern int  console_getkey();
 
 /* -------- implementation ----------- */
 

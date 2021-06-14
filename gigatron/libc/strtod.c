@@ -5,7 +5,11 @@
 #include <math.h>
 #include <gigatron/libc.h>
 
-int _exponent(register const char **sp)
+/* This code is much simpler than a numerically correct strtod. In
+   particular it is going to overflow/underflow up to one bit below
+   FLT_MAX or above FLT_MIN. */
+
+static int _exponent(register const char **sp)
 {
 	register const char *s = *sp;
 	register int exp = 0;
@@ -32,22 +36,21 @@ int _exponent(register const char **sp)
 	return 0;
 }
 
-double _mantissa(register const char **sp, int *pe)
+static double _mantissa(register const char **sp, int *pe)
 {
 	register const char *s = *sp;
 	register int c = *s;
-	register double x = 0.0;
-	register double p = 1.0;
-	int e = 0;
+	register int e = 0;
 	int d = 0;
-
+	double x = 0.0;
+	
 	/* leading zeroes */
 	for(;; c = *++s) {
-		if (c == '.')
+		if (c == '.' && !d)
 			d = 1;
-		else if (c == '0' && d)
-			e -= 1;
-		else if (c != '0')
+		else if (c == '0')
+			e -= d;
+		else
 			break;
 	}
 	/* mantissa */
@@ -55,10 +58,11 @@ double _mantissa(register const char **sp, int *pe)
 		if (c == '.' && !d)
 			d = 1;
 		else if (c >= '0' && c <= '9') {
-			if (! d)
+			if (x < 1e16) {
+				e -= d;
+				x = x * 10 + (double)(c - '0');
+			} else if (! d) 
 				e += 1;
-			p = p * 0.1;
-			x = x + (double)(c - '0') * p;
 		} else
 			break;
 	}
@@ -94,14 +98,7 @@ double strtod(const char *nptr, char **endptr)
 		x = 0.0;
 	}
 	/* finalize */
-	while (exp > 0) {
-		x = x * 10;
-		exp -= 1;
-	}
-	while (exp < 0) {
-		x = x * 0.1;
-		exp += 1;
-	}
+	x = _ldexp10(x, exp);
 	/* check for error */
 	_raise_disposition = saved_raise_disposition;
 	if (_raise_code) {

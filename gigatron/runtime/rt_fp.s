@@ -748,8 +748,9 @@ def scope():
            label('_@_fmul')
            PUSH();STW(T3)
            _CALLJ('__@fsavevsp')
-           LDW(T3);PEEK();SUBI(128);STW(T2);
-           LD(AE);ADDW(T2);_BGT('.fmul1')
+           LDW(T3);PEEK();_BEQ('.zero');SUBI(128);STW(T2);
+           LD(AE);_BEQ('.zero');ADDW(T2);_BGT('.fmul1')
+           label('.zero')
            _CALLJ('__@clrfac')
            tryhop(2);POP();RET()
            label('.fmul1')
@@ -886,6 +887,7 @@ def scope():
         SUBI(32);_BLT('.fmod2')
         _CALLJ('__@clrfac')              # if qexp >=32 return zero
         label('.ret')
+        LDI(0);STW(CM)                   # for remquo
         tryhop(2);POP();RET()
         label('.fmod2')
         _CALLJ('__@bm32loadx')           # load mantissa

@@ -11,9 +11,19 @@ strtod("-3000000000e10") = -3e+19, delta=+14 errno=0
 strtod(" 17e499 overflow") = 1.7014118e+38, delta=+7 errno=2
 strtod(" 17e-499 underflow (should set errno but doesn't)") = 0, delta=+8 errno=0
 strtod("83928038989809890809") = 8.3928039e+19, delta=+20 errno=0
-strtod("0.00000000000000000000000000000000000000001e30") = 9.9999999e-12, delta=+46 errno=0
+strtod("0.00000000000000000000000000000000000000001e30") = 1e-11, delta=+46 errno=0
 strtod("-100000000000000000000000000000000000000000e-30") = -1e+11, delta=+47 errno=0
 strtod("  -9999999999.999") = -1e+10, delta=+17 errno=0
 strtod("  23z") = 23, delta=+4 errno=0
 strtod("  23e+") = 23, delta=+4 errno=0
+strtod("4294967291") = 4.2949673e+09, delta=+10 errno=0
+strtod("4294967292") = 4.2949673e+09, delta=+10 errno=0
+strtod("4294967293") = 4.2949673e+09, delta=+10 errno=0
+strtod("4294967294") = 4.2949673e+09, delta=+10 errno=0
+strtod("4294967295") = 4.2949673e+09, delta=+10 errno=0
+strtod("4294967296") = 4.2949673e+09, delta=+10 errno=0
+strtod("4294967297") = 4.2949673e+09, delta=+10 errno=0
+strtod("4294967298") = 4.2949673e+09, delta=+10 errno=0
+strtod("4294967299") = 4.2949673e+09, delta=+10 errno=0
+strtod("4294967300") = 4.2949673e+09, delta=+10 errno=0
 strtod("   asdf") = 0, delta=+0 errno=0

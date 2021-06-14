@@ -63,11 +63,26 @@ extern int _raise_code;
 /* This is the vIRQ handler than emits SIGIRQ. Do not call. */
 extern void _virq_handler(void);
 
+
+/* ---- Numerics ---- */
+
 /* Raise a SIGFPE exception and return defval if the exception is ignored.
    If a signal handler for SIGFPE has been setup, these functions
    return what the signal handler returns. */
 extern double _fexception(double defval);
 extern double _foverflow(double defval);
+
+/* Multiplies x by 10^n. */
+extern double _ldexp10(double x, int n);
+
+/* Returns a number 0.1<=y<1 and an integer exp such that x = y * 10^exp */
+extern double _frexp10(double x, int *pexp);
+
+/* Like the C99 function remquo but with fmod-style remainder. */
+extern double _fmodquo(double x, double y, int *quo);
+
+/* C99 function remquo, implemented using _fmodquo.  */
+extern double remquo(double x, double y, int *quo);
 
 
 /* ---- Misc ---- */

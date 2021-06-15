@@ -41,7 +41,7 @@ int console_waitkey()
 static void echo(int ch)
 {
 	char c = '?';
-	if (ch == '\n' || (ch >= ' ' && ch < 0x84))
+	if (ch == '\n' || (ch >= ' ' && 0x83 - ch > 0))
 		c = ch;
 	console_print(&c, 1);
 }

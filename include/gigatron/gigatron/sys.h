@@ -100,7 +100,7 @@ typedef struct channel_s {
 #define channel2         (*(channel_t*)(0x02fa)) // chanel_t channel2
 #define channel3         (*(channel_t*)(0x03fa)) // chanel_t channel3
 #define channel4         (*(channel_t*)(0x04fa)) // chanel_t channel4
-
+#define channel(c)       (*(channel_t*)(((1+((c-1)&0xff))<<8)|0xfa))
 
 /* ---- Unofficial memory locations ---- */
 

@@ -7,17 +7,31 @@
 
 #define CONSOLE_DEFAULT_FGBG 0x3f20
 
+/* Print up to len characters of zero terminated string s.
+   Understands control characters "\a\t\b\n\r\f". */
 extern void console_print(const char *s, int len);
+
+/* Reset the video tables and clear the screen. */
 extern void console_clear_screen(void);
+
+/* Clear character row y */
 extern void console_clear_line(int y);
+
+/* Scroll rows [y1,y2) by n position */
 extern void console_scroll(int y1, int y2, int n);
-extern void console_printxy(int x, int y, const char *s, int len);
 
 /* -------- input ----------- */
 
-extern void console_readline(char *buffer, int bufsiz);
-extern int console_waitkey(void);
+/* Get currently pressed key or -1 */
 extern int console_getkey(void);
+
+/* Wait for a key press with a flashing cursor. */
+extern int console_waitkey(void);
+
+/* Input a line with rudimentary editing features: 
+   BS,DEL,LEFT to erase the last character, 
+   CTRL+C to erase the line. */
+extern void console_readline(char *buffer, int bufsiz);
 
 /* -------- implementation ----------- */
 
@@ -29,12 +43,22 @@ extern const struct console_info_s {
 extern struct console_state_s {
 	int fgbg;                    /* foreground and background colors */
 	int cx, cy;                  /* cursor coordinates */
-	int reserved;                /* tbd */
-	void (*controlf)(int);       /* when not zero, called for unknown chars */
+	void (*controlf)(int);       /* called for unknown chars when not zero */
 } console_state;
 
-extern void   _console_setup(void);
-extern char  *_console_addr(int x, int y);
-extern int    _console_printchars(int fgbg, char *addr, const char *s, int len);
+/* Called before main() to setup the console. */
+extern void _console_setup(void);
+
+/* Compute the address of the top-left pixel of char(x,y) */
+extern char *_console_addr(int x, int y);
+
+/* Draws up to `len` characters from string `s` at the screen position
+   given by address `addr`.  This assumes that the horizontal offsets
+   in the string table are all zero. All characters are printed on a
+   single line (no newline).  The function returns when any of the
+   following conditions is met: (1) `len` characters have been
+   printed, (2) the next character would not fit horizontally on the
+   screen, or (3), an unprintable character has been met. */
+extern int _console_printchars(int fgbg, char *addr, const char *s, int len);
 
 #endif

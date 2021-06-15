@@ -6,13 +6,6 @@
 
 struct console_state_s console_state = { CONSOLE_DEFAULT_FGBG };
 
-void console_printxy(register int x, register int y, register const char *s, register int len)
-{
-	register char *addr = _console_addr(x,y);
-	if (addr)
-		_console_printchars(console_state.fgbg, addr, s, len);
-}
-
 static char *cons_addr(void)
 {
 	for(;;) {
@@ -40,23 +33,21 @@ static char *cons_addr(void)
 	}
 }
 
-static void cons_note(channel_t *note)
+static void cons_bell(void)
 {
-	channel1 = *note;
-	if (channelMask_v4 & 1)
-		channel2 = *note;
-	if (channelMask_v4 & 2)
-		channel3 = channel4 = *note;
+	static struct channel_s bell = {0,1,77,21};
+	int i;
+	for (i = channelMask_v4 & 3; i >= 0; i--)
+		channel(i+1) = bell;
+	soundTimer = 4;
 }
 
-static struct channel_s bell = {0,1,77,21};
 
 static int cons_control(register int c)
 {
 	switch(c) {
 	case '\a':
-		cons_note(&bell);
-		soundTimer = 4;
+		cons_bell();
 		break;
 	case '\b': /* backspace */
 		if (console_state.cx > 0)

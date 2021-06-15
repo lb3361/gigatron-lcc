@@ -47,7 +47,7 @@ def map_extra_modules(romtype):
     '''
     def code0():
         nohop()
-        label('_gt1exec')
+        label(args.gt1exec)
         _LDI(initsp);STW(SP);
         LD('romType');ANDI(0xfc);SUBI(romtype or 0);BLT('.err')
         _LDI(v(args.e));CALL(vAC)

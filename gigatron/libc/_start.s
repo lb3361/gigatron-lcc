@@ -64,6 +64,9 @@ code=[
     ('IMPORT', '_exitm'),
     ('IMPORT', '_exitvsp') ]
 
+if args.gt1exec != args.e:
+    code.append(('IMPORT', args.gt1exec))        # causes map start stub to be included
+
 if not args.no_runtime_bss_initialization:
     code.append(('IMPORT', '__glink_magic_bss')) # causes _init1.c to be included
 

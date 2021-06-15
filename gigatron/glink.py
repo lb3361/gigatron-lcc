@@ -190,18 +190,18 @@ def resolve(s, ignore=None):
         
 class Module:
     '''Class for assembly modules read from .s/.o/.a files.'''
-    def __init__(self, name=None, cpu=None, code=None, library=True):
+    def __init__(self, name=None, cpu=None, code=None):
         global args, current_module
         self.cpu = cpu if cpu != None else args.cpu
         self.code = code
         self.name = name
         self.fname = name
+        self.library = False
+        self.used = False
         self.exports = []
         self.imports = []
-        self.library = library
         self.symdefs = {}
         self.sympass = {}
-        self.used = False
         for tp in self.code:
             if tp[0] == 'EXPORT':
                 self.exports.append(tp[1])
@@ -304,7 +304,7 @@ def hop(sz, jump):
             the_segment = ns
             the_pc = ns.pc
             if args.d >= 2 or final_pass:
-                debug(f"continuing '{the_fragment[1]}' at {hex(the_pc)} in {ns}")
+                debug(f"- continuing code fragment '{the_fragment[1]}' at {hex(the_pc)} in {ns}")
 
 def emitjump(d):
     global hops_enabled, lbranch_counter
@@ -1270,13 +1270,12 @@ def read_file(f):
     exec(c, new_globals())
     if len(new_modules) == 0:
         warning(f"file {f} did not define any module")
-    if len(new_modules) == 1 and not f.endswith(".a"):
-        new_modules[0].library = False
-    for m in new_modules:
-        if m.library:
-            m.fname = f"{os.path.basename(f)}({m.name})"
-        else:
-            m.fname = m.name
+    if f.endswith(".a") or len(new_modules) > 1:
+        libid = id(new_modules[0])
+        libname = os.path.basename(f)
+        for m in new_modules:
+            m.library = libid
+            m.fname = f"{libname}({m.name})"
     module_list += new_modules
     new_modules = []
 
@@ -1384,13 +1383,14 @@ def measure_code_fragment(m, frag):
         fatal(str(err), exc=True)
     function_size = the_pc - lbranch_counter
     if short_function:
-        addr = is_placed(short_function)
-        fname = frag[1] + (f"@{hex(addr)}" if addr else "")
-        debug(f"nohop function '{fname}' is {function_size} bytes long")
+        fname = frag[1]
+        ftype = is_placed(short_function)
+        ftype = f"org:{hex(ftype)}" if ftype else "nohop"
+        debug(f"- code fragment '{fname}' is {function_size} bytes long ({ftype})")
         if function_size >= 256:
-            error("function '{fname}' is declared short but is too long for that")
+            error("code fragment '{fname}' declared '{ftype}' but is too long")
     else:
-        debug(f"function '{frag[1]}' is {function_size}+{lbranch_counter} bytes long")
+        debug(f"- code fragment '{frag[1]}' is {function_size}+{lbranch_counter} bytes long")
     frag = frag[0:3] + (the_pc - lbranch_counter, short_function)
     return frag
 
@@ -1407,7 +1407,7 @@ def measure_fragments(m):
 def compute_closure():
     global module_list, exporters
     # compute closure from start symbol
-    implist = [ args.e, '_gt1exec' ]
+    implist = [ args.e ]
     for sym in implist:
         if sym in exporters:
             pass
@@ -1417,12 +1417,12 @@ def compute_closure():
             e = None
             elist = find_exporters(sym)
             for m in elist:
-                if m.library:                      # rules for selecting one of the library modules 
-                    if e and not e.library:        # that export a required symbol:
+                if m.library:                      # rules for selecting one of many library 
+                    if e and not e.library:        # modules exporting a same required symbol:
                         pass                       # -- cannot override a non-library module
                     elif m.cpu > args.cpu:         # -- ignore exports when module targets too high a cpu.
-                        pass                       # -- prefer exports from module targeting a higher cpu. 
-                    elif not e or m.cpu > e.cpu:
+                        pass                       # -- prefers exports targeting a higher cpu within a same library.
+                    elif not e or (m.library == e.library and m.cpu > e.cpu):
                         e = m
                 else:                              # complain when a required symbol is exported
                     if e and not e.library:        # by multiple non-library files.
@@ -1565,18 +1565,18 @@ def assemble_code_fragments(m, placed=False):
                 hops_enabled = False
                 the_segment = find_code_segment(funcsize, addr)
                 if shortonly and not the_segment:
-                    error(f"cannot find a segment for short function '{frag[1]}' of length {funcsize}")
+                    error(f"cannot find a segment for short code fragment '{frag[1]}' of length {funcsize}")
                 if the_segment and (args.d >= 2 or final_pass):
-                    debug(f"assembling short function '{frag[1]}' at {hex(the_segment.pc)} in {the_segment}")
+                    debug(f"assembling code fragment '{frag[1]}' at {hex(the_segment.pc)} in {the_segment}")
             if not the_segment:
                 short_function = False
                 hops_enabled = True
                 lfss = args.lfss or 32
                 the_segment = find_code_segment(min(lfss, 256))
                 if not the_segment:
-                    fatal(f"map memory exhausted while fitting function '{frag[1]}'")
+                    fatal(f"map memory exhausted while fitting code fragment '{frag[1]}'")
                 if the_segment and (args.d >= 2 or final_pass):
-                    debug(f"assembling function '{frag[1]}' at {hex(the_segment.pc)} in {the_segment}")
+                    debug(f"assembling code fragment '{frag[1]}' at {hex(the_segment.pc)} in {the_segment}")
             the_pc = the_segment.pc
             try:
                 frag[2]()
@@ -1593,9 +1593,9 @@ def assemble_data_fragments(m, cseg):
             hops_enabled = False
             the_segment = find_data_segment(frag[3], align=frag[4])
             if not the_segment:
-                fatal(f"map memory exhausted while fitting datum '{frag[1]}'")
+                fatal(f"map memory exhausted while fitting {cseg} fragment '{frag[1]}'")
             elif args.d >= 2 or final_pass:
-                debug(f"assembling {cseg} item '{frag[1]}' at {hex(the_segment.pc)} in {the_segment}")
+                debug(f"assembling {cseg} fragent '{frag[1]}' at {hex(the_segment.pc)} in {the_segment}")
             the_pc = the_segment.pc
             try:
                 frag[2]()
@@ -1773,9 +1773,10 @@ def print_symbols(allsymbols=False):
                 exported = (s in exporters) and (exporters[s] == m)
                 syms.append((m.symdefs[s], s, exported, m.fname))
     syms.sort(key = lambda x : x[0] )
+    print("Symbol table (sorted by address)")
     for s in syms:
-        pp="public " if s[2] else "private"
-        print(f"{s[0]:04x}\t{s[1]:<22s}\t{pp}\t{s[3]:<24s}")
+        pp="public" if s[2] else "private"
+        print(f"\t{s[0]:04x} {pp:<8s}  {s[1]:<22s}  {s[3]:<24s}")
 
     
 # ------------- main function
@@ -1840,6 +1841,9 @@ def main(argv):
         parser.add_argument('--entry', '-e', dest='e', metavar='START',
                             type=str, action='store', default='_start',
                             help='select the entry point symbol (default _start)')
+        parser.add_argument('--gt1-exec-address', dest='gt1exec', metavar='ADDR',
+                            type=str, action='store', default='_gt1exec',
+                            help='select the gt1 execution address (default _gt1exec)')
         parser.add_argument('--short-function-size-threshold', dest='sfst',
                             metavar='SIZE', type=int, action='store',
                             help='attempts to fit functions smaller than this threshold into a single page.')
@@ -1946,7 +1950,7 @@ def main(argv):
                 fatal(f"internal error: segment overflow in {s} (final pc={hex(s.pc)})")
         
         # output
-        save_gt1(args.o, '_gt1exec')
+        save_gt1(args.o, args.gt1exec)
         if (args.symbols):
             print_symbols(allsymbols=args.symbols>1)
         return 0

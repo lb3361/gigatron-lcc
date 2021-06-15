@@ -85,6 +85,24 @@ extern double _fmodquo(double x, double y, int *quo);
 extern double remquo(double x, double y, int *quo);
 
 
+/* ---- Stdio ---- */
+
+struct _iobuf {
+	int size;
+	char xtra[2];
+	char data[1];
+};
+
+struct _iovec {
+	int  (*read)(int fd, void *buf, size_t cnt);
+	int  (*write)(int fd, void *buf, size_t cnt);
+	long (*lseek)(int fd, long off, int whence);
+	int  (*close)(int fd);
+};
+
+int _fwr(const char *buf, size_t sz, FILE *fp);
+int _frd(char *buf, size_t sz, FILE *fp);
+
 /* ---- Misc ---- */
 
 /* Calls srand(int) using the gigatron entropy generator */

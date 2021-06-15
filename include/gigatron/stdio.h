@@ -1,22 +1,33 @@
 #ifndef __STDIO
 #define __STDIO
 
-#define _IOFBF 0
-#define _IOLBF 0100
-#define _IONBF 04
-#define BUFSIZ 1024
-#define EOF (-1)
+#define _IOFBF   0x40  /* fully buffered */
+#define _IOLBF   0xC0  /* line buffered. */ /* note: treated as _IONBF */
+#define _IONBF   0x80  /* not buffered   */
+#define	_IOEOF   0x10  /* eof flag       */
+#define	_IOERR   0x20  /* error flag     */
+#define _IOSTR   0x08  /* sprintf/scanf  */
+#define _IOMYBUF 0x04  /* own buffer     */
+#define _IORW    0x03  /* r+ or w+       */ /* note: implies _IONBF */
+#define _IOREAD  0x01  /* r              */
+#define _IOWRIT  0x02  /* w              */
+
+#define BUFSIZ 256
+#define EOF    (-1)
 
 extern struct _iobuf {
-	int	_cnt;
-	unsigned char	*_ptr;
-	unsigned char	*_base;
-	char	_flag;
-	char	_file;
+	int  _cnt;
+	unsigned char *_ptr;
+	int  _flag;
+	int  _file;
+	char _buf[4];
+	struct _iobuf *buf;
+	struct _iovec *vec;
 } _iob[];
+
 #define FILE struct _iobuf
 #define FILENAME_MAX 256
-#define FOPEN_MAX 100
+#define FOPEN_MAX 10
 
 #if !defined(_FPOS_T) && !defined(_FPOS_T_) && !defined(_FPOS_T_DEFINED)
 #define _FPOS_T
@@ -93,10 +104,16 @@ extern int feof(FILE *);
 extern int ferror(FILE *);
 extern void perror(const char *);
 
-#define	_IOEOF 020
-#define	_IOERR 040
-
 #define getc(p) (--(p)->_cnt < 0 ? _filbuf(p) : (int) *(p)->_ptr++)
-#define putc(x, p) (--(p)->_cnt < 0 ? _flsbuf((unsigned char) (x), p) : (int) (*(p)->_ptr++ = (unsigned char) (x)))
-extern int _filbuf(FILE *), _flsbuf(unsigned, FILE *);
+#define putc(x, p) (--(p)->_cnt < 0 ? _flsbuf((unsigned char)(x),p) : (int)(*(p)->_ptr++=(unsigned char)(x)))
+#define getchar() (getc(stdin))
+#define putchar(x) (putc(stdout,x))
+#define ferror(p) ((p)->_flag & _IOERR)
+#define feof(p) ((p)->_flag & _IOEOF)
+#define clearerr(p) ((p)->flag &= (_IOERR|_IOEOF)^0xff)
+
+extern int _filbuf(FILE *);
+extern int _flsbuf(unsigned, FILE *);
+
+
 #endif /* __STDIO */

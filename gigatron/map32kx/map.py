@@ -1,25 +1,27 @@
 
 
 def map_describe():
-    print('''  Memory map '32k' targets the 32KB Gigatron.
+    print('''  Memory map '32kx' steals screen memory on a 32KB Gigatron.
              
-  Program and data are scattered in the video memory holes starting in
-  0x8a0-0x8ff and progressing towards 0x7fa0-0x7fff. Data items larger
-  than 96 bytes can be located in page 2 to 5. The stack grows
-  downwards from 0x6fe.
-
-  This memory map is very constraining because it only provides space
-  for a couple data items larger than 96 bytes. Problems can arise if
-  the stack grows into a data region.
+  This map uses a special version of the console that adds spacing
+  between character lines in a manner that saves screen memory
+  and makes memory range 0x800-0x2eff available.
+  
+  Program and data are first scattered in the video memory holes starting in
+  0x2fa0-0x2fff and progressing towards 0x7fa0-0x7fff. Remaining code and 
+  data items larger than 96 bytes can then be located in pages 2, 3, 4, 5, 
+  6, and 8 to 0x2a. The stack grows from 0x2efe.
   ''')
 
 
 # ------------size----addr----step----end---- flags (1=nocode, 2=nodata)
-segments = [ (0x0060, 0x08a0, 0x0100, 0x80a0, 0),
-	     (0x00fa, 0x0200, 0x0100, 0x0500, 1),
-	     (0x0100, 0x0500, None,   None,   1)   ]
+segments = [ (0x0060, 0x2fa0, 0x0100, 0x80a0, 0),
+	     (0x00fa, 0x0200, 0x0100, 0x0500, 0),
+	     (0x0200, 0x0500, None,   None,   0),
+             (0x2300, 0x0800, None,   None,   0),
+]
 
-initsp = 0x6fe
+initsp = 0x2efe
 minram = 0x80
 
 def map_segments():
@@ -37,7 +39,7 @@ def map_extra_libs(romtype):
     '''
     Returns a list of extra libraries to scan before the standard ones
     '''
-    return []
+    return [ 'conx' ]
 
 def map_extra_modules(romtype):
     '''

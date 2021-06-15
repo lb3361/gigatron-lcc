@@ -17,7 +17,7 @@ GLCC=${B}glcc
 ROM=../gigatron-rom/dev.rom
 GTSIM=${B}gtsim -rom ${TOP}${ROM}
 
-SUBDIRS=${G}runtime ${G}libc ${G}map32k ${G}map64k ${G}mapsim
+SUBDIRS=${G}runtime ${G}libc ${G}map32k ${G}map64k ${G}mapsim ${G}map32kx
 
 FILES=${B}glcc ${B}glink ${B}glink.py ${B}interface.json ${B}roms.json
 

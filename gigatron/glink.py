@@ -1595,7 +1595,7 @@ def assemble_data_fragments(m, cseg):
             if not the_segment:
                 fatal(f"map memory exhausted while fitting {cseg} fragment '{frag[1]}'")
             elif args.d >= 2 or final_pass:
-                debug(f"assembling {cseg} fragent '{frag[1]}' at {hex(the_segment.pc)} in {the_segment}")
+                debug(f"assembling {cseg} fragment '{frag[1]}' at {hex(the_segment.pc)} in {the_segment}")
             the_pc = the_segment.pc
             try:
                 frag[2]()

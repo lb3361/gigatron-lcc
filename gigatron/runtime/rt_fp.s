@@ -450,9 +450,9 @@ def scope():
 
     def code_fnorm3():
         '''There are three normalization levels.
-           -- __@fnorm3 just shifts am32 left until normalized.
+           -- __@fnorm1 just shifts am32 left until normalized.
            -- __@fnorm2 can shift am40 right (occasionally happens once after addition, can overflow).
-           -- __@fnorm1 can also two-complement am40 (happens after addition).'''
+           -- __@fnorm3 can also two-complement am40 (happens after addition).'''
         # entry point for fnorm3
         label('__@fnorm3')
         PUSH()

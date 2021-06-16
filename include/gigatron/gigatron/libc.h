@@ -75,7 +75,8 @@ extern double _foverflow(double defval);
 /* Multiplies x by 10^n. */
 extern double _ldexp10(double x, int n);
 
-/* Returns a number 0.1<=y<1 and an integer exp such that x = y * 10^exp */
+/* Returns a double y and an exponent exp such that x = y * 10^exp,
+   with y as large as possible (almost) with an exact integer part. */
 extern double _frexp10(double x, int *pexp);
 
 /* Like the C99 function remquo but with fmod-style remainder. */

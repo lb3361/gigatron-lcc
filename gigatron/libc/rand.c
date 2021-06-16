@@ -4,7 +4,7 @@
 static char init;
 static long seed;
 
-void srand(unsigned int x)
+void srand(register unsigned int x)
 {
 	init = 1;
 	seed = x;

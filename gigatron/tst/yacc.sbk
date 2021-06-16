@@ -981,7 +981,7 @@ def code19():
 	_LDI('yyin');STW(R22);
 	_LDI('_iob');DOKE(R22);
 	_LDI('yyout');STW(R22);
-	_LDI(v('_iob')+8);DOKE(R22);
+	_LDI(v('_iob')+16);DOKE(R22);
 	CALLI('yyparse');
 	LDI(0);
 	label('.152');

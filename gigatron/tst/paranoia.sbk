@@ -71,7 +71,7 @@ def code15():
 	LDW(R22);DEEK();ADDI(1);DOKE(R22);
 	_LDI('.2');STW(R8);
 	CALLI('printf');
-	_LDI(v('_iob')+8);STW(R8);
+	_LDI(v('_iob')+16);STW(R8);
 	CALLI('fflush');
 	_LDI('sigsave');DEEK();_BEQ('.4');
 	LDI(4);STW(R8);

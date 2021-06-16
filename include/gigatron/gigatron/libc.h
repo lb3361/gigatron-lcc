@@ -87,13 +87,13 @@ extern double remquo(double x, double y, int *quo);
 
 /* ---- Stdio ---- */
 
-struct _iobuf {
+struct _sbuf {
 	int size;
 	char xtra[2];
 	char data[1];
 };
 
-struct _iovec {
+struct _svec {
 	int  (*read)(int fd, void *buf, size_t cnt);
 	int  (*write)(int fd, void *buf, size_t cnt);
 	long (*lseek)(int fd, long off, int whence);

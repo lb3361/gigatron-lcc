@@ -21,8 +21,8 @@ extern struct _iobuf {
 	int  _flag;
 	int  _file;
 	char _buf[4];
-	struct _iobuf *buf;
-	struct _iovec *vec;
+	struct _sbuf *buf;
+	struct _svec *vec;
 } _iob[];
 
 #define FILE struct _iobuf

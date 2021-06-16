@@ -14,7 +14,7 @@ static int _exponent(register const char **sp)
 	register const char *s = *sp;
 	register int exp = 0;
 	register int c = *s;
-	char neg = 0;
+	register char neg = 0;
 
 	if (c == 'e' || c == 'E') {
 		c = *++s;
@@ -22,8 +22,8 @@ static int _exponent(register const char **sp)
 			c = *++s;
 		if (c >= '0' && c <= '9') {
 			while (c >= '0' && c <= '9') {
-				if (exp < 1000)
-					exp = _ldexp10(exp,1) + c - '0';
+				if (exp < 250)
+					exp = exp * 10 + c - '0';
 				c = *++s;
 			}
 			*sp = s;

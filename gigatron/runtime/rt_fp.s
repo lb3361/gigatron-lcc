@@ -215,13 +215,13 @@ def scope():
 
     def code_clrfac():
         nohop()
-        label('__@clrfac')
+        label('_@_clrfac')
         LDI(0);ST(AE);STW(AM);STW(AM+2);ST(AM+4);ST(AS)
         RET()
 
     module(name='rt_clrfac.s',
-           code=[ ('EXPORT', '__@clrfac'),
-                  ('CODE', '__@clrfac', code_clrfac) ] )
+           code=[ ('EXPORT', '_@_clrfac'),
+                  ('CODE', '_@_clrfac', code_clrfac) ] )
 
     def code_fone():
         label('_@_fone')
@@ -492,7 +492,7 @@ def scope():
         LD(AE);SUBI(1);_BLE('.norm0');ST(AE)
         _CALLJ('__@am32shl1');_BRA('.norm1d')
         label('.norm0')
-        _CALLJ('__@clrfac')
+        _CALLJ('_@_clrfac')
         label('.normok')
         tryhop(2);POP();RET()
 
@@ -507,7 +507,7 @@ def scope():
                   ('IMPORT', '__@am32shl4'),
                   ('IMPORT', '__@am32shl1'),
                   ('IMPORT', '__@foverflow'),
-                  ('IMPORT', '__@clrfac'),
+                  ('IMPORT', '_@_clrfac'),
                   ('CODE', '__@fnorm3', code_fnorm3),
                   ('CODE', '__@fnorm1', code_fnorm1) ] )
 
@@ -551,7 +551,7 @@ def scope():
         PUSH()
         LD(AE);SUBI(160);_BLT('.ok')
         label('.ovf')
-        _CALLJ('__@clrfac')
+        _CALLJ('_@_clrfac')
         LDI(128);ST(LAC+3)
         tryhop(2);POP();RET()
         label('_@_ftou')
@@ -572,7 +572,7 @@ def scope():
            code=[ ('EXPORT', '_@_ftoi'),
                   ('EXPORT', '_@_ftou'),
                   ('IMPORT', '__@am32shra'),
-                  ('IMPORT', '__@clrfac'),
+                  ('IMPORT', '_@_clrfac'),
                   ('CODE', '_@_ftoi', code_ftoi) ] )
 
     # ==== additions and subtractions
@@ -756,7 +756,7 @@ def scope():
            LDW(T3);PEEK();_BEQ('.zero');SUBI(128);STW(T2);
            LD(AE);_BEQ('.zero');ADDW(T2);_BGT('.fmul1')
            label('.zero')
-           _CALLJ('__@clrfac')
+           _CALLJ('_@_clrfac')
            tryhop(2);POP();RET()
            label('.fmul1')
            ST(AE);LD(vACH);_BEQ('.fmul2')
@@ -771,7 +771,7 @@ def scope():
     module(name='_@_fmul',
            code=[ ('EXPORT', '_@_fmul'),
                   ('IMPORT', '__@fsavevsp'),
-                  ('IMPORT', '__@clrfac'),
+                  ('IMPORT', '_@_clrfac'),
                   ('IMPORT', '__@foverflow'),
                   ('IMPORT', '__@fmulmac'),
                   ('IMPORT', '__@fnorm1'),
@@ -831,7 +831,7 @@ def scope():
         LD(AE);_BEQ('.fdivzero')
         SUBW(T2);ST(AE);_BGT('.fdiv2')   # set the exponent
         label('.fdivzero')
-        _CALLJ('__@clrfac')              # result is zero
+        _CALLJ('_@_clrfac')              # result is zero
         tryhop(2);POP();RET()
         label('.fdiv2')
         LD(vACH);_BEQ('.fdiv3')
@@ -868,7 +868,7 @@ def scope():
                   ('CODE', '_@_fdiv2', code_fdiv2),
                   ('IMPORT', '__@fsavevsp'),
                   ('IMPORT', '__@fexception'),
-                  ('IMPORT', '__@clrfac'),
+                  ('IMPORT', '_@_clrfac'),
                   ('IMPORT', '__@foverflow'),
                   ('IMPORT', '__@cm32shl1'),
                   ('IMPORT', '__@bm40load'),
@@ -890,7 +890,7 @@ def scope():
         SUBW(T2);STW(T2);                # qexp should be in [0,32)
         _BLT('.ret')                     # if qexp < 0 return dividend
         SUBI(32);_BLT('.fmod2')
-        _CALLJ('__@clrfac')              # if qexp >=32 return zero
+        _CALLJ('_@_clrfac')              # if qexp >=32 return zero
         label('.ret')
         LDI(0);STW(CM)                   # for remquo
         tryhop(2);POP();RET()
@@ -921,7 +921,7 @@ def scope():
                   ('CODE', '_@_fmod', code_fmod),
                   ('IMPORT', '__@fsavevsp'),
                   ('IMPORT', '__@fexception'),
-                  ('IMPORT', '__@clrfac'),
+                  ('IMPORT', '_@_clrfac'),
                   ('IMPORT', '__@foverflow'),
                   ('IMPORT', '__@bm32loadx'),
                   ('IMPORT', '__@cm32shl1'),
@@ -996,13 +996,13 @@ def scope():
         ST(AE);LD(vACH);BNE('.fscalovf')
         POP();RET()
         label('.fscalund')
-        _CALLJ('__@clrfac');POP();RET()
+        _CALLJ('_@_clrfac');POP();RET()
         label('.fscalovf')
         _CALLJ('__@fsavevsp')
         _CALLJ('__@foverflow');HALT()
 
     module(name='rt_fscalb.s',
-           code=[ ('IMPORT', '__@clrfac'),
+           code=[ ('IMPORT', '_@_clrfac'),
                   ('IMPORT', '__@foverflow'),
                   ('IMPORT', '__@fsavevsp'),
                   ('EXPORT', '_@_fscalb'),
@@ -1020,12 +1020,12 @@ def scope():
         LDW(T3);XORW(AM+2);ANDW(BM+2);STW(AM+2)
         ORW(AM);_BNE('.done')
         label('.zero')
-        _CALLJ('__@clrfac')
+        _CALLJ('_@_clrfac')
         label('.done')
         tryhop(2);POP();RET()
 
     module(name='rt_frndz.s',
-           code=[ ('IMPORT', '__@clrfac'),
+           code=[ ('IMPORT', '_@_clrfac'),
                   ('IMPORT', '__@am32shra'),
                   ('EXPORT', '_@_frndz'),
                   ('CODE', '_@_frndz', code_frndz) ] )

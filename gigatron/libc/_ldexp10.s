@@ -55,32 +55,33 @@ def scope():
     def code_frexp10():
         label('_frexp10')
         # Calling _ldexp10 will not damage R16-R19
-        LDW(vLR);STW(R19)
+        PUSH()
         LDW(R11);STW(R18)
         LD(F8);_BEQ('.zero')
         SUBI(158);STW(R17);LSLW();ADDW(R17);_DIVIS(10);STW(R17)
-        LDI(0);SUBW(R17);STW(R11);STW(R17);_CALLJ('_ldexp10')
+        LDI(0);SUBW(R17);STW(R11);_CALLJ('_ldexp10')
         label('.loop1')
         _FMOV(FAC,F8)
-        LD(F8);SUBI(157);_BLT('.fix1')
-        SUBI(3);_BLE('.ret')
-        _LDI(-1)
-        _BRA('.fix2')
+        LD(F8);SUBI(160);_BGT('.fix1')
+        ADDI(3);_BGT('.ret');_BLT('.fix0')
+        LD(F8+1);ORI(0x80);SUBI(0xcc);_BGE('.ret')
+        label('.fix0')
+        LDI(1);_BRA('.fix2')
         label('.fix1')
-        LDI(1);
+        _LDI(-1);
         label('.fix2')
-        STW(R11);ADDW(R17);STW(R17)
+        STW(R11);LDW(R17);SUBW(R11);STW(R17)
         _CALLJ('_ldexp10');_BRA('.loop1')
         label('.zero')
-        LDI(0);STW(R17)
-        STW(0x81);STW(0x83);STW(0x85) # clrfac
+        STW(R17);_CALLJ('_@_clrfac')
         label('.ret')
-        LDI(0);SUBW(R17);DOKE(R18)
-        LDW(R19);tryhop(3);STW(vLR);RET();
+        LDW(R17);DOKE(R18)
+        tryhop(2);POP();RET();
 
     module(name='_frexp10',
            code=[ ('EXPORT', '_frexp10'),
                   ('IMPORT', '_ldexp10'),
+                  ('IMPORT', '_@_clrfac'),
                   ('CODE', '_frexp10', code_frexp10) ] )
 
 scope()

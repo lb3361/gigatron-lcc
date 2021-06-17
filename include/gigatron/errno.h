@@ -14,6 +14,7 @@ extern int errno;
 #define ENFILE    6
 #define ENOMEM    7
 #define EIO       8
-#define ENOTSUP   9
+#define EPERM     9
+#define ENOTSUP  10
 
 #endif /* __ERRNO */

@@ -76,10 +76,11 @@ static int cons_control(register int c)
 	return 1;
 }
 
-void console_print(register const char *s, register int len)
+int console_print(const char *ss, register int len)
 {
+	register int n;
+	register const char *s = ss;
 	while (len > 0 && *s) {
-		register int n;
 		if (n = _console_printchars(console_state.fgbg, cons_addr(), s, len))
 			console_state.cx += n;
 		else
@@ -87,6 +88,7 @@ void console_print(register const char *s, register int len)
 		s += n;
 		len -= n;
 	}
+	return s - ss;
 }
 
 DECLARE_INIT_FUNCTION(_console_setup);

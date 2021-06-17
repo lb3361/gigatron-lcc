@@ -46,7 +46,7 @@ static void echo(int ch)
 	console_print(&c, 1);
 }
 
-void console_readline(char *buffer, int bufsiz)
+int console_readline(char *buffer, int bufsiz)
 {
 	register char *s = buffer;
 	register char *e = buffer + bufsiz - 3;
@@ -73,4 +73,5 @@ void console_readline(char *buffer, int bufsiz)
 		}
 		console_print("\a", 1);
 	}
+	return s - buffer;
 }

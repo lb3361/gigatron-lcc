@@ -21,8 +21,8 @@ extern struct _iobuf {
 	int  _flag;
 	int  _file;
 	char _buf[4];
-	struct _sbuf *buf;
-	struct _svec *vec;
+	struct _sbuf *_base;
+	struct _svec *_v;
 } _iob[];
 
 #define FILE struct _iobuf
@@ -107,13 +107,12 @@ extern void perror(const char *);
 #define getc(p) (--(p)->_cnt < 0 ? _filbuf(p) : (int) *(p)->_ptr++)
 #define putc(x, p) (--(p)->_cnt < 0 ? _flsbuf((unsigned char)(x),p) : (int)(*(p)->_ptr++=(unsigned char)(x)))
 #define getchar() (getc(stdin))
-#define putchar(x) (putc(stdout,x))
+#define putchar(x) (putc(x,stdout))
 #define ferror(p) ((p)->_flag & _IOERR)
 #define feof(p) ((p)->_flag & _IOEOF)
 #define clearerr(p) ((p)->flag &= (_IOERR|_IOEOF)^0xff)
 
 extern int _filbuf(FILE *);
 extern int _flsbuf(unsigned, FILE *);
-
 
 #endif /* __STDIO */

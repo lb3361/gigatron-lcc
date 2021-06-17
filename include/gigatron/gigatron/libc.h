@@ -91,18 +91,24 @@ extern double remquo(double x, double y, int *quo);
 struct _sbuf {
 	int size;
 	char xtra[2];
-	char data[1];
+	char data[2];
 };
 
 struct _svec {
-	int  (*read)(int fd, void *buf, size_t cnt);
+	int  (*flsbuf)(unsigned c, FILE *fp);
 	int  (*write)(int fd, void *buf, size_t cnt);
+	int  (*filbuf)(FILE *fp);
+	int  (*read)(int fd, void *buf, size_t cnt);
 	long (*lseek)(int fd, long off, int whence);
 	int  (*close)(int fd);
 };
 
-int _fwr(const char *buf, size_t sz, FILE *fp);
-int _frd(char *buf, size_t sz, FILE *fp);
+/* This function is called before main() to initialize the _iob[]. 
+   The default version hooks the console to stdin/stdout/stderr. */
+extern void  _iob_setup(void);
+
+extern int _fwr(const char *buf, size_t sz, FILE *fp);
+extern int _frd(char *buf, size_t sz, FILE *fp);
 
 /* ---- Misc ---- */
 

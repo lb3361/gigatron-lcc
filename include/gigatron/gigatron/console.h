@@ -8,8 +8,9 @@
 #define CONSOLE_DEFAULT_FGBG 0x3f20
 
 /* Print up to len characters of zero terminated string s.
-   Understands control characters "\a\t\b\n\r\f". */
-extern void console_print(const char *s, int len);
+   Understands control characters "\a\t\b\n\r\f". 
+   Returns number of printed characters. */
+extern int console_print(const char *s, int len);
 
 /* Reset the video tables and clear the screen. */
 extern void console_clear_screen(void);
@@ -30,8 +31,9 @@ extern int console_waitkey(void);
 
 /* Input a line with rudimentary editing features: 
    BS,DEL,LEFT to erase the last character, 
-   CTRL+C to erase the line. */
-extern void console_readline(char *buffer, int bufsiz);
+   CTRL+C to erase the line. 
+   Returns line length. */
+extern int console_readline(char *buffer, int bufsiz);
 
 /* -------- implementation ----------- */
 

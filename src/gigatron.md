@@ -464,15 +464,21 @@ ac: MULI2(conB, ac) "%1%{mul0}" 100
 ac: MULI2(conBn, ac) "%1%{mul0}" 110
 ac: MULI2(conB, reg) "%{mul0%1}" 100
 ac: MULI2(conBn, reg) "%{mul0%1}" 110
+ac: MULI2(con, ac)  "%1_MULI(%0);" 200
 ac: MULI2(ac, iarg) "%0%[1b]_MUL(%1);" 200
 ac: MULI2(iarg, ac) "%1%[0b]_MUL(%0);" 200
 ac: MULU2(conB, ac) "%1%{mul0}" 100
+ac: MULU2(con, ac)  "%1_MULI(%0);" 200
 ac: MULU2(ac, iarg) "%0%[1b]_MUL(%1);" 200
 ac: MULU2(iarg, ac) "%1%[0b]_MUL(%0);" 200
 ac: DIVI2(ac, iarg) "%0%[1b]_DIVS(%1);" 200
 ac: DIVU2(ac, iarg) "%0%[1b]_DIVU(%1);" 200
 ac: MODI2(ac, iarg) "%0%[1b]_MODS(%1);" 200
 ac: MODU2(ac, iarg) "%0%[1b]_MODU(%1);" 200
+ac: DIVI2(ac, con)  "%0%[1b]_DIVIS(%1);" 200
+ac: DIVU2(ac, con)  "%0%[1b]_DIVIU(%1);" 200
+ac: MODI2(ac, con)  "%0%[1b]_MODIS(%1);" 200
+ac: MODU2(ac, con)  "%0%[1b]_MODIU(%1);" 200
 ac: BCOMI2(ac)      "%0STW(T3);_LDI(-1);XORW(T3);" 68
 ac: BCOMU2(ac)      "%0STW(T3);_LDI(-1);XORW(T3);" 68
 ac: BANDI2(ac,iarg)  "%0%[1b]ANDW(%1);" 28

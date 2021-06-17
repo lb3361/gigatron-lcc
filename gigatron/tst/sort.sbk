@@ -52,14 +52,11 @@ def code2():
 	CALLI('putchar');
 	LDI(0);SUBW(R7);STW(R7);
 	label('.7');
-	LDI(10);STW(R22);
-	LDW(R7);_DIVS(R22);_BEQ('.9');
-	LDI(10);STW(R22);
-	LDW(R7);_DIVS(R22);STW(R8);
+	LDW(R7);_DIVIS(10);_BEQ('.9');
+	LDW(R7);_DIVIS(10);STW(R8);
 	CALLI('putd');
 	label('.9');
-	LDI(10);STW(R22);
-	LDW(R7);_MODS(R22);ADDI(48);STW(R8);
+	LDW(R7);_MODIS(10);ADDI(48);STW(R8);
 	_SP(2);_MOV(R8,[vAC]);
 	CALLI('putchar');
 	LDI(0);

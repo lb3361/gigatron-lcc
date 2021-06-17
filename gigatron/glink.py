@@ -811,6 +811,11 @@ def _MUL(d):
     extern('_@_mul')
     _CALLI('_@_mul')            # T3 * AC --> vAC
 @vasm
+def _MULI(d):
+    STW(T3);_LDI(d)
+    extern('_@_mul')
+    _CALLI('_@_mul')            # T3 * AC --> vAC
+@vasm
 def _DIVS(d):
     STW(T3); LDW(d)
     extern('_@_divs')
@@ -828,6 +833,26 @@ def _MODS(d):
 @vasm
 def _MODU(d):
     STW(T3); LDW(d)
+    extern('_@_modu')
+    _CALLI('_@_modu')           # T3 % vAC --> vAC
+@vasm
+def _DIVIS(d):
+    STW(T3);_LDI(d)
+    extern('_@_divs')
+    _CALLI('_@_divs')           # T3 / AC --> vAC
+@vasm
+def _DIVIU(d):
+    STW(T3);_LDI(d)
+    extern('_@_divu')
+    _CALLI('_@_divu')           # T3 / AC --> vAC
+@vasm
+def _MODIS(d):
+    STW(T3);_LDI(d)
+    extern('_@_mods')
+    _CALLI('_@_mods')           # T3 % vAC --> vAC
+@vasm
+def _MODIU(d):
+    STW(T3);_LDI(d)
     extern('_@_modu')
     _CALLI('_@_modu')           # T3 % vAC --> vAC
 @vasm

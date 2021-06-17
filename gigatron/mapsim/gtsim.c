@@ -149,7 +149,7 @@ void sim(void)
       }
 
       // callbacks
-      if (S.PC == 0x3b4) {
+      if (S.PC == 0x3b4 && T.AC != 0x80) {
         sys_0x3b4(&T);
       } else if (S.PC == 0x301) {
         next_0x301(&T);

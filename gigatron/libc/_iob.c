@@ -4,6 +4,23 @@ struct _iobuf _iob[_IOB_NUM] = { 0 };
 
 DECLARE_INIT_FUNCTION(_iob_setup);
 
+int _fcheck(register FILE *fp)
+{
+	register int f = fp->_flag;
+	if (f == 0 || (f & (_IOERR|_IOEOF)))
+		return EOF;
+	return 0;
+}
+
+int _fwalk(register int(*func)(FILE*))
+{
+	int i;
+	for (i = 0; i != _IOB_NUM; i++)
+		if (_iob[i]._flag)
+			(*func)(&_iob[i]);
+	return 0;
+}
+
 int _serror(FILE *fp, int errn)
 {
 	if (errn > 0) {
@@ -17,30 +34,6 @@ int _serror(FILE *fp, int errn)
 		return EOF;
 	} else
 		return 0;
-}
-
-FILE *_sfindiob(void)
-{
-	int i;
-	for (i = 0; i != _IOB_NUM; i++)
-		if (_iob[i]._flag == 0)
-			return &_iob[i];
-	errno = ENFILE;
-	return 0;
-}
-
-void _sfreeiob(FILE *fp)
-{
-	fp->_flag = 0;
-}
-
-int _swalk(register int(*f)(FILE*))
-{
-	register int i;
-	for (i = 0; i != _IOB_NUM; i++)
-		if (_iob[i]._flag)
-			(*f)(&_iob[i]);
-	return 0;
 }
 
 static int _chk_flsbuf(register FILE *fp)

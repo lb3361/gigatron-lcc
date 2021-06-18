@@ -6,10 +6,13 @@
 #include <gigatron/libc.h>
 
 #define _IOB_NUM 5
+
+extern int _fcheck(FILE*);
+extern int _fwalk(int(*f)(FILE*));
+
+extern int   _serror(FILE*, int);
 extern FILE *_sfindiob(void);
-extern void _sfreeiob(FILE *fp);
-extern int _serror(FILE*, int);
-extern int _swalk(int(*f)(FILE*));
+extern void  _sfreeiob(FILE *fp);
 
 #define CONS_BUFSIZE 80
 extern struct _svec _cons_svec;

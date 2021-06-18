@@ -22,9 +22,7 @@ int _fputm(register const char *buf, register size_t sz, register FILE *fp)
 
 int fputs(register const char *s, register FILE *fp)
 {
-	register int written = _fputs(s, strlen(s), fp);
-	if (ferror(fp))
-		return -1;
-	return 0;
+	_fputm(s, strlen(s), fp);
+	return _fcheck(fp);
 }
 

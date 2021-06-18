@@ -2,7 +2,7 @@
 #define __STDIO
 
 #define _IOFBF   0x40  /* fully buffered */
-#define _IOLBF   0xC0  /* line buffered. */ /* note: treated as _IONBF */
+#define _IOLBF   0xC0  /* line buffered. */ /* note: partial impl */
 #define _IONBF   0x80  /* not buffered   */
 #define	_IOEOF   0x10  /* eof flag       */
 #define	_IOERR   0x20  /* error flag     */
@@ -17,7 +17,7 @@
 
 extern struct _iobuf {
 	int  _cnt;
-	unsigned char *_ptr;
+	char *_ptr;
 	int  _flag;
 	int  _file;
 	char _buf[4];
@@ -105,14 +105,14 @@ extern int ferror(FILE *);
 extern void perror(const char *);
 
 #define getc(p) (--(p)->_cnt < 0 ? _filbuf(p) : (int) *(p)->_ptr++)
-#define putc(x, p) (--(p)->_cnt < 0 ? _flsbuf((unsigned char)(x),p) : (int)(*(p)->_ptr++=(unsigned char)(x)))
+#define putc(x, p) (--(p)->_cnt < 0 ? _flsbuf((char)(x),p) : (int)(*(p)->_ptr++=(char)(x)))
 #define getchar() (getc(stdin))
 #define putchar(x) (putc(x,stdout))
 #define ferror(p) ((p)->_flag & _IOERR)
 #define feof(p) ((p)->_flag & _IOEOF)
-#define clearerr(p) ((p)->flag &= (_IOERR|_IOEOF)^0xff)
+#define clearerr(p) ((p)->_flag &= (_IOERR|_IOEOF)^0xff)
 
 extern int _filbuf(FILE *);
-extern int _flsbuf(unsigned, FILE *);
+extern int _flsbuf(int, FILE *);
 
 #endif /* __STDIO */

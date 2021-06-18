@@ -3,7 +3,7 @@
 # ======== ('CODE', 'main', code0)
 def code0():
 	label('main');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-22);STW(SP);_SAVE(10, 0xfc); # R2-7
+	_PROLOGUE(22,10,0xfc); # save=R2-7
 	_SP(2+22);STW(R22);
 	LDW(R8);DOKE(R22);
 	_SP(4+22);STW(R22);
@@ -73,8 +73,7 @@ def code0():
 	LDW(R7);_CMPIS(127);_BLE('.15');
 	LDI(0);
 	label('.1');
-	STW(R8);_RESTORE(10, 0xfc); # R2-7
-	_SP(22);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(22,10,0xfc,saveAC=True);
 # ======== ('COMMON', 'f', code1, 640, 1)
 def code1():
 	label('f');

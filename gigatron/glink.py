@@ -724,7 +724,9 @@ def _SP(n):
     '''Pseudo-instruction to compute SP relative addresses'''
     n = v(n)
     if is_zero(n):
-        _LDW(SP);
+        LDW(SP);
+    elif isinstance(n,int) and not isinstance(n,Unk) and n < 0 and n > -256:
+        LDW(SP); SUBI(-n)
     else:
         _LDI(n); ADDW(SP)
 @vasm
@@ -1208,73 +1210,37 @@ def _CALLJ(d):
     else:
         tryhop(5);LDWI(d);CALL(vAC)
 @vasm
-def _SAVE(offset, mask):
-    '''Save all registers specified by mask at [SP+offset],
-       Use runtime helpers to save code bytes.'''
-    def save1(r, postincr=False):
-        '''Save one register'''
-        if (args.cpu < 6):
-            STW(T3);LDW(r);DOKE(T3)
-            if (postincr):
-                LDW(T3);ADDI(2)
-        else:
-            DOKEA(r)
-            if (postincr):
-                ADDI(2)
-    i = 0
-    while i < 32:
-        m = 1 << i
-        if mask & m:
-            if i < 8 and ((0xff << i) & 0xff) == (mask & 0xff):
-                # we can call a runtime helper
-                rt = "_@_saveR%dto7" % i
-                extern(rt)
-                if args.cpu < 5:
-                    _LDI(rt);STW('sysArgs6');_SP(offset);CALL('sysArgs6')
-                else:
-                    _SP(offset);CALLI(rt)
-                i = 7
-            else:
-                if not mask & (m-1): _SP(offset)
-                save1(R0+i+i, postincr=(mask & ~(m+m-1)))
-        i += 1
-        
+def _PROLOGUE(framesize,maxargoffset,mask):
+    '''Function prologue'''
+    if args.cpu >= 5:
+        tryhop(4);LDW(vLR);DOKE(SP);_SP(-framesize);STW(SP)
+        if mask:
+            ADDI(maxargoffset)
+            extern('_@_save_%02x' % mask)
+            _CALLI('_@_save_%02x' % mask)
+    else:
+        tryhop(4);LDW(vLR);DOKE(SP);_SP(-framesize);STW(SP)
+        if mask:
+            ADDI(maxargoffset);STW(T3)
+            extern('_@_save_%02x' % mask)
+            _CALLJ('_@_save_%02x' % mask)
 @vasm
-def _RESTORE(offset, mask):
-    '''Restore all registers specified by mask from [SP+offset}
-       Use runtime helpers to save code bytes.'''
-    def restore1(r,postincr=False):
-        '''Restore one register'''
-        if (args.cpu < 6):
-            if (postincr):
-                STW(T3)
-            DEEK();STW(r)
-            if (postincr):
-                LDW(T3);ADDI(2)
-        else:
-            DEEKA(r)
-            if (postincr):
-                ADDI(2)
-    i = 0
-    while i < 32:
-        m = 1 << i
-        if mask & m:
-            if i < 8 and ((0xff << i) & 0xff) == (mask & 0xff):
-                # we can call a runtime helper
-                rt = "_@_restoreR%dto7" % i
-                extern(rt)
-                if args.cpu < 5:
-                    _LDI(rt);STW('sysArgs6');_SP(offset);CALL('sysArgs6')
-                else:
-                    _SP(offset);CALLI(rt)
-                i = 7
-            else:
-                if not mask & (m-1): _SP(offset)
-                restore1(R0+i+i, postincr=(mask & ~(m+m-1)))
-            first = False
-        i += 1
-
-    
+def _EPILOGUE(framesize,maxargoffset,mask,saveAC=False):
+    '''Function epilogue'''
+    if saveAC:
+        STW(T2);
+    if mask:
+        _SP(maxargoffset)
+        extern('_@_restore_%02x' % mask)
+        _CALLI('_@_restore_%02x' % mask)
+    if args.cpu >= 5:
+        _LDI(framesize)
+        extern('_@_endframe')
+        _CALLI('_@_endframe')
+    else:
+        _LDI(framesize);STW(T3)
+        extern('_@_endframe')
+        _CALLI('_@_endframe')
         
 # ------------- reading .s/.o/.a files
         

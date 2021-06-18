@@ -3,7 +3,7 @@
 # ======== ('CODE', 'print', code0)
 def code0():
 	label('print');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-40);STW(SP);
+	_PROLOGUE(40,40,0x0); # save=
 	_LDI('.2');STW(R8);
 	_SP(2);_MOV(R8,[vAC]);
 	_LDI('c');PEEK();XORI(128);SUBI(128);STW(R9);
@@ -30,11 +30,11 @@ def code0():
 	_SP(34);_FMOV(F20,[vAC]);
 	CALLI('printf');
 	label('.1');
-	_SP(40);STW(SP);DEEK();tryhop(3);STW(vLR);RET();
+	_EPILOGUE(40,40,0x0);
 # ======== ('CODE', 'main', code1)
 def code1():
 	label('main');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-2);STW(SP);
+	_PROLOGUE(2,2,0x0); # save=
 	_LDI('c');STW(R22);
 	LDI(1);POKE(R22);
 	LDW(R22);PEEK();XORI(128);SUBI(128);STW(R22);
@@ -277,7 +277,7 @@ def code1():
 	LDW(R22);DEEK();DOKE(R21);
 	LDI(0);
 	label('.3');
-	STW(R8);_SP(2);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(2,2,0x0,saveAC=True);
 # ======== ('COMMON', 'P', code2, 2, 2)
 def code2():
 	align(2);

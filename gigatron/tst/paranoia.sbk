@@ -64,7 +64,7 @@ def code14():
 # ======== ('CODE', 'sigfpe', code15)
 def code15():
 	label('sigfpe');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-6);STW(SP);
+	_PROLOGUE(6,6,0x0); # save=
 	_LDI('fpecount');STW(R22);
 	LDW(R22);DEEK();ADDI(1);DOKE(R22);
 	_LDI('.2');STW(R8);
@@ -83,7 +83,7 @@ def code15():
 	label('.4');
 	CALLI('abort');
 	label('.1');
-	_SP(6);STW(SP);DEEK();tryhop(3);STW(vLR);RET();
+	_EPILOGUE(6,6,0x0);
 # ======== ('DATA', '.757', code16, 0, 2)
 def code16():
 	align(2);
@@ -95,7 +95,7 @@ def code16():
 # ======== ('CODE', 'main', code17)
 def code17():
 	label('main');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-142);STW(SP);_SAVE(20, 0xff); # R0-7
+	_PROLOGUE(142,20,0xff); # save=R0-7
 	_FMOV('.7','Zero');
 	_FMOV('.8','One');
 	_FMOV('One',F20);
@@ -3491,8 +3491,7 @@ def code17():
 	CALLI('printf');
 	LDI(0);
 	label('.6');
-	STW(R8);_RESTORE(20, 0xff); # R0-7
-	_SP(142);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(142,20,0xff,saveAC=True);
 # ======== ('DATA', '.570', code18, 0, 2)
 def code18():
 	align(2);
@@ -3512,7 +3511,7 @@ def code19():
 # ======== ('CODE', 'Sign', code20)
 def code20():
 	label('Sign');
-	tryhop(4);LDW(vLR);STW(R22);
+	PUSH();
 	_FMOV(F8,FAC);_LDI('.7');_FCMP();_BLT('.823');
 	_FMOV('.8',F17);
 	_BRA('.824');
@@ -3521,11 +3520,11 @@ def code20():
 	label('.824');
 	_FMOV(F17,FAC);
 	label('.821');
-	LDW(R22);tryhop(3);STW(vLR);RET();
+	tryhop(2);POP();RET()
 # ======== ('CODE', 'Pause', code21)
 def code21():
 	label('Pause');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-6);STW(SP);
+	_PROLOGUE(6,6,0x0); # save=
 	_LDI('.827');STW(R8);
 	_LDI('Milestone');DEEK();STW(R9);
 	_SP(4);_MOV(R9,[vAC]);
@@ -3540,11 +3539,11 @@ def code21():
 	LDW(R22);DEEK();ADDI(1);DOKE(R22);
 	LDI(0);
 	label('.826');
-	STW(R8);_SP(6);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(6,6,0x0,saveAC=True);
 # ======== ('CODE', 'TstCond', code22)
 def code22():
 	label('TstCond');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-6);STW(SP);
+	_PROLOGUE(6,6,0x0); # save=
 	_SP(2+6);STW(R22);
 	LDW(R8);DOKE(R22);
 	_SP(4+6);STW(R22);
@@ -3562,7 +3561,7 @@ def code22():
 	label('.830');
 	LDI(0);
 	label('.829');
-	STW(R8);_SP(6);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(6,6,0x0,saveAC=True);
 # ======== ('DATA', '.833', code23, 0, 2)
 def code23():
 	align(2);
@@ -3574,7 +3573,7 @@ def code23():
 # ======== ('CODE', 'BadCond', code24)
 def code24():
 	label('BadCond');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-10);STW(SP);_SAVE(8, 0x80); # R7
+	_PROLOGUE(10,8,0x80); # save=R7
 	LDW(R8);STW(R7);
 	_SP(4+10);STW(R22);
 	LDW(R9);DOKE(R22);
@@ -3590,12 +3589,11 @@ def code24():
 	CALLI('printf');
 	LDI(0);
 	label('.832');
-	STW(R8);_RESTORE(8, 0x80); # R7
-	_SP(10);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(10,8,0x80,saveAC=True);
 # ======== ('CODE', 'Random', code25)
 def code25():
 	label('Random');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-20);STW(SP);_SAVE(8, 0xfc); # R2-7
+	_PROLOGUE(20,8,0xfc); # save=R2-7
 	_FMOV('Random1',FAC);_LDI('Random9');_FADD();_FMOV(FAC,F5);
 	_FMOV(F5,FAC);LDI(F5);_FMUL();_FMOV(FAC,F2);
 	_FMOV(F2,FAC);LDI(F2);_FMUL();_FMOV(FAC,F2);
@@ -3607,12 +3605,11 @@ def code25():
 	_FMOV('.840',FAC);LDI(F5);_FMUL();LDI(F2);_FADD();_FMOV(FAC,'Random1');
 	_FMOV('Random1',FAC);
 	label('.839');
-	_RESTORE(8, 0xfc); # R2-7
-	_SP(20);STW(SP);DEEK();tryhop(3);STW(vLR);RET();
+	_EPILOGUE(20,8,0xfc);
 # ======== ('CODE', 'SqXMinX', code26)
 def code26():
 	label('SqXMinX');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-32);STW(SP);_SAVE(20, 0xe0); # R5-7
+	_PROLOGUE(32,20,0xe0); # save=R5-7
 	_SP(2+32);STW(R22);
 	LDW(R8);DOKE(R22);
 	_FMOV('X',F20);
@@ -3648,12 +3645,11 @@ def code26():
 	label('.842');
 	LDI(0);
 	label('.841');
-	STW(R8);_RESTORE(20, 0xe0); # R5-7
-	_SP(32);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(32,20,0xe0,saveAC=True);
 # ======== ('CODE', 'NewD', code27)
 def code27():
 	label('NewD');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-10);STW(SP);
+	_PROLOGUE(10,8,0x0); # save=
 	_FMOV('Z1',FAC);_LDI('Q');_FMUL();_FMOV(FAC,'X');
 	_FMOV('X',FAC);_LDI('Radix');_FDIV();_FNEG();_LDI('Half');_FADD();_FMOV(FAC,F8);
 	_SP(2);_FMOV(F8,[vAC]);
@@ -3678,11 +3674,11 @@ def code27():
 	_FMOV('Radix',FAC);LDW(R22);_FMUL();_FMOV(FAC,'D');
 	LDI(0);
 	label('.850');
-	STW(R8);_SP(10);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(10,8,0x0,saveAC=True);
 # ======== ('CODE', 'SR3750', code28)
 def code28():
 	label('SR3750');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-8);STW(SP);
+	_PROLOGUE(8,8,0x0); # save=
 	_FMOV('X',F20);
 	_FMOV('Radix',F17);
 	_FMOV('Z2',F14);
@@ -3718,11 +3714,11 @@ def code28():
 	label('.854');
 	LDI(0);
 	label('.853');
-	STW(R8);_SP(8);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(8,8,0x0,saveAC=True);
 # ======== ('CODE', 'IsYeqX', code29)
 def code29():
 	label('IsYeqX');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-14);STW(SP);
+	_PROLOGUE(14,14,0x0); # save=
 	_FMOV('Y',FAC);_LDI('X');_FCMP();_BEQ('.861');
 	_LDI('N');DEEK();_BGT('.863');
 	_FMOV('Zero',F20);
@@ -3760,11 +3756,11 @@ def code29():
 	label('.861');
 	LDI(0);
 	label('.860');
-	STW(R8);_SP(14);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(14,14,0x0,saveAC=True);
 # ======== ('CODE', 'SR3980', code30)
 def code30():
 	label('SR3980');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-12);STW(SP);
+	_PROLOGUE(12,12,0x0); # save=
 	label('.874');
 	_LDI('I');DEEK();_LCVI();_FCVI();_FMOV(FAC,'Q');
 	_FMOV('Z',F8);
@@ -3788,11 +3784,11 @@ def code30():
 	label('.876');
 	LDI(0);
 	label('.873');
-	STW(R8);_SP(12);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(12,12,0x0,saveAC=True);
 # ======== ('CODE', 'PrintIfNPositive', code31)
 def code31():
 	label('PrintIfNPositive');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-6);STW(SP);
+	_PROLOGUE(6,6,0x0); # save=
 	_LDI('N');DEEK();_BLE('.880');
 	_LDI('.882');STW(R8);
 	_LDI('N');DEEK();STW(R9);
@@ -3801,11 +3797,11 @@ def code31():
 	label('.880');
 	LDI(0);
 	label('.879');
-	STW(R8);_SP(6);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(6,6,0x0,saveAC=True);
 # ======== ('CODE', 'TstPtUf', code32)
 def code32():
 	label('TstPtUf');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-10);STW(SP);
+	_PROLOGUE(10,10,0x0); # save=
 	_LDI('N');STW(R22);
 	LDI(0);DOKE(R22);
 	_FMOV('Z',FAC);_LDI('Zero');_FCMP();_BEQ('.884');
@@ -3924,11 +3920,11 @@ def code32():
 	label('.884');
 	LDI(0);
 	label('.883');
-	STW(R8);_SP(10);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(10,10,0x0,saveAC=True);
 # ======== ('CODE', 'notify', code33)
 def code33():
 	label('notify');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-6);STW(SP);
+	_PROLOGUE(6,6,0x0); # save=
 	_SP(2+6);STW(R22);
 	LDW(R8);DOKE(R22);
 	_LDI('.928');STW(R8);
@@ -3939,11 +3935,11 @@ def code33():
 	CALLI('printf');
 	LDI(0);
 	label('.927');
-	STW(R8);_SP(6);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(6,6,0x0,saveAC=True);
 # ======== ('CODE', 'msglist', code34)
 def code34():
 	label('msglist');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-8);STW(SP);_SAVE(6, 0x80); # R7
+	_PROLOGUE(8,6,0x80); # save=R7
 	LDW(R8);STW(R7);
 	_BRA('.932');
 	label('.931');
@@ -3957,8 +3953,7 @@ def code34():
 	LDW(R7);DEEK();_BNE('.931');
 	LDI(0);
 	label('.930');
-	STW(R8);_RESTORE(6, 0x80); # R7
-	_SP(8);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(8,6,0x80,saveAC=True);
 # ======== ('DATA', '.936', code35, 0, 2)
 def code35():
 	align(2);
@@ -3976,12 +3971,12 @@ def code35():
 # ======== ('CODE', 'Instructions', code36)
 def code36():
 	label('Instructions');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-4);STW(SP);
+	_PROLOGUE(4,4,0x0); # save=
 	_LDI('.936');STW(R8);
 	CALLI('msglist');
 	LDI(0);
 	label('.935');
-	STW(R8);_SP(4);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(4,4,0x0,saveAC=True);
 # ======== ('DATA', '.947', code37, 0, 2)
 def code37():
 	align(2);
@@ -4004,12 +3999,12 @@ def code37():
 # ======== ('CODE', 'Heading', code38)
 def code38():
 	label('Heading');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-4);STW(SP);
+	_PROLOGUE(4,4,0x0); # save=
 	_LDI('.947');STW(R8);
 	CALLI('msglist');
 	LDI(0);
 	label('.946');
-	STW(R8);_SP(4);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(4,4,0x0,saveAC=True);
 # ======== ('DATA', '.963', code39, 0, 2)
 def code39():
 	align(2);
@@ -4037,12 +4032,12 @@ def code39():
 # ======== ('CODE', 'Characteristics', code40)
 def code40():
 	label('Characteristics');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-4);STW(SP);
+	_PROLOGUE(4,4,0x0); # save=
 	_LDI('.963');STW(R8);
 	CALLI('msglist');
 	LDI(0);
 	label('.962');
-	STW(R8);_SP(4);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(4,4,0x0,saveAC=True);
 # ======== ('DATA', '.984', code41, 0, 2)
 def code41():
 	align(2);
@@ -4068,16 +4063,16 @@ def code41():
 # ======== ('CODE', 'History', code42)
 def code42():
 	label('History');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-4);STW(SP);
+	_PROLOGUE(4,4,0x0); # save=
 	_LDI('.984');STW(R8);
 	CALLI('msglist');
 	LDI(0);
 	label('.983');
-	STW(R8);_SP(4);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(4,4,0x0,saveAC=True);
 # ======== ('CODE', 'pow', code43)
 def code43():
 	label('pow');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-44);STW(SP);_SAVE(10, 0xff); # R0-7
+	_PROLOGUE(44,10,0xff); # save=R0-7
 	_FMOV(F8,F5);
 	_FMOV(F11,F2);
 	_SP(-10+44);STW(R22);
@@ -4167,8 +4162,7 @@ def code43():
 	CALLI('ldexp');
 	
 	label('.1002');
-	_RESTORE(10, 0xff); # R0-7
-	_SP(44);STW(SP);DEEK();tryhop(3);STW(vLR);RET();
+	_EPILOGUE(44,10,0xff);
 # ======== ('COMMON', 'UfNGrad', code44, 2, 2)
 def code44():
 	align(2);

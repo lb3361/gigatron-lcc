@@ -3,14 +3,14 @@
 # ======== ('CODE', 'main', code0)
 def code0():
 	label('main');
-	tryhop(4);LDW(vLR);STW(R22);
+	PUSH();
 	LDI(0);
 	label('.1');
-	STW(R8);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	tryhop(2);POP();RET()
 # ======== ('CODE', 'f', code1)
 def code1():
 	label('f');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-4);STW(SP);
+	_PROLOGUE(4,2,0x0); # save=
 	_SP(2+4);STW(R22);
 	LDW(R8);DOKE(R22);
 	CALLI('f');STW(R22);
@@ -20,11 +20,11 @@ def code1():
 	_SP(-2+4);DEEK();ADDW(R21);DOKE(R22);
 	LDI(0);
 	label('.2');
-	STW(R8);_SP(4);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(4,2,0x0,saveAC=True);
 # ======== ('CODE', 'f2', code2)
 def code2():
 	label('f2');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-8);STW(SP);_SAVE(2, 0xc0); # R6-7
+	_PROLOGUE(8,2,0xc0); # save=R6-7
 	LDW(R8);STW(R7);
 	CALLI('f');STW(R22);
 	STW(T1);_SP(-2+8);_MOV(R22,[vAC]);LDW(T1) #genspill
@@ -38,12 +38,11 @@ def code2():
 	_SP(-2+8);DEEK();ADDW(R6);STW(R7);
 	LDI(0);
 	label('.3');
-	STW(R8);_RESTORE(2, 0xc0); # R6-7
-	_SP(8);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(8,2,0xc0,saveAC=True);
 # ======== ('CODE', 'f3', code3)
 def code3():
 	label('f3');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-26);STW(SP);_SAVE(2, 0xff); # R0-7
+	_PROLOGUE(26,2,0xff); # save=R0-7
 	_SP(2+26);STW(R22);
 	LDW(R8);DOKE(R22);
 	_SP(4+26);STW(R22);
@@ -76,12 +75,11 @@ def code3():
 	_SP(-6+26);DEEK();STW(T2);_SP(-8+26);DEEK();STW(T3);LDW(T2);DOKE(T3);
 	LDI(0);
 	label('.7');
-	STW(R8);_RESTORE(2, 0xff); # R0-7
-	_SP(26);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(26,2,0xff,saveAC=True);
 # ======== ('CODE', 'f4', code4)
 def code4():
 	label('f4');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-12);STW(SP);
+	_PROLOGUE(12,2,0x0); # save=
 	LDI(0);STW(R19);
 	LDI(0);STW(R18);
 	LDI(0);STW(R17);
@@ -107,11 +105,11 @@ def code4():
 	LDW(R13);DOKE(R22);
 	LDI(0);
 	label('.11');
-	STW(R8);_SP(12);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(12,2,0x0,saveAC=True);
 # ======== ('CODE', 'f5', code5)
 def code5():
 	label('f5');
-	tryhop(4);LDW(vLR);STW(R15);
+	PUSH();
 	_LDI('k');DEEK();STW(R22);
 	_LDI('m');DEEK();STW(R21);
 	_LDI('A');DEEK();STW(R20);
@@ -128,7 +126,7 @@ def code5():
 	LDW(R19);_FMOV([vAC],FAC);LDW(R20);_FMUL();LDI(F16);_FSUB();_FMOV(FAC,'x');
 	LDI(0);
 	label('.16');
-	STW(R8);LDW(R15);tryhop(5);STW(vLR);LDW(R8);RET();
+	tryhop(2);POP();RET()
 # ======== ('COMMON', 'x', code6, 5, 1)
 def code6():
 	label('x');

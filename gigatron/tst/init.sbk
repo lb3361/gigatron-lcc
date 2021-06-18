@@ -60,7 +60,7 @@ def code3():
 # ======== ('CODE', 'main', code4)
 def code4():
 	label('main');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-10);STW(SP);_SAVE(6, 0xc0); # R6-7
+	_PROLOGUE(10,6,0xc0); # save=R6-7
 	LDI(0);STW(R6);
 	_BRA('.8');
 	label('.5');
@@ -94,8 +94,7 @@ def code4():
 	CALLI('g');
 	LDI(0);
 	label('.4');
-	STW(R8);_RESTORE(6, 0xc0); # R6-7
-	_SP(10);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(10,6,0xc0,saveAC=True);
 # ======== ('DATA', '.16', code5, 0, 2)
 def code5():
 	align(2);
@@ -108,7 +107,7 @@ def code5():
 # ======== ('CODE', 'f', code6)
 def code6():
 	label('f');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-8);STW(SP);_SAVE(6, 0x80); # R7
+	_PROLOGUE(8,6,0x80); # save=R7
 	_LDI('.16');STW(R7);
 	_BRA('.24');
 	label('.21');
@@ -123,12 +122,11 @@ def code6():
 	LDW(R7);DEEK();_BNE('.21');
 	LDI(0);
 	label('.15');
-	STW(R8);_RESTORE(6, 0x80); # R7
-	_SP(8);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(8,6,0x80,saveAC=True);
 # ======== ('CODE', 'g', code7)
 def code7():
 	label('g');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-10);STW(SP);_SAVE(6, 0xc0); # R6-7
+	_PROLOGUE(10,6,0xc0); # save=R6-7
 	LDW(R8);STW(R7);
 	_BRA('.30');
 	label('.27');
@@ -156,12 +154,11 @@ def code7():
 	CALLI('h');
 	LDI(0);
 	label('.26');
-	STW(R8);_RESTORE(6, 0xc0); # R6-7
-	_SP(10);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(10,6,0xc0,saveAC=True);
 # ======== ('CODE', 'h', code8)
 def code8():
 	label('h');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-14);STW(SP);_SAVE(12, 0x80); # R7
+	_PROLOGUE(14,12,0x80); # save=R7
 	LDI(0);STW(R7);
 	_BRA('.40');
 	label('.37');
@@ -183,8 +180,7 @@ def code8():
 	LDW(R7);_CMPIU(5);_BLT('.37');
 	LDI(0);
 	label('.36');
-	STW(R8);_RESTORE(12, 0x80); # R7
-	_SP(14);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(14,12,0x80,saveAC=True);
 # ======== ('DATA', '.41', code9, 0, 1)
 def code9():
 	label('.41');

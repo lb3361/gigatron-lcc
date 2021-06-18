@@ -3,7 +3,7 @@
 # ======== ('CODE', 'addpoint', code0)
 def code0():
 	label('addpoint');
-	tryhop(4);LDW(vLR);STW(R20);
+	PUSH();
 	_SP(4+0);STW(R22);
 	_SP(8+0);DEEK();STW(R21);
 	_SP(4+0);DEEK();ADDW(R21);DOKE(R22);
@@ -12,11 +12,11 @@ def code0():
 	_SP(6+0);DEEK();ADDW(R21);DOKE(R22);
 	LDW(R8);STW(T2);_SP(4+0);_BMOV([vAC],[T2],4)
 	label('.1');
-	LDW(R20);tryhop(3);STW(vLR);RET();
+	tryhop(2);POP();RET()
 # ======== ('CODE', 'canonrect', code1)
 def code1():
 	label('canonrect');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-10);STW(SP);
+	_PROLOGUE(10,2,0x0); # save=
 	_SP(8+10);DEEK();STW(R22);
 	_SP(4+10);DEEK();_CMPWS(R22);_BGE('.10');
 	_SP(4+10);DEEK();STW(R19);
@@ -55,22 +55,22 @@ def code1():
 	LDW(R16);DOKE(R22);
 	LDW(R8);STW(T2);_SP(-8+10);_BMOV([vAC],[T2],8)
 	label('.5');
-	_SP(10);STW(SP);DEEK();tryhop(3);STW(vLR);RET();
+	_EPILOGUE(10,2,0x0);
 # ======== ('CODE', 'makepoint', code2)
 def code2():
 	label('makepoint');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-6);STW(SP);
+	_PROLOGUE(6,2,0x0); # save=
 	_SP(-4+6);STW(R22);
 	LDW(R9);DOKE(R22);
 	_SP(-2+6);STW(R22);
 	LDW(R10);DOKE(R22);
 	LDW(R8);STW(T2);_SP(-4+6);_BMOV([vAC],[T2],4)
 	label('.39');
-	_SP(6);STW(SP);DEEK();tryhop(3);STW(vLR);RET();
+	_EPILOGUE(6,2,0x0);
 # ======== ('CODE', 'makerect', code3)
 def code3():
 	label('makerect');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-22);STW(SP);_SAVE(12, 0x80); # R7
+	_PROLOGUE(22,12,0x80); # save=R7
 	LDW(R8);STW(R7);
 	_SP(-8+22);STW(T2);_SP(4+22);_BMOV([vAC],[T2],4)
 	_SP(-4+22);STW(T2);_SP(8+22);_BMOV([vAC],[T2],4)
@@ -78,12 +78,11 @@ def code3():
 	_SP(4);STW(T2);_SP(-8+22);_BMOV([vAC],[T2],8);
 	CALLI('canonrect');
 	label('.42');
-	_RESTORE(12, 0x80); # R7
-	_SP(22);STW(SP);DEEK();tryhop(3);STW(vLR);RET();
+	_EPILOGUE(22,12,0x80);
 # ======== ('CODE', 'ptinrect', code4)
 def code4():
 	label('ptinrect');
-	tryhop(4);LDW(vLR);STW(R20);
+	PUSH();
 	_SP(2+0);DEEK();STW(R22);
 	_SP(6+0);DEEK();STW(R21);
 	LDW(R22);_CMPWS(R21);_BLT('.53');
@@ -100,7 +99,7 @@ def code4():
 	label('.54');
 	LDW(R19);
 	label('.45');
-	STW(R8);LDW(R20);tryhop(5);STW(vLR);LDW(R8);RET();
+	tryhop(2);POP();RET()
 # ======== ('DATA', 'y', code5, 3, 1)
 def code5():
 	label('y');
@@ -109,7 +108,7 @@ def code5():
 # ======== ('CODE', 'odd', code6)
 def code6():
 	label('odd');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-10);STW(SP);
+	_PROLOGUE(10,6,0x0); # save=
 	_SP(-3+10);STW(T2);_SP(2+10);_BMOV([vAC],[T2],3)
 	_LDI('.56');STW(R8);
 	_SP(2);_MOV(R8,[vAC]);
@@ -118,7 +117,7 @@ def code6():
 	CALLI('printf');
 	LDI(0);
 	label('.55');
-	STW(R8);_SP(10);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(10,6,0x0,saveAC=True);
 # ======== ('DATA', '.58', code7, 0, 2)
 def code7():
 	align(2);
@@ -146,7 +145,7 @@ def code9():
 # ======== ('CODE', 'main', code10)
 def code10():
 	label('main');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-68);STW(SP);_SAVE(14, 0x80); # R7
+	_PROLOGUE(68,14,0x80); # save=R7
 	_SP(-32+68);STW(T2);_BMOV('.58',[T2],4)
 	_SP(-36+68);STW(T2);_BMOV('.59',[T2],4)
 	_SP(-16+68);STW(T2);_BMOV('.60',[T2],16)
@@ -220,8 +219,7 @@ def code10():
 	CALLI('exit');
 	LDI(0);
 	label('.57');
-	STW(R8);_RESTORE(14, 0x80); # R7
-	_SP(68);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(68,14,0x80,saveAC=True);
 # ======== ('DATA', '.71', code11, 0, 1)
 def code11():
 	label('.71');

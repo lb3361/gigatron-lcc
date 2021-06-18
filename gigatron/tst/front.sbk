@@ -3,17 +3,17 @@
 # ======== ('CODE', 'main', code0)
 def code0():
 	label('main');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-4);STW(SP);
+	_PROLOGUE(4,4,0x0); # save=
 	LDI(0);STW(R8);
 	_SP(2);_MOV(R8,[vAC]);
 	CALLI('exit');
 	LDI(0);
 	label('.1');
-	STW(R8);_SP(4);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(4,4,0x0,saveAC=True);
 # ======== ('CODE', 'nested', code1)
 def code1():
 	label('nested');
-	tryhop(4);LDW(vLR);STW(R22);
+	PUSH();
 	LDW(R8);_CMPIS(4);_BGE('.6');
 	LDW(R9);XORI(114);_BEQ('.9');
 	label('.6');
@@ -29,13 +29,13 @@ def code1():
 	label('.3');
 	LDI(0);
 	label('.2');
-	STW(R8);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	tryhop(2);POP();RET()
 # ======== ('CODE', 's', code2)
 def code2():
 	label('s');
-	tryhop(4);LDW(vLR);STW(R22);
+	PUSH();
 	label('.10');
-	LDW(R22);tryhop(3);STW(vLR);RET();
+	tryhop(2);POP();RET()
 # ======== ('DATA', 'Dy', code3, 4, 2)
 def code3():
 	align(2);
@@ -51,43 +51,43 @@ def code4():
 # ======== ('CODE', 'Dfunc', code5)
 def code5():
 	label('Dfunc');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-2);STW(SP);
-	STW(R8);_SP(2);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_PROLOGUE(2,2,0x0); # save=
+	_EPILOGUE(2,2,0x0,saveAC=True);
 # ======== ('CODE', 'f', code6)
 def code6():
 	label('f');
-	tryhop(4);LDW(vLR);STW(R22);
-	STW(R8);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	PUSH();
+	tryhop(2);POP();RET()
 # ======== ('CODE', 'f1', code7)
 def code7():
 	label('f1');
-	tryhop(4);LDW(vLR);STW(R22);
-	STW(R8);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	PUSH();
+	tryhop(2);POP();RET()
 # ======== ('CODE', 'f2', code8)
 def code8():
 	label('f2');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-2);STW(SP);
-	STW(R8);_SP(2);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_PROLOGUE(2,2,0x0); # save=
+	_EPILOGUE(2,2,0x0,saveAC=True);
 # ======== ('CODE', 'g', code9)
 def code9():
 	label('g');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-2);STW(SP);
-	STW(R8);_SP(2);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_PROLOGUE(2,2,0x0); # save=
+	_EPILOGUE(2,2,0x0,saveAC=True);
 # ======== ('CODE', 'h', code10)
 def code10():
 	label('h');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-2);STW(SP);
-	STW(R8);_SP(2);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_PROLOGUE(2,2,0x0); # save=
+	_EPILOGUE(2,2,0x0,saveAC=True);
 # ======== ('CODE', 'h1', code11)
 def code11():
 	label('h1');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-2);STW(SP);
-	STW(R8);_SP(2);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_PROLOGUE(2,2,0x0); # save=
+	_EPILOGUE(2,2,0x0,saveAC=True);
 # ======== ('CODE', 'h2', code12)
 def code12():
 	label('h2');
-	tryhop(4);LDW(vLR);STW(R22);
-	STW(R8);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	PUSH();
+	tryhop(2);POP();RET()
 # ======== ('DATA', '.21', code13, 2, 2)
 def code13():
 	align(2);
@@ -96,8 +96,8 @@ def code13():
 # ======== ('CODE', 'set1', code14)
 def code14():
 	label('set1');
-	tryhop(4);LDW(vLR);STW(R22);
-	STW(R8);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	PUSH();
+	tryhop(2);POP();RET()
 # ======== ('DATA', '.23', code15, 2, 2)
 def code15():
 	align(2);
@@ -106,18 +106,18 @@ def code15():
 # ======== ('CODE', 'set2', code16)
 def code16():
 	label('set2');
-	tryhop(4);LDW(vLR);STW(R22);
-	STW(R8);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	PUSH();
+	tryhop(2);POP();RET()
 # ======== ('CODE', 'goo', code17)
 def code17():
 	label('goo');
-	tryhop(4);LDW(vLR);STW(R22);
-	LDW(R22);tryhop(3);STW(vLR);RET();
+	PUSH();
+	tryhop(2);POP();RET()
 # ======== ('CODE', 'sss', code18)
 def code18():
 	label('sss');
-	tryhop(4);LDW(vLR);STW(R22);
-	STW(R8);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	PUSH();
+	tryhop(2);POP();RET()
 # ======== ('BSS', '.27', code19, 5, 1)
 def code19():
 	label('.27');
@@ -125,48 +125,48 @@ def code19():
 # ======== ('CODE', 'rrr', code20)
 def code20():
 	label('rrr');
-	tryhop(4);LDW(vLR);STW(R22);
-	STW(R8);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	PUSH();
+	tryhop(2);POP();RET()
 # ======== ('CODE', 'setstatic', code21)
 def code21():
 	label('setstatic');
-	tryhop(4);LDW(vLR);STW(R22);
-	STW(R8);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	PUSH();
+	tryhop(2);POP();RET()
 # ======== ('CODE', 'gx1', code22)
 def code22():
 	label('gx1');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-2);STW(SP);
-	STW(R8);_SP(2);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_PROLOGUE(2,2,0x0); # save=
+	_EPILOGUE(2,2,0x0,saveAC=True);
 # ======== ('CODE', 'ff1', code23)
 def code23():
 	label('ff1');
-	tryhop(4);LDW(vLR);STW(R22);
-	STW(R8);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	PUSH();
+	tryhop(2);POP();RET()
 # ======== ('CODE', 'gg1', code24)
 def code24():
 	label('gg1');
-	tryhop(4);LDW(vLR);STW(R22);
-	STW(R8);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	PUSH();
+	tryhop(2);POP();RET()
 # ======== ('CODE', 'hh1', code25)
 def code25():
 	label('hh1');
-	tryhop(4);LDW(vLR);STW(R22);
-	STW(R8);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	PUSH();
+	tryhop(2);POP();RET()
 # ======== ('CODE', 'cmp', code26)
 def code26():
 	label('cmp');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-2);STW(SP);
-	STW(R8);_SP(2);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_PROLOGUE(2,2,0x0); # save=
+	_EPILOGUE(2,2,0x0,saveAC=True);
 # ======== ('CODE', 'sort', code27)
 def code27():
 	label('sort');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-2);STW(SP);
-	STW(R8);_SP(2);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_PROLOGUE(2,2,0x0); # save=
+	_EPILOGUE(2,2,0x0,saveAC=True);
 # ======== ('CODE', 'onearg', code28)
 def code28():
 	label('onearg');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-2);STW(SP);
-	STW(R8);_SP(2);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_PROLOGUE(2,2,0x0); # save=
+	_EPILOGUE(2,2,0x0,saveAC=True);
 # ======== ('COMMON', 'ss4', code29, 2, 2)
 def code29():
 	align(2);

@@ -11,7 +11,7 @@ def code0():
 # ======== ('CODE', 'main', code1)
 def code1():
 	label('main');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-52);STW(SP);
+	_PROLOGUE(52,52,0x0); # save=
 	_LDI('.2');STW(R8);
 	CALLI('print');
 	_LDI('.3');STW(R8);
@@ -54,11 +54,11 @@ def code1():
 	CALLI('print');
 	LDI(0);
 	label('.1');
-	STW(R8);_SP(52);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(52,52,0x0,saveAC=True);
 # ======== ('CODE', 'print', code2)
 def code2():
 	label('print');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-24);STW(SP);_SAVE(12, 0xc0); # R6-7
+	_PROLOGUE(24,12,0xc0); # save=R6-7
 	_SP(2+24);STW(R22);
 	LDW(R8);DOKE(R22);
 	_SP(4+24);STW(R7);
@@ -165,8 +165,7 @@ def code2():
 	_SP(2+24);DEEK();PEEK();_BNE('.14');
 	LDI(0);
 	label('.12');
-	STW(R8);_RESTORE(12, 0xc0); # R6-7
-	_SP(24);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(24,12,0xc0,saveAC=True);
 # ======== ('DATA', '.52', code3, 0, 2)
 def code3():
 	align(2);

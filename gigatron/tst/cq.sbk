@@ -38,7 +38,7 @@ def code2():
 # ======== ('CODE', 'main', code3)
 def code3():
 	label('main');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-10);STW(SP);_SAVE(8, 0x80); # R7
+	_PROLOGUE(10,8,0x80); # save=R7
 	_LDI(v('.3')+24);STW(R22);
 	LDI(1);DOKE(R22);
 	_LDI(v('.3')+26);STW(R22);
@@ -86,8 +86,7 @@ def code3():
 	label('.24');
 	LDI(0);
 	label('.1');
-	STW(R8);_RESTORE(8, 0x80); # R7
-	_SP(10);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(10,8,0x80,saveAC=True);
 # ======== ('DATA', '.29', code4, 0, 1)
 def code4():
 	label('.29');
@@ -100,7 +99,7 @@ def code5():
 # ======== ('CODE', 's22', code6)
 def code6():
 	label('s22');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-24);STW(SP);_SAVE(6, 0xf8); # R3-7
+	_PROLOGUE(24,6,0xf8); # save=R3-7
 	LDW(R8);STW(R7);
 	LDI(0);STW(R4);
 	_LDI('.30');STW(R6);
@@ -147,8 +146,7 @@ def code6():
 	label('.38');
 	LDW(R4);
 	label('.28');
-	STW(R8);_RESTORE(6, 0xf8); # R3-7
-	_SP(24);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(24,6,0xf8,saveAC=True);
 # ======== ('DATA', '.43', code7, 0, 1)
 def code7():
 	label('.43');
@@ -204,7 +202,7 @@ def code9():
 # ======== ('CODE', 's241', code10)
 def code10():
 	label('s241');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-488);STW(SP);_SAVE(6, 0xf8); # R3-7
+	_PROLOGUE(488,6,0xf8); # save=R3-7
 	LDW(R8);STW(R7);
 	LDI(0);STW(R3);
 	_SP(-470+488);STW(R22);
@@ -440,12 +438,11 @@ def code10():
 	label('.236');
 	LDW(R3);
 	label('.42');
-	STW(R8);_RESTORE(6, 0xf8); # R3-7
-	_SP(488);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(488,6,0xf8,saveAC=True);
 # ======== ('CODE', 'pow2', code11)
 def code11():
 	label('pow2');
-	tryhop(4);LDW(vLR);STW(R20);
+	PUSH();
 	_LMOV('.74',L18);
 	_BRA('.240');
 	label('.239');
@@ -456,7 +453,7 @@ def code11():
 	_LMOV(L21,LAC);_LDI('.75');_LCMPX();_BNE('.239');
 	_LMOV(L18,LAC);
 	label('.238');
-	LDW(R20);tryhop(3);STW(vLR);RET();
+	tryhop(2);POP();RET()
 # ======== ('DATA', '.243', code12, 0, 1)
 def code12():
 	label('.243');
@@ -469,7 +466,7 @@ def code13():
 # ======== ('CODE', 's243', code14)
 def code14():
 	label('s243');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-270);STW(SP);_SAVE(6, 0xf0); # R4-7
+	_PROLOGUE(270,6,0xf0); # save=R4-7
 	LDW(R8);STW(R7);
 	LDI(0);STW(R4);
 	_LDI('.244');STW(R6);
@@ -707,12 +704,11 @@ def code14():
 	label('.349');
 	LDW(R4);
 	label('.242');
-	STW(R8);_RESTORE(6, 0xf0); # R4-7
-	_SP(270);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(270,6,0xf0,saveAC=True);
 # ======== ('CODE', 'zerofill', code15)
 def code15():
 	label('zerofill');
-	tryhop(4);LDW(vLR);STW(R21);
+	PUSH();
 	LDI(0);STW(R19);
 	label('.354');
 	LDW(R8);STW(R22);
@@ -724,11 +720,11 @@ def code15():
 	LDW(R19);_CMPWS(R22);_BLT('.354');
 	LDI(0);
 	label('.353');
-	STW(R8);LDW(R21);tryhop(5);STW(vLR);LDW(R8);RET();
+	tryhop(2);POP();RET()
 # ======== ('CODE', 'sumof', code16)
 def code16():
 	label('sumof');
-	tryhop(4);LDW(vLR);STW(R21);
+	PUSH();
 	LDW(R8);STW(R17);
 	LDI(0);STW(R19);
 	LDI(0);STW(R18);
@@ -742,7 +738,7 @@ def code16():
 	LDW(R18);_CMPWS(R22);_BLT('.359');
 	LDW(R19);
 	label('.358');
-	STW(R8);LDW(R21);tryhop(5);STW(vLR);LDW(R8);RET();
+	tryhop(2);POP();RET()
 # ======== ('DATA', '.364', code17, 0, 1)
 def code17():
 	label('.364');
@@ -755,7 +751,7 @@ def code18():
 # ======== ('CODE', 's244', code19)
 def code19():
 	label('s244');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-58);STW(SP);_SAVE(6, 0xfc); # R2-7
+	_PROLOGUE(58,6,0xfc); # save=R2-7
 	LDW(R8);STW(R7);
 	_LDI('.365');STW(R5);
 	LDI(36);ADDW(R7);STW(R4);
@@ -812,8 +808,7 @@ def code19():
 	label('.388');
 	LDW(R2);
 	label('.363');
-	STW(R8);_RESTORE(6, 0xfc); # R2-7
-	_SP(58);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(58,6,0xfc,saveAC=True);
 # ======== ('DATA', '.393', code20, 0, 1)
 def code20():
 	label('.393');
@@ -826,7 +821,7 @@ def code21():
 # ======== ('CODE', 's25', code22)
 def code22():
 	label('s25');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-22);STW(SP);_SAVE(6, 0xff); # R0-7
+	_PROLOGUE(22,6,0xff); # save=R0-7
 	LDW(R8);STW(R7);
 	_LDI('.394');STW(R3);
 	LDI(36);ADDW(R7);STW(R2);
@@ -921,8 +916,7 @@ def code22():
 	label('.433');
 	LDW(R1);
 	label('.392');
-	STW(R8);_RESTORE(6, 0xff); # R0-7
-	_SP(22);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(22,6,0xff,saveAC=True);
 # ======== ('DATA', '.438', code23, 8, 1)
 def code23():
 	label('.438');
@@ -946,7 +940,7 @@ def code25():
 # ======== ('CODE', 's26', code26)
 def code26():
 	label('s26');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-50);STW(SP);_SAVE(12, 0xff); # R0-7
+	_PROLOGUE(50,12,0xff); # save=R0-7
 	LDW(R8);STW(R7);
 	_SP(-18+50);STW(R22);
 	_LDI('.438');DOKE(R22);
@@ -1074,8 +1068,7 @@ def code26():
 	label('.459');
 	LDI(0);
 	label('.437');
-	STW(R8);_RESTORE(12, 0xff); # R0-7
-	_SP(50);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(50,12,0xff,saveAC=True);
 # ======== ('DATA', '.469', code27, 0, 1)
 def code27():
 	label('.469');
@@ -1088,7 +1081,7 @@ def code28():
 # ======== ('CODE', 's4', code29)
 def code29():
 	label('s4');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-30);STW(SP);_SAVE(6, 0xfe); # R1-7
+	_PROLOGUE(30,6,0xfe); # save=R1-7
 	LDW(R8);STW(R7);
 	LDI(0);STW(R1);
 	_LDI('.470');STW(R3);
@@ -1170,8 +1163,7 @@ def code29():
 	label('.494');
 	LDW(R1);
 	label('.468');
-	STW(R8);_RESTORE(6, 0xfe); # R1-7
-	_SP(30);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(30,6,0xfe,saveAC=True);
 # ======== ('BSS', '.500', code30, 2, 2)
 def code30():
 	align(2);
@@ -1180,7 +1172,7 @@ def code30():
 # ======== ('CODE', 'svtest', code31)
 def code31():
 	label('svtest');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-4);STW(SP);
+	_PROLOGUE(4,2,0x0); # save=
 	LDW(R8);_BEQ('.503');
 	LDW(R8);XORI(1);_BEQ('.504');
 	LDW(R8);XORI(2);_BEQ('.507');
@@ -1216,7 +1208,7 @@ def code31():
 	label('.502');
 	_SP(-2+4);DEEK();
 	label('.499');
-	STW(R8);_SP(4);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(4,2,0x0,saveAC=True);
 # ======== ('BSS', '.511', code32, 2, 2)
 def code32():
 	align(2);
@@ -1225,18 +1217,18 @@ def code32():
 # ======== ('CODE', 'zero', code33)
 def code33():
 	label('zero');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-4);STW(SP);
+	_PROLOGUE(4,2,0x0); # save=
 	_LDI('.511');STW(R22);
 	LDI(2);DOKE(R22);
 	_SP(-2+4);STW(R22);
 	LDI(0);DOKE(R22);
 	_SP(-2+4);DEEK();
 	label('.510');
-	STW(R8);_SP(4);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(4,2,0x0,saveAC=True);
 # ======== ('CODE', 'testev', code34)
 def code34():
 	label('testev');
-	tryhop(4);LDW(vLR);STW(R21);
+	PUSH();
 	_LDI(1066);STW(R22);
 	_LDI('extvar');DEEK();XORW(R22);_BEQ('.513');
 	LDI(1);
@@ -1244,7 +1236,7 @@ def code34():
 	label('.513');
 	LDI(0);
 	label('.512');
-	STW(R8);LDW(R21);tryhop(5);STW(vLR);LDW(R8);RET();
+	tryhop(2);POP();RET()
 # ======== ('DATA', '.516', code35, 0, 1)
 def code35():
 	label('.516');
@@ -1291,7 +1283,7 @@ def code42():
 # ======== ('CODE', 's61', code43)
 def code43():
 	label('s61');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-44);STW(SP);_SAVE(6, 0xff); # R0-7
+	_PROLOGUE(44,6,0xff); # save=R0-7
 	LDW(R8);STW(R7);
 	_LDI('.517');STW(R4);
 	LDI(36);ADDW(R7);STW(R3);
@@ -1381,8 +1373,7 @@ def code43():
 	label('.551');
 	LDW(R0);
 	label('.515');
-	STW(R8);_RESTORE(6, 0xff); # R0-7
-	_SP(44);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(44,6,0xff,saveAC=True);
 # ======== ('DATA', '.558', code44, 0, 1)
 def code44():
 	label('.558');
@@ -1395,7 +1386,7 @@ def code45():
 # ======== ('CODE', 's626', code46)
 def code46():
 	label('s626');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-102);STW(SP);_SAVE(6, 0xff); # R0-7
+	_PROLOGUE(102,6,0xff); # save=R0-7
 	LDW(R8);STW(R7);
 	_SP(-36+102);STW(R22);
 	_LDI('.559');DOKE(R22);
@@ -1652,8 +1643,7 @@ def code46():
 	label('.680');
 	_SP(-70+102);DEEK();
 	label('.557');
-	STW(R8);_RESTORE(6, 0xff); # R0-7
-	_SP(102);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(102,6,0xff,saveAC=True);
 # ======== ('DATA', '.685', code47, 0, 1)
 def code47():
 	label('.685');
@@ -1670,7 +1660,7 @@ def code49():
 # ======== ('CODE', 's71', code50)
 def code50():
 	label('s71');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-40);STW(SP);_SAVE(6, 0xf8); # R3-7
+	_PROLOGUE(40,6,0xf8); # save=R3-7
 	LDW(R8);STW(R7);
 	_LDI('.686');STW(R6);
 	LDI(36);ADDW(R7);STW(R5);
@@ -1769,12 +1759,11 @@ def code50():
 	label('.718');
 	LDW(R4);
 	label('.684');
-	STW(R8);_RESTORE(6, 0xf8); # R3-7
-	_SP(40);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(40,6,0xf8,saveAC=True);
 # ======== ('CODE', 'McCarthy', code51)
 def code51():
 	label('McCarthy');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-6);STW(SP);_SAVE(4, 0x80); # R7
+	_PROLOGUE(6,4,0x80); # save=R7
 	LDW(R8);STW(R7);
 	LDW(R7);_CMPIS(100);_BLE('.723');
 	LDW(R7);SUBI(10);
@@ -1786,17 +1775,16 @@ def code51():
 	CALLI('McCarthy');
 	
 	label('.722');
-	STW(R8);_RESTORE(4, 0x80); # R7
-	_SP(6);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(6,4,0x80,saveAC=True);
 # ======== ('CODE', 'clobber', code52)
 def code52():
 	label('clobber');
-	tryhop(4);LDW(vLR);STW(R22);
+	PUSH();
 	LDI(3);STW(R8);
 	LDI(2);DOKE(R9);
 	LDI(0);
 	label('.725');
-	STW(R8);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	tryhop(2);POP();RET()
 # ======== ('DATA', '.727', code53, 0, 1)
 def code53():
 	label('.727');
@@ -1815,7 +1803,7 @@ def code55():
 # ======== ('CODE', 's714', code56)
 def code56():
 	label('s714');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-62);STW(SP);_SAVE(6, 0xff); # R0-7
+	_PROLOGUE(62,6,0xff); # save=R0-7
 	LDW(R8);STW(R7);
 	_SP(-36+62);STW(R22);
 	_LDI('.729');DOKE(R22);
@@ -7536,8 +7524,7 @@ def code56():
 	label('.2323');
 	_SP(-40+62);DEEK();
 	label('.726');
-	STW(R8);_RESTORE(6, 0xff); # R0-7
-	_SP(62);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(62,6,0xff,saveAC=True);
 # ======== ('DATA', '.2328', code57, 0, 1)
 def code57():
 	label('.2328');
@@ -7550,7 +7537,7 @@ def code58():
 # ======== ('CODE', 's715', code59)
 def code59():
 	label('s715');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-24);STW(SP);_SAVE(8, 0xf8); # R3-7
+	_PROLOGUE(24,8,0xf8); # save=R3-7
 	LDW(R8);STW(R7);
 	_SP(-6+24);STW(R22);
 	LDI(0);DOKE(R22);
@@ -7606,15 +7593,14 @@ def code59():
 	label('.2337');
 	LDW(R3);
 	label('.2327');
-	STW(R8);_RESTORE(8, 0xf8); # R3-7
-	_SP(24);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(24,8,0xf8,saveAC=True);
 # ======== ('CODE', 's715f', code60)
 def code60():
 	label('s715f');
-	tryhop(4);LDW(vLR);STW(R22);
+	PUSH();
 	LDW(R9);
 	label('.2341');
-	STW(R8);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	tryhop(2);POP();RET()
 # ======== ('DATA', '.2343', code61, 0, 1)
 def code61():
 	label('.2343');
@@ -7627,7 +7613,7 @@ def code62():
 # ======== ('CODE', 's72', code63)
 def code63():
 	label('s72');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-42);STW(SP);_SAVE(6, 0xff); # R0-7
+	_PROLOGUE(42,6,0xff); # save=R0-7
 	LDW(R8);STW(R7);
 	_LDI('.2344');STW(R5);
 	LDI(36);ADDW(R7);STW(R4);
@@ -7797,8 +7783,7 @@ def code63():
 	label('.2416');
 	LDW(R2);
 	label('.2342');
-	STW(R8);_RESTORE(6, 0xff); # R0-7
-	_SP(42);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(42,6,0xff,saveAC=True);
 # ======== ('DATA', '.2419', code64, 0, 1)
 def code64():
 	label('.2419');
@@ -7811,7 +7796,7 @@ def code65():
 # ======== ('CODE', 's757', code66)
 def code66():
 	label('s757');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-82);STW(SP);_SAVE(6, 0xff); # R0-7
+	_PROLOGUE(82,6,0xff); # save=R0-7
 	LDW(R8);STW(R7);
 	_SP(-42+82);STW(R22);
 	_LDI('.2420');DOKE(R22);
@@ -8083,8 +8068,7 @@ def code66():
 	label('.2518');
 	_SP(-46+82);DEEK();
 	label('.2418');
-	STW(R8);_RESTORE(6, 0xff); # R0-7
-	_SP(82);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(82,6,0xff,saveAC=True);
 # ======== ('DATA', '.2523', code67, 0, 1)
 def code67():
 	label('.2523');
@@ -8103,7 +8087,7 @@ def code69():
 # ======== ('CODE', 's7813', code70)
 def code70():
 	label('s7813');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-50);STW(SP);_SAVE(6, 0xff); # R0-7
+	_PROLOGUE(50,6,0xff); # save=R0-7
 	LDW(R8);STW(R7);
 	_LDI('.2525');STW(R1);
 	LDI(36);ADDW(R7);STW(R0);
@@ -9325,8 +9309,7 @@ def code70():
 	label('.2976');
 	_SP(-2+50);DEEK();
 	label('.2522');
-	STW(R8);_RESTORE(6, 0xff); # R0-7
-	_SP(50);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(50,6,0xff,saveAC=True);
 # ======== ('DATA', '.2988', code71, 0, 1)
 def code71():
 	label('.2988');
@@ -9355,7 +9338,7 @@ def code74():
 # ======== ('CODE', 's81', code75)
 def code75():
 	label('s81');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-38);STW(SP);_SAVE(8, 0xff); # R0-7
+	_PROLOGUE(38,8,0xff); # save=R0-7
 	LDW(R8);STW(R7);
 	_SP(-14+38);STW(R22);
 	LDI(0);DOKE(R22);
@@ -9508,12 +9491,11 @@ def code75():
 	label('.3026');
 	_SP(-14+38);DEEK();
 	label('.2987');
-	STW(R8);_RESTORE(8, 0xff); # R0-7
-	_SP(38);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(38,8,0xff,saveAC=True);
 # ======== ('CODE', 'regc', code76)
 def code76():
 	label('regc');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-88);STW(SP);_SAVE(2, 0xfe); # R1-7
+	_PROLOGUE(88,2,0xfe); # save=R1-7
 	_SP(-66+88);STW(R22);
 	LDI(0);POKE(R22);
 	_SP(-45+88);STW(R22);
@@ -9691,12 +9673,11 @@ def code76():
 	label('.3069');
 	_LDI(-1);
 	label('.3030');
-	STW(R8);_RESTORE(2, 0xfe); # R1-7
-	_SP(88);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(88,2,0xfe,saveAC=True);
 # ======== ('CODE', 'regi', code77)
 def code77():
 	label('regi');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-114);STW(SP);_SAVE(2, 0xfe); # R1-7
+	_PROLOGUE(114,2,0xfe); # save=R1-7
 	_SP(-88+114);STW(R22);
 	LDI(0);DOKE(R22);
 	_SP(-46+114);STW(R22);
@@ -9877,12 +9858,11 @@ def code77():
 	label('.3110');
 	_LDI(-1);
 	label('.3071');
-	STW(R8);_RESTORE(2, 0xfe); # R1-7
-	_SP(114);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(114,2,0xfe,saveAC=True);
 # ======== ('CODE', 'regp', code78)
 def code78():
 	label('regp');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-114);STW(SP);_SAVE(2, 0xfe); # R1-7
+	_PROLOGUE(114,2,0xfe); # save=R1-7
 	_SP(-88+114);STW(R22);
 	_SP(-88+114);DOKE(R22);
 	_SP(-78+114);STW(R22);
@@ -10063,8 +10043,7 @@ def code78():
 	label('.3151');
 	_LDI(-1);
 	label('.3112');
-	STW(R8);_RESTORE(2, 0xfe); # R1-7
-	_SP(114);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(114,2,0xfe,saveAC=True);
 # ======== ('BSS', '.3154', code79, 210, 2)
 def code79():
 	align(2);
@@ -10082,7 +10061,7 @@ def code81():
 # ======== ('CODE', 's84', code82)
 def code82():
 	label('s84');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-156);STW(SP);_SAVE(8, 0xff); # R0-7
+	_PROLOGUE(156,8,0xff); # save=R0-7
 	LDW(R8);STW(R7);
 	_LDI('.3156');STW(R0);
 	_SP(-122+156);STW(R22);
@@ -10229,12 +10208,11 @@ def code82():
 	label('.3193');
 	_SP(-124+156);DEEK();
 	label('.3153');
-	STW(R8);_RESTORE(8, 0xff); # R0-7
-	_SP(156);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(156,8,0xff,saveAC=True);
 # ======== ('CODE', 'array', code83)
 def code83():
 	label('array');
-	tryhop(4);LDW(vLR);STW(R21);
+	PUSH();
 	LDI(0);STW(R19);
 	_BRA('.3201');
 	label('.3198');
@@ -10249,7 +10227,7 @@ def code83():
 	LDW(R19);_CMPWS(R9);_BLT('.3198');
 	LDI(0);
 	label('.3197');
-	STW(R8);LDW(R21);tryhop(5);STW(vLR);LDW(R8);RET();
+	tryhop(2);POP();RET()
 # ======== ('BSS', '.3205', code84, 2, 2)
 def code84():
 	align(2);
@@ -10258,19 +10236,19 @@ def code84():
 # ======== ('CODE', 'fip', code85)
 def code85():
 	label('fip');
-	tryhop(4);LDW(vLR);STW(R21);
+	PUSH();
 	_LDI('.3205');STW(R22);
 	LDW(R8);DOKE(R22);
 	LDW(R22);
 	label('.3204');
-	STW(R8);LDW(R21);tryhop(5);STW(vLR);LDW(R8);RET();
+	tryhop(2);POP();RET()
 # ======== ('CODE', 'glork', code86)
 def code86():
 	label('glork');
-	tryhop(4);LDW(vLR);STW(R22);
+	PUSH();
 	LDW(R8);
 	label('.3206');
-	STW(R8);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	tryhop(2);POP();RET()
 # ======== ('DATA', '.3208', code87, 0, 1)
 def code87():
 	label('.3208');
@@ -10299,7 +10277,7 @@ def code90():
 # ======== ('CODE', 's85', code91)
 def code91():
 	label('s85');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-270);STW(SP);_SAVE(10, 0xf8); # R3-7
+	_PROLOGUE(270,10,0xf8); # save=R3-7
 	LDW(R8);STW(R7);
 	_LDI('.3209');STW(R5);
 	LDI(36);ADDW(R7);STW(R4);
@@ -10452,8 +10430,7 @@ def code91():
 	label('.3286');
 	LDW(R3);
 	label('.3207');
-	STW(R8);_RESTORE(10, 0xf8); # R3-7
-	_SP(270);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(270,10,0xf8,saveAC=True);
 # ======== ('DATA', '.3291', code92, 0, 1)
 def code92():
 	label('.3291');
@@ -10535,7 +10512,7 @@ def code100():
 # ======== ('CODE', 's86', code101)
 def code101():
 	label('s86');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-26);STW(SP);_SAVE(6, 0xff); # R0-7
+	_PROLOGUE(26,6,0xff); # save=R0-7
 	LDW(R8);STW(R7);
 	_SP(-4+26);STW(R22);
 	_LDI('.3294');DEEK();SUBI(-(-2));DOKE(R22);
@@ -10667,15 +10644,14 @@ def code101():
 	label('.3347');
 	_SP(-2+26);DEEK();
 	label('.3290');
-	STW(R8);_RESTORE(6, 0xff); # R0-7
-	_SP(26);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(26,6,0xff,saveAC=True);
 # ======== ('CODE', 'one', code102)
 def code102():
 	label('one');
-	tryhop(4);LDW(vLR);STW(R22);
+	PUSH();
 	LDI(1);
 	label('.3351');
-	STW(R8);LDW(R22);tryhop(5);STW(vLR);LDW(R8);RET();
+	tryhop(2);POP();RET()
 # ======== ('DATA', '.3353', code103, 0, 1)
 def code103():
 	label('.3353');
@@ -10688,7 +10664,7 @@ def code104():
 # ======== ('CODE', 's88', code105)
 def code105():
 	label('s88');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-28);STW(SP);_SAVE(6, 0xf8); # R3-7
+	_PROLOGUE(28,6,0xf8); # save=R3-7
 	LDW(R8);STW(R7);
 	_LDI('.3354');STW(R6);
 	LDI(36);ADDW(R7);STW(R5);
@@ -10746,8 +10722,7 @@ def code105():
 	label('.3368');
 	LDW(R4);
 	label('.3352');
-	STW(R8);_RESTORE(6, 0xf8); # R3-7
-	_SP(28);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(28,6,0xf8,saveAC=True);
 # ======== ('DATA', '.3374', code106, 0, 1)
 def code106():
 	label('.3374');
@@ -10760,7 +10735,7 @@ def code107():
 # ======== ('CODE', 's9', code108)
 def code108():
 	label('s9');
-	tryhop(4);LDW(vLR);DOKE(SP);_SP(-26);STW(SP);_SAVE(6, 0xff); # R0-7
+	_PROLOGUE(26,6,0xff); # save=R0-7
 	LDW(R8);STW(R7);
 	_LDI('.3375');STW(R4);
 	LDI(36);ADDW(R7);STW(R3);
@@ -10817,17 +10792,16 @@ def code108():
 	label('.3393');
 	LDW(R2);
 	label('.3373');
-	STW(R8);_RESTORE(6, 0xff); # R0-7
-	_SP(26);STW(SP);DEEK();tryhop(5);STW(vLR);LDW(R8);RET();
+	_EPILOGUE(26,6,0xff,saveAC=True);
 # ======== ('CODE', 'setev', code109)
 def code109():
 	label('setev');
-	tryhop(4);LDW(vLR);STW(R21);
+	PUSH();
 	_LDI('extvar');STW(R22);
 	_LDI(1066);DOKE(R22);
 	LDI(0);
 	label('.3396');
-	STW(R8);LDW(R21);tryhop(5);STW(vLR);LDW(R8);RET();
+	tryhop(2);POP();RET()
 # ======== ('COMMON', 'rfs', code110, 8, 1)
 def code110():
 	label('rfs');

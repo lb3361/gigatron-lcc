@@ -433,9 +433,13 @@ void gencode(Symbol caller[], Symbol callee[]) {
 		codelist = codehead.next;
 		for (i = 0; (p = callee[i]) != NULL
 		         && (q = caller[i]) != NULL; i++)
-			if ((p->sclass != q->sclass) ||
-			    (p->sclass == REGISTER && p->x.regnode && q->x.regnode && p->x.regnode != q->x.regnode) ||
-			    (p->type != q->type) && !(isint(p->type) && IR->little_endian) )
+			if (p->ref == 0)
+				continue;
+			else if ((p->sclass != q->sclass)
+				 || (p->sclass == REGISTER && p->x.regnode
+				     && q->x.regnode && p->x.regnode != q->x.regnode)
+				 || (p->type != q->type
+				     && !(isint(p->type) && IR->little_endian) ) )
 				walk(asgn(p, idtree(q)), 0, 0);
 		codelist->next = cp;
 		cp->prev = codelist;

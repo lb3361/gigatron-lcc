@@ -1450,7 +1450,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
     r = argreg(i, optype(ttob(q->type)), q->type->size, &roffset);
     offset += q->type->size;
     if (r) {
-      if (ncalls == 0 && !p->addressed) {
+      if (ncalls == 0 && !p->addressed && p->ref > 0) {
         /* Leaf function: leave register arguments in place */
         p->sclass = q->sclass = REGISTER;
         askregvar(p, r);
@@ -1466,7 +1466,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
         q->x = r->x;
       }
     }
-    if (p->sclass == REGISTER && ! p->x.regnode) {
+    if (p->sclass == REGISTER && !p->x.regnode && p->ref > 0) {
       /* Allocate register argument. Gencode does the rest. */
       askregvar(p, rmap(ttob(p->type)));
     }

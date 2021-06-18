@@ -65,8 +65,6 @@ def code14():
 def code15():
 	label('sigfpe');
 	tryhop(4);LDW(vLR);DOKE(SP);_SP(-6);STW(SP);
-	_SP(2+6);STW(R22);
-	LDW(R8);DOKE(R22);
 	_LDI('fpecount');STW(R22);
 	LDW(R22);DEEK();ADDI(1);DOKE(R22);
 	_LDI('.2');STW(R8);

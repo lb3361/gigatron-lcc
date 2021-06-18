@@ -39,10 +39,6 @@ def code2():
 def code3():
 	label('main');
 	tryhop(4);LDW(vLR);DOKE(SP);_SP(-10);STW(SP);_SAVE(8, 0x80); # R7
-	_SP(2+10);STW(R22);
-	LDW(R8);DOKE(R22);
-	_SP(4+10);STW(R22);
-	LDW(R9);DOKE(R22);
 	_LDI(v('.3')+24);STW(R22);
 	LDI(1);DOKE(R22);
 	_LDI(v('.3')+26);STW(R22);

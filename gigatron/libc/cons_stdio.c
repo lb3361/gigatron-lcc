@@ -45,7 +45,7 @@ static int cons_flsbuf(register int c, register FILE *fp)
 	return c;
 }
 
-static int cons_read(int fd, void *buf, size_t cnt)
+static int cons_read(int fd, register void *buf, size_t cnt)
 {
 	*(char*)buf = (char)console_waitkey();
 	return 1;
@@ -56,7 +56,7 @@ static int cons_filbuf(register FILE *fp)
 	register int n;
 	register char *buf = _cons_ibuf.data;
 	if (stdout->_v == &_cons_svec)
-		fflush(stdout);
+		_fflush(stdout);
 	if (fp->_flag & _IOFBF)
 		n = console_readline(buf, CONS_BUFSIZE);
 	else

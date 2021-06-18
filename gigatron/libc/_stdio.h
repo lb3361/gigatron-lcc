@@ -8,9 +8,10 @@
 #define _IOB_NUM 5
 
 extern int _fcheck(FILE*);
-extern int _fwalk(int(*f)(FILE*));
+extern void _fflush(FILE*);
 
 extern int   _serror(FILE*, int);
+
 extern FILE *_sfindiob(void);
 extern void  _sfreeiob(FILE *fp);
 

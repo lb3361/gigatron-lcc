@@ -10,7 +10,7 @@ def code0():
 # ======== ('CODE', 'memchar', code1)
 def code1():
 	label('memchar');
-	_PROLOGUE(6,2,0x0); # save=
+	_PROLOGUE(6,2,0x0); # save=None
 	_SP(-4+6);DEEK();STW(R22);
 	_SP(-4+6);STW(R21);
 	LDI(1);ADDW(R22);DOKE(R21);
@@ -37,7 +37,7 @@ def code1():
 # ======== ('CODE', 'memint', code2)
 def code2():
 	label('memint');
-	_PROLOGUE(6,2,0x0); # save=
+	_PROLOGUE(6,2,0x0); # save=None
 	_SP(-4+6);DEEK();STW(R22);
 	_SP(-4+6);STW(R21);
 	LDI(2);ADDW(R22);DOKE(R21);

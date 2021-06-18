@@ -11,7 +11,7 @@ def code0():
 # ======== ('CODE', 'main', code1)
 def code1():
 	label('main');
-	_PROLOGUE(52,52,0x0); # save=
+	_PROLOGUE(52,52,0x0); # save=None
 	_LDI('.2');STW(R8);
 	CALLI('print');
 	_LDI('.3');STW(R8);

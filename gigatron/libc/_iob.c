@@ -2,8 +2,6 @@
 
 struct _iobuf _iob[_IOB_NUM] = { 0 };
 
-DECLARE_INIT_FUNCTION(_iob_setup);
-
 static int _chk_flsbuf(register FILE *fp)
 {
 	register int flag = fp->_flag;
@@ -77,4 +75,58 @@ int _serror(FILE *fp, int errn)
 	} else
 		return 0;
 }
+
+FILE *_sfindiob(void)
+{
+	int i;
+	FILE *f = _iob;
+	for (i = 0; i != _IOB_NUM; i++, f++)
+		if (! f->_flag)
+			return f;
+#if WITH_MALLOC
+	/* Allocate a struct _iobuf outside _iob: not implemented */
+#endif
+	return 0;
+}
+
+void  _sfreeiob(FILE *fp)
+{
+	fp->_flag = 0;
+#if WITH_MALLOC
+	/* Free struct _iobuf outside _iob: not implemented */
+#endif
+}
+
+int _swalk(int(*func)(FILE*))
+{
+	register int i;
+	register int r = 0;
+	FILE *f = _iob;
+	for (i = 0; i != _IOB_NUM; i++, f++)
+		if  (f->_flag && (*func)(f) < 0)
+			r = -1;
+#if WITH_MALLOC
+	/* Walk struct _iobuf outside _iob: not implemented */
+#endif
+	return r;
+}
+
+int _fclose(register FILE *fp)
+{
+	register int r = 0;
+	_fflush(fp);
+	if (ferror(fp))
+		r = -1;
+	if (fp->_v->close && (*fp->_v->close)(fp->_file) < 0)
+		r = -1;
+	return 0;
+}
+
+static void _fcloseall(void)
+{
+	_swalk(_fclose);
+}
+
+DECLARE_INIT_FUNCTION(_iob_setup);
+DECLARE_FINI_FUNCTION(_fcloseall);
 

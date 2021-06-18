@@ -1172,7 +1172,7 @@ def code30():
 # ======== ('CODE', 'svtest', code31)
 def code31():
 	label('svtest');
-	_PROLOGUE(4,2,0x0); # save=
+	_PROLOGUE(4,2,0x0); # save=None
 	LDW(R8);_BEQ('.503');
 	LDW(R8);XORI(1);_BEQ('.504');
 	LDW(R8);XORI(2);_BEQ('.507');
@@ -1217,7 +1217,7 @@ def code32():
 # ======== ('CODE', 'zero', code33)
 def code33():
 	label('zero');
-	_PROLOGUE(4,2,0x0); # save=
+	_PROLOGUE(4,2,0x0); # save=None
 	_LDI('.511');STW(R22);
 	LDI(2);DOKE(R22);
 	_SP(-2+4);STW(R22);

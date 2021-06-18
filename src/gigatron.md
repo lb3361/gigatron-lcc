@@ -1407,6 +1407,8 @@ static void printregmask(unsigned mask) {
         print("-%d", i);
       }
     }
+  if (!mask)
+    print("None");
 }
 
 static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)

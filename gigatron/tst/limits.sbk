@@ -3,7 +3,7 @@
 # ======== ('CODE', 'main', code0)
 def code0():
 	label('main');
-	_PROLOGUE(12,12,0x0); # save=
+	_PROLOGUE(12,12,0x0); # save=None
 	_LDI('.2');STW(R8);
 	_SP(2);_MOV(R8,[vAC]);
 	LDI(255);STW(R9);

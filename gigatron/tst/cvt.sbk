@@ -3,7 +3,7 @@
 # ======== ('CODE', 'print', code0)
 def code0():
 	label('print');
-	_PROLOGUE(40,40,0x0); # save=
+	_PROLOGUE(40,40,0x0); # save=None
 	_LDI('.2');STW(R8);
 	_SP(2);_MOV(R8,[vAC]);
 	_LDI('c');PEEK();XORI(128);SUBI(128);STW(R9);
@@ -34,7 +34,7 @@ def code0():
 # ======== ('CODE', 'main', code1)
 def code1():
 	label('main');
-	_PROLOGUE(2,2,0x0); # save=
+	_PROLOGUE(2,2,0x0); # save=None
 	_LDI('c');STW(R22);
 	LDI(1);POKE(R22);
 	LDW(R22);PEEK();XORI(128);SUBI(128);STW(R22);

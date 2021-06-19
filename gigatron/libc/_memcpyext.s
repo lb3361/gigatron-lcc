@@ -27,6 +27,8 @@ def scope():
             _LDI(0x1f8);PEEK();STW(R16);_BNE('.ok')        # R16: copy of 3f8
             _LDI(0);STW(R21);_BRA('.done');label('.ok')
             XORW(R8);ANDI(0xc0);XORW(R16);STW(R17)         # R17: destination ctrl word
+            LDW(R8);LSLW();LSLW()
+            XORW(R16);ANDI(0xc0);XORW(R16);STW(R18)        # R18: source ctrl word
             LDI(0);STW(R8)                                 # R8 = zero
             _LDI('SYS_ExpanderControl_v4_40');STW('sysFn') # prep sys call
         def m_reduceCopyMemoryExt():
@@ -40,6 +42,7 @@ def scope():
             space(32)
             label('_memcpyext0')
             _LDI('.memcpyextb');STW(R19)
+            LDW(R18);SYS(40)
             label('.loop1')
             if args.cpu <= 5:
                 LDW('sysArgs2');PEEK();POKE(R19)
@@ -64,12 +67,12 @@ def scope():
         code.append(('CODE', '_memcpyext0', code0))
 
 
-    # void *_memcpyext(int bank, void *dest, const void *src, size_t n);
+    # void *_memcpyext(int banks, void *dest, const void *src, size_t n);
     def code1():
-        label('_memcpyext');                        # R8=bank, R9=d, R10=s, R11=l
+        label('_memcpyext');                        # R8=banks, R9=d, R10=s, R11=l
         tryhop(4);LDW(vLR);STW(R22)
         m_prepCopyMemoryExt()
-        LD(R8);ANDI(0xc0);_SHLI(8);STW(R8)
+        LD(R8);ANDI(0xf0);_SHLI(8);STW(R8)
         LDW(R9);STW(R21);STW('sysArgs0')
         LDW(R10);STW('sysArgs2')
         label('.loop')

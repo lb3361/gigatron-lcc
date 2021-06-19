@@ -23,10 +23,10 @@
 	      "has_SYS_CopyMemoryExt" : { "addr" : "0xec", "cycs" : 94 }
 	    },
 
-    "lb3361x" : { "cpu" : 5,
-	          "romType" : "0xf8",
-	          "inherits" : "dev"
-	        },
+    "exp" : { "cpu" : 5,
+	      "romType" : "0xf8",
+	      "inherits" : "dev"
+	    },
 
     "at67x" : { "cpu" : 6,
 		"romType" : "0x80",

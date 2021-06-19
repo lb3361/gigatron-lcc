@@ -122,11 +122,11 @@ extern void _srand(void);
    This is fast when there is a SYS call. */
 extern void *_memchr2(const void *s, char c0, char c1, size_t n);
 
-/* Copy a block of memory [src,src+n) from the current address space
-   into block [dst,dst+n) in the address space one gets when the bits
-   6 and 7 of go into the ram expansion control register.  This is
-   slow without SYS_CopyMemoryExt. Returns zero when no expansion. */
-extern void *_memcpyext(char bank, void *dst, const void* src, size_t n);
+/* Copy a block of memory [src,src+n) to [dst,dst+n) across memory banks.
+   The destination bank is given by bits 6 and 7 of argument banks,
+   and the source bank is given by bits 5 and 4.
+   Returns zero when no expansion. */
+extern void *_memcpyext(char banks, void *dst, const void* src, size_t n);
 
 
 #endif

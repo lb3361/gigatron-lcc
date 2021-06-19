@@ -124,7 +124,7 @@ void print_int(int n, int radix)
 	print_unsigned(n, radix);
 }
 
-void printf(const char *fmt, ...)
+int printf(const char *fmt, ...)
 {
 	char c;
 	va_list ap;
@@ -146,6 +146,7 @@ void printf(const char *fmt, ...)
 		}
 	}
 	va_end(ap);
+	return 0;
 }
 
 
@@ -160,61 +161,60 @@ void setbank(int bank)
 	SYS_ExpanderControl(ctrl);
 }
 
-void test(int doff, int soff, int len, int bank)
+void test(int doff, int soff, int len, int dstbank, int srcbank)
 {
 	int i;
-	printf("[%d:%x,] <- [%x,+%d]\n", bank, dbuffer+doff, sbuffer+soff, len);
+	printf("[%d:%x,]<-[%d:%x,+%d]\n", dstbank, dbuffer+doff, srcbank, sbuffer+soff, len);
 
+	setbank(srcbank);
 	for (i=0; i<1024;i++)
-		sbuffer[i] = (i&0x3f) | 0x80;
-	setbank(bank);
+		sbuffer[i] = (i&0x3f) | ((srcbank&3)<<6);
+	setbank(dstbank);
 	for (i=0; i<1024;i++)
-		dbuffer[i] = (i&0x3f) | 0x40;
-	setbank(1);
+		dbuffer[i] = (i&0x3f) | ((dstbank&3)<<6);
 
-	if (bank == 1)
-		memcpy(dbuffer+doff, sbuffer+soff, len);
-	else 
-		_memcpyext(bank<<6, dbuffer+doff, sbuffer+soff, len);
+	_memcpyext(((dstbank&3)<<6)|((srcbank&3)<<4),
+		   dbuffer+doff, sbuffer+soff, len);
 
-	setbank(bank);
+	setbank(dstbank);
 	for (i=0; i<1024;i++)
 		{
-			int expected = (i & 0x3f) | 0x40;
+			int expected = (i & 0x3f) | ((dstbank&3)<<6);
 			if (i >= doff && i < doff + len)
-				expected = ( (i-doff+soff) & 0x3f ) | 0x80;
+				expected = ( (i-doff+soff) & 0x3f ) | ((srcbank&3)<<6);
 			if (dbuffer[i] != expected)
-				printf(" at %d:%x: not %x, %x\n", bank, dbuffer+i, expected, dbuffer[i]);
+				printf(" at %d:%x: not %x, %x\n", dstbank, dbuffer+i, expected, dbuffer[i]);
 		}
-	setbank(1);
+	setbank(srcbank);
 	for (i=0; i<1024;i++)
 		{
-			int expected = (i & 0x3f) | 0x80;
+			int expected = (i & 0x3f) | ((srcbank&3)<<6);
 			if (sbuffer[i] != expected)
-				printf(" at 1:%x: not %x, %x\n", sbuffer+i, expected, sbuffer[i]);
+				printf(" at %d:%x: not %x, %x\n", srcbank, sbuffer+i, expected, sbuffer[i]);
 		}
-	//exit(100);
+	setbank(1);
 }
 
 
 int main()
 {
-	int i;
+	int i,j;
 
 	clear_screen(&pos);
 	if (ctrlBits_v5 == 0) {
 		printf("No memory expansion\n");
 		return 10;
 	}
-	for (i=1; i<=3; i++) {
-		printf("========= bank %d\n", i);
-		test(255,256,257,i);
-		test(34,0,12,i);
-		test(34,65,12,i);
-		test(84,63,255,i);
-		test(34,63,256,i);
-		test(128,256,257,i);
-		test(256,63,757,i);
+	for (j=1; j<=3; j++)
+		for (i=2; i<=3; i++) {
+			printf("========= bank %d to %d\n", j, i);
+			test(255,256,257,i,j);
+			test(34,0,12,i,j);
+			test(34,65,12,i,j);
+			test(84,63,255,i,j);
+			test(34,63,256,i,j);
+			test(128,256,257,i,j);
+			test(256,63,757,i,j);
 	}
 	return 0;
 }

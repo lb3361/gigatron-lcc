@@ -24,7 +24,7 @@ O6FILES=${patsubst %.c,${BL}%_6.o,${CFILES}}
 OFILES=${O4FILES} ${O5FILES} ${O6FILES}
 RFILES=$(wildcard ../runtime/*.s)
 
-all: ${B}cpu4/libc.a ${B}cpu5/libc.a 
+all: ${B}cpu4/libc.a ${B}cpu5/libc.a ${B}cpu6/libc.a 
 
 ${B}cpu4/libc.a: ${SFILES} ${O4FILES} ${RFILES}
 	-@mkdir -p ${B}cpu4

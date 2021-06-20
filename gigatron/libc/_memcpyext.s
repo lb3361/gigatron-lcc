@@ -59,7 +59,7 @@ def scope():
                 INC(R19);INC('sysArgs0')
                 LD('sysArgs4');SUBI(1);ST('sysArgs4');BNE('.loop2')
             else:
-                PEEK+(R19);POKE+('sysArgs0')
+                PEEKp(R19);POKEp('sysArgs0')
                 DBNE('sysArgs4','.loop2')
             LDW(R16);SYS(40)
             RET()

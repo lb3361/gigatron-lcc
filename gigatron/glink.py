@@ -666,43 +666,22 @@ def CMPHS(d):
 def CMPHU(d):
     check_cpu(5); tryhop(2); emit(0x97, check_zp(d))
 
-# some experimental instructions for cpu6 (opcodes to be checked)
-@vasm
-def DOKEA(d):
-    check_cpu(6); tryhop(2); emit(0x7d, check_zp(d))
-@vasm
-def POKEA(d):
-    check_cpu(6); tryhop(2); emit(0x69, check_zp(d))
-@vasm
-def DOKEI(d):
-    check_cpu(6); tryhop(2); d=int(v(d)); emit(0x37, lo(d), hi(d))
-@vasm
-def POKEI(d):
-    check_cpu(6); tryhop(2); emit(0x25, check_im8s(d))
-@vasm
-def DEEKA(d):
-    check_cpu(6); tryhop(2); emit(0x6f, check_zp(d))
-@vasm
-def PEEKA(d):
-    check_cpu(6); tryhop(2); emit(0x67, check_zp(d))
+# instructions for cpu6 (opcodes to be checked once at67's rom is released)
 @vasm
 def DEC(d):
     check_cpu(6); tryhop(2); emit(0x14, check_zp(d))
 @vasm
-def INCW(d):
-    check_cpu(6); tryhop(2); emit(0x79, check_zp(d))
+def LSRB(d):
+    check_cpu(6); tryhop(2); emit(0x18, check_zp(d))
 @vasm
-def DECW(d):
-    check_cpu(6); tryhop(2); emit(0x7b, check_zp(d))
+def SEXT(d):
+    check_cpu(6); tryhop(2); emit(0x1c, check_zp(d))
 @vasm
-def NEGW(d):
-    check_cpu(6); tryhop(2); emit(0xd3, check_zp(d))
+def PEEKp(d):
+    check_cpu(6); tryhop(2); emit(0x23, check_zp(d))
 @vasm
-def NOTB(d):
-    check_cpu(6); tryhop(2); emit(0x48, check_zp(d))
-@vasm
-def NOTW(d):
-    check_cpu(6); tryhop(2); emit(0x8a, check_zp(d))
+def POKEI(d):
+    check_cpu(6); tryhop(2); emit(0x25, check_im8s(d))
 @vasm
 def LSLV(d):
     check_cpu(6); tryhop(2);  emit(0x27, check_zp(d))
@@ -710,14 +689,188 @@ def LSLV(d):
 def ADDBA(d):
     check_cpu(6); tryhop(2); emit(0x29, check_zp(d))
 @vasm
-def SUBBA(d):
-    check_cpu(6); tryhop(2); emit(0x77, check_zp(d))
+def ADDBI(imm,d):
+    check_cpu(6); tryhop(2); emit(0x29, check_zp(imm), check_zp(d))
+@vasm
+def DBNE(v, d):
+    check_cpu(6); tryhop(3); emit(0x32, check_br(d), check_zp(v))
+@vasm
+def DOKEI(d):
+    check_cpu(6); tryhop(2); d=int(v(d)); emit(0x37, lo(d), hi(d))
 @vasm
 def PEEKV(d):
     check_cpu(6); tryhop(2); emit(0x39, check_zp(d))
 @vasm
 def DEEKV(d):
     check_cpu(6); tryhop(2); emit(0x3b, check_zp(d))
+@vasm
+def XORBI(imm,d):
+    check_cpu(6); tryhop(2); emit(0x3d, check_zp(imm), check_zp(d))
+@vasm
+def ANDBA(d):
+    check_cpu(6); tryhop(2); emit(0x42, check_zp(d))
+@vasm
+def ORBA(d):
+    check_cpu(6); tryhop(2); emit(0x44, check_zp(d))
+@vasm
+def XORBA(d):
+    check_cpu(6); tryhop(2); emit(0x46, check_zp(d))
+@vasm
+def NOTB(d):
+    check_cpu(6); tryhop(2); emit(0x48, check_zp(d))
+@vasm
+def DOKEpp(d):
+    check_cpu(6); tryhop(2); emit(0x4a, check_zp(d))
+@vasm
+def MOVQW(imm,d):
+    check_cpu(6); tryhop(2); emit(0x5b, check_zp(imm), check_zp(d))
+@vasm
+def DEEKpp(d):
+    check_cpu(6); tryhop(2); emit(0x60, check_zp(d))
+@vasm
+def MOV(s,d):
+    check_cpu(6); tryhop(2); emit(0x60, check_zp(d), check_zp(s))
+@vasm
+def PEEKA(d):
+    check_cpu(6); tryhop(2); emit(0x67, check_zp(d))
+@vasm
+def POKEA(d):
+    check_cpu(6); tryhop(2); emit(0x69, check_zp(d))
+@vasm
+def TEQ(d):
+    check_cpu(6); tryhop(2); emit(0x6b, check_zp(d))
+@vasm
+def TNE(d):
+    check_cpu(6); tryhop(2); emit(0x6d, check_zp(d))
+@vasm
+def DEEKA(d):
+    check_cpu(6); tryhop(2); emit(0x6f, check_zp(d))
+@vasm
+def SUBBA(d):
+    check_cpu(6); tryhop(2); emit(0x77, check_zp(d))
+@vasm
+def INCW(d):
+    check_cpu(6); tryhop(2); emit(0x79, check_zp(d))
+@vasm
+def DECW(d):
+    check_cpu(6); tryhop(2); emit(0x7b, check_zp(d))
+@vasm
+def DOKEA(d):
+    check_cpu(6); tryhop(2); emit(0x7d, check_zp(d))
+@vasm
+def NOTW(d):
+    check_cpu(6); tryhop(2); emit(0x8a, check_zp(d))
+@vasm
+def DBGE(v, d):
+    check_cpu(6); tryhop(3); emit(0x83, check_br(d), check_zp(v))
+@vasm
+def ORBI(imm,d):
+    check_cpu(6); tryhop(2); emit(0x95, check_zp(imm), check_zp(d))
+@vasm
+def LDNI(d):
+    check_cpu(6); tryhop(2); emit(0x9c, check_zp(d))
+@vasm
+def ANDBK(d,imm):
+    check_cpu(6); tryhop(2); emit(0x9e, check_zp(imm), check_zp(d))
+@vasm
+def ORBK(d,imm):
+    check_cpu(6); tryhop(2); emit(0xa0, check_zp(imm), check_zp(d))
+@vasm
+def XORBK(d,imm):
+    check_cpu(6); tryhop(2); emit(0xa2, check_zp(imm), check_zp(d))
+@vasm
+def PEEKAp(d):
+    check_cpu(6); tryhop(2); emit(0xa4, check_zp(d))
+@vasm
+def CMPI(d,imm):
+    check_cpu(6); tryhop(2); emit(0xa7, check_zp(imm), check_zp(d))
+@vasm
+def JEQ(d):
+    check_cpu(6); tryhop(3); d=int(v(d)); emit(0xbb, lo(d), hi(d))
+@vasm
+def JNE(d):
+    check_cpu(6); tryhop(3); d=int(v(d)); emit(0xbd, lo(d), hi(d))
+@vasm
+def JLT(d):
+    check_cpu(6); tryhop(3); d=int(v(d)); emit(0xbf, lo(d), hi(d))
+@vasm
+def JGT(d):
+    check_cpu(6); tryhop(3); d=int(v(d)); emit(0xc1, lo(d), hi(d))
+@vasm
+def JLE(d):
+    check_cpu(6); tryhop(3); d=int(v(d)); emit(0xc3, lo(d), hi(d))
+@vasm
+def JGE(d):
+    check_cpu(6); tryhop(3); d=int(v(d)); emit(0xc5, lo(d), hi(d))
+@vasm
+def POKEp(d):
+    check_cpu(6); tryhop(2); emit(0xd1, check_zp(d))
+@vasm
+def NEGW(d):
+    check_cpu(6); tryhop(2); emit(0xd3, check_zp(d))
+@vasm
+def TGE(d):
+    check_cpu(6); tryhop(2); emit(0xd5, check_zp(d))
+@vasm
+def TLT(d):
+    check_cpu(6); tryhop(2); emit(0xd7, check_zp(d))
+@vasm
+def TGT(d):
+    check_cpu(6); tryhop(2); emit(0xd9, check_zp(d))
+@vasm
+def TLE(d):
+    check_cpu(6); tryhop(2); emit(0xdb, check_zp(d))
+@vasm
+def ANDBI(imm,d):
+    check_cpu(6); tryhop(2); emit(0xdd, check_zp(imm), check_zp(d))
+@vasm
+def SUBBI(imm,d):
+    check_cpu(6); tryhop(2); emit(0xe1, check_zp(imm), check_zp(d))
+@vasm
+def ST2(d):
+    check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x11, lo(d), hi(d))
+@vasm
+def STW2(d):
+    check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x14, lo(d), hi(d))
+@vasm
+def XCHG(s,d):
+    check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x17, check_zp(s), check_zp(d))
+@vasm
+def MOVW(s,d):
+    check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x17, check_zp(s), check_zp(d))
+@vasm
+def ADDWI(d):
+    check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x1b, lo(d), hi(d))
+@vasm
+def SUBWI(d):
+    check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x1d, lo(d), hi(d))
+@vasm
+def ANDWI(d):
+    check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x1f, lo(d), hi(d))
+@vasm
+def ORWI(d):
+    check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x21, lo(d), hi(d))
+@vasm
+def XORWI(d):
+    check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x23, lo(d), hi(d))
+@vasm
+def LDPX(a,c):
+    check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x25, check_zp(a), check_zp(c))
+@vasm
+def STPX(a,c):
+    check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x28, check_zp(a), check_zp(c))
+@vasm
+def CONDI(i,j):
+    check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x2b, check_zp(i), check_zp(j))
+@vasm
+def CONDB(v,w):
+    check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x2d, check_zp(v), check_zp(w))
+@vasm
+def CONDIB(i,v):
+    check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x30, check_zp(i), check_zp(v))
+@vasm
+def CONDBI(v,i):
+    check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x33, check_zp(v), check_zp(i))
 
 @vasm
 def _SP(n):
@@ -735,6 +888,8 @@ def _LDI(d):
     d = v(d)
     if is_zeropage(d):
         LDI(d)
+    elif args.cpu >= 6 and is_zeropage(-d):
+        LDNI(-d)
     else:
         LDWI(d)
 @vasm
@@ -889,6 +1044,8 @@ def _MOV(s,d):
                 DOKEA(T3)
             else:
                 STW(T2); LDW(T3); DOKE(T2)
+        elif args.cpu >= 6:
+            _LDW(s); STW2(d)
         else:
             _LDI(d); STW(T2); _LDW(s); DOKE(T2)
 @vasm
@@ -1229,18 +1386,18 @@ def _EPILOGUE(framesize,maxargoffset,mask,saveAC=False):
     '''Function epilogue'''
     if saveAC:
         STW(T2);
-    if mask:
-        _SP(maxargoffset)
-        extern('_@_restore_%02x' % mask)
-        _CALLI('_@_restore_%02x' % mask)
-    if args.cpu >= 5:
-        _LDI(framesize)
-        extern('_@_endframe')
-        _CALLI('_@_endframe')
+    diff = framesize - maxargoffset;
+    _SP(framesize);STW(SP);
+    if diff >= 0 and diff < 256:
+        SUBI(diff)
     else:
-        _LDI(framesize);STW(T3)
-        extern('_@_endframe')
-        _CALLI('_@_endframe')
+        _SP(-framesize);
+    extern('_@_rtrn_%02x' % mask)
+    if args.cpu >= 5:
+        _CALLI('_@_rtrn_%02x' % mask)
+    else:
+        STW(T3)
+        _CALLJ('_@_rtrn_%02x' % mask)
         
 # ------------- reading .s/.o/.a files
         

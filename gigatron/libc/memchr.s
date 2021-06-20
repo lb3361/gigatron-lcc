@@ -40,7 +40,7 @@ def scope():
                 LD('sysArgs4');BNE('.scanloop')
             else:
                 label('.scanloop')
-                PEEK+('sysArgs0')
+                PEEKp('sysArgs0')
                 ST(vACH);XORW('sysArgs2');STW(T3)
                 LD(T3);BEQ('.scanok')
                 LD(T3+1);BEQ('.scanok')

@@ -669,207 +669,279 @@ def CMPHU(d):
 # instructions for cpu6 (opcodes to be checked once at67's rom is released)
 @vasm
 def DEC(d):
+    '''DEC: Decrement byte var ([D]--), 22 cycles'''
     check_cpu(6); tryhop(2); emit(0x14, check_zp(d))
 @vasm
+def MOVQ(imm,d):
+    '''MOVQ: Load a byte var with a small constant 0..255, 28 cycles'''
+    check_cpu(6); tryhop(2); emit(0x16, check_zp(imm), check_zp(d))
+@vasm
 def LSRB(d):
+    '''LSRB: Logical shift right on a byte var, 28 cycles'''
     check_cpu(6); tryhop(2); emit(0x18, check_zp(d))
 @vasm
 def SEXT(d):
+    '''SEXT: Sign extend vAC based on a variable mask, 28 cycles'''
     check_cpu(6); tryhop(2); emit(0x1c, check_zp(d))
 @vasm
 def PEEKp(d):
+    '''PEEK+: Peek byte at address contained in var, inc var, 30 cycles'''
     check_cpu(6); tryhop(2); emit(0x23, check_zp(d))
 @vasm
 def POKEI(d):
+    '''POKEI: Poke immediate byte into address contained in [vAC], 20 cycles'''
     check_cpu(6); tryhop(2); emit(0x25, check_im8s(d))
 @vasm
 def LSLV(d):
+    '''LSLV: Logical shift left word var, 28 cycles'''
     check_cpu(6); tryhop(2);  emit(0x27, check_zp(d))
 @vasm
 def ADDBA(d):
+    '''ADDBA: vAC += var.lo, 28 cycles'''
     check_cpu(6); tryhop(2); emit(0x29, check_zp(d))
 @vasm
 def ADDBI(imm,d):
+    '''ADDBI: Add a constant 0..255 to byte var, 28 cycles'''
     check_cpu(6); tryhop(2); emit(0x29, check_zp(imm), check_zp(d))
 @vasm
 def DBNE(v, d):
+    '''DBNE:  Decrement byte var and branch if not zero, 28 cycles'''
     check_cpu(6); tryhop(3); emit(0x32, check_br(d), check_zp(v))
 @vasm
 def DOKEI(d):
+    '''DOKEI: Doke immediate word into address contained in [vAC], 30 cycles'''
     check_cpu(6); tryhop(2); d=int(v(d)); emit(0x37, lo(d), hi(d))
 @vasm
 def PEEKV(d):
+    '''PEEKV: Read byte from address contained in var, 30 cycles'''
     check_cpu(6); tryhop(2); emit(0x39, check_zp(d))
 @vasm
 def DEEKV(d):
+    '''DEEKV: Read word from address contained in var, 28 cycles'''
     check_cpu(6); tryhop(2); emit(0x3b, check_zp(d))
 @vasm
 def XORBI(imm,d):
+    '''XORBI: var.lo ^= imm, 28 cycles'''
     check_cpu(6); tryhop(2); emit(0x3d, check_zp(imm), check_zp(d))
 @vasm
 def ANDBA(d):
+    '''ANDBA: vAC &= var.lo, 24 cycles'''
     check_cpu(6); tryhop(2); emit(0x42, check_zp(d))
 @vasm
 def ORBA(d):
+    '''ORBA: vAC |= var.lo, 22 cycles'''
     check_cpu(6); tryhop(2); emit(0x44, check_zp(d))
 @vasm
 def XORBA(d):
+    '''XORBA: vAC ^= var.lo, 22 cycles'''
     check_cpu(6); tryhop(2); emit(0x46, check_zp(d))
 @vasm
 def NOTB(d):
+    '''NOTB: var.lo = var.lo ^ 0xff, 22 cycles'''
     check_cpu(6); tryhop(2); emit(0x48, check_zp(d))
 @vasm
 def DOKEpp(d):
+    '''DOKE+: doke word in vAC to address contained in var, var += 2, 30 cycles'''
     check_cpu(6); tryhop(2); emit(0x4a, check_zp(d))
 @vasm
 def MOVQW(imm,d):
+    '''MOVQW: Load a word var with a small constant 0..255, 30 cycles'''
     check_cpu(6); tryhop(2); emit(0x5b, check_zp(imm), check_zp(d))
 @vasm
 def DEEKpp(d):
+    '''DEEK+: Deek word at address contained in var, var += 2, 30 cycles'''
     check_cpu(6); tryhop(2); emit(0x60, check_zp(d))
 @vasm
 def MOV(s,d):
+    '''MOV: Moves a byte from src var to dst var, 28 cycles'''
     check_cpu(6); tryhop(2); emit(0x60, check_zp(d), check_zp(s))
 @vasm
 def PEEKA(d):
+    '''PEEKA: Peek a byte from [vAC] to var, 24 cycles'''
     check_cpu(6); tryhop(2); emit(0x67, check_zp(d))
 @vasm
 def POKEA(d):
+    '''POKEA: Poke a byte from var to [vAC], 22 cycles'''
     check_cpu(6); tryhop(2); emit(0x69, check_zp(d))
 @vasm
 def TEQ(d):
+    '''TEQ: Test for EQ, returns 0x0000 or 0x0001 in var, 28 cycles'''
     check_cpu(6); tryhop(2); emit(0x6b, check_zp(d))
 @vasm
 def TNE(d):
+    '''TEQ: Test for NE, returns 0x0000 or 0x0001 in var, 28 cycles'''
     check_cpu(6); tryhop(2); emit(0x6d, check_zp(d))
 @vasm
 def DEEKA(d):
+    '''DEEKA: Deek a word from [vAC] to var, 30 cycles'''
     check_cpu(6); tryhop(2); emit(0x6f, check_zp(d))
 @vasm
 def SUBBA(d):
+    '''SUBBA: vAC -= var.lo, 28 cycles'''
     check_cpu(6); tryhop(2); emit(0x77, check_zp(d))
 @vasm
 def INCW(d):
+    '''INCW: Increment word var, 26 cycles'''
     check_cpu(6); tryhop(2); emit(0x79, check_zp(d))
 @vasm
 def DECW(d):
+    '''DECW: Decrement word var, 26 cycles'''
     check_cpu(6); tryhop(2); emit(0x7b, check_zp(d))
 @vasm
 def DOKEA(d):
+    '''DOKEA: Doke a word from var to [vAC], 30 cycles'''
     check_cpu(6); tryhop(2); emit(0x7d, check_zp(d))
 @vasm
 def NOTW(d):
+    '''NOTW: Boolean invert var'''
     check_cpu(6); tryhop(2); emit(0x8a, check_zp(d))
 @vasm
 def DBGE(v, d):
+    '''DBGE:  Decrement byte var and branch if >= 0, 30 cycles'''
     check_cpu(6); tryhop(3); emit(0x83, check_br(d), check_zp(v))
 @vasm
 def ORBI(imm,d):
+    '''ORBI: OR immediate byte with byte var, result in byte var, 28 cycles'''
     check_cpu(6); tryhop(2); emit(0x95, check_zp(imm), check_zp(d))
 @vasm
 def LDNI(d):
+    '''LDNI: Load an 8bit immediate as a negative 16bit immediate into vAC'''
     check_cpu(6); tryhop(2); emit(0x9c, check_zp(d))
 @vasm
 def ANDBK(d,imm):
+    '''ANDBK: vAC = var & imm'''
     check_cpu(6); tryhop(2); emit(0x9e, check_zp(imm), check_zp(d))
 @vasm
 def ORBK(d,imm):
+    '''ORBK: vAC = var | imm'''
     check_cpu(6); tryhop(2); emit(0xa0, check_zp(imm), check_zp(d))
 @vasm
 def XORBK(d,imm):
+    '''XORBK: vAC = var ^ imm'''
     check_cpu(6); tryhop(2); emit(0xa2, check_zp(imm), check_zp(d))
 @vasm
 def PEEKAp(d):
+    '''PEEKA+: Peek a byte from [vAC] to var, incw vAC, 26 to 30 cycles'''
     check_cpu(6); tryhop(2); emit(0xa4, check_zp(d))
 @vasm
 def CMPI(d,imm):
+    '''CMPI: Compare byte variable to 8bit immediate, 30 cycles'''
     check_cpu(6); tryhop(2); emit(0xa7, check_zp(imm), check_zp(d))
 @vasm
 def JEQ(d):
+    '''JEQ: jump to 16bit address if vAC=0, 26 cycles'''
     check_cpu(6); tryhop(3); d=int(v(d)); emit(0xbb, lo(d), hi(d))
 @vasm
 def JNE(d):
+    '''JNE: jump to 16bit address if vAC!=0, 26 cycles'''
     check_cpu(6); tryhop(3); d=int(v(d)); emit(0xbd, lo(d), hi(d))
 @vasm
 def JLT(d):
+    '''JLT: jump to 16bit address if vAC<0, 24 to 26 cycles'''
     check_cpu(6); tryhop(3); d=int(v(d)); emit(0xbf, lo(d), hi(d))
 @vasm
 def JGT(d):
+    '''JGT: jump to 16bit address if vAC>0, 24 to 26 cycles'''
     check_cpu(6); tryhop(3); d=int(v(d)); emit(0xc1, lo(d), hi(d))
 @vasm
 def JLE(d):
+    '''JLE: jump to 16bit address if vAC<=0, 24 to 28 cycles'''
     check_cpu(6); tryhop(3); d=int(v(d)); emit(0xc3, lo(d), hi(d))
 @vasm
 def JGE(d):
+    '''JGE: jump to 16bit address if vAC>=0, 22 to 26 cycles'''
     check_cpu(6); tryhop(3); d=int(v(d)); emit(0xc5, lo(d), hi(d))
 @vasm
 def POKEp(d):
+    '''POKE+: Poke byte in vAC to address contained in var, inc var, 30 cycles'''
     check_cpu(6); tryhop(2); emit(0xd1, check_zp(d))
 @vasm
 def NEGW(d):
+    '''NEGW: Arithmetic negate var'''
     check_cpu(6); tryhop(2); emit(0xd3, check_zp(d))
 @vasm
 def TGE(d):
+    '''TEQ: Test for GE, returns 0x0000 or 0x0001 in var, 28 cycles'''
     check_cpu(6); tryhop(2); emit(0xd5, check_zp(d))
 @vasm
 def TLT(d):
+    '''TLT: Test for LT, returns 0x0000 or 0x0001 in var, 28 cycles'''
     check_cpu(6); tryhop(2); emit(0xd7, check_zp(d))
 @vasm
 def TGT(d):
+    '''TGT: Test for GT, returns 0x0000 or 0x0001 in var, 28 cycles'''
     check_cpu(6); tryhop(2); emit(0xd9, check_zp(d))
 @vasm
 def TLE(d):
+    '''TLE: Test for LE, returns 0x0000 or 0x0001 in var, 28 cycles'''
     check_cpu(6); tryhop(2); emit(0xdb, check_zp(d))
 @vasm
 def ANDBI(imm,d):
+    '''ANDBI: And immediate byte with byte var, result in byte var, 28 cycles'''
     check_cpu(6); tryhop(2); emit(0xdd, check_zp(imm), check_zp(d))
 @vasm
 def SUBBI(imm,d):
+    '''SUBBI: Subtract a constant 0..255 from a byte var, 28 cycles'''
     check_cpu(6); tryhop(2); emit(0xe1, check_zp(imm), check_zp(d))
 @vasm
 def ST2(d):
+    '''ST2: Store vAC.lo into 16bit immediate address, (26 + 26 cycles)'''
     check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x11, lo(d), hi(d))
 @vasm
 def STW2(d):
+    '''STW2: Store vAC into 16bit immediate address, (26 + 28 cycles)'''
     check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x14, lo(d), hi(d))
 @vasm
 def XCHG(s,d):
+    '''XCHG: Swap two zero byte variables, (26 + 30 cycles)'''
     check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x17, check_zp(s), check_zp(d))
 @vasm
 def MOVW(s,d):
+    '''MOVW: Move 16bits from src zero page var to dst zero page var, (26 + 28 cycles)'''
     check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x17, check_zp(s), check_zp(d))
 @vasm
 def ADDWI(d):
+    '''ADDWI: vAC += immediate 16bit value, (26 + 28 cycles)'''
     check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x1b, lo(d), hi(d))
 @vasm
 def SUBWI(d):
+    '''SUBWI: vAC -= immediate 16bit value, (26 + 28 cycles)'''
     check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x1d, lo(d), hi(d))
 @vasm
 def ANDWI(d):
+    '''ANDWI: vAC &= immediate 16bit value, (26 + 26 cycles)'''
     check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x1f, lo(d), hi(d))
 @vasm
 def ORWI(d):
+    '''ORWI: vAC |= immediate 16bit value, (26 + 22 cycles)'''
     check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x21, lo(d), hi(d))
 @vasm
 def XORWI(d):
+    '''XORWI: vAC &= immediate 16bit value, (26 + 22 cycles)'''
     check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x23, lo(d), hi(d))
 @vasm
 def LDPX(a,c):
+    '''LDPX: Load Pixel, <address var>, <colour var>, (26 + 30 cycles)'''
     check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x25, check_zp(a), check_zp(c))
 @vasm
 def STPX(a,c):
+    '''STPX: Store Pixel, <address var>, <colour var>, (26 + 28 cycles)'''
     check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x28, check_zp(a), check_zp(c))
 @vasm
 def CONDI(i,j):
+    '''CONDI: chooses immediate operand based on condition, (vAC == 0), (26 + 26 cycles)'''
     check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x2b, check_zp(i), check_zp(j))
 @vasm
 def CONDB(v,w):
+    '''CONDB: chooses zero page byte var based on condition, (vAC == 0), (26 + 28 cycles)'''
     check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x2d, check_zp(v), check_zp(w))
 @vasm
 def CONDIB(i,v):
+    '''CONDIB: chooses between imm and zero page byte var based on condition, (vAC == 0), (28 + 26 cycles)'''
     check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x30, check_zp(i), check_zp(v))
 @vasm
 def CONDBI(v,i):
+    '''CONDBI: chooses between zero page byte var and imm based on condition, (vAC == 0), (28 + 26 cycles)'''
     check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x33, check_zp(v), check_zp(i))
 
 @vasm

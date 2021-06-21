@@ -50,7 +50,7 @@ def scope():
                 LD('sysArgs5');SUBI(1);ST('sysArgs5');BNE('.loop1')
             else:
                 PEEKp('sysArgs2');POKEp(R19)
-                DBNE('sysArgs5','.loop2')
+                DBNE('sysArgs5','.loop1')
             LDW(R17);SYS(40)
             _LDI('.memcpyextb');STW(R19)
             label('.loop2')

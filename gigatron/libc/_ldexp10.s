@@ -25,11 +25,11 @@ def scope():
         LDW(R21);_FMUL()
         label('.neg3')
         LDI(5);ADDW(R21);STW(R21);XORW(R20);_BNE('.neg2')
-        tryhop(5);LDW(R22);STW(vLR);RET()
+        tryhop(2);POP();RET()
         
     def code_ldexp10():
         label('_ldexp10')
-        LDW(vLR);STW(R22)
+        PUSH()
         _FMOV(F8,FAC)
         LDW(R11);_BGE('.pos')
         _CALLJ('_ldexp10n') # no return
@@ -44,7 +44,7 @@ def scope():
         LDI(1);_FSCALB();  # *2
         label('.pos1')
         LDW(R11);_BNE('.pos2')
-        tryhop(5);LDW(R22);STW(vLR);RET()
+        tryhop(2);POP();RET()
 
     module(name='_ldexp10',
            code=[ ('EXPORT', '_ldexp10'),

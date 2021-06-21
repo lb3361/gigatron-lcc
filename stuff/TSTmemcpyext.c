@@ -43,6 +43,11 @@ void clear_lines(int l1, int l2)
 
 void clear_screen(screenpos_t *pos)
 {
+	int i;
+	for (i=0; i<120; i++) {
+		videoTable[i+i] = 8 + i;
+		videoTable[i+i+1] = 0;
+	}
 	clear_lines(0,120);
 	pos->x = pos->y = 0;
 	pos->addr = (char*)(videoTable[0]<<8);
@@ -124,7 +129,7 @@ void print_int(int n, int radix)
 	print_unsigned(n, radix);
 }
 
-int printf(const char *fmt, ...)
+int myprintf(const char *fmt, ...)
 {
 	char c;
 	va_list ap;
@@ -164,7 +169,7 @@ void setbank(int bank)
 void test(int doff, int soff, int len, int dstbank, int srcbank)
 {
 	int i;
-	printf("[%d:%x,]<-[%d:%x,+%d]\n", dstbank, dbuffer+doff, srcbank, sbuffer+soff, len);
+	myprintf("[%d:%x,]<-[%d:%x,+%d]\n", dstbank, dbuffer+doff, srcbank, sbuffer+soff, len);
 
 	setbank(srcbank);
 	for (i=0; i<1024;i++)
@@ -183,14 +188,14 @@ void test(int doff, int soff, int len, int dstbank, int srcbank)
 			if (i >= doff && i < doff + len)
 				expected = ( (i-doff+soff) & 0x3f ) | ((srcbank&3)<<6);
 			if (dbuffer[i] != expected)
-				printf(" at %d:%x: not %x, %x\n", dstbank, dbuffer+i, expected, dbuffer[i]);
+				myprintf(" at %d:%x: not %x, %x\n", dstbank, dbuffer+i, expected, dbuffer[i]);
 		}
 	setbank(srcbank);
 	for (i=0; i<1024;i++)
 		{
 			int expected = (i & 0x3f) | ((srcbank&3)<<6);
 			if (sbuffer[i] != expected)
-				printf(" at %d:%x: not %x, %x\n", srcbank, sbuffer+i, expected, sbuffer[i]);
+				myprintf(" at %d:%x: not %x, %x\n", srcbank, sbuffer+i, expected, sbuffer[i]);
 		}
 	setbank(1);
 }
@@ -202,12 +207,12 @@ int main()
 
 	clear_screen(&pos);
 	if (ctrlBits_v5 == 0) {
-		printf("No memory expansion\n");
+		myprintf("No memory expansion\n");
 		return 10;
 	}
 	for (j=1; j<=3; j++)
 		for (i=2; i<=3; i++) {
-			printf("========= bank %d to %d\n", j, i);
+			myprintf("========= bank %d to %d\n", j, i);
 			test(255,256,257,i,j);
 			test(34,0,12,i,j);
 			test(34,65,12,i,j);

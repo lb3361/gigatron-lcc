@@ -2,13 +2,13 @@
 def code0():
     # div_t *div(int a, int q)
     label('div')
-    tryhop(4);LDW(vLR);STW(R22)
+    PUSH();
     LDW(R9);_MODS(R10)
     #  _@_mods returns remainder in vAC and quotient in T1
     STW(R21);
     LDW(T1);DOKE(R8)
     LDI(2);ADDW(R8);STW(R8);LDW(R21);DOKE(R8)
-    LDW(R22);tryhop(3);STW(vLR);RET()
+    tryhop(2);POP();RET()
     
 code=[
     ('EXPORT', 'div'),

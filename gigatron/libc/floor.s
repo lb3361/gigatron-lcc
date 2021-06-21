@@ -4,13 +4,13 @@ def scope():
     def code0():
         nohop()
         label('modf')
-        LDW(vLR);STW(R22)
+        PUSH()
         _FMOV(F8, FAC)
         _CALLJ('_@_frndz')
         LDW(R11)
         _FMOV(FAC, [vAC])
         _FNEG();_LDI(F8);_FADD()
-        LDW(R22);STW(vLR);RET()
+        POP();RET()
 
     module(name='modf.s',
            code=[ ('EXPORT', 'modf'),
@@ -23,13 +23,13 @@ def scope():
     def code0():
         nohop()
         label('floor')
-        LDW(vLR);STW(R22)
+        PUSH()
         _FMOV(F8, FAC)
         _CALLJ('_@_frndz')
         LDI(F8);_FCMP();_BLE('.ret')
         _LDI('_@_fone');_FSUB()
         label('.ret')
-        LDW(R22);STW(vLR);RET()
+        POP();RET()
     
     module(name='floor.s',
            code=[ ('EXPORT', 'floor'),
@@ -40,13 +40,13 @@ def scope():
     def code0():
         nohop()
         label('ceil')
-        LDW(vLR);STW(R22)
+        PUSH()
         _FMOV(F8, FAC)
         _CALLJ('_@_frndz')
         LDI(F8);_FCMP();_BGE('.ret')
         _LDI('_@_fone');_FADD()
         label('.ret')
-        LDW(R22);STW(vLR);RET()
+        POP();RET()
     
     module(name='ceil.s',
            code=[ ('EXPORT', 'ceil'),

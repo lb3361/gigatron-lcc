@@ -53,7 +53,7 @@ def scope():
 
     def code1():
         label('memcpy');                            # R8=d, R9=s, R10=l
-        tryhop(4);LDW(vLR);STW(R22)
+        PUSH()
         m_prepCopyMemory()
         LDW(R8);STW(R21);STW('sysArgs0')
         LDW(R9);STW('sysArgs2')
@@ -77,7 +77,7 @@ def scope():
         label('.memcpy5')
         LDW(R10);m_CopyMemory()
         label('.done')
-        LDW(R22);tryhop(5);STW(vLR);LDW(R21);RET();
+        LDW(R21);tryhop(2);POP();RET();
 
     code.append(('CODE', 'memcpy', code1))
 	

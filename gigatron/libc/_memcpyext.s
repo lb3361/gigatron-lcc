@@ -70,7 +70,7 @@ def scope():
     # void *_memcpyext(int banks, void *dest, const void *src, size_t n);
     def code1():
         label('_memcpyext');                        # R8=banks, R9=d, R10=s, R11=l
-        tryhop(4);LDW(vLR);STW(R22)
+        PUSH()
         m_prepCopyMemoryExt()
         LD(R8);ANDI(0xf0);_SHLI(8);STW(R8)
         LDW(R9);STW(R21);STW('sysArgs0')
@@ -96,7 +96,7 @@ def scope():
         label('.memcpy5')
         LDW(R11);ORW(R8);m_CopyMemoryExt()
         label('.done')
-        LDW(R22);tryhop(5);STW(vLR);LDW(R21);RET();
+        LDW(R21);POP();RET();
         
     code.append(('CODE', '_memcpyext', code1))
 

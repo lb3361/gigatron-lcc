@@ -3,7 +3,7 @@
 
 def code0():
     label('ldiv')
-    tryhop(4);LDW(vLR);STW(R22)
+    PUSH();
     _LMOV(L9,LAC);LDI(L11);_LMODS()
     # save quotient
     LDW(T0);DOKE(R8);
@@ -12,7 +12,7 @@ def code0():
     LDI(4);ADDW(R8);STW(T3);LDW(LAC);DOKE(T3);
     LDI(6);ADDW(R8);STW(T3);LDW(LAC+2);DOKE(T3);
     # return
-    LDW(R22);tryhop(3);STW(vLR);RET()
+    tryhop(2);POP();RET()
     
 # ======== (epilog)
 code=[

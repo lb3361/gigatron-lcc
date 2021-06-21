@@ -4,10 +4,10 @@
 def code0():
     nohop()
     label('fabs')
-    LDW(vLR);STW(R22)
+    PUSH()
     LD(F8+1);ANDI(127);ST(F8+1)
     _FMOV(F8, FAC)
-    LDW(R22);STW(vLR);RET()
+    POP();RET()
     
 code=[
     ('EXPORT', 'fabs'),

@@ -611,8 +611,8 @@ int disassemble(word addr, char **pm, char *operand)
       sprintf(operand, "$%04x", (addr&0xff00)|((peek(addlo(addr,1))+2)&0xff));
       return 2;
     oper8br:
-      sprintf(operand, "$%02x, $%04x", peek(addlo(addr,1)),
-              (addr&0xff00)|((peek(addlo(addr,2))+2)&0xff) );
+      sprintf(operand, "$%02x, $%04x", peek(addlo(addr,2)),
+              (addr&0xff00)|((peek(addlo(addr,1))+2)&0xff) );
       return 3;
     }
 }

@@ -63,10 +63,10 @@ def scope():
 
     def code1():
         label('memchr');
-        tryhop(16);
+        tryhop(9);
         LDW(R10);STW(R11);LDW(R9);STW(R10)
         label('_memchr2');                          # R8=d, R9=c0 R10=c1, R11=l
-        tryhop(4);LDW(vLR);STW(R22)
+        PUSH();
         LDW(R8);STW('sysArgs0')
         LD(R9);ST('sysArgs2');LD(R10);ST('sysArgs3')
         m_prepScanMemory()
@@ -86,7 +86,7 @@ def scope():
         label('.memscan5')
         LDW(R11);m_ScanMemory()
         label('.done')
-        STW(R21);LDW(R22);tryhop(5);STW(vLR);LDW(R21);RET();
+        tryhop(2);POP();RET();
 
     code.append(('CODE', 'memchr', code1))
 

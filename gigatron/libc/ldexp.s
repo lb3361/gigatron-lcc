@@ -3,11 +3,11 @@ def scope():
     def code0():
         nohop()
         label('ldexp')
-        LDW(vLR);STW(R22)
+        PUSH()
         _FMOV(F8, FAC)
         LDW(R11)
         _FSCALB()
-        LDW(R22);STW(vLR);RET()
+        POP();RET()
         
     module(name='ldexp.s',
            code=[ ('EXPORT', 'ldexp'),
@@ -18,7 +18,7 @@ def scope():
     def code0():
         nohop()
         label('frexp')
-        LDW(vLR);STW(R22)
+        PUSH()
         LD(F8)
         BEQ('.zero')
         SUBI(128)
@@ -31,7 +31,7 @@ def scope():
         DOKE(R11)
         label('.ret')
         _FMOV(F8,FAC)
-        LDW(R22);STW(vLR);RET()
+        POP();RET()
 
     module(name='frexp.s',
            code=[ ('EXPORT', 'frexp'),

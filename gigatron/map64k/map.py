@@ -57,7 +57,9 @@ def map_extra_modules(romtype):
         # Set stack
         _LDI(initsp);STW(SP);
         # Check rom and ram
-        if romtype:
+        if romtype and romtype >= 0x80:
+            LD('romType');ANDI(0xfc);XORI(romtype);BNE('.err')
+        elif romtype:
             LD('romType');ANDI(0xfc);SUBI(romtype);BLT('.err')
         if minram == 0x100:
             LD('memSize');BNE('.err')

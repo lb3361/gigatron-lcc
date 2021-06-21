@@ -84,10 +84,8 @@ def code4():
 	label('ptinrect');
 	PUSH();
 	_SP(2+0);DEEK();STW(R22);
-	_SP(6+0);DEEK();STW(R21);
-	LDW(R22);_CMPWS(R21);_BLT('.53');
-	_SP(10+0);DEEK();STW(R21);
-	LDW(R22);_CMPWS(R21);_BGE('.53');
+	_SP(6+0);DEEK();_CMPWS(R22);_BGT('.53');
+	_SP(10+0);DEEK();_CMPWS(R22);_BLE('.53');
 	_SP(8+0);DEEK();STW(R22);
 	_SP(4+0);DEEK();_CMPWS(R22);_BLT('.53');
 	_SP(12+0);DEEK();STW(R22);

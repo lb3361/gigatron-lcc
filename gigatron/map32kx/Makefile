@@ -27,7 +27,7 @@ ${B}${MAPDIR}/map.py: map.py
 	-mkdir -p ${B}${MAPDIR}
 	cp map.py $@
 
-${B}${MAPDIR}/libconx.a: ${SFILES} ${O4FILES} ${O5FILES}
+${B}${MAPDIR}/libconx.a: ${SFILES} ${O4FILES} ${O5FILES} ${O6FILES}
 	cat $+ > $@
 
 ${B}${LIBNAME}/%_4.o: ${LIBNAME}/%.c ${B}rcc

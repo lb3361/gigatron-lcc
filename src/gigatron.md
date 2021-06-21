@@ -304,11 +304,11 @@ reg: LOADI4(reg)  "\t_LMOV(%0,%c);\n"     move(a)+148
 reg: LOADU4(reg)  "\t_LMOV(%0,%c);\n"     move(a)+148
 reg: LOADF5(reg)  "\t_FMOV(%0,%c);\n"     move(a)+148
 # -- these were missing, really
-reg: LOADI1(conBs) "\tLDI(%0);ST(%c);\n" 36
-reg: LOADU1(conB)  "\tLDI(%0);ST(%c);\n" 36
-reg: LOADI2(con)   "\t_LDI(%0);STW(%c);\n" 41
-reg: LOADU2(con)   "\t_LDI(%0);STW(%c);\n" 41
-reg: LOADP2(con)   "\t_LDI(%0);STW(%c);\n" 41
+reg: LOADI1(conBs) "\tLDI(%0);%{dst!=vAC:ST(%c);}\n" 36
+reg: LOADU1(conB)  "\tLDI(%0);%{dst!=vAC:ST(%c);}\n" 36
+reg: LOADI2(con)   "\t_LDI(%0);%{dst!=vAC:STW(%c);}\n" 41
+reg: LOADU2(con)   "\t_LDI(%0);%{dst!=vAC:STW(%c);}\n" 41
+reg: LOADP2(con)   "\t_LDI(%0);%{dst!=vAC:STW(%c);}\n" 41
 
 # -- constants
 # These non terminal represent constants in the tree grammar
@@ -567,6 +567,14 @@ stmt: LTU2(ac,iarg) "\t%0%[1b]_CMPWU(%1);_BLT(%a);\n" 100
 stmt: LEU2(ac,iarg) "\t%0%[1b]_CMPWU(%1);_BLE(%a);\n" 100
 stmt: GTU2(ac,iarg) "\t%0%[1b]_CMPWU(%1);_BGT(%a);\n" 100
 stmt: GEU2(ac,iarg) "\t%0%[1b]_CMPWU(%1);_BGE(%a);\n" 100
+stmt: LTI2(iarg,ac) "\t%1%[0b]_CMPWS(%0);_BGT(%a);\n" 100
+stmt: LEI2(iarg,ac) "\t%1%[0b]_CMPWS(%0);_BGE(%a);\n" 100
+stmt: GTI2(iarg,ac) "\t%1%[0b]_CMPWS(%0);_BLT(%a);\n" 100
+stmt: GEI2(iarg,ac) "\t%1%[0b]_CMPWS(%0);_BLE(%a);\n" 100
+stmt: LTU2(iarg,ac) "\t%1%[0b]_CMPWU(%0);_BGT(%a);\n" 100
+stmt: LEU2(iarg,ac) "\t%1%[0b]_CMPWU(%0);_BGE(%a);\n" 100
+stmt: GTU2(iarg,ac) "\t%1%[0b]_CMPWU(%0);_BLT(%a);\n" 100
+stmt: GEU2(iarg,ac) "\t%1%[0b]_CMPWU(%0);_BLE(%a);\n" 100
 
 # Nonterminals for BMOV/LMOV/FMOV:
 #   stmt: ASGNx(vdst,vsrc) "\t%[1b]%[0b]_xMOV(%1,%0);\n"
@@ -652,6 +660,19 @@ stmt: NEI4(lac,larg) "\t%0%1_LCMPX();_BNE(%a);\n" 100
 stmt: EQI4(lac,larg) "\t%0%1_LCMPX();_BEQ(%a);\n" 100
 stmt: NEU4(lac,larg) "\t%0%1_LCMPX();_BNE(%a);\n" 100
 stmt: EQU4(lac,larg) "\t%0%1_LCMPX();_BEQ(%a);\n" 100
+stmt: LTI4(larg,lac) "\t%1%0_LCMPS();_BGT(%a);\n" 200
+stmt: LEI4(larg,lac) "\t%1%0_LCMPS();_BGE(%a);\n" 200
+stmt: GTI4(larg,lac) "\t%1%0_LCMPS();_BLT(%a);\n" 200
+stmt: GEI4(larg,lac) "\t%1%0_LCMPS();_BLE(%a);\n" 200
+stmt: LTU4(larg,lac) "\t%1%0_LCMPU();_BGT(%a);\n" 200
+stmt: LEU4(larg,lac) "\t%1%0_LCMPU();_BGE(%a);\n" 200
+stmt: GTU4(larg,lac) "\t%1%0_LCMPU();_BLT(%a);\n" 200
+stmt: GEU4(larg,lac) "\t%1%0_LCMPU();_BLE(%a);\n" 200
+stmt: NEI4(larg,lac) "\t%1%0_LCMPX();_BNE(%a);\n" 100
+stmt: EQI4(larg,lac) "\t%1%0_LCMPX();_BEQ(%a);\n" 100
+stmt: NEU4(larg,lac) "\t%1%0_LCMPX();_BNE(%a);\n" 100
+stmt: EQU4(larg,lac) "\t%1%0_LCMPX();_BEQ(%a);\n" 100
+
 stmt: ASGNI4(vdst,vsrc)          "\t%[1b]%[0b]_LMOV(%1,%0);\n" 160
 stmt: ASGNI4(pdst,INDIRI4(psrc)) "\t%[0b]%[1b]_LMOV(%1,%0);\n" 160
 stmt: ASGNU4(vdst,vsrc)          "\t%[1b]%[0b]_LMOV(%1,%0);\n" 160
@@ -681,6 +702,12 @@ stmt: LTF5(fac,farg) "\t%0%1_FCMP();_BLT(%a);\n" 200
 stmt: LEF5(fac,farg) "\t%0%1_FCMP();_BLE(%a);\n" 200
 stmt: GTF5(fac,farg) "\t%0%1_FCMP();_BGT(%a);\n" 200
 stmt: GEF5(fac,farg) "\t%0%1_FCMP();_BGE(%a);\n" 200
+stmt: EQF5(farg,fac) "\t%1%0_FCMP();_BEQ(%a);\n" 200
+stmt: NEF5(farg,fac) "\t%1%0_FCMP();_BNE(%a);\n" 200
+stmt: LTF5(farg,fac) "\t%1%0_FCMP();_BGT(%a);\n" 200
+stmt: LEF5(farg,fac) "\t%1%0_FCMP();_BGE(%a);\n" 200
+stmt: GTF5(farg,fac) "\t%1%0_FCMP();_BLT(%a);\n" 200
+stmt: GEF5(farg,fac) "\t%1%0_FCMP();_BLE(%a);\n" 200
 stmt: ASGNF5(vdst,vsrc) "\t%[1b]%[0b]_FMOV(%1,%0);\n" 160
 stmt: ASGNF5(pdst,INDIRF5(psrc)) "\t%[0b]%[1b]_FMOV(%1,%0);\n" 160
 
@@ -808,11 +835,11 @@ stmt: ASGNU2(ac,con)  "\t%0%[1b]DOKEI(%1);\n" mincpu6(30)
 stmt: ASGNI1(ac,conB) "\t%0%[1b]POKEI(%1);\n" mincpu6(28)
 stmt: ASGNI1(ac,conBs) "\t%0%[1b]POKEI(%1);\n" mincpu6(28)
 stmt: ASGNU1(ac,conB) "\t%0%[1b]POKEI(%1);\n" mincpu6(28)
-reg: INDIRI2(ac) "\t%0DEEKA(%c);\n" mincpu6(30)
-reg: INDIRU2(ac) "\t%0DEEKA(%c);\n" mincpu6(30)
-reg: INDIRP2(ac) "\t%0DEEKA(%c);\n" mincpu6(30)
-reg: INDIRI1(ac) "\t%0PEEKA(%c);\n" mincpu6(30)
-reg: INDIRU1(ac) "\t%0PEEKA(%c);\n" mincpu6(30)
+reg: INDIRI2(ac) "\t%0%{dst!=vAC:DEEKA(%c)}%{dst==vAC:DEEK()};\n" mincpu6(30)
+reg: INDIRU2(ac) "\t%0%{dst!=vAC:DEEKA(%c)}%{dst==vAC:DEEK()};\n" mincpu6(30)
+reg: INDIRP2(ac) "\t%0%{dst!=vAC:DEEKA(%c)}%{dst==vAC:DEEK()};\n" mincpu6(30)
+reg: INDIRI1(ac) "\t%0%{dst!=vAC:PEEKA(%c)}%{dst==vAC:PEEK()};\n" mincpu6(30)
+reg: INDIRU1(ac) "\t%0%{dst!=vAC:PEEKA(%c)}%{dst==vAC:PEEK()};\n" mincpu6(30)
 ac: INDIRI2(reg) "DEEKV(%0);" mincpu6(30)
 ac: INDIRU2(reg) "DEEKV(%0);" mincpu6(30)
 ac: INDIRP2(reg) "DEEKV(%0);" mincpu6(30)
@@ -1282,6 +1309,20 @@ static void emit3(const char *fmt, Node p, Node *kids, short *nts)
   else if (!strncmp(fmt,"src!=", 5) && fmt[i])
     {
       if (!kids[0] || !kids[0]->syms[RX] || kids[0]->syms[RX]->x.name != stringn(fmt+5,i-6))
+        myemitfmt(fmt+i, p, kids, nts);
+      return;
+    }
+  /* %{dst==XXX:YYY} */
+  if (!strncmp(fmt,"dst==",5) && fmt[i])
+    {
+      if (p->syms[RX]->x.name == stringn(fmt+5,i-6))
+        myemitfmt(fmt+i, p, kids, nts);
+      return;
+    }
+  /* %{src==XXX:YYY} */
+  else if (!strncmp(fmt,"src==", 5) && fmt[i])
+    {
+      if (kids[0] && kids[0]->syms[RX] && kids[0]->syms[RX]->x.name == stringn(fmt+5,i-6))
         myemitfmt(fmt+i, p, kids, nts);
       return;
     }

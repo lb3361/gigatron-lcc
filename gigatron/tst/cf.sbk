@@ -43,7 +43,7 @@ def code0():
 	label('.15');
 	_LDI('f');STW(R22);
 	LDW(R7);LSLW();LSLW();ADDW(R7);ADDW(R22);_FMOV([vAC],F20);
-	_FMOV(F20,FAC);_LDI('.4');_FCMP();_BEQ('.19');
+	_FMOV('.4',FAC);LDI(F20);_FCMP();_BEQ('.19');
 	LDW(R6);_LCVI();_FCVI();_FMOV(FAC,F17);
 	_FMOV(F20,FAC);LDI(F17);_FDIV();LDI(F2);_FCMP();_BLT('.19');
 	LDW(R7);_CMPIS(32);_BGT('.21');

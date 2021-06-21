@@ -49,7 +49,7 @@ def scope():
         if exponent or checkzero:
             lbl = genlabel()
             lbr = genlabel()
-            LDW(ptr);PEEK()
+            _PEEKV(ptr)
             if exponent:
                 ST(exponent)
             _BNE(lbl)
@@ -72,14 +72,15 @@ def scope():
                 LDI(0);ST(mantissa+4)
             LDLW(-2)
         else:
-            INCW(vAC);PEEKA(mantissa+3)
-            INCW(vAC);PEEKA(mantissa+2)
-            INCW(vAC);PEEKA(mantissa+1)
-            INCW(vAC);PEEKA(mantissa)
+            LDW(ptr);INCW(vAC);
+            PEEKAp(mantissa+3)
+            PEEKAp(mantissa+2)
+            PEEKAp(mantissa+1)
+            PEEKA(mantissa)
             if ext:
-                MOVQ(mantissa+4, 0x00)
+                MOVQ(0x00, mantissa+4)
             LD(mantissa+3); 
-            ORBI(mantissa+3, 0x80)
+            ORBI(0x80, mantissa+3)
         if ret:
             RET()
         elif exponent or checkzero:
@@ -92,38 +93,40 @@ def scope():
            May use a fast path if `fastpath` is true.
            Pointer `ptr` is not preserved.'''
         ORI(0x7f);STLW(-2)
-        if args.cpu <= 5:
-            if exponent:
-                LD(exponent);POKE(ptr)
-            if fastpath:
-                lblslow = genlabel()
-                lbldone = genlabel()
-                LD(ptr);ANDI(0xfc);XORI(0xfc);_BEQ(lblslow)
-                # no page crossing
+        if exponent:
+            LD(exponent);POKE(ptr)
+        if fastpath:
+            lblslow = genlabel()
+            lbldone = genlabel()
+            LD(ptr);ANDI(0xfc);XORI(0xfc);_BEQ(lblslow)
+            # no page crossing
+            if args.cpu <= 5:
                 INC(ptr);LDLW(-2);ANDW(mantissa+3);POKE(ptr)
                 INC(ptr);LD(mantissa+2);POKE(ptr)
                 INC(ptr);LD(mantissa+1);POKE(ptr)
                 INC(ptr);LD(mantissa);POKE(ptr)
-                RET() if ret else _BRA(lbldone)
-                label(lblslow)
-            # page crossing possible
+            else:
+                INC(ptr);LDLW(-2);ANDW(mantissa+3);POKEp(ptr)
+                LD(mantissa+2);POKEp(ptr)
+                LD(mantissa+1);POKEp(ptr)
+                LD(mantissa);POKE(ptr)
+            RET() if ret else _BRA(lbldone)
+            label(lblslow)
+        # page crossing possible
+        if args.cpu <= 5:
             LDI(1);ADDW(ptr);STW(ptr);LDLW(-2);ANDW(mantissa+3);POKE(ptr)
             LDI(1);ADDW(ptr);STW(ptr);LD(mantissa+2);POKE(ptr)
             LDI(1);ADDW(ptr);STW(ptr);LD(mantissa+1);POKE(ptr)
             LDI(1);ADDW(ptr);STW(ptr);LD(mantissa);POKE(ptr)
-            if fastpath:
-                label(lbldone)
-            if ret:
-                RET()
         else:
-            if exponent:
-                LD(exponent); POKE(ptr)
             INCW(ptr);LDLW(-2);ANDW(mantissa+3);POKE(ptr)
             INCW(ptr);LD(mantissa+2);POKE(ptr)
             INCW(ptr);LD(mantissa+1);POKE(ptr)
             INCW(ptr);LD(mantissa);POKE(ptr)
-            if ret:
-                RET()
+        if fastpath:
+            label(lbldone)
+        if ret:
+            RET()
 
     def code_fldfac():
         '''[vAC]->FAC'''
@@ -634,7 +637,7 @@ def scope():
 
     def code_fadd_t3():
         label('__@fadd_t3')
-        PUSH();LDW(T3);PEEK();STW(T2);_BEQ('.faddx4')
+        PUSH();_PEEKV(T3);STW(T2);_BEQ('.faddx4')
         LD(AE);SUBW(T2);_BGT('.faddx1')
         XORI(255);INC(vAC);ANDI(255)   # FAC exponent <= arg exponent
         _CALLI('__@faddalign')         # - align (rounded)
@@ -753,7 +756,7 @@ def scope():
            label('_@_fmul')
            PUSH();STW(T3)
            _CALLJ('__@fsavevsp')
-           LDW(T3);PEEK();_BEQ('.zero');SUBI(128);STW(T2);
+           _PEEKV(T3);_BEQ('.zero');SUBI(128);STW(T2);
            LD(AE);_BEQ('.zero');ADDW(T2);_BGT('.fmul1')
            label('.zero')
            _CALLJ('_@_clrfac')
@@ -808,10 +811,10 @@ def scope():
             ADDW(AM+3);ST(AM+3);LD(vACH);SUBI(1);ST(AM+4)
         else:
             # untested but sensible
-            LD(AM);SUBBA(BM);ST(AM);LD(vACH)
-            ADDBA(AM+1);SUBBA(BM+1);ST(LAC+1);LD(vACH)
-            ADDBA(AM+2);SUBBA(BM+2);ST(LAC+2);LD(vACH)
-            ADDW(AM+3);SUBBA(BM+3);ST(LAC+3)
+            LD(AM);SUBBA(BM);ST(AM);LD(vACH);ST(vACH)
+            ADDBA(AM+1);SUBBA(BM+1);ST(AM+1);LD(vACH);ST(vACH)
+            ADDBA(AM+2);SUBBA(BM+2);ST(AM+2);LD(vACH);ST(vACH)
+            ADDW(AM+3);SUBBA(BM+3);STW(AM+3)
         RET()
         
     module(name='rt_am40subbm32.s',
@@ -822,7 +825,7 @@ def scope():
         label('_@_fdiv')
         PUSH();STW(T3)
         _CALLJ('__@fsavevsp')
-        LDW(T3);PEEK();_BNE('.fdiv1')
+        _PEEKV(T3);_BNE('.fdiv1')
         _CALLJ('__@fexception')          # divisor is zero
         label('.fdiv1')
         SUBI(129);STW(T2);
@@ -883,7 +886,7 @@ def scope():
         label('_@_fmod')
         PUSH();STW(T3)
         _CALLJ('__@fsavevsp')
-        LDW(T3);PEEK();STW(T2);_BNE('.fmod1')
+        _PEEKV(T3);STW(T2);_BNE('.fmod1')
         _CALLJ('__@fexception')          # divisor is zero
         label('.fmod1')
         LD(AE);_BEQ('.ret')              # if 0/x return zero
@@ -944,7 +947,7 @@ def scope():
         LD(AS);ANDI(128);PEEK();LSLW();SUBI(1)
         tryhop(2);POP();RET()
         label('.fcmp1')
-        LDW(T3);PEEK();STW(T2)
+        _PEEKV(T3);STW(T2)
         LD(AE);SUBW(T2);_BLT('.minus');_BGT('.plus')
         LD(AE);_BEQ('.zero')
         _CALLJ('__@bm32loadx')

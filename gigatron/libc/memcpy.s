@@ -30,7 +30,7 @@ def scope():
             label('_memcpy0')
             # single byte
             LD('sysArgs4');ANDI(1);BEQ('.cpy2')
-            LDW('sysArgs2');PEEK();POKE('sysArgs0')
+            _PEEKV('sysArgs2');POKE('sysArgs0')
             INC('sysArgs2');INC('sysArgs0')
             LD('sysArgs4');ANDI(0xfe);ST('sysArgs4');BEQ('.cpydone')
             # even length

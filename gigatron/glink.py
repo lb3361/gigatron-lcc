@@ -984,6 +984,20 @@ def _LD(d):
     else:
         _LDI(d); PEEK()
 @vasm
+def _PEEKV(d):
+    '''Compile as PEEKV(d) on cpu6, LDW(d);PEEK() otherwise'''
+    if args.cpu >= 6:
+        PEEKV(d)
+    else:
+        LDW(d); PEEK()
+@vasm
+def _DEEKV(d):
+    '''Compile as DEEKV(d) on cpu6, LDW(d);DEEK() otherwise'''
+    if args.cpu >= 6:
+        DEEKV(d)
+    else:
+        LDW(d); DEEK()
+@vasm
 def _SHLI(imm):
     '''Shift vAC left by imm positions'''
     imm &= 0xf

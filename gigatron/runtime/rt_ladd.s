@@ -50,9 +50,9 @@ def scope():
             ADDW(LAC+3);ST(LAC+3)
         else:
             # untested but sensible
-            LD(LAC);SUBBA(T0);ST(LAC);LD(vACH)
-            ADDBA(LAC+1);SUBBA(T0+1);ST(LAC+1);LD(vACH)
-            ADDBA(LAC+2);SUBBA(T0+2);ST(LAC+2);LD(vACH)
+            LD(LAC);SUBBA(T0);ST(LAC);LD(vACH);ST(vACH)
+            ADDBA(LAC+1);SUBBA(T0+1);ST(LAC+1);LD(vACH);ST(vACH)
+            ADDBA(LAC+2);SUBBA(T0+2);ST(LAC+2);LD(vACH);ST(vACH)
             ADDBA(LAC+3);SUBBA(T0+3);ST(LAC+3)
         RET()
 

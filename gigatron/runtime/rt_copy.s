@@ -27,23 +27,37 @@ def scope():
     # FCOPYNC: Float copy when no page crossings
     def code2():
         nohop()
-        label('_@_fcopyz')
-        ST(T3);LD(vACH);STW(T2)
-        LD(T3);PEEK();POKE(T2)
-        INC(T2);INC(T3)
-        LD(T3);STW(T3);BRA('.cont')
-        label('_@_lcopyz')
-        ST(T3);LD(vACH);STW(T2)
-        LD(T3);STW(T3);BRA('.cont')
-        label('_@_fcopync')
-        LDW(T3);PEEK();POKE(T2)
-        INC(T2);INC(T3);LDW(T3)
-        label('.cont')
-        DEEK();DOKE(T2)
-        INC(T2);INC(T3)
-        INC(T2);INC(T3)
-        LDW(T3);DEEK();DOKE(T2)
-        RET()
+        if args.cpu >= 6:
+            label('_@_fcopyz')
+            ST(T3);LD(vACH);STW(T2)
+            LD(T3);STW(T3)
+            label('_@_fcopync')
+            PEEKp(T3);POKEp(T2)
+            BRA('.cont')
+            label('_@_lcopyz')
+            ST(T3);LD(vACH);STW(T2)
+            LD(T3);STW(T3)
+            label('.cont')
+            DEEKp(T3);DOKEp(T2)
+            DEEKp(T3);DOKEp(T2)
+            RET()
+        else:
+            label('_@_fcopyz')
+            ST(T3);LD(vACH);STW(T2)
+            LD(T3);STW(T3);
+            label('_@_fcopync')
+            LDW(T3);PEEK();POKE(T2)
+            INC(T2);INC(T3);LDW(T3)
+            BRA('.cont')
+            label('_@_lcopyz')
+            ST(T3);LD(vACH);STW(T2)
+            LD(T3);STW(T3)
+            label('.cont')
+            DEEK();DOKE(T2)
+            INC(T2);INC(T3)
+            INC(T2);INC(T3)
+            LDW(T3);DEEK();DOKE(T2)
+            RET()
 
     module(name='rt_copyz.s',
            code=[ ('EXPORT', '_@_lcopyz'),
@@ -60,7 +74,7 @@ def scope():
         label('_@_fcopy')
         LDI(5);ADDW(T3);STW(T1)
         label('_@_bcopy')
-        LDW(T3);PEEK();POKE(T2)
+        _PEEKV(T3);POKE(T2)
         if args.cpu >= 6:
             INCW(T2);INCW(T3);LDW(T3)
         else:
@@ -80,7 +94,7 @@ def scope():
     def code4():
         nohop()
         label('_@_wcopy')
-        LDW(T3);DEEK();DOKE(T2)
+        _DEEKV(T3);DOKE(T2)
         LDI(2);ADDW(T2);STW(T2)
         LDI(2);ADDW(T3);STW(T3)
         XORW(T1);BNE('_@_wcopy')

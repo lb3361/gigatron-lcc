@@ -713,7 +713,7 @@ def DBNE(v, d):
 @vasm
 def DOKEI(d):
     '''DOKEI: Doke immediate word into address contained in [vAC], 30 cycles'''
-    check_cpu(6); tryhop(2); d=int(v(d)); emit(0x37, lo(d), hi(d))
+    check_cpu(6); tryhop(2); d=int(v(d)); emit(0x37, hi(d), lo(d))
 @vasm
 def PEEKV(d):
     '''PEEKV: Read byte from address contained in var, 30 cycles'''

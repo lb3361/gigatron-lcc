@@ -512,7 +512,7 @@ int disassemble(word addr, char **pm, char *operand)
     case 0x29: *pm="ADDBA"; goto oper8;
     case 0x2d: *pm="ADDBI"; goto oper88;
     case 0x32: *pm="DBNE"; goto oper8br;
-    case 0x37: *pm="DOKEI"; goto oper8;
+    case 0x37: *pm="DOKEI"; goto oper16r;
     case 0x39: *pm="PEEKV"; goto oper8;
     case 0x3b: *pm="DEEKV"; goto oper8;
     case 0x3d: *pm="XORBI"; goto oper88;
@@ -600,6 +600,9 @@ int disassemble(word addr, char **pm, char *operand)
       return 3;
     oper16:
       sprintf(operand, "$%04x", deek(addlo(addr,1)));
+      return 3;
+    oper16r:
+      sprintf(operand, "$%02x%02x", peek(addlo(addr,1)), peek(addlo(addr,2)));
       return 3;
     oper16p2:
       sprintf(operand, "$%04x", addlo(deek(addlo(addr,1)),2));

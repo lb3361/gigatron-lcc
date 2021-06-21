@@ -318,7 +318,7 @@ def emitjump(d):
     hops_enabled = save_hops_enabled
     tryhop(jump=False)
     
-def emitjcc(BCC, BNCC, d):
+def emitjcc(BCC, BNCC, JCC, d):
     global hops_enabled, lbranch_counter
     save_hops_enabled = hops_enabled
     hops_enabled = False
@@ -331,6 +331,9 @@ def emitjcc(BCC, BNCC, d):
             break;
         elif is_pcpage(d) and short_ok:
             BCC(d)
+            break;
+        elif args.cpu >= 6 and JCC and short_ok:
+            JCC(d)
             break;
         elif not is_pcpage(d) and long_ok:
             BNCC(lbl)
@@ -702,7 +705,7 @@ def ADDBA(d):
 @vasm
 def ADDBI(imm,d):
     '''ADDBI: Add a constant 0..255 to byte var, 28 cycles'''
-    check_cpu(6); tryhop(2); emit(0x29, check_zp(imm), check_zp(d))
+    check_cpu(6); tryhop(2); emit(0x2d, check_zp(imm), check_zp(d))
 @vasm
 def DBNE(v, d):
     '''DBNE:  Decrement byte var and branch if not zero, 28 cycles'''
@@ -740,7 +743,7 @@ def NOTB(d):
     '''NOTB: var.lo = var.lo ^ 0xff, 22 cycles'''
     check_cpu(6); tryhop(2); emit(0x48, check_zp(d))
 @vasm
-def DOKEpp(d):
+def DOKEp(d):
     '''DOKE+: doke word in vAC to address contained in var, var += 2, 30 cycles'''
     check_cpu(6); tryhop(2); emit(0x4a, check_zp(d))
 @vasm
@@ -748,13 +751,13 @@ def MOVQW(imm,d):
     '''MOVQW: Load a word var with a small constant 0..255, 30 cycles'''
     check_cpu(6); tryhop(2); emit(0x5b, check_zp(imm), check_zp(d))
 @vasm
-def DEEKpp(d):
+def DEEKp(d):
     '''DEEK+: Deek word at address contained in var, var += 2, 30 cycles'''
     check_cpu(6); tryhop(2); emit(0x60, check_zp(d))
 @vasm
 def MOV(s,d):
     '''MOV: Moves a byte from src var to dst var, 28 cycles'''
-    check_cpu(6); tryhop(2); emit(0x60, check_zp(d), check_zp(s))
+    check_cpu(6); tryhop(2); emit(0x65, check_zp(d), check_zp(s))
 @vasm
 def PEEKA(d):
     '''PEEKA: Peek a byte from [vAC] to var, 24 cycles'''
@@ -798,7 +801,7 @@ def NOTW(d):
 @vasm
 def DBGE(v, d):
     '''DBGE:  Decrement byte var and branch if >= 0, 30 cycles'''
-    check_cpu(6); tryhop(3); emit(0x83, check_br(d), check_zp(v))
+    check_cpu(6); tryhop(3); emit(0x8e, check_br(d), check_zp(v))
 @vasm
 def ORBI(imm,d):
     '''ORBI: OR immediate byte with byte var, result in byte var, 28 cycles'''
@@ -830,27 +833,27 @@ def CMPI(d,imm):
 @vasm
 def JEQ(d):
     '''JEQ: jump to 16bit address if vAC=0, 26 cycles'''
-    check_cpu(6); tryhop(3); d=int(v(d)); emit(0xbb, lo(d), hi(d))
+    check_cpu(6); tryhop(3); d=int(v(d)); emit(0xbb, lo(d-2), hi(d))
 @vasm
 def JNE(d):
     '''JNE: jump to 16bit address if vAC!=0, 26 cycles'''
-    check_cpu(6); tryhop(3); d=int(v(d)); emit(0xbd, lo(d), hi(d))
+    check_cpu(6); tryhop(3); d=int(v(d)); emit(0xbd, lo(d-2), hi(d))
 @vasm
 def JLT(d):
     '''JLT: jump to 16bit address if vAC<0, 24 to 26 cycles'''
-    check_cpu(6); tryhop(3); d=int(v(d)); emit(0xbf, lo(d), hi(d))
+    check_cpu(6); tryhop(3); d=int(v(d)); emit(0xbf, lo(d-2), hi(d))
 @vasm
 def JGT(d):
     '''JGT: jump to 16bit address if vAC>0, 24 to 26 cycles'''
-    check_cpu(6); tryhop(3); d=int(v(d)); emit(0xc1, lo(d), hi(d))
+    check_cpu(6); tryhop(3); d=int(v(d)); emit(0xc1, lo(d-2), hi(d))
 @vasm
 def JLE(d):
     '''JLE: jump to 16bit address if vAC<=0, 24 to 28 cycles'''
-    check_cpu(6); tryhop(3); d=int(v(d)); emit(0xc3, lo(d), hi(d))
+    check_cpu(6); tryhop(3); d=int(v(d)); emit(0xc3, lo(d-2), hi(d))
 @vasm
 def JGE(d):
     '''JGE: jump to 16bit address if vAC>=0, 22 to 26 cycles'''
-    check_cpu(6); tryhop(3); d=int(v(d)); emit(0xc5, lo(d), hi(d))
+    check_cpu(6); tryhop(3); d=int(v(d)); emit(0xc5, lo(d-2), hi(d))
 @vasm
 def POKEp(d):
     '''POKE+: Poke byte in vAC to address contained in var, inc var, 30 cycles'''
@@ -898,7 +901,7 @@ def XCHG(s,d):
 @vasm
 def MOVW(s,d):
     '''MOVW: Move 16bits from src zero page var to dst zero page var, (26 + 28 cycles)'''
-    check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x17, check_zp(s), check_zp(d))
+    check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x19, check_zp(s), check_zp(d))
 @vasm
 def ADDWI(d):
     '''ADDWI: vAC += immediate 16bit value, (26 + 28 cycles)'''
@@ -1092,9 +1095,9 @@ def _MOV(s,d):
     s = v(s)
     d = v(d)
     if s != d:
-        if args.cpu > 5 and s == [vAC] and is_zeropage(d):
+        if args.cpu >= 6 and s == [vAC] and is_zeropage(d):
             DEEKA(d)
-        elif args.cpu > 5 and is_zeropage(s) and d == [vAC]:
+        elif args.cpu >= 6 and is_zeropage(s) and d == [vAC]:
             DOKEA(s)
         elif d == [vAC]:
             STW(T3)
@@ -1111,11 +1114,11 @@ def _MOV(s,d):
         elif s == vAC or s == [vAC]:
             if s == [vAC]:
                 DEEK()
-            STW(T3); _LDI(d)
-            if args.cpu > 5:
-                DOKEA(T3)
+            if args.cpu >= 6:
+                STW2(d)
             else:
-                STW(T2); LDW(T3); DOKE(T2)
+                STW(T3); _LDI(d); STW(T2);
+                LDW(T3); DOKE(T2)
         elif args.cpu >= 6:
             _LDW(s); STW2(d)
         else:
@@ -1125,22 +1128,22 @@ def _BRA(d):
     emitjump(v(d))
 @vasm
 def _BEQ(d):
-    emitjcc(BEQ, BNE, v(d))
+    emitjcc(BEQ, BNE, JEQ, v(d))
 @vasm
 def _BNE(d):
-    emitjcc(BNE, BEQ, v(d))
+    emitjcc(BNE, BEQ, JNE, v(d))
 @vasm
 def _BLT(d):
-    emitjcc(BLT, BGE, v(d))
+    emitjcc(BLT, BGE, JLT, v(d))
 @vasm
 def _BGT(d):
-    emitjcc(BGT, BLE, v(d))
+    emitjcc(BGT, BLE, JGT, v(d))
 @vasm
 def _BLE(d):
-    emitjcc(BLE, BGT, v(d))
+    emitjcc(BLE, BGT, JLE, v(d))
 @vasm
 def _BGE(d):
-    emitjcc(BGE, BLT, v(d))
+    emitjcc(BGE, BLT, JGE, v(d))
 @vasm
 def _CMPIS(d):
     '''Compare vAC (signed) with immediate in range 0..255'''

@@ -501,17 +501,116 @@ int disassemble(word addr, char **pm, char *operand)
         *pm = (b > 0) ? "S??" : "HALT";
       return 2;
     }
+    /* CPU6 instructions below */
+    case 0x14: *pm="DEC"; goto oper8;
+    case 0x16: *pm="MOVQ"; goto oper88;
+    case 0x18: *pm="LSRB"; goto oper8;
+    case 0x1c: *pm="SEXT"; goto oper8;
+    case 0x23: *pm="PEEK+"; goto oper8;
+    case 0x25: *pm="POKEI"; goto oper8;
+    case 0x27: *pm="LSLV"; goto oper8;
+    case 0x29: *pm="ADDBA"; goto oper8;
+    case 0x2d: *pm="ADDBI"; goto oper88;
+    case 0x32: *pm="DBNE"; goto oper8br;
+    case 0x37: *pm="DOKEI"; goto oper8;
+    case 0x39: *pm="PEEKV"; goto oper8;
+    case 0x3b: *pm="DEEKV"; goto oper8;
+    case 0x3d: *pm="XORBI"; goto oper88;
+    case 0x42: *pm="ANDBA"; goto oper8;
+    case 0x44: *pm="ORBA"; goto oper8;
+    case 0x46: *pm="XORBA"; goto oper8;
+    case 0x48: *pm="NOTB"; goto oper8;
+    case 0x4a: *pm="DOKE+"; goto oper8;
+    case 0x5b: *pm="MOVQW"; goto oper88;
+    case 0x60: *pm="DEEK+"; goto oper8;
+    case 0x65: *pm="MOV"; goto oper88r;
+    case 0x67: *pm="PEEKA"; goto oper8;
+    case 0x69: *pm="POKEA"; goto oper8;
+    case 0x6b: *pm="TEQ"; goto oper8;
+    case 0x6d: *pm="TNE"; goto oper8;
+    case 0x6f: *pm="DEEKA"; goto oper8;
+    case 0x77: *pm="SUBBA"; goto oper8;
+    case 0x79: *pm="INCW"; goto oper8;
+    case 0x7b: *pm="DECW"; goto oper8;
+    case 0x7d: *pm="DOKEA"; goto oper8;
+    case 0x8a: *pm="NOTW"; goto oper8;
+    case 0x8e: *pm="DBGE"; goto oper8br;
+    case 0x95: *pm="ORBI"; goto oper88;
+    case 0x9c: *pm="LDNI"; goto oper8n;
+    case 0x9e: *pm="ANDBK"; goto oper88r;
+    case 0xa0: *pm="ORBK"; goto oper88r;
+    case 0xa2: *pm="XORBK"; goto oper88r;
+    case 0xa4: *pm="PEEKA+"; goto oper8;
+    case 0xa7: *pm="CMPI"; goto oper88;
+    case 0xbb: *pm="JEQ"; goto oper16p2;
+    case 0xbd: *pm="JNE"; goto oper16p2;
+    case 0xbf: *pm="JLT"; goto oper16p2;
+    case 0xc1: *pm="JGT"; goto oper16p2;
+    case 0xc3: *pm="JLE"; goto oper16p2;
+    case 0xc5: *pm="JGE"; goto oper16p2;
+    case 0xd1: *pm="POKE+"; goto oper8;
+    case 0xd3: *pm="NEGW"; goto oper8;
+    case 0xd5: *pm="TGE"; goto oper8;
+    case 0xd7: *pm="TLT"; goto oper8;
+    case 0xd9: *pm="TGT"; goto oper8;
+    case 0xdb: *pm="TLE"; goto oper8;
+    case 0xdd: *pm="ANDBI"; goto oper88;
+    case 0xe1: *pm="SUBBI"; goto oper88;
+    case 0xc7: {
+      switch(peek(addlo(addr,1)))
+        {
+        case 0x11:  *pm = "ST2"; goto oper16p3;
+        case 0x14:  *pm = "STW2"; goto oper16p3;
+        case 0x17:  *pm = "XCHG"; goto oper88p3;
+        case 0x19:  *pm = "MOVW"; goto oper88p3;
+        case 0x1b:  *pm = "ADDWI"; goto oper16p3;
+        case 0x1d:  *pm = "SUBWI"; goto oper16p3;
+        case 0x1f:  *pm = "ANDWI"; goto oper16p3;
+        case 0x21:  *pm = "ORWI"; goto oper16p3;
+        case 0x23:  *pm = "XORWI"; goto oper16p3;
+        case 0x25:  *pm = "LDPX"; goto oper88p3;
+        case 0x28:  *pm = "STPX"; goto oper88p3;
+        case 0x2b:  *pm = "CONDI"; goto oper88p3;
+        case 0x2d:  *pm = "CONDB"; goto oper88p3;
+        case 0x30:  *pm = "CONDIB"; goto oper88p3;
+        case 0x33:  *pm = "CONDBI"; goto oper88p3;
+        oper16p3:
+          sprintf(operand, "$%04x", deek(addlo(addr,2)));
+          return 4;
+        oper88p3:
+          sprintf(operand, "$%02x, $%02x", peek(addlo(addr,2)),peek(addlo(addr,3)));
+          return 4;
+        default:
+          return 4;;
+        }
+    }
     default:
       return 2;
     oper8:
       sprintf(operand, "$%02x", peek(addlo(addr,1)));
       return 2;
+    oper8n:
+      sprintf(operand, "-$%02x", peek(addlo(addr,1)));
+      return 2;
+    oper88:
+      sprintf(operand, "$%02x, $%02x", peek(addlo(addr,1)),peek(addlo(addr,2)));
+      return 3;
+    oper88r:
+      sprintf(operand, "$%02x, $%02x", peek(addlo(addr,2)),peek(addlo(addr,1)));
+      return 3;
     oper16:
       sprintf(operand, "$%04x", deek(addlo(addr,1)));
+      return 3;
+    oper16p2:
+      sprintf(operand, "$%04x", addlo(deek(addlo(addr,1)),2));
       return 3;
     operbr:
       sprintf(operand, "$%04x", (addr&0xff00)|((peek(addlo(addr,1))+2)&0xff));
       return 2;
+    oper8br:
+      sprintf(operand, "$%02x, $%04x", peek(addlo(addr,1)),
+              (addr&0xff00)|((peek(addlo(addr,2))+2)&0xff) );
+      return 3;
     }
 }
 

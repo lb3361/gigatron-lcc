@@ -38,16 +38,20 @@ def scope():
                 LD(T3+1);BEQ('.scanok')
                 INC('sysArgs0');INC('sysArgs4')
                 LD('sysArgs4');BNE('.scanloop')
+                LDI(0);RET()
+                label('.scanok')
+                LDW('sysArgs0');RET()
             else:
                 label('.scanloop')
                 PEEKp('sysArgs0')
                 ST(vACH);XORW('sysArgs2');STW(T3)
                 LD(T3);BEQ('.scanok')
                 LD(T3+1);BEQ('.scanok')
-                DBNE('sysArgs4','_memscan0')
-            LDI(0);RET()
-            label('.scanok')
-            LDW('sysArgs0');RET()
+                DBNE('sysArgs4','.scanloop')
+                LDI(0);RET()
+                label('.scanok')
+                DEC('sysArgs0');
+                LDW('sysArgs0');RET()
 
         code.append(('CODE', '_memscan0', code0))
 

@@ -1480,7 +1480,7 @@ def _EPILOGUE(framesize,maxargoffset,mask,saveAC=False):
     if diff >= 0 and diff < 256:
         SUBI(diff)
     else:
-        _SP(-framesize);
+        _SP(-diff);
     extern('_@_rtrn_%02x' % mask)
     if args.cpu >= 5:
         _CALLI('_@_rtrn_%02x' % mask)

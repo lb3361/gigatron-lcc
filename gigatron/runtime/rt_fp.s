@@ -855,7 +855,7 @@ def scope():
         _CALLJ('__@cm32shl1')            # shift quotient
         _CALLJ('__@am40shl1')            # shift dividend
         _CALLJ('__@am40cmpbm32')
-        _BLE('.fdivloop1')
+        _BLT('.fdivloop1')
         label('__@fdiv2')                # entry point from fdiv!
         INC(CM)                          # set low bit of quotient
         _CALLJ('__@am40subbm32')         # subtract divisor from dividend
@@ -868,7 +868,7 @@ def scope():
     module(name='rt_fdiv.s',
            code=[ ('EXPORT', '_@_fdiv'),
                   ('CODE', '_@_fdiv', code_fdiv),
-                  ('CODE', '_@_fdiv2', code_fdiv2),
+                  ('CODE', '__@fdiv2', code_fdiv2),
                   ('IMPORT', '__@fsavevsp'),
                   ('IMPORT', '__@fexception'),
                   ('IMPORT', '_@_clrfac'),

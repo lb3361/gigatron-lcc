@@ -109,7 +109,7 @@ static int cpu = 5;
 #define mincpu5(cost) ((cpu<5)?LBURG_MAX:(cost))
 #define mincpu6(cost) ((cpu<6)?LBURG_MAX:(cost))
 #define ifspill(cost) ((spilling)?cost:LBURG_MAX)
- 
+
 /*---- END HEADER --*/
 %}
 # /*-- BEGIN TERMINALS --/
@@ -295,14 +295,14 @@ stmt: ASGNP2(VREGP,reg)  "# write register\n"
 stmt: ASGNI4(VREGP,reg)  "# write register\n"
 stmt: ASGNU4(VREGP,reg)  "# write register\n"
 stmt: ASGNF5(VREGP,reg)  "# write register\n"
-reg: LOADI1(reg)  "\t%{src!=vAC:LD(%0);}%{dst!=vAC:STW(%c);}\n"  move(a)+30
-reg: LOADU1(reg)  "\t%{src!=vAC:LD(%0);}%{dst!=vAC:STW(%c);}\n"  move(a)+30
-reg: LOADI2(reg)  "\t%{src!=vAC:LDW(%0);}%{dst!=vAC:STW(%c);}\n" move(a)+38
-reg: LOADU2(reg)  "\t%{src!=vAC:LDW(%0);}%{dst!=vAC:STW(%c);}\n" move(a)+38
-reg: LOADP2(reg)  "\t%{src!=vAC:LDW(%0);}%{dst!=vAC:STW(%c);}\n" move(a)+38
-reg: LOADI4(reg)  "\t_LMOV(%0,%c);\n"     move(a)+148
-reg: LOADU4(reg)  "\t_LMOV(%0,%c);\n"     move(a)+148
-reg: LOADF5(reg)  "\t_FMOV(%0,%c);\n"     move(a)+148
+reg: LOADI1(reg)  "\t%{#alsoVAC}%{src!=vAC:LD(%0);}%{dst!=vAC:ST(%c);}\n"   34
+reg: LOADU1(reg)  "\t%{#alsoVAC}%{src!=vAC:LD(%0);}%{dst!=vAC:ST(%c);}\n"   34
+reg: LOADI2(reg)  "\t%{#alsoVAC}%{src!=vAC:LDW(%0);}%{dst!=vAC:STW(%c);}\n" 40
+reg: LOADU2(reg)  "\t%{#alsoVAC}%{src!=vAC:LDW(%0);}%{dst!=vAC:STW(%c);}\n" 40
+reg: LOADP2(reg)  "\t%{#alsoVAC}%{src!=vAC:LDW(%0);}%{dst!=vAC:STW(%c);}\n" 40
+reg: LOADI4(reg)  "\t_LMOV(%0,%c);\n" 148
+reg: LOADU4(reg)  "\t_LMOV(%0,%c);\n" 148
+reg: LOADF5(reg)  "\t_FMOV(%0,%c);\n" 148
 # -- these were missing, really
 reg: LOADI1(conBs) "\tLDI(%0);%{dst!=vAC:ST(%c);}\n" 36
 reg: LOADU1(conB)  "\tLDI(%0);%{dst!=vAC:ST(%c);}\n" 36
@@ -352,7 +352,6 @@ lddr: ADDRFP2 "%a+%F"
 addr: ADDRGP2 "%a" 
 addr: con "%0"
 addr: zddr "%0"
-zddr: VREGP "%a" if_vregp_not_temp(a)
 zddr: ADDRGP2 "%a" if_zpglobal(a)
 zddr: conB "%0"
 
@@ -370,41 +369,42 @@ zddr: conB "%0"
 # -- lac and fac are the same but respectively compute long results and fp results
 #    into registers LAC or FAC, potentially clobbering vAC, LAC, FAC, and T0-T3.
 # -- eac is like ac but cannot clobber LAC, FAC or T0-T3.
-# -- ac1 is like ac but signals that the result is contained in the low
-#    byte of vAC and that the high byte is undertermined.
+# -- ac0/eac0 mean that the high byte of ac is known to be zero
 
-stmt: reg ""
-stmt: ac1 "\t%0\n"
-reg: ac   "\t%0%{dst!=vAC:STW(%c);}\n" 20
-ac: reg   "%{src!=vAC:LDW(%0);}" 20
-ac: conB  "LDI(%0);" 16
-ac: con   "_LDI(%0);" 21
-ac: zddr  "LDI(%0);" 16
-ac: addr  "_LDI(%0);" 21
-ac: eac   "%0" 
-ac1: ac   "%0"
-ac: ac1   "%0LD(vACL);" 16
-eac: reg  "%{src!=vAC:LDW(%0);}" 20
-eac: zddr "LDI(%0);" 16
-eac: addr "_LDI(%0);" 21
-eac: lddr "_SP(%0);"  50
+stmt: reg  ""
+stmt: ac   "\t%0\n"
+reg:  ac   "\t%{#alsoVAC}%0%{dst!=vAC:STW(%c);}\n" 20
+ac:  reg   "%{src!=vAC:LDW(%0);}" 20
+ac:  ac0   "%0"
+ac:  eac   "%0" 
+ac0: eac0  "%0"
+ac0: conB  "LDI(%0);" 16
+ac:  con   "_LDI(%0);" 21
+ac:  zddr  "LDI(%0);" 16
+ac:  addr  "_LDI(%0);" 21
+eac:  reg  "%{src!=vAC:LDW(%0);}" 20
+eac:  eac0 "%0"
+eac0: zddr "LDI(%0);" 16
+eac:  addr "_LDI(%0);" 21
+eac:  lddr "_SP(%0);"  50
+
 
 # Loads
-eac: INDIRI2(eac) "%0DEEK();" 21
-eac: INDIRU2(eac) "%0DEEK();" 21
-eac: INDIRP2(eac) "%0DEEK();" 21
-eac: INDIRI1(eac) "%0PEEK();" 17 
-eac: INDIRU1(eac) "%0PEEK();" 17 
-eac: INDIRI2(zddr) "LDW(%0);" 20 
-eac: INDIRU2(zddr) "LDW(%0);" 20 
-eac: INDIRP2(zddr) "LDW(%0);" 20 
-eac: INDIRI1(zddr) "LD(%0);" 16 
-eac: INDIRU1(zddr) "LD(%0);" 16 
-ac: INDIRI2(ac) "%0DEEK();" 21
-ac: INDIRU2(ac) "%0DEEK();" 21
-ac: INDIRP2(ac) "%0DEEK();" 21
-ac: INDIRI1(ac) "%0PEEK();" 17
-ac: INDIRU1(ac) "%0PEEK();" 17
+eac:  INDIRI2(eac) "%0DEEK();" 21
+eac:  INDIRU2(eac) "%0DEEK();" 21
+eac:  INDIRP2(eac) "%0DEEK();" 21
+eac0: INDIRI1(eac) "%0PEEK();" 17 
+eac0: INDIRU1(eac) "%0PEEK();" 17 
+eac:  INDIRI2(zddr) "LDW(%0);" 20 
+eac:  INDIRU2(zddr) "LDW(%0);" 20 
+eac:  INDIRP2(zddr) "LDW(%0);" 20 
+eac0: INDIRI1(zddr) "LD(%0);" 18
+eac0: INDIRU1(zddr) "LD(%0);" 18
+ac:  INDIRI2(ac) "%0DEEK();" 21
+ac:  INDIRU2(ac) "%0DEEK();" 21
+ac:  INDIRP2(ac) "%0DEEK();" 21
+ac0: INDIRI1(ac) "%0PEEK();" 17
+ac0: INDIRU1(ac) "%0PEEK();" 17
 
 # -- iarg represents the argument of binary integer operations that
 #    map to zero page locations in assembly instructions.  However the
@@ -516,17 +516,17 @@ eac: SUBP2(eac,conBn) "%0ADDI(-(%1));" 28
 eac: LSHI2(eac, conB) "%0%{shl1}" 100
 eac: LSHU2(eac, conB) "%0%{shl1}" 100
 
-# Assignments
+# Indirect assignments
 stmt: ASGNP2(zddr,ac)  "\t%1STW(%0);\n" 20
 stmt: ASGNP2(iarg,ac)  "\t%1%[0b]DOKE(%0);\n" 28
 stmt: ASGNI2(zddr,ac)  "\t%1STW(%0);\n" 20
 stmt: ASGNI2(iarg,ac)  "\t%1%[0b]DOKE(%0);\n" 28
 stmt: ASGNU2(zddr,ac)  "\t%1STW(%0);\n" 20
 stmt: ASGNU2(iarg,ac)  "\t%1%[0b]DOKE(%0);\n" 28
-stmt: ASGNI1(zddr,ac1) "\t%1ST(%0);\n" 20
-stmt: ASGNI1(iarg,ac1) "\t%1%[0b]POKE(%0);\n" 26
-stmt: ASGNU1(zddr,ac1) "\t%1ST(%0);\n" 20
-stmt: ASGNU1(iarg,ac1) "\t%1%[0b]POKE(%0);\n" 26
+stmt: ASGNI1(zddr,ac) "\t%1ST(%0);\n" 20
+stmt: ASGNI1(iarg,ac) "\t%1%[0b]POKE(%0);\n" 26
+stmt: ASGNU1(zddr,ac) "\t%1ST(%0);\n" 20
+stmt: ASGNU1(iarg,ac) "\t%1%[0b]POKE(%0);\n" 26
 
 # Conditional branches
 stmt: EQI2(ac,con0)  "\t%0_BEQ(%a);\n" 28
@@ -601,7 +601,7 @@ stmt: lac "\t%0\n"
 larg: reg "LDI(%0);"
 larg: INDIRI4(eac) "%0" 
 larg: INDIRU4(eac) "%0" 
-reg: lac "\t%0%{dst!=LAC:_LMOV(LAC,%c);}\n" 80
+reg: lac "\t%{#alsoLAC}%0%{dst!=LAC:_LMOV(LAC,%c);}\n" 80
 reg: INDIRI4(ac) "\t%0_LMOV([vAC],%c);\n" 150
 reg: INDIRU4(ac) "\t%0_LMOV([vAC],%c);\n" 150
 reg: INDIRI4(addr) "\t_LMOV(%0,%c);\n" 150
@@ -682,7 +682,7 @@ stmt: ASGNU4(pdst,INDIRU4(psrc)) "\t%[0b]%[1b]_LMOV(%1,%0);\n" 160
 stmt: fac "\t%0\n"
 farg: reg "LDI(%0);"
 farg: INDIRF5(eac) "%0"
-reg: fac "\t%0%{dst!=FAC:_FMOV(FAC,%c);}\n" 200
+reg: fac "\t%{#alsoFAC}%0%{dst!=FAC:_FMOV(FAC,%c);}\n" 200
 reg: INDIRF5(ac)   "\t%0_FMOV([vAC],%c);\n" 150
 reg: INDIRF5(addr) "\t_FMOV(%0,%c);\n" 150
 fac: reg            "%{src!=FAC:_FMOV(%0,FAC);}" 150
@@ -759,10 +759,14 @@ stmt: RETP2(ac)   "\t%0\n"  1
 #            /  | X |
 #         F5 - I4 - U4
 # 1) prelabel changes all truncations into LOADs
-ac1: LOADI1(ac) "%0"
-ac1: LOADU1(ac) "%0"
+ac0: LOADI1(reg) "LD(%0);" 18
+ac0: LOADU1(reg) "LD(%0);" 18
+ac: LOADI1(ac) "%0"
+ac: LOADU1(ac) "%0"
 ac: LOADI2(ac) "%0"
 ac: LOADU2(ac) "%0"
+ac: LOADI2(reg) "LDW(%0);" 20
+ac: LOADU2(reg) "LDW(%0);" 20
 ac: LOADP2(ac) "%0"
 ac: LOADI2(lac) "%0LDW(LAC);" 20
 ac: LOADU2(lac) "%0LDW(LAC);" 20
@@ -771,8 +775,12 @@ lac: LOADU4(lac) "%0"
 fac: LOADF5(fac) "%0"
 
 # 2) extensions
-ac: CVII2(ac) "%0XORI(128);SUBI(128);" if_cv_from(a,1,48)
-ac: CVUI2(ac) "%0" if_cv_from(a,1,0)
+ac: CVII2(reg) "LD(%0);XORI(128);SUBI(128);" if_cv_from(a,1,66)
+ac: CVUI2(reg) "LD(%0);" if_cv_from(a,1,18)
+ac: CVII2(ac0) "%0XORI(128);SUBI(128);" if_cv_from(a,1,48)
+ac: CVUI2(ac0) "%0" if_cv_from(a,1,0)
+ac: CVII2(ac) "%0LD(vACL);XORI(128);SUBI(128);" if_cv_from(a,1,66)
+ac: CVUI2(ac) "%0LD(vACL);" if_cv_from(a,1,18)
 lac: CVIU4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);" 50
 lac: CVII4(ac) "%0_LCVI();" if_cv_from(a,2,120)
 lac: CVUU4(ac) "%0STW(LAC);LDI(0);STW(LAC+2);"
@@ -789,8 +797,8 @@ fac: CVIF5(lac) "%0_FCVI();" if_cv_from(a,4,200)
 
 # Labels and jumps
 stmt: LABELV       "\tlabel(%a);\n"
-stmt: JUMPV(addr)  "\t_BRA(%0);\n"  14
-stmt: JUMPV(reg)   "\tCALL(%0);\n"  14
+stmt: JUMPV(addr)  "\t_BRA(%0);\n"    14
+stmt: JUMPV(reg)   "\tCALL(%0);\n"    14
 stmt: JUMPV(ac)    "\t%0CALL(vAC);\n" 14
 
 # More about spills: we want to save/restore vAC when genspill() inserts
@@ -803,27 +811,7 @@ stmt: ASGNI4(spill,reg) "\tSTW(T1);%0_LMOV(%1,[vAC]);LDW(T1) #genspill\n" 0
 stmt: ASGNU4(spill,reg) "\tSTW(T1);%0_LMOV(%1,[vAC]);LDW(T1) #genspill\n" 0
 stmt: ASGNF5(spill,reg) "\tSTW(T1);%0_FMOV(%1,[vAC]);LDW(T1) #genspill\n" 0
 
-# More opcodes for cpu=5
-stmt: ASGNU1(zddr, LOADU1(ADDI2(CVUI2(INDIRU1(zddr)), con1))) "\tINC(%1);\n" if_rmw1(a,16)
-stmt: ASGNI1(zddr, LOADI1(ADDI2(CVII2(INDIRI1(zddr)), con1))) "\tINC(%1);\n" if_rmw1(a,16)
-
 # More opcodes for cpu=6
-stmt: ASGNU1(zddr, LOADU1(SUBI2(CVUI2(INDIRU1(zddr)), con1))) "\tDEC(%1);\n" mincpu6(if_rmw1(a,16))
-stmt: ASGNI1(zddr, LOADI1(SUBI2(CVII2(INDIRI1(zddr)), con1))) "\tDEC(%1);\n" mincpu6(if_rmw1(a,16))
-stmt: ASGNP2(zddr, ADDP2(INDIRP2(zddr), con1)) "\tINCW(%1);\n" mincpu6(if_rmw2(a, 26))
-stmt: ASGNU2(zddr, ADDU2(INDIRU2(zddr), con1)) "\tINCW(%1);\n" mincpu6(if_rmw2(a, 26))
-stmt: ASGNI2(zddr, ADDI2(INDIRI2(zddr), con1)) "\tINCW(%1);\n" mincpu6(if_rmw2(a, 26))
-stmt: ASGNP2(zddr, SUBP2(INDIRP2(zddr), con1)) "\tDECW(%1);\n" mincpu6(if_rmw2(a, 26))
-stmt: ASGNU2(zddr, SUBU2(INDIRU2(zddr), con1)) "\tDECW(%1);\n" mincpu6(if_rmw2(a, 26))
-stmt: ASGNI2(zddr, SUBI2(INDIRI2(zddr), con1)) "\tDECW(%1);\n" mincpu6(if_rmw2(a, 26))
-stmt: ASGNP2(zddr, ADDP2(INDIRP2(zddr), con1n)) "\tDECW(%1);\n" mincpu6(if_rmw2(a, 26))
-stmt: ASGNU2(zddr, ADDU2(INDIRU2(zddr), con1n)) "\tDECW(%1);\n" mincpu6(if_rmw2(a, 26))
-stmt: ASGNI2(zddr, ADDI2(INDIRI2(zddr), con1n)) "\tDECW(%1);\n" mincpu6(if_rmw2(a, 26))
-stmt: ASGNI2(zddr, NEGI2(INDIRI2(zddr))) "\tNEGW(%1);\n" mincpu6(if_rmw2(a, 26))
-stmt: ASGNI2(zddr, BCOMI2(INDIRI2(zddr))) "\tNOTW(%1);\n" mincpu6(if_rmw2(a, 26))
-stmt: ASGNU2(zddr, BCOMU2(INDIRU2(zddr))) "\tNOTW(%1);\n" mincpu6(if_rmw2(a, 26))
-stmt: ASGNI2(zddr, LSHI2(INDIRI2(zddr),con1)) "\tLSLV(%1);\n" mincpu6(if_rmw2(a, 28))
-stmt: ASGNU2(zddr, LSHU2(INDIRU2(zddr),con1)) "\tLSLV(%1);\n" mincpu6(if_rmw2(a, 28))
 stmt: ASGNP2(ac,iarg)  "\t%0%[1b]DOKEA(%1);\n" mincpu6(30)
 stmt: ASGNI2(ac,iarg)  "\t%0%[1b]DOKEA(%1);\n" mincpu6(30)
 stmt: ASGNU2(ac,iarg)  "\t%0%[1b]DOKEA(%1);\n" mincpu6(30)
@@ -835,16 +823,40 @@ stmt: ASGNU2(ac,con)  "\t%0%[1b]DOKEI(%1);\n" mincpu6(30)
 stmt: ASGNI1(ac,conB) "\t%0%[1b]POKEI(%1);\n" mincpu6(28)
 stmt: ASGNI1(ac,conBs) "\t%0%[1b]POKEI(%1);\n" mincpu6(28)
 stmt: ASGNU1(ac,conB) "\t%0%[1b]POKEI(%1);\n" mincpu6(28)
-reg: INDIRI2(ac) "\t%0%{dst!=vAC:DEEKA(%c)}%{dst==vAC:DEEK()};\n" mincpu6(30)
-reg: INDIRU2(ac) "\t%0%{dst!=vAC:DEEKA(%c)}%{dst==vAC:DEEK()};\n" mincpu6(30)
-reg: INDIRP2(ac) "\t%0%{dst!=vAC:DEEKA(%c)}%{dst==vAC:DEEK()};\n" mincpu6(30)
-reg: INDIRI1(ac) "\t%0%{dst!=vAC:PEEKA(%c)}%{dst==vAC:PEEK()};\n" mincpu6(30)
-reg: INDIRU1(ac) "\t%0%{dst!=vAC:PEEKA(%c)}%{dst==vAC:PEEK()};\n" mincpu6(30)
-ac: INDIRI2(reg) "DEEKV(%0);" mincpu6(30)
-ac: INDIRU2(reg) "DEEKV(%0);" mincpu6(30)
-ac: INDIRP2(reg) "DEEKV(%0);" mincpu6(30)
-ac: INDIRI1(reg) "PEEKV(%0);" mincpu6(30)
-ac: INDIRU1(reg) "PEEKV(%0);" mincpu6(30)
+reg: INDIRI2(ac) "\t%{#canVAC}%0%{dst!=vAC:DEEKA(%c)}%{dst==vAC:DEEK()};\n" mincpu6(30)
+reg: INDIRU2(ac) "\t%{#canVAC}%0%{dst!=vAC:DEEKA(%c)}%{dst==vAC:DEEK()};\n" mincpu6(30)
+reg: INDIRP2(ac) "\t%{#canVAC}%0%{dst!=vAC:DEEKA(%c)}%{dst==vAC:DEEK()};\n" mincpu6(30)
+ac: INDIRI2(reg) "%{src!=vAC:DEEKV(%0)}%{src==vAC:DEEK()};" mincpu6(30)
+ac: INDIRU2(reg) "%{src!=vAC:DEEKV(%0)}%{src==vAC:DEEK()};" mincpu6(30)
+ac: INDIRP2(reg) "%{src!=vAC:DEEKV(%0)}%{src==vAC:DEEK()};" mincpu6(30)
+ac: INDIRI1(reg) "%{src!=vAC:PEEKV(%0)}%{src==vAC:PEEK()};" mincpu6(30)
+ac: INDIRU1(reg) "%{src!=vAC:PEEKV(%0)}%{src==vAC:PEEK()};" mincpu6(30)
+
+# Read-modify-write
+
+rmw: VREGP "%a"
+rmw: zddr "%0"
+stmt: ASGNU1(rmw, LOADU1(ADDI2(CVUI2(INDIRU1(rmw)), con1))) "\tINC(%0);\n" if_rmw1(a,16) 
+stmt: ASGNI1(rmw, LOADI1(ADDI2(CVII2(INDIRI1(rmw)), con1))) "\tINC(%0);\n" if_rmw1(a,16) 
+stmt: ASGNU1(rmw, LOADU1(SUBI2(CVUI2(INDIRU1(rmw)), con1))) "\tDEC(%0);\n" mincpu6(if_rmw1(a,16))
+stmt: ASGNI1(rmw, LOADI1(SUBI2(CVII2(INDIRI1(rmw)), con1))) "\tDEC(%0);\n" mincpu6(if_rmw1(a,16))
+stmt: ASGNP2(rmw, ADDP2(INDIRP2(rmw), con1)) "\tINCW(%0);\n" mincpu6(if_rmw2(a, 26))
+stmt: ASGNP2(rmw, ADDP2(INDIRP2(rmw), con1)) "\tINCW(%0);\n" mincpu6(if_rmw2(a, 26))
+stmt: ASGNU2(rmw, ADDU2(INDIRU2(rmw), con1)) "\tINCW(%0);\n" mincpu6(if_rmw2(a, 26))
+stmt: ASGNI2(rmw, ADDI2(INDIRI2(rmw), con1)) "\tINCW(%0);\n" mincpu6(if_rmw2(a, 26))
+stmt: ASGNP2(rmw, SUBP2(INDIRP2(rmw), con1)) "\tDECW(%0);\n" mincpu6(if_rmw2(a, 26))
+stmt: ASGNU2(rmw, SUBU2(INDIRU2(rmw), con1)) "\tDECW(%0);\n" mincpu6(if_rmw2(a, 26))
+stmt: ASGNI2(rmw, SUBI2(INDIRI2(rmw), con1)) "\tDECW(%0);\n" mincpu6(if_rmw2(a, 26))
+stmt: ASGNP2(rmw, ADDP2(INDIRP2(rmw), con1n)) "\tDECW(%0);\n" mincpu6(if_rmw2(a, 26))
+stmt: ASGNU2(rmw, ADDU2(INDIRU2(rmw), con1n)) "\tDECW(%0);\n" mincpu6(if_rmw2(a, 26))
+stmt: ASGNI2(rmw, ADDI2(INDIRI2(rmw), con1n)) "\tDECW(%0);\n" mincpu6(if_rmw2(a, 26))
+stmt: ASGNI2(rmw, NEGI2(INDIRI2(rmw))) "\tNEGW(%0);\n" mincpu6(if_rmw2(a, 26))
+stmt: ASGNI2(rmw, BCOMI2(INDIRI2(rmw))) "\tNOTW(%0);\n" mincpu6(if_rmw2(a, 26))
+stmt: ASGNU2(rmw, BCOMU2(INDIRU2(rmw))) "\tNOTW(%0);\n" mincpu6(if_rmw2(a, 26))
+stmt: ASGNI2(rmw, LSHI2(INDIRI2(rmw),con1)) "\tLSLV(%0);\n" mincpu6(if_rmw2(a, 28))
+stmt: ASGNU2(rmw, LSHU2(INDIRU2(rmw),con1)) "\tLSLV(%0);\n" mincpu6(if_rmw2(a, 28))
+
+
 
 
 
@@ -936,42 +948,55 @@ static int if_zpglobal(Node p)
   return LBURG_MAX;
 }
 
+static int sametree(Node p, Node q) {
+  return p == NULL && q == NULL
+    || p && q && p->op == q->op && p->syms[0] == q->syms[0]
+    && sametree(p->kids[0], q->kids[0])
+    && sametree(p->kids[1], q->kids[1]);
+}
+
 static int if_rmw1(Node p, int cost)
 {
-  Node n0 = p->kids[0];
-  Node n1 = p->kids[1]->kids[0]->kids[0]->kids[0]->kids[0];
-  assert(n0 && n1);
-  if (generic(n0->op) == INDIR && n0->kids[0]->op == VREG+P
-      && n0->x.mayrecalc && n0->syms[RX]->u.t.cse)
-    n0 = n0->syms[RX]->u.t.cse;
-  if (generic(n1->op) == INDIR && n1->kids[0]->op == VREG+P
-      && n1->x.mayrecalc && n1->syms[RX]->u.t.cse)
-    n1 = n1->syms[RX]->u.t.cse;
-  if (n0->syms[RX] && n1->syms[RX] && n0->syms[RX] == n1->syms[RX])
+  Node n;
+  assert(p);
+  assert(generic(p->op) == ASGN);
+  assert(p->kids[0]);
+  assert(p->kids[1]);
+  n = p->kids[1]->kids[0]->kids[0]->kids[0];
+  assert(generic(n->op) == INDIR);
+  if (sametree(p->kids[0], n->kids[0]))
     return cost;
+  if (n->syms[RX]->temporary && n->syms[RX]->generated && n->syms[RX]->u.t.cse)
+    {
+      n = n->syms[RX]->u.t.cse;
+      if (generic(n->op) == LOAD)
+        n = n->kids[0];
+      if (generic(n->op) == INDIR && sametree(p->kids[0], n->kids[0]))
+        return cost;
+    }
   return LBURG_MAX;
 }
 
 static int if_rmw2(Node p, int cost)
 {
-  Node n0 = p->kids[0];
-  Node n1 = p->kids[1]->kids[0]->kids[0];
-  assert(n0 && n1);
-  if (generic(n0->op) == INDIR && n0->kids[0]->op == VREG+P
-      && n0->x.mayrecalc && n0->syms[RX]->u.t.cse)
-    n0 = n0->syms[RX]->u.t.cse;
-  if (generic(n1->op) == INDIR && n1->kids[0]->op == VREG+P
-      && n1->x.mayrecalc && n1->syms[RX]->u.t.cse)
-    n1 = n1->syms[RX]->u.t.cse;
-  if (n0->syms[RX] && n1->syms[RX] && n0->syms[RX] == n1->syms[RX])
+  Node n;
+  assert(p);
+  assert(generic(p->op) == ASGN);
+  assert(p->kids[0]);
+  assert(p->kids[1]);
+  n = p->kids[1]->kids[0];
+  assert(generic(n->op) == INDIR);
+  if (sametree(p->kids[0], n->kids[0]))
     return cost;
+  if (n->syms[RX]->temporary && n->syms[RX]->generated && n->syms[RX]->u.t.cse)
+    {
+      n = n->syms[RX]->u.t.cse;
+      if (generic(n->op) == LOAD)
+        n = n->kids[0];
+      if (generic(n->op) == INDIR && sametree(p->kids[0], n->kids[0]))
+        return cost;
+    }
   return LBURG_MAX;
-}
-
-static int if_vregp_not_temp(Node p)
-{
-  assert(p->syms[0]);
-  return p->syms[0]->temporary ? LBURG_MAX : 0;
 }
 
 static int if_cv_from(Node p, int sz, int cost)
@@ -1129,7 +1154,8 @@ static void clobber(Node p)
 }
 
 /* Helper for preralloc */
-static int find_tempuse_in_cover(Node n, int nt, Symbol sym, const char **lefttpl)
+static int find_reguse_in_cover(Node n, int nt, Symbol sym,
+                                const char **lefttpl)
 {
   Node kids[10];
   int rulenum = (*IR->x._rule)(n->x.state, nt);
@@ -1139,11 +1165,16 @@ static int find_tempuse_in_cover(Node n, int nt, Symbol sym, const char **lefttp
   int count = 0;
   int i;
 
+  for(;template;template++) {
+    if (isspace(template[0]))
+      { continue; }
+    if (template[0]=='%' && template[1]=='{' && template[2] == '#')
+      { template = strchr(template,'}'); continue; }
+    if (template[0] == '%' && isdigit(template[1]))
+      { leftkid = template[1] - '0'; break; }
+    break;
+  }
   (*IR->x._kids)(n, rulenum, kids);
-  while (isspace(template[0]))
-    template += 1;
-  if (template[0] == '%' && isdigit(template[1]))
-    leftkid = template[1] - '0';
   for (i=0; nts[i] && i<NELEMS(kids); i++)
     {
       Node k = kids[i];
@@ -1153,18 +1184,22 @@ static int find_tempuse_in_cover(Node n, int nt, Symbol sym, const char **lefttp
         count += 1;
         if (lefttpl && i == 0 && leftkid < 0)
           *lefttpl = template;
-      } else
-        count += find_tempuse_in_cover(k, knt, sym,
-                                       (i == leftkid) ? lefttpl : 0);
+      } else if (i == leftkid) {
+        count += find_reguse_in_cover(k, knt, sym, lefttpl);
+      } else {
+        count += find_reguse_in_cover(k, knt, sym, 0);
+      }
     }
   return count;
 }
 
 /* Helper for preralloc */
-static int scan_ac_preserving_instructions(Symbol sym, Symbol r, Node q)
+static int scan_ac_preserving_instructions(Symbol sym, Symbol r, Node q, int ready)
 {
+  int gotlast = 0;
+  
   /* scan instructions until finding the last use of sym */
-  for(; q != sym->x.lastuse; q = q->x.next)
+  for(; ; q = q->x.next)
     {
       /* Acceptable instructions here fall in two categories:
          instructions that leave vAC/LAC/FAC unchanged, and
@@ -1173,70 +1208,83 @@ static int scan_ac_preserving_instructions(Symbol sym, Symbol r, Node q)
          we only recognize a couple common cases. */
       if (! q)
         return 0;
+      if (sym->temporary && q == sym->x.lastuse)
+        gotlast = 1;
       if (generic(q->op)==INDIR && specific(q->kids[0]->op) == VREG+P)
-        continue; /* no code generated */
-      if (generic(q->op)==ASGN && specific(q->kids[0]->op) == VREG+P)
-        continue; /* no code generated */
+        /* matches INDIR(VREGP) rule which does not generate code */
+        continue;
+      if (generic(q->op)==ASGN && specific(q->kids[0]->op) == VREG+P
+          && q->kids[1]->x.inst)
+        /* matches ASGN(VREGP,reg) which does not generate code */
+        continue;
+      if (generic(q->op)==ASGN && specific(q->kids[0]->op) == VREG+P
+          && q->kids[0]->syms[0] != sym && q->kids[0]->syms[0] != ireg[31] )
+        /* matches a RMW rule whose code preserves vAC/LAC/FAC */
+        continue;
       if (generic(q->op)==LOAD && generic(q->kids[0]->op) == INDIR
           && specific(q->kids[0]->kids[0]->op) == VREG+P
           && q->kids[0]->kids[0]->syms[0] == sym)
-        continue;
-      /* Otherwise fail */
+        {
+          if (ready) {
+            q->kids[0]->syms[RX] = r;
+            q->kids[0]->x.registered = 1;
+          }
+          if (gotlast)
+            return 1;
+          continue;
+        }
+      /* Next instruction is not known to preserve ac.
+         However it might start with the lastuse of sym. */
+      if (gotlast) {
+        const char *template = 0;
+        int count = find_reguse_in_cover(q, q->x.inst, sym, &template);
+        if (count == 1 && template) {
+          /* Template expansion refers to sym as %0.
+             But it also has to be in the first opcode. */
+          const char *p0 = strstr(template,"%0");
+          const char *p1 = strchr(template,';');
+          if (p0 && p1 && p0 < p1 && !strstr(p1, "%0"))
+            return 1;
+        }
+      }
       return 0;
     }
-  if (generic(q->op)==INDIR && q->kids[0]->op == VREG+P)
-    {
-      /* We have reached the last use of symbol sym and we are
-         about to declare success by returning 1. But we still
-         have to check how the code uses sym. */
-      Node n= q->x.next;
-      const char *template = 0;
-      int count = find_tempuse_in_cover(n, n->x.nt, sym, &template);
-      if (count == 1 && template) {
-        /* Template expansion refers to sym as %0.
-           Check that %0 appears only in the first opcode. */
-        const char *p0 = strstr(template,"%0");
-        const char *p1 = strchr(template,';');
-        if (count == 1 && p0 && p1 && p0 < p1 && !strstr(p1, "%0"))
-          return 1;
-      }
-    }
-  return 0;
 }
 
 static void preralloc(Node p)
 {
   Symbol sym = p->syms[RX];
+  int rulenum = (*IR->x._rule)(p->x.state, p->x.inst);
+  short *nts = IR->x._nts[rulenum];
+  const char *template = IR->x._templates[rulenum];
+  Symbol r = 0;
+  Node q = p->x.next;
+  int ready = 1;
+
   /* Try to eliminate useless data moving operations between
      successive trees in the same forest, by using vAC/LAC/FAC instead
      of allocating a register, which, otherwise, is the only way to
      pass data from one tree to the next. */
-  if (sym->temporary)
+  if (!strncmp(template,"\t%{#alsoVAC}", 12))
+    r = ireg[31]; 
+  else if (!strncmp(template,"\t%{#alsoLAC}", 12))
+    r = lreg[31];
+  else if (!strncmp(template,"\t%{#alsoFAC}", 12))
+    { r = freg[31]; ready=0; }
+  else if (sym->temporary && !strncmp(template,"\t%{#canVAC}", 11))
+    { r = ireg[31]; ready=0; }
+  if (r && q && generic(q->op) == ASGN && q->kids[0]->op == VREG+P)
     {
-      int rulenum = (*IR->x._rule)(p->x.state, p->x.inst);
-      short *nts = IR->x._nts[rulenum];
-      Symbol r = 0;
-      Node q = p->x.next;
-      /* Allocating temporary reg for something already in vAC/LAC/FAC */
-      if (nts[0] == _ac_NT && !nts[1])
-        r = ireg[31];
-      else if (nts[0] == _lac_NT && !nts[1])
-        r = lreg[31];
-      else if (nts[0] == _fac_NT && !nts[1])
-        r = freg[31];
-      if (r && q && generic(q->op) == ASGN && q->kids[0]->op == VREG+P)
+      /* In order to use vAC/LAC/FAC instead of allocating a
+         temporary register, we must be sure that the value of
+         vAC/LAC/FAC is unchanged whenever the code needs it.*/
+      if (scan_ac_preserving_instructions(sym, r, q->x.next, ready) && sym->temporary)
         {
-          /* In order to use vAC/LAC/FAC instead of allocating a
-             temporary register, we must be sure that the value of
-             vAC/LAC/FAC is unchanged whenever the code needs it.*/
-          if (scan_ac_preserving_instructions(sym, r, q->x.next))
-            {
-              r->x.lastuse = sym->x.lastuse;
-              for (q = sym->x.lastuse; q; q = q->x.prevuse) {
-                q->syms[RX] = r;
-                q->x.registered = 1;
-              }
-            }
+          r->x.lastuse = sym->x.lastuse;
+          for (q = sym->x.lastuse; q; q = q->x.prevuse) {
+            q->syms[RX] = r;
+            q->x.registered = 1;
+          }
         }
     }
 }
@@ -1296,6 +1344,16 @@ static void myemitfmt(const char *fmt, Node p, Node *kids, short *nts)
 static void emit3(const char *fmt, Node p, Node *kids, short *nts)
 {
   int i = 0;
+  /* %{#COMMENT} -- comment [nothing emitted]  */
+  if (fmt[0]=='#')
+    {
+      /* This is mostly used to help preralloc.
+         %{#alsoVAC} : contents of destination reg is also left in vAC.
+         %{#alsoLAC} : contents of destination reg is also left in LAC.
+         %{#alsoFAC} : contents of destination reg is also left in FAC.
+         %{#canVAC}  : destination reg could be vAC. */
+      return;
+    }
   while (fmt[i] && fmt[i++] != ':')
     { }
   /* %{dst!=XXX:YYY} */

@@ -594,7 +594,7 @@ def code14():
 	_LDI('yytchar');DEEK();STW(R0);
 	label('.56');
 	LDW(R0);STW(R3);
-	LDW(R0);STW(T2);_SP(-6+28);DEEK();STW(T3);LDW(T2);POKE(T3);
+	LD(R0);STW(T2);_SP(-6+28);DEEK();STW(T3);LDW(T2);POKE(T3);
 	label('.63');
 	LDW(R5);STW(R2);
 	_LDI('yycrank');_CMPWU(R5);_BGE('.64');
@@ -834,10 +834,11 @@ def code14():
 	label('.112');
 	_LDI('yytchar');DEEK();STW(R0);
 	label('.113');
+	LD(R0);ST(R22);
 	_LDI('yytext');STW(R21);
-	LDW(R0);POKE(R21);
+	LDW(R22);POKE(R21);
 	_LDI('yyprevious');STW(R21);
-	LDW(R0);DOKE(R21);
+	LD(R22);DOKE(R21);
 	_LDI('yyprevious');DEEK();_BLE('.120');
 	_LDI('yyout');DEEK();STW(R22);
 	LDW(R22);DEEK();SUBI(1);STW(R21);
@@ -932,7 +933,7 @@ def code17():
 	LDW(R22);DEEK();SUBI(1);STW(R21);
 	LDW(R21);DOKE(R22);
 	LDW(R21);_BGE('.147');
-	LDW(R7);LD(vACL);STW(R8);
+	LD(R7);STW(R8);
 	_LDI('yyout');DEEK();STW(R9);
 	CALLI('_flsbuf');
 	_BRA('.148');
@@ -940,7 +941,7 @@ def code17():
 	_LDI('yyout');DEEK();ADDI(2);STW(R22);
 	LDW(R22);DEEK();STW(R21);
 	LDI(1);ADDW(R21);DOKE(R22);
-	LDW(R7);POKE(R21);
+	LD(R7);POKE(R21);
 	label('.148');
 	LDI(0);
 	label('.145');

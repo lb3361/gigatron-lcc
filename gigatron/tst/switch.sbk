@@ -32,6 +32,7 @@ def code0():
 	_SP(2);_MOV(R8,[vAC]);
 	CALLI('big');
 	label('.9');
+	LDW(R6);_LCVI();_LDI('.12');_LADD();LDW(LAC);STW(R6);
 	label('.11');
 	LDW(R6);_LCVI();_LDI('.13');_LAND();_LDI('.14');_LCMPX();_BNE('.8');
 	CALLI('limit');

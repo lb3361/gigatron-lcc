@@ -14,8 +14,8 @@ def code0():
 	label('.2');
 	_SP(4+22);DEEK();ADDI(2);DEEK();STW(R8);
 	_SP(2);_MOV(R8,[vAC]);
-	CALLI('atof');_FMOV(FAC,F20);
-	_FMOV(F20,FAC);_LDI('.5');_FDIV();_FMOV(FAC,F2);
+	CALLI('atof');
+	_LDI('.5');_FDIV();_FMOV(FAC,F2);
 	label('.3');
 	LDI(0);STW(R7);
 	label('.6');

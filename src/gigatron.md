@@ -1154,13 +1154,14 @@ static void clobber(Node p)
 }
 
 /* Helper for preralloc */
-static int find_reguse_in_cover(Node n, int nt, Symbol sym,
+static int find_reguse_in_cover(Node p, int nt, Symbol sym,
                                 const char **lefttpl)
 {
-  Node kids[10];
+  Node n = p;
   int rulenum = (*IR->x._rule)(n->x.state, nt);
   const short *nts = IR->x._nts[rulenum];
   const char *template = IR->x._templates[rulenum];
+  Node kids[10];
   int leftkid = -1;
   int count = 0;
   int i;
@@ -1194,7 +1195,7 @@ static int find_reguse_in_cover(Node n, int nt, Symbol sym,
 }
 
 /* Helper for preralloc */
-static int scan_ac_preserving_instructions(Symbol sym, Symbol r, Node q, int ready)
+static int scan_ac_preserving_instructions(Symbol sym, Symbol r, Node q)
 {
   int gotlast = 0;
   
@@ -1214,21 +1215,18 @@ static int scan_ac_preserving_instructions(Symbol sym, Symbol r, Node q, int rea
         /* matches INDIR(VREGP) rule which does not generate code */
         continue;
       if (generic(q->op)==ASGN && specific(q->kids[0]->op) == VREG+P
-          && q->kids[1]->x.inst)
+          && q->kids[1]->x.inst == _reg_NT)
         /* matches ASGN(VREGP,reg) which does not generate code */
         continue;
       if (generic(q->op)==ASGN && specific(q->kids[0]->op) == VREG+P
           && q->kids[0]->syms[0] != sym && q->kids[0]->syms[0] != ireg[31] )
         /* matches a RMW rule whose code preserves vAC/LAC/FAC */
         continue;
-      if (generic(q->op)==LOAD && generic(q->kids[0]->op) == INDIR
+      if (generic(q->op)==LOAD && q->kids[0]->x.inst == _reg_NT
+          && generic(q->kids[0]->op) == INDIR
           && specific(q->kids[0]->kids[0]->op) == VREG+P
           && q->kids[0]->kids[0]->syms[0] == sym)
         {
-          if (ready) {
-            q->kids[0]->syms[RX] = r;
-            q->kids[0]->x.registered = 1;
-          }
           if (gotlast)
             return 1;
           continue;
@@ -1259,34 +1257,34 @@ static void preralloc(Node p)
   const char *template = IR->x._templates[rulenum];
   Symbol r = 0;
   Node q = p->x.next;
-  int ready = 1;
-
-  /* Try to eliminate useless data moving operations between
-     successive trees in the same forest, by using vAC/LAC/FAC instead
-     of allocating a register, which, otherwise, is the only way to
-     pass data from one tree to the next. */
-  if (!strncmp(template,"\t%{#alsoVAC}", 12))
-    r = ireg[31]; 
-  else if (!strncmp(template,"\t%{#alsoLAC}", 12))
-    r = lreg[31];
-  else if (!strncmp(template,"\t%{#alsoFAC}", 12))
-    { r = freg[31]; ready=0; }
-  else if (sym->temporary && !strncmp(template,"\t%{#canVAC}", 11))
-    { r = ireg[31]; ready=0; }
-  if (r && q && generic(q->op) == ASGN && q->kids[0]->op == VREG+P)
-    {
-      /* In order to use vAC/LAC/FAC instead of allocating a
-         temporary register, we must be sure that the value of
-         vAC/LAC/FAC is unchanged whenever the code needs it.*/
-      if (scan_ac_preserving_instructions(sym, r, q->x.next, ready) && sym->temporary)
-        {
-          r->x.lastuse = sym->x.lastuse;
-          for (q = sym->x.lastuse; q; q = q->x.prevuse) {
-            q->syms[RX] = r;
-            q->x.registered = 1;
+  
+  if (sym->temporary) {
+    /* Try to eliminate useless data moving operations between
+       successive trees in the same forest, by using vAC/LAC/FAC instead
+       of allocating a temporary register. */
+    if (!strncmp(template,"\t%{#alsoVAC}", 12))
+      r = ireg[31]; 
+    else if (!strncmp(template,"\t%{#alsoLAC}", 12))
+      r = lreg[31];
+    else if (!strncmp(template,"\t%{#alsoFAC}", 12))
+      r = freg[31];
+    else if (sym->temporary && !strncmp(template,"\t%{#canVAC}", 11))
+      r = ireg[31];
+    if (r && q && generic(q->op) == ASGN && q->kids[0]->op == VREG+P)
+      {
+        /* In order to use vAC/LAC/FAC instead of allocating a
+           temporary register, we must be sure that the value of
+           vAC/LAC/FAC is unchanged whenever the code needs it.*/
+        if (scan_ac_preserving_instructions(sym, r, q->x.next) && sym->temporary)
+          {
+            r->x.lastuse = sym->x.lastuse;
+            for (q = sym->x.lastuse; q; q = q->x.prevuse) {
+              q->syms[RX] = r;
+              q->x.registered = 1;
+            }
           }
-        }
-    }
+      }
+  }
 }
 
 static void myemitfmt(const char *fmt, Node p, Node *kids, short *nts)

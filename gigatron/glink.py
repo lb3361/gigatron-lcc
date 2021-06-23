@@ -1550,17 +1550,19 @@ def read_interface():
             symdefs[name] = value if isinstance(value, int) else int(value, base=0)
 
 def get_rominfo(roms, rom):
-    ri = roms[rom]
-    if 'inherits' in ri:
-        if ri['inherits'] not in roms:
-            fatal(f"roms.json: rom '{rom}' inherits from an unknown rom")
-        else:
-            rj = get_rominfo(roms, ri['inherits'])
-            for k in rj:
-                if k not in ri:
-                    ri[k] = rj[k]
-            ri.pop('inherits')
-    return ri
+    if rom in roms:
+        ri = roms[rom]
+        if 'inherits' in ri:
+            if ri['inherits'] not in roms:
+                fatal(f"roms.json: rom '{rom}' inherits from an unknown rom")
+            else:
+                rj = get_rominfo(roms, ri['inherits'])
+                for k in rj:
+                    if k not in ri:
+                        ri[k] = rj[k]
+                ri.pop('inherits')
+        return ri
+    return None
             
 def read_rominfo(rom):
     '''Read `rom.jsom' to translate rom names into romType byte and cpu version.'''
@@ -2195,7 +2197,7 @@ def main(argv):
     except FileNotFoundError as err:
         fatal(str(err), exc=True)
     except Exception as err:
-        fatal(str(err), exc=True)
+        fatal(repr(err), exc=True)
 
 
 if __name__ == '__main__':

@@ -159,37 +159,32 @@ def code5():
 # ======== ('CODE', 'exchange', code6)
 def code6():
 	label('exchange');
-	_PROLOGUE(18,12,0xc0); # save=R6-7
+	_PROLOGUE(14,8,0xc0); # save=R6-7
 	LDW(R8);STW(R7);
 	LDW(R9);STW(R6);
 	_LDI('.28');STW(R8);
 	_SP(2);_MOV(R8,[vAC]);
 	_LDI('xx');DEEK();STW(R22);
-	_LMOV('.29',L20);
-	LDW(R7);SUBW(R22);STW(LAC);LDI(0);STW(LAC+2);LDI(L20);_LDIVS();_LMOV(LAC,L9);
-	_SP(4);_LMOV(L9,[vAC]);
-	LDW(R6);SUBW(R22);STW(LAC);LDI(0);STW(LAC+2);LDI(L20);_LDIVS();_LMOV(LAC,L11);
-	_SP(8);_LMOV(L11,[vAC]);
+	LDI(2);STW(R21);
+	LDW(R7);SUBW(R22);_DIVS(R21);STW(R9);
+	_SP(4);_MOV(R9,[vAC]);
+	LDW(R6);SUBW(R22);_DIVS(R21);STW(R10);
+	_SP(6);_MOV(R10,[vAC]);
 	CALLI('printf');
-	_SP(-2+18);STW(R22);
+	_SP(-2+14);STW(R22);
 	LDW(R7);DEEK();DOKE(R22);
 	LDW(R6);DEEK();DOKE(R7);
-	_SP(-2+18);DEEK();DOKE(R6);
+	_SP(-2+14);DEEK();DOKE(R6);
 	LDI(0);
 	label('.27');
-	_EPILOGUE(18,12,0xc0,saveAC=True);
+	_EPILOGUE(14,8,0xc0,saveAC=True);
 # ======== ('COMMON', 'xx', code7, 2, 2)
 def code7():
 	align(2);
 	label('xx');
 	space(2);
-# ======== ('DATA', '.29', code8, 0, 2)
+# ======== ('DATA', '.28', code8, 0, 1)
 def code8():
-	align(2);
-	label('.29');
-	words(2,0); # 2
-# ======== ('DATA', '.28', code9, 0, 1)
-def code9():
 	label('.28');
 	bytes(101,120,99,104,97,110,103,101);
 	bytes(40,37,100,44,37,100,41,10);
@@ -213,8 +208,7 @@ code=[
 	('IMPORT', 'printf'),
 	('IMPORT', 'putchar'),
 	('COMMON', 'xx', code7, 2, 2),
-	('DATA', '.29', code8, 0, 2),
-	('DATA', '.28', code9, 0, 1) ]
+	('DATA', '.28', code8, 0, 1) ]
 module(code=code, name='tst/sort.c', cpu=5);
 
 # Local Variables:

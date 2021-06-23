@@ -12,11 +12,13 @@ def map_describe():
 
 
 # ------------size----addr----step----end---- flags (1=nocode, 2=nodata)
-segments = [ (0x0060, 0x08a0, 0x0100, 0x80a0, 0),
-	     (0x00fa, 0x0200, 0x0100, 0x0500, 1),
-	     (0x0200, 0x0500, None,   None,   1),
-             (0x0100, 0x8100, None,   None,   0),
-	     (0x7000, 0x8240, None,   None,   0)   ]
+segments = [(0x0060, 0x08a0, 0x0100, 0x80a0, 0),
+            (0x00fa, 0x0200, 0x0100, 0x0500, 0),
+            (0x0200, 0x0500, None,   None,   0),
+            (0x7c00, 0x8000, None,   None,   0),
+            # overflow into screen area (for the cq tests)
+            (0x00a0, 0x0800, 0x0100, 0x8000, 0) ]
+
 
 initsp = 0xfffe
 minram = 0x100
@@ -46,7 +48,7 @@ def map_extra_modules(romtype):
     pinned at address 0x200.
     '''
     def code0():
-        nohop()
+        org(0x200)
         label(args.gt1exec)
         _LDI(initsp);STW(SP);
         if romtype and romtype >= 0x80:

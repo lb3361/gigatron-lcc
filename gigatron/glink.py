@@ -677,7 +677,7 @@ def DEC(d):
 @vasm
 def MOVQ(imm,d):
     '''MOVQ: Load a byte var with a small constant 0..255, 28 cycles'''
-    check_cpu(6); tryhop(2); emit(0x16, check_zp(imm), check_zp(d))
+    check_cpu(6); tryhop(3); emit(0x16, check_zp(imm), check_zp(d))
 @vasm
 def LSRB(d):
     '''LSRB: Logical shift right on a byte var, 28 cycles'''
@@ -705,7 +705,7 @@ def ADDBA(d):
 @vasm
 def ADDBI(imm,d):
     '''ADDBI: Add a constant 0..255 to byte var, 28 cycles'''
-    check_cpu(6); tryhop(2); emit(0x2d, check_zp(imm), check_zp(d))
+    check_cpu(6); tryhop(3); emit(0x2d, check_zp(imm), check_zp(d))
 @vasm
 def DBNE(v, d):
     '''DBNE:  Decrement byte var and branch if not zero, 28 cycles'''
@@ -713,7 +713,7 @@ def DBNE(v, d):
 @vasm
 def DOKEI(d):
     '''DOKEI: Doke immediate word into address contained in [vAC], 30 cycles'''
-    check_cpu(6); tryhop(2); d=int(v(d)); emit(0x37, hi(d), lo(d))
+    check_cpu(6); tryhop(3); d=int(v(d)); emit(0x37, hi(d), lo(d))
 @vasm
 def PEEKV(d):
     '''PEEKV: Read byte from address contained in var, 30 cycles'''
@@ -725,7 +725,7 @@ def DEEKV(d):
 @vasm
 def XORBI(imm,d):
     '''XORBI: var.lo ^= imm, 28 cycles'''
-    check_cpu(6); tryhop(2); emit(0x3d, check_zp(imm), check_zp(d))
+    check_cpu(6); tryhop(3); emit(0x3d, check_zp(imm), check_zp(d))
 @vasm
 def ANDBA(d):
     '''ANDBA: vAC &= var.lo, 24 cycles'''
@@ -749,7 +749,7 @@ def DOKEp(d):
 @vasm
 def MOVQW(imm,d):
     '''MOVQW: Load a word var with a small constant 0..255, 30 cycles'''
-    check_cpu(6); tryhop(2); emit(0x5b, check_zp(imm), check_zp(d))
+    check_cpu(6); tryhop(3); emit(0x5b, check_zp(imm), check_zp(d))
 @vasm
 def DEEKp(d):
     '''DEEK+: Deek word at address contained in var, var += 2, 30 cycles'''
@@ -757,7 +757,7 @@ def DEEKp(d):
 @vasm
 def MOV(s,d):
     '''MOV: Moves a byte from src var to dst var, 28 cycles'''
-    check_cpu(6); tryhop(2); emit(0x65, check_zp(d), check_zp(s))
+    check_cpu(6); tryhop(3); emit(0x65, check_zp(d), check_zp(s))
 @vasm
 def PEEKA(d):
     '''PEEKA: Peek a byte from [vAC] to var, 24 cycles'''
@@ -805,7 +805,7 @@ def DBGE(v, d):
 @vasm
 def ORBI(imm,d):
     '''ORBI: OR immediate byte with byte var, result in byte var, 28 cycles'''
-    check_cpu(6); tryhop(2); emit(0x95, check_zp(imm), check_zp(d))
+    check_cpu(6); tryhop(3); emit(0x95, check_zp(imm), check_zp(d))
 @vasm
 def LDNI(d):
     '''LDNI: Load an 8bit immediate as a negative 16bit immediate into vAC'''
@@ -813,15 +813,15 @@ def LDNI(d):
 @vasm
 def ANDBK(d,imm):
     '''ANDBK: vAC = var & imm'''
-    check_cpu(6); tryhop(2); emit(0x9e, check_zp(imm), check_zp(d))
+    check_cpu(6); tryhop(3); emit(0x9e, check_zp(imm), check_zp(d))
 @vasm
 def ORBK(d,imm):
     '''ORBK: vAC = var | imm'''
-    check_cpu(6); tryhop(2); emit(0xa0, check_zp(imm), check_zp(d))
+    check_cpu(6); tryhop(3); emit(0xa0, check_zp(imm), check_zp(d))
 @vasm
 def XORBK(d,imm):
     '''XORBK: vAC = var ^ imm'''
-    check_cpu(6); tryhop(2); emit(0xa2, check_zp(imm), check_zp(d))
+    check_cpu(6); tryhop(3); emit(0xa2, check_zp(imm), check_zp(d))
 @vasm
 def PEEKAp(d):
     '''PEEKA+: Peek a byte from [vAC] to var, incw vAC, 26 to 30 cycles'''
@@ -829,7 +829,7 @@ def PEEKAp(d):
 @vasm
 def CMPI(d,imm):
     '''CMPI: Compare byte variable to 8bit immediate, 30 cycles'''
-    check_cpu(6); tryhop(2); emit(0xa7, check_zp(imm), check_zp(d))
+    check_cpu(6); tryhop(3); emit(0xa7, check_zp(imm), check_zp(d))
 @vasm
 def JEQ(d):
     '''JEQ: jump to 16bit address if vAC=0, 26 cycles'''
@@ -881,11 +881,11 @@ def TLE(d):
 @vasm
 def ANDBI(imm,d):
     '''ANDBI: And immediate byte with byte var, result in byte var, 28 cycles'''
-    check_cpu(6); tryhop(2); emit(0xdd, check_zp(imm), check_zp(d))
+    check_cpu(6); tryhop(3); emit(0xdd, check_zp(imm), check_zp(d))
 @vasm
 def SUBBI(imm,d):
     '''SUBBI: Subtract a constant 0..255 from a byte var, 28 cycles'''
-    check_cpu(6); tryhop(2); emit(0xe1, check_zp(imm), check_zp(d))
+    check_cpu(6); tryhop(3); emit(0xe1, check_zp(imm), check_zp(d))
 @vasm
 def ST2(d):
     '''ST2: Store vAC.lo into 16bit immediate address, (26 + 26 cycles)'''

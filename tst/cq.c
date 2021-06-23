@@ -165,6 +165,7 @@ used for housekeeping, handshaking and module initialization.
 
    int j;
    static int (*sec[])() = {
+#ifndef NO22TO71
      s22,
      s241,
      s243,
@@ -175,17 +176,22 @@ used for housekeeping, handshaking and module initialization.
      s61,
      s626,
      s71,
+#endif
+#ifndef NO714
+     s714,
+#endif
+#ifndef NO715TO9
+     s715,
      s72,
      s757,
      s7813,
-     s714,
-     s715,
      s81,
      s84,
      s85,
      s86,
      s88,
      s9
+#endif
    };
 
    static struct defs d0, *pd0;
@@ -207,6 +213,7 @@ used for housekeeping, handshaking and module initialization.
    else printf("\nFailed.\n");
    return 0;
 }
+#ifndef NO22TO71
 s22(pd0)                 /* 2.2 Identifiers (Names)      */
 struct defs *pd0;
 {
@@ -1167,6 +1174,8 @@ int x, *y;
    x = 3;
    *y = 2;
 }
+#endif
+#ifndef NO714
 s714(pd0)          /*  7.14  Assignment operators       */
 struct defs *pd0;
 {
@@ -3611,6 +3620,8 @@ initial         (5,2)       |    (5,2)    |  (12,10)
    }
    return rc;
 }
+#endif
+#ifndef NO715TO9
 s715(pd0)          /*  7.15 Comma operator     */
 struct defs *pd0;
 {
@@ -5297,10 +5308,13 @@ struct defs *pd0;
 
    return rc;
 }
+#endif
+#ifndef NO22TO71
 setev(){                  /* Sets an external variable. Used  */
    extern int extvar;     /* by s4, and should be compiled    */
    extvar = 1066;         /* separately from s4.              */
 }
+#endif
      int lbits;          /*                 long           */
      int ubits;          /*                 unsigned       */
      int fbits;          /*                 float          */

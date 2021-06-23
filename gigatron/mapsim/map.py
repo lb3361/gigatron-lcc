@@ -2,22 +2,30 @@
 def map_describe():
     print('''  Memory map 'sim' targets the simulator 'gtsim'.
              
-  Code and data are placed as with memory map '64k'.  The memory map
-  causes the linker to load library 'libsim' which overrides various
-  libc components. Function 'printf' is directly executed by gtsim and
-  prints to gtsim's standard output and function '_exitm' exits
-  gtsim. It is expected that libsim will eventually delegate all stdio
-  operations to gtsim.  This particularly useful for the glcc test
-  suite.  ''')
+  Code and data are placed as with memory map '64k' then overflow into
+  the screen and stack area in order to run the large 'cq' tests.  The
+  memory map causes the linker to load library 'libsim' which
+  overrides various libc components. Function 'printf' is directly
+  executed by gtsim and prints to gtsim's standard output and function
+  '_exitm' exits gtsim. It is expected that libsim will eventually
+  delegate all stdio operations to gtsim.  This particularly useful
+  for the glcc test suite.  ''')
 
 
 # ------------size----addr----step----end---- flags (1=nocode, 2=nodata)
-segments = [(0x0060, 0x08a0, 0x0100, 0x80a0, 0),
-            (0x00fa, 0x0200, 0x0100, 0x0500, 0),
-            (0x0200, 0x0500, None,   None,   0),
-            (0x7c00, 0x8000, None,   None,   0),
-            # overflow into screen area (for the cq tests)
-            (0x00a0, 0x0800, 0x0100, 0x8000, 0) ]
+segments = [ (0x0060, 0x08a0, 0x0100, 0x80a0, 0),
+             (0x00fa, 0x0200, 0x0100, 0x0500, 0),
+             (0x0200, 0x0500, None,   None,   0),
+             (0x0100, 0x8100, None,   None,   0),
+             (0x75c0, 0x8240, None,   None,   0),
+             # overflow into screen and stack area (for the cq tests)
+             (0x00a0, 0x0800, 0x0100, 0x8000, 0),
+             (0x0400, 0x7800, None,   None,   0) ]
+
+# This variant is even more extreme.
+# segments = [(0xfe00, 0x0200, None,   None,   0)]
+
+
 
 
 initsp = 0xfffe
@@ -44,11 +52,11 @@ def map_extra_modules(romtype):
     '''
     Generate an extra modules for this map. At the minimum this should
     define a function '_gt1exec' that sets the stack pointer,
-    checks the rom and ram size, then calls v(args.e). This is ofen
+    checks the rom and ram size, then calls v(args.e). This is often
     pinned at address 0x200.
     '''
     def code0():
-        org(0x200)
+        nohop() # instead of org(0x200)
         label(args.gt1exec)
         _LDI(initsp);STW(SP);
         if romtype and romtype >= 0x80:

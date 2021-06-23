@@ -2,11 +2,10 @@
 def map_describe():
     print('''  Memory map '64k' targets memory expanded Gigatrons.
              
- Code and data can be placed in the video memory holes or 
- in the memory above 0x8280. The stack grows downwards from 0xfffe.
- Space in page 2 to 6 is reserved for data items. Small data
- objects often fit in the memory holes. Meanwhile the high
- 32KB of memory provides space for large data objects.
+ Code and data can be placed in the video memory holes or in the
+ extension memory. The stack grows downwards from 0xfffe. Both code
+ and small data objects often fit in the memory holes. Meanwhile the
+ high 32KB of memory provides space for large data objects.
 
  Option '--short-function-size-threshold=256' has the effect of using
  high memory for all functions that fit in a page but do not fit in a
@@ -19,10 +18,10 @@ def map_describe():
 
 # ------------size----addr----step----end---- flags (1=nocode, 2=nodata)
 segments = [ (0x0060, 0x08a0, 0x0100, 0x80a0, 0),
-	     (0x00fa, 0x0200, 0x0100, 0x0500, 1),
-	     (0x0200, 0x0500, None,   None,   1),
+             (0x00fa, 0x0200, 0x0100, 0x0500, 0),
+             (0x0200, 0x0500, None,   None,   0),
              (0x0100, 0x8100, None,   None,   0),
-	     (0x7000, 0x8240, None,   None,   0)   ]
+             (0x75c0, 0x8240, None,   None,   0)   ]
 
 initsp = 0xfffe
 minram = 0x100
@@ -48,7 +47,7 @@ def map_extra_modules(romtype):
     '''
     Generate an extra modules for this map. At the minimum this should
     define a function '_gt1exec' that sets the stack pointer,
-    checks the rom and ram size, then calls v(args.e). This is ofen
+    checks the rom and ram size, then calls v(args.e). This is often
     pinned at address 0x200.
     '''
     def code0():

@@ -146,7 +146,7 @@ def scope():
         nohop()
         label('_@_fstfac')
         STW(T2);LD(AS);ANDI(0x80)
-        m_store(T2, exponent=AE, mantissa=AM, ret=True)
+        m_store(T2, exponent=AE, mantissa=AM, fastpath=True, ret=True)
 
     module(name='rt_fstfac.s',
            code=[ ('EXPORT', '_@_fstfac'),

@@ -43,7 +43,7 @@ def map_extra_modules(romtype):
     '''
     Generate an extra modules for this map. At the minimum this should
     define a function '_gt1exec' that sets the stack pointer,
-    checks the rom and ram size, then calls v(args.e). This is ofen
+    checks the rom and ram size, then calls v(args.e). This is often
     pinned at address 0x200.
     '''
     def code0():

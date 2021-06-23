@@ -407,6 +407,37 @@ main()
 	TstCond (Failure, Half + MinusOne + Half == Zero,
 		  "1/2 + (-1) + 1/2 != 0");
 	/*=============================================*/
+#ifndef PART
+# define WANTPART(i) (1)
+#else
+# define WANTPART(i) ((PART) & (1<<(i-2)))
+# if WANTPART(2)	
+	part2();
+# endif
+# if WANTPART(3)	
+	part3();
+# endif
+# if WANTPART(4)	
+	part4();
+# endif
+# if WANTPART(5)	
+	part5();
+# endif
+# if WANTPART(6)	
+	part6();
+# endif
+# if WANTPART(7)	
+	part7();
+# endif
+# if WANTPART(8)	
+	part8();
+# endif	
+        }
+# if WANTPART(2)
+part2() {
+# endif
+#endif
+#if WANTPART(2)
 	/*SPLIT
 	part2();
 	part3();
@@ -622,6 +653,16 @@ part2(){
 		}
 	Pause();
 	/*=============================================*/
+#endif
+#ifdef PART
+# if WANTPART(2)
+        }
+# endif
+# if WANTPART(3)
+part3() {
+# endif
+#endif
+#if WANTPART(3)
 	/*SPLIT
 	}
 #include "paranoia.h"
@@ -847,6 +888,16 @@ part3(){
 	TstCond (Failure, (BInvrse * Radix - Half == Half),
 		   "Radix * ( 1 / Radix ) differs from 1");
 	/*=============================================*/
+#endif
+#ifdef PART
+# if WANTPART(3)
+        }
+# endif
+# if WANTPART(4)
+part4() {
+# endif
+#endif
+#if WANTPART(4)
 	/*SPLIT
 	}
 #include "paranoia.h"
@@ -1046,6 +1097,16 @@ part4(){
 		printf("sqrt(X) is non-monotonic for X near %.7e .\n", Y);
 		}
 	/*=============================================*/
+#endif
+#ifdef PART
+# if WANTPART(4)
+        }
+# endif
+# if WANTPART(5)
+part5() {
+# endif
+#endif
+#if WANTPART(5)
 	/*SPLIT
 	}
 #include "paranoia.h"
@@ -1262,6 +1323,16 @@ part5(){
 	if (N > 0) Pause();
 	else printf("\n");
 	/*=============================================*/
+#endif
+#ifdef PART
+# if WANTPART(5)
+        }
+# endif
+# if WANTPART(6)
+part6() {
+# endif
+#endif
+#if WANTPART(6)
 	/*SPLIT
 	}
 #include "paranoia.h"
@@ -1485,6 +1556,16 @@ part6(){
 		printf("Range is too narrow; U1^%d Underflows.\n", I);
 		}
 	/*=============================================*/
+#endif
+#ifdef PART
+# if WANTPART(6)
+        }
+# endif
+# if WANTPART(7)
+part7() {
+# endif
+#endif
+#if WANTPART(7)
 	/*SPLIT
 	}
 #include "paranoia.h"
@@ -1693,6 +1774,16 @@ overflow:
 			}
 		}
 	/*=============================================*/
+#endif
+#ifdef PART
+# if WANTPART(7)
+        }
+# endif
+# if WANTPART(8)
+part8() {
+# endif
+#endif
+#if WANTPART(8)
 	/*SPLIT
 	}
 #include "paranoia.h"
@@ -1838,7 +1929,7 @@ part8(){
 	printf("END OF TEST.\n");
 	return 0;
 	}
-
+#endif
 /*SPLIT subs.c
 #include "paranoia.h"
 */

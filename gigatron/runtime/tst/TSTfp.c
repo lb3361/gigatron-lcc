@@ -15,18 +15,6 @@
 
 #ifdef __gigatron__
 
-/* quick ldexp to avoid -lm in test file */
-double ldexp(double x, int i)
-{
-	i = i + *(unsigned char*)&x;
-	if (i <= 0)
-		return 0;
-	if (i > 255)
-		return 123456789.0;
-	*(unsigned char*)&x = i;
-	return x;
-}
-
 double sigfpe(int signo, int fpeinfo)
 {
 	printf("[SIGFPE %d %d] ", signo, fpeinfo);

@@ -82,8 +82,9 @@ extern double _frexp10(double x, int *pexp);
 /* Like the C99 function remquo but with fmod-style remainder. */
 extern double _fmodquo(double x, double y, int *quo);
 
-/* C99 function remquo, implemented using _fmodquo.  */
-extern double remquo(double x, double y, int *quo);
+/* Evaluate polynomials */
+extern double _polevl(double x, double *coeff, int n);
+extern double _p1evl(double x, double *coeff, int n);
 
 
 /* ---- Stdio ---- */

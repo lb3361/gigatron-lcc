@@ -97,20 +97,16 @@ struct _sbuf {
 
 struct _svec {
 	int  (*flsbuf)(int c, FILE *fp);
-	int  (*write)(int fd, const void *buf, size_t cnt);
+	int  (*write)(FILE *fp, const void *buf, size_t cnt);
 	int  (*filbuf)(FILE *fp);
-	int  (*read)(int fd, void *buf, size_t cnt);
-	long (*lseek)(int fd, long off, int whence);
-	int  (*close)(int fd);
+	int  (*read)(FILE *fp, void *buf, size_t cnt);
+	long (*lseek)(FILE *fp, long off, int whence);
+	int  (*close)(FILE *fp);
 };
 
 /* This function is called before main() to initialize the _iob[]. 
    The default version hooks the console to stdin/stdout/stderr. */
 extern void _iob_setup(void);
-
-/* Write buffer buf of length len to file fp, handle line-buffered
-   files, and return the number of bytes written. */
-extern int _fputm(register const char *buf, register size_t sz, register FILE *fp);
 
 
 /* ---- Misc ---- */

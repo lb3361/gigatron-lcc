@@ -15,7 +15,7 @@ struct _cbuf {
 struct _cbuf _cons_ibuf = { CONS_BUFSIZE };
 struct _cbuf _cons_obuf = { CONS_BUFSIZE };
 
-static int cons_write(register int fd, register const void *buf, register size_t cnt)
+static int cons_write(FILE *fp, register const void *buf, register size_t cnt)
 {
 	register int written = 0;
 	while (written != cnt) {
@@ -32,20 +32,25 @@ static int cons_flsbuf(register int c, register FILE *fp)
 	register char *buf = _cons_obuf.data;
 	register int cnt = 0;
 	register int n = 0;
+	register char *p;
+	
 	if (fp->_flag & _IOFBF) {
 		cnt = CONS_BUFSIZE - 1;
-		if (fp->_ptr)
-			n = fp->_ptr - buf;
+		if ((p = fp->_ptr))
+			n = p - buf;
 	}
+	fp->_base = (struct _sbuf*)&_cons_obuf;
 	fp->_ptr = buf;
 	fp->_cnt = cnt;
-	if (c >= 0)
-		buf[n++] = (char) c;
-	cons_write(fp->_file, buf, n);
+	if (c >= 0) {
+		buf[n] = (char) c;
+		n += 1;
+	}
+	cons_write(fp, buf, n);
 	return c;
 }
 
-static int cons_read(int fd, register void *buf, size_t cnt)
+static int cons_read(FILE *fp, register void *buf, size_t cnt)
 {
 	*(char*)buf = (char)console_waitkey();
 	return 1;
@@ -55,12 +60,13 @@ static int cons_filbuf(register FILE *fp)
 {
 	register int n;
 	register char *buf = _cons_ibuf.data;
-	if (stdout->_v == &_cons_svec)
+	if (fp == stdin)
 		_fflush(stdout);
 	if (fp->_flag & _IOFBF)
 		n = console_readline(buf, CONS_BUFSIZE);
 	else
-		n = cons_read(0, buf, 1);
+		n = cons_read(fp, buf, 1);
+	fp->_base = (struct _sbuf*)&_cons_ibuf;
 	fp->_cnt = n - 1;
 	fp->_ptr = buf + 1;
 	return buf[0];

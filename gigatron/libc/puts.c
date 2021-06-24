@@ -3,5 +3,7 @@
 int puts(register const char *s)
 {
 	fputs(s, stdout);
-	return fputs("\n", stdout);
+	putc('\n', stdout);
+	if ((stdout->_flag & _IOLBF) == _IOLBF)
+		fflush(stdout);
 }

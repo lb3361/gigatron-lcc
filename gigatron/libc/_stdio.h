@@ -10,17 +10,27 @@
 
 #define _IOB_NUM 5
 
+extern int _schkwrite(FILE*);
+extern int _schkread(FILE*);
+extern int _serror(FILE*, int);
 extern int _fcheck(FILE*);
 extern int _fclose(FILE*);
 extern void _fflush(FILE*);
-
-extern int   _serror(FILE*, int);
-
+extern size_t _fwrite(FILE*, const char*, size_t);
+extern size_t _fread(FILE*, char*, size_t);
 extern FILE *_sfindiob(void);
-extern void  _sfreeiob(FILE *fp);
-extern int   _swalk(int(*f)(FILE*));
+extern void _sfreeiob(FILE *fp);
+extern int _swalk(int(*f)(FILE*));
 
 #define CONS_BUFSIZE 80
 extern struct _svec _cons_svec;
+
+#if WITH_MALLOC
+extern struct more_iobuf *_more_iob;
+struct _more_iobuf {
+	struct _iobuf _iob[1];
+	struct _more_iobuf *next;
+};
+#endif
 
 #endif

@@ -614,22 +614,40 @@ def BRA(d):
     emit(0x90, check_br(d)); tryhop(jump=False)
 @vasm
 def BEQ(d):
-    tryhop(3); emit(0x35, 0x3f, check_br(d))
+    if args.cpu >= 6 and args.jcconly:
+        JEQ(d)
+    else:
+        tryhop(3); emit(0x35, 0x3f, check_br(d))
 @vasm
 def BNE(d):
-    tryhop(3); emit(0x35, 0x72, check_br(d))
+    if args.cpu >= 6 and args.jcconly:
+        JNE(d)
+    else:
+        tryhop(3); emit(0x35, 0x72, check_br(d))
 @vasm
 def BLT(d):
-    tryhop(3); emit(0x35, 0x50, check_br(d))
+    if args.cpu >= 6 and args.jcconly:
+        JLT(d)
+    else:
+        tryhop(3); emit(0x35, 0x50, check_br(d))
 @vasm
 def BGT(d):
-    tryhop(3); emit(0x35, 0x4d, check_br(d))
+    if args.cpu >= 6 and args.jcconly:
+        JGT(d)
+    else:
+        tryhop(3); emit(0x35, 0x4d, check_br(d))
 @vasm
 def BLE(d):
-    tryhop(3); emit(0x35, 0x56, check_br(d))
+    if args.cpu >= 6 and args.jcconly:
+        JLE(d)
+    else:
+        tryhop(3); emit(0x35, 0x56, check_br(d))
 @vasm
 def BGE(d):
-    tryhop(3); emit(0x35, 0x53, check_br(d))
+    if args.cpu >= 6 and args.jcconly:
+        JGE(d)
+    else:
+        tryhop(3); emit(0x35, 0x53, check_br(d))
 @vasm
 def CALL(d):
     tryhop(3); emit(0xcf, check_zp(d))
@@ -1142,22 +1160,40 @@ def _BRA(d):
     emitjump(v(d))
 @vasm
 def _BEQ(d):
-    emitjcc(BEQ, BNE, JEQ, v(d))
+    if args.cpu >= 6 and args.jcconly:
+        JEQ(d)
+    else:
+        emitjcc(BEQ, BNE, JEQ, v(d))
 @vasm
 def _BNE(d):
-    emitjcc(BNE, BEQ, JNE, v(d))
+    if args.cpu >= 6 and args.jcconly:
+        JNE(d)
+    else:
+        emitjcc(BNE, BEQ, JNE, v(d))
 @vasm
 def _BLT(d):
-    emitjcc(BLT, BGE, JLT, v(d))
+    if args.cpu >= 6 and args.jcconly:
+        JLT(d)
+    else:
+        emitjcc(BLT, BGE, JLT, v(d))
 @vasm
 def _BGT(d):
-    emitjcc(BGT, BLE, JGT, v(d))
+    if args.cpu >= 6 and args.jcconly:
+        JGT(d)
+    else:
+        emitjcc(BGT, BLE, JGT, v(d))
 @vasm
 def _BLE(d):
-    emitjcc(BLE, BGT, JLE, v(d))
+    if args.cpu >= 6 and args.jcconly:
+        JLE(d)
+    else:
+        emitjcc(BLE, BGT, JLE, v(d))
 @vasm
 def _BGE(d):
-    emitjcc(BGE, BLT, JGE, v(d))
+    if args.cpu >= 6 and args.jcconly:
+        JGE(d)
+    else:
+        emitjcc(BGE, BLT, JGE, v(d))
 @vasm
 def _CMPIS(d):
     '''Compare vAC (signed) with immediate in range 0..255'''
@@ -2089,6 +2125,8 @@ def main(argv):
         parser.add_argument('--long-function-segment-size', dest='lfss',
                             metavar='SIZE', type=int, action='store',
                             help='minimal segment size for functions split across segments.')
+        parser.add_argument('--use-jcc-only', action='store_true', dest='jcconly', default=True,
+                            help='replace all Bcc instructions by the new cpu6 Jcc instruction')
         parser.add_argument('--no-runtime-bss-initialization', action='store_true',
                             help='cause all bss segments to go as zeroes in the gt1 file')
         parser.add_argument('--minimal-heap-segment-size', dest='mhss',

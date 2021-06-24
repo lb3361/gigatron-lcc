@@ -18,7 +18,6 @@ def scope():
             BNE('.a3');LD(T0+3);BEQ('.a3');LDWI(0x100);label('.a3')
             ADDW(LAC+3);ST(LAC+3)
         else:
-            # untested but sensible
             LD(LAC);ADDBA(T0);ST(LAC);LD(vACH)
             ADDBA(LAC+1);ADDBA(T0+1);ST(LAC+1);LD(vACH)
             ADDBA(LAC+2);ADDBA(T0+2);ST(LAC+2);LD(vACH)
@@ -49,7 +48,6 @@ def scope():
             BNE('.a3');LD(T0+3);XORI(255);BEQ('.a3');LDWI(0x100);label('.a3')
             ADDW(LAC+3);ST(LAC+3)
         else:
-            # untested but sensible
             LD(LAC);SUBBA(T0);ST(LAC);LD(vACH);ST(vACH)
             ADDBA(LAC+1);SUBBA(T0+1);ST(LAC+1);LD(vACH);ST(vACH)
             ADDBA(LAC+2);SUBBA(T0+2);ST(LAC+2);LD(vACH);ST(vACH)

@@ -6,9 +6,9 @@ PREFIX=/usr/local
 DESTDIR=
 BUILDDIR=build
 B=${TOP}${BUILDDIR}/
+G=${TOP}gigatron/
 GLCC=${B}glcc
-ROM=../gigatron-rom/dev.rom
-GTSIM=${B}gtsim -rom ${TOP}${ROM}
+GTSIM=${B}gtsim
 
 all: FORCE
 
@@ -17,26 +17,18 @@ clean: FORCE
 install: FORCE
 
 TSTCFILES=$(wildcard tst/TST*.c)
-TSTO4FILES=${patsubst tst/%.c,${B}tst4/%.out,${TSTCFILES}}
-TSTO5FILES=${patsubst tst/%.c,${B}tst5/%.out,${TSTCFILES}}
+TSTXFILES=${patsubst tst/%.c,${B}tst/%.gt1,${TSTCFILES}}
+TSTOFILES=${patsubst tst/%.c,${B}tst/%.xx1,${TSTCFILES}}
 
-test: ${TSTO4FILES} ${TSTO5FILES}
+test: ${TSTOFILES}
 
-%.out: %.gt1
-	-${GTSIM} $< > $@
-	cmp $@ tst/$(@F)
+${B}tst/%.xx1: ${B}tst/%.gt1
+	-${GTSIM} -rom ${G}roms/${ROM}.rom $< > $@
+	cmp $@ tst/$(*F).out
 
-${B}tst4/%.gt1: tst/%.c FORCE
-	test -d ${B}tst4 || mkdir ${B}tst4
-	${GLCC} -map=sim -cpu=4 -o $@ $<
-
-${B}tst5/%.gt1: tst/%.c FORCE
-	test -d ${B}tst5 || mkdir ${B}tst5
-	${GLCC} -map=sim -cpu=5 -o $@ $<
-
-${B}tst6/%.gt1: tst/%.c FORCE
-	test -d ${B}tst5 || mkdir ${B}tst5
-	${GLCC} -map=sim -cpu=5 -o $@ $<
+${B}tst/%.gt1: tst/%.c FORCE
+	@test -d ${B}tst || mkdir ${B}tst
+	${GLCC} -map=sim -rom=${ROM} -DROM=${ROM} -o $@ $<
 
 FORCE: .PHONY
 

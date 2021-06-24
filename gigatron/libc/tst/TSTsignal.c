@@ -22,7 +22,7 @@ long lhandler(int signo, int fpeinfo)
 void vhandler(int signo)
 {
 	printf("SIGVIRQ(%d): count=%d\n", signo, vblcount++);
-	frameCount=255;
+	frameCount=250;
 	signal(SIGVIRQ, vhandler);
 }
 
@@ -33,8 +33,19 @@ int main()
 	signal(SIGFPE, (sig_handler_t)lhandler);
 	printf("%ld/0 = %ld\n", b , b / 0);
 	signal(SIGVIRQ, vhandler);
-	while (vblcount < 10) { 
-		b = b * b;
-	}
+	
+	if ( (*(char*)(0x21)) & 0xfc >= 0x40 )
+		{
+			/* The rom supports vIRQ */
+			while (vblcount < 10)
+				b = b * b;
+		}
+	else
+		{
+			/* Cheat */
+			while (vblcount < 10)
+				vhandler(SIGVIRQ);
+		}
+	
 	return 0;
 }

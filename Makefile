@@ -14,12 +14,12 @@ CFLAGS=-g -Wno-abi
 LDFLAGS=-g
 HOSTFILE=${TOP}etc/gigatron-lcc.c
 GLCC=${B}glcc
-ROM=../gigatron-rom/dev.rom
-GTSIM=${B}gtsim -rom ${TOP}${ROM}
+GTSIM=${B}gtsim
 
 SUBDIRS=${G}runtime ${G}libc ${G}map32k ${G}map64k ${G}mapsim ${G}map32kx
-
-FILES=${B}glcc ${B}glink ${B}glink.py ${B}interface.json ${B}roms.json
+GFILES=${B}glcc ${B}glink ${B}glink.py ${B}interface.json ${B}roms.json
+ROMFILES=${wildcard ${G}roms/*.rom}
+ROMS=${patsubst ${G}roms/%.rom,%,${ROMFILES}}
 
 default: all
 
@@ -30,7 +30,13 @@ clean: lcc-clean gigatron-clean subdirs-clean build-dir-clean
 
 install: all gigatron-install subdirs-install
 
-test: all glcc-test subdirs-test
+test: all
+	@for rom in ${ROMS}; do \
+	    printf "+----------------------------------+\n"; \
+	    printf "|  Compiling for rom: %-8s     |\n" $$rom; \
+	    printf "+----------------------------------+\n"; \
+	    ${MAKE} ROM=$$rom glcc-test subdirs-test || exit; \
+	 done
 	@echo "+----------------------------------+"
 	@echo "|  Test sequence ran successfully! |"
 	@echo "+----------------------------------+"
@@ -63,10 +69,10 @@ subdirs-%: FORCE
 		`echo $@ | sed -e 's/^subdirs-//'` || exit; \
 	   done
 
-gigatron-all: gigatron-include ${FILES} 
+gigatron-all: gigatron-include ${GFILES} 
 
 gigatron-clean: FORCE
-	-rm -rf ${FILES} ${B}include
+	-rm -rf ${GFILES} ${B}include
 	-rm -rf ${B}tst[0-9]
 
 gigatron-install: FORCE
@@ -74,7 +80,7 @@ gigatron-install: FORCE
 	${INSTALL} -m 755 "${B}cpp" "${libdir}/cpp"
 	${INSTALL} -m 755 "${B}rcc" "${libdir}/rcc"
 	${INSTALL} -m 755 "${B}lcc" "${libdir}/lcc"
-	for n in ${FILES}; do \
+	for n in ${GFILES}; do \
 	    mode=644; test -x "$$n" && mode=755 ; \
 	    ${INSTALL} -m $$mode "$$n" ${libdir}/ ; done
 	-${INSTALL} -d "${libdir}/include"
@@ -107,38 +113,35 @@ ${B}%: ${G}%
 	cp $< $@
 
 
+GTSIMR=${GTSIM} -rom ${G}roms/${ROM}.rom
 TSTBK1FILES=$(wildcard ${G}tst/*.1bk)
 TSTBK2FILES=$(wildcard ${G}tst/*.2bk)
+TSTX=${patsubst ${G}tst/%.1bk,${B}tst/%.gt1, ${TSTBK1FILES}}
+TSTO=${patsubst ${G}tst/%.1bk,${B}tst/%.xx1, ${TSTBK1FILES}}
 
-TST0=${patsubst ${G}tst/%.2bk,${B}tst0/%.s, ${TSTBK2FILES}}
-TST4=${patsubst ${G}tst/%.1bk,${B}tst4/%.out, ${TSTBK1FILES}}
-TST5=${patsubst ${G}tst/%.1bk,${B}tst5/%.out, ${TSTBK1FILES}}
-TST6=${patsubst ${G}tst/%.1bk,${B}tst6/%.out, ${TSTBK1FILES}}
+ifeq (${ROM},dev)
+TSTS=${patsubst ${G}tst/%.2bk,${B}tst/%.s, ${TSTBK2FILES}}
+endif
 
-%.out: %.gt1
-	@echo "${GTSIM} $< >$@"
-	@m="tst/$(*F).0"; test -r "$m" && ${GTSIM} $< > "$@" < "$m" || ${GTSIM} $< > "$@"
-	cmp $@ ${G}tst/$(*F).1bk
+glcc-test: ${TSTS} ${TSTO}
 
-${B}tst0/%.s: tst/%.c FORCE
-	test -d ${B}tst0 || mkdir ${B}tst0
-	-${GLCC} -S -o $@  $< 2>"${B}tst0/$(*F).out"
-	cmp "${B}tst0/$(*F).out" "${G}tst/$(*F).2bk"
+${B}tst/%.s: tst/%.c FORCE
+	@test -d ${B}tst || mkdir ${B}tst
+	-${GLCC} -S -rom=${ROM} -o $@  $< 2>"${B}tst/$(*F).xx2"
+	cmp "${B}tst/$(*F).xx2" "${G}tst/$(*F).2bk"
 	[ ! -r "${G}tst/$(*F).sbk" ] || cmp $@ "${G}tst/$(*F).sbk"
 
-${B}tst4/%.gt1: tst/%.c FORCE
-	test -d ${B}tst4 || mkdir ${B}tst4
-	${GLCC} -map=sim -cpu=4 -o $@ $< 2>"${B}tst0/$(*F).out"
+${B}tst/%.gt1: tst/%.c FORCE
+	@test -d ${B}tst || mkdir ${B}tst
+	${GLCC} -map=sim -rom=${ROM} -o $@ $< 2>"${B}tst/$(*F).xx2"
 
-${B}tst5/%.gt1: tst/%.c FORCE
-	test -d ${B}tst5 || mkdir ${B}tst5
-	${GLCC} -map=sim -cpu=5 -o $@ $< 2>"${B}tst0/$(*F).out"
+${B}tst/%.xx1: ${B}tst/%.gt1 FORCE
+	@echo "${GTSIMR} $< >$@"
+	@m="tst/$(*F).0"; test -r "$m" && ${GTSIMR} $< > "$@" < "$m" || ${GTSIMR} $< > "$@"
+	cmp $@ ${G}tst/$(*F).1bk
 
-${B}tst6/%.gt1: tst/%.c FORCE
-	test -d ${B}tst6 || mkdir ${B}tst6
-	${GLCC} -map=sim -cpu=6 -o $@ $< 2>"${B}tst0/$(*F).out"
 
-glcc-test: ${TST0} ${TST4} ${TST5}
+sbk-test:
 
 
 FORCE: .PHONY

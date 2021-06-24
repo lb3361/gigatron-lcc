@@ -604,7 +604,6 @@ def scope():
             ADDW(AM+3);ST(AM+3);LD(vACH)
             ADDW(BM+4);ST(AM+4)
         else:
-            # untested but sensible
             LD(BM);ADDBA(AM);ST(AM);LD(vACH)
             ADDBA(BM+1);ADDBA(AM+1);ST(AM+1);LD(vACH)
             ADDBA(BM+2);ADDBA(AM+2);ST(AM+2);LD(vACH)
@@ -810,7 +809,6 @@ def scope():
             BNE('.a3');LD(BM+3);XORI(255);BEQ('.a3');LDWI(0x100);label('.a3')
             ADDW(AM+3);ST(AM+3);LD(vACH);SUBI(1);ST(AM+4)
         else:
-            # untested but sensible
             LD(AM);SUBBA(BM);ST(AM);LD(vACH);ST(vACH)
             ADDBA(AM+1);SUBBA(BM+1);ST(AM+1);LD(vACH);ST(vACH)
             ADDBA(AM+2);SUBBA(BM+2);ST(AM+2);LD(vACH);ST(vACH)

@@ -40,148 +40,93 @@ def scope():
     
     # ==== Load/store
 
-    def m_load(ptr = T3, exponent = AE, mantissa = AM, ret = False, ext = True, checkzero = True):
-        '''Load float pointed by `ptr` into `exponent` and `mantissa`.
-           Argument `ext` says whether `mantissa` is 32 or 40 bits.
-           Preserve the value of pointer `ptr`.
-           Argument `exponent` might be None to ignore it.
-           Returns sign in bit 7 of vAC.'''
-        if exponent or checkzero:
-            lbl = genlabel()
-            lbr = genlabel()
-            _PEEKV(ptr)
-            if exponent:
-                ST(exponent)
-            _BNE(lbl)
-            LDI(0)
-            if mantissa:
-                STW(mantissa);STW(mantissa+2)
-            if ext:
-                ST(mantissa+4)
-            if ret:
-                RET();
-            else:
-                _BRA(lbr)
-            label(lbl)
+    def load_mantissa(ptr, mantissa):
+        '''Load mantissa of float [ptr] into [mantissa,mantissa+3].'''
         if args.cpu <= 5:
-            LDI(1);ADDW(ptr);PEEK();STLW(-2);ORI(128);ST(mantissa+3)
+            LDI(1);ADDW(ptr);PEEK();ORI(0x80);ST(mantissa+3)
             LDI(2);ADDW(ptr);PEEK();ST(mantissa+2)
             LDI(3);ADDW(ptr);PEEK();ST(mantissa+1)
             LDI(4);ADDW(ptr);PEEK();ST(mantissa)
-            if ext:
-                LDI(0);ST(mantissa+4)
-            LDLW(-2)
         else:
             LDW(ptr);INCW(vAC);
             PEEKAp(mantissa+3)
+            ORBI(0x80, mantissa+3)
             PEEKAp(mantissa+2)
             PEEKAp(mantissa+1)
             PEEKA(mantissa)
-            if ext:
-                MOVQ(0x00, mantissa+4)
-            LD(mantissa+3); 
-            ORBI(0x80, mantissa+3)
-        if ret:
-            RET()
-        elif exponent or checkzero:
-            label(lbr)
-
-    def m_store(ptr = T3, exponent = AE, mantissa = AM, ret = False, fastpath = False):
-        '''Save float at location `ptr`.
-           Exponent and mantissa are taken from the specified locations.
-           Sign in bit 7 of vAC. Returns if `ret` is true. 
-           May use a fast path if `fastpath` is true.
-           Pointer `ptr` is not preserved.'''
-        ORI(0x7f);STLW(-2)
-        if exponent:
-            LD(exponent);POKE(ptr)
-        if fastpath:
-            lblslow = genlabel()
-            lbldone = genlabel()
-            LD(ptr);ANDI(0xfc);XORI(0xfc);_BEQ(lblslow)
-            # no page crossing
-            if args.cpu <= 5:
-                INC(ptr);LDLW(-2);ANDW(mantissa+3);POKE(ptr)
-                INC(ptr);LD(mantissa+2);POKE(ptr)
-                INC(ptr);LD(mantissa+1);POKE(ptr)
-                INC(ptr);LD(mantissa);POKE(ptr)
-            else:
-                INC(ptr);LDLW(-2);ANDW(mantissa+3);POKEp(ptr)
-                LD(mantissa+2);POKEp(ptr)
-                LD(mantissa+1);POKEp(ptr)
-                LD(mantissa);POKE(ptr)
-            RET() if ret else _BRA(lbldone)
-            label(lblslow)
-        # page crossing possible
-        if args.cpu <= 5:
-            LDI(1);ADDW(ptr);STW(ptr);LDLW(-2);ANDW(mantissa+3);POKE(ptr)
-            LDI(1);ADDW(ptr);STW(ptr);LD(mantissa+2);POKE(ptr)
-            LDI(1);ADDW(ptr);STW(ptr);LD(mantissa+1);POKE(ptr)
-            LDI(1);ADDW(ptr);STW(ptr);LD(mantissa);POKE(ptr)
-        else:
-            INCW(ptr);LDLW(-2);ANDW(mantissa+3);POKE(ptr)
-            INCW(ptr);LD(mantissa+2);POKE(ptr)
-            INCW(ptr);LD(mantissa+1);POKE(ptr)
-            INCW(ptr);LD(mantissa);POKE(ptr)
-        if fastpath:
-            label(lbldone)
-        if ret:
-            RET()
 
     def code_fldfac():
         '''[vAC]->FAC'''
         nohop()
         label('_@_fldfac')
         STW(T3)
-        m_load(T3, exponent=AE, mantissa=AM, ret=False, ext=True)
-        ANDI(0x80);ST(AS)
-        RET()
+        DEEK();ST(AE);LD(vACH);ANDI(0x80);ST(AS)
+        label('__@am40load')
+        LDI(0);ST(AM+4)
+        _PEEKV(T3);BEQ('.zero')
+        load_mantissa(T3,AM)
+        LDI(1);ADDW(T3);PEEK();ANDI(0x80);RET()
+        label('.zero')
+        STW(AM);STW(AM+2);RET()
 
     module(name='rt_fldfac.s',
            code=[ ('EXPORT', '_@_fldfac'),
+                  ('EXPORT', '__@am40load'),
                   ('CODE', '_@_fldfac', code_fldfac) ] )
+
+    def code_bm40load():
+        nohop()
+        label('__@bm40load')
+        LD(0);ST(BM+4)
+        _PEEKV(T3);BEQ('.zero')
+        label('__@bm32load')
+        load_mantissa(T3,BM)
+        LDI(1);ADDW(T3);PEEK();ANDI(0x80);RET()
+        label('.zero')
+        STW(BM);STW(BM+2);RET()
+
+    module(name='rt_bm40load.s',
+           code=[ ('EXPORT', '__@bm40load'),
+                  ('EXPORT', '__@bm32load'),
+                  ('CODE', '__@bm40load', code_bm40load) ] )
 
     def code_fstfac():
         '''FAC->[vAC]'''
         nohop()
         label('_@_fstfac')
-        STW(T2);LD(AS);ANDI(0x80)
-        m_store(T2, exponent=AE, mantissa=AM, fastpath=True, ret=True)
+        STW(T2)
+        LD(AE);POKE(T2)
+        LD(T2);ANDI(0xfc);XORI(0xfc);BEQ('.slow')
+        # no page crossings
+        if args.cpu <= 5:
+            INC(T2);LD(AS);ORI(0x7f);ANDW(AM+3);POKE(T2)
+            INC(T2);LD(AM+2);POKE(T2)
+            INC(T2);LD(AM+1);POKE(T2)
+            INC(T2);LD(AM);POKE(T2)
+        else:
+            INC(T2)
+            LD(AS);ORI(0x7f);ANDW(AM+3);POKEp(T2)
+            LD(AM+2);POKEp(T2)
+            LD(AM+1);POKEp(T2)
+            LD(AM);POKE(T2)
+        RET()
+        # possible page crossings
+        label('.slow')
+        if args.cpu <= 5:
+            LDI(1);ADDW(T2);STW(T2);LD(AS);ORI(0x7f);ANDW(AM+3);POKE(T2)
+            LDI(1);ADDW(T2);STW(T2);LD(AM+2);POKE(T2)
+            LDI(1);ADDW(T2);STW(T2);LD(AM+1);POKE(T2)
+            LDI(1);ADDW(T2);STW(T2);LD(AM);POKE(T2)
+        else:
+            INCW(T2);LD(AS);ORI(0x7f);ANDW(AM+3);POKE(T2)
+            INCW(T2);LD(AM+2);POKE(T2)
+            INCW(T2);LD(AM+1);POKE(T2)
+            INCW(T2);LD(AM);POKE(T2)
+        RET()
 
     module(name='rt_fstfac.s',
            code=[ ('EXPORT', '_@_fstfac'),
                   ('CODE', '_@_fstfac', code_fstfac) ] )
-
-    def code_am40load():
-        nohop()
-        label('__@am40load')
-        m_load(ptr=T3, exponent=None, mantissa=AM, ret=True, ext=True)
-
-    module(name='rt_am40load.s',
-           code=[ ('EXPORT', '__@am40load'),
-                  ('CODE', '__@am40load', code_am40load) ] )
-
-    def code_bm40load():
-        nohop()
-        label('__@bm40load')
-        m_load(ptr=T3, exponent=None, mantissa=BM, ret=True, ext=True)
-
-    module(name='rt_bm40load.s',
-           code=[ ('EXPORT', '__@bm40load'),
-                  ('CODE', '__@bm40load', code_bm40load) ] )
-
-
-    def code_bm32loadx():
-        '''just load the mantissa with no additional checks'''
-        label('__@bm32loadx')
-        PUSH()
-        m_load(ptr=T3, exponent=None, mantissa=BM, checkzero=False, ext=False)
-        tryhop(2);POP();RET()
-        
-    module(name='rt_bm32loadx.s',
-           code=[ ('EXPORT', '__@bm32loadx'),
-                  ('CODE', '__@bm32loadx', code_bm32loadx) ] )
-
                 
     # ==== common things
 
@@ -408,24 +353,23 @@ def scope():
     def code_am32shra():
         '''shift am32 right by vAC positions'''
         label('__@am32shra') # AM30 >>= vAC
-        PUSH();STLW(-2)
+        PUSH();ALLOC(-2);STLW(0)
         ANDI(0xe0);_BEQ('.shra16')
-        LDI(0);STW(AM);STW(AM+2)
-        label('.shraret')
-        tryhop(2);POP();RET()
+        LDI(0);STW(AM);STW(AM+2);_BRA('.shraret')
         label('.shra16')
-        LDLW(-2);ANDI(16);_BEQ('.shra8')
+        LDLW(0);ANDI(16);_BEQ('.shra8')
         _CALLJ('__@am32shr16')
         label('.shra8')
-        LDLW(-2);ANDI(8);_BEQ('.shra1to7')
+        LDLW(0);ANDI(8);_BEQ('.shra1to7')
         _CALLJ('__@am32shr8')
         label('.shra1to7')
-        LDLW(-2);ANDI(7);_BEQ('.shraret')
+        LDLW(0);ANDI(7);_BEQ('.shraret')
         _CALLI('__@shrsysfn')
         LDW(AM);SYS(52);ST(AM)
         LDW(AM+1);SYS(52);ST(AM+1)
         LDW(AM+2);SYS(52);STW(AM+2)
-        tryhop(2);POP();RET()
+        label('.shraret')
+        tryhop(2);ALLOC(2);POP();RET()
 
     module(name='rt_fam32shra.s',
            code=[ ('EXPORT', '__@am32shra'),
@@ -649,7 +593,7 @@ def scope():
         LDW(AM);STW(BM);               # - move fac mantissa into t0t1
         LDW(AM+2);STW(T1);
         _CALLJ('__@am40load')          # - load arg mantissa into am
-        XORW(AS);ANDI(128);ST(T2H  )   # - are signs different?
+        XORW(AS);ANDI(128);ST(T2H)     # - are signs different?
         XORW(AS);ST(AS)                # - assume arg sign
         LD(T2L)
         _CALLI('__@faddalign')         # - align (rounded)
@@ -896,7 +840,7 @@ def scope():
         LDI(0);STW(CM)                   # for remquo
         tryhop(2);POP();RET()
         label('.fmod2')
-        _CALLJ('__@bm32loadx')           # load mantissa
+        _CALLJ('__@bm32load')           # load mantissa
         ALLOC(-2);LDW(T2);STLW(0)        # save round counter
         LDI(0);STW(CM);STW(CM+2)         # prepare quotient, overwriting T2 T3
         label('.fmodloop')
@@ -924,7 +868,7 @@ def scope():
                   ('IMPORT', '__@fexception'),
                   ('IMPORT', '_@_clrfac'),
                   ('IMPORT', '__@foverflow'),
-                  ('IMPORT', '__@bm32loadx'),
+                  ('IMPORT', '__@bm32load'),
                   ('IMPORT', '__@cm32shl1'),
                   ('IMPORT', '__@am40shl1'),
                   ('IMPORT', '__@am40cmpbm32'),
@@ -948,7 +892,7 @@ def scope():
         _PEEKV(T3);STW(T2)
         LD(AE);SUBW(T2);_BLT('.minus');_BGT('.plus')
         LD(AE);_BEQ('.zero')
-        _CALLJ('__@bm32loadx')
+        _CALLJ('__@bm32load')
         LDW(AM+2);_CMPWU(BM+2);_BLT('.minus');_BGT('.plus')
         LDW(AM);_CMPWU(BM);_BLT('.minus');_BGT('.plus')
         label('.zero')
@@ -956,7 +900,7 @@ def scope():
 
     module(name='rt_fcmp.s',
            code=[ ('EXPORT', '_@_fcmp'),
-                  ('IMPORT', '__@bm32loadx'),
+                  ('IMPORT', '__@bm32load'),
                   ('CODE', '_@_fcmp', code_fcmp) ] )
 
     def code_fsign():

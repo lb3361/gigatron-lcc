@@ -448,8 +448,10 @@ ac: SUBP2(ac,conB) "%0SUBI(%1);" 27
 ac: SUBI2(ac,conBn) "%0ADDI(-(%1));" 27
 ac: SUBU2(ac,conBn) "%0ADDI(-(%1));" 27
 ac: SUBP2(ac,conBn) "%0ADDI(-(%1));" 27
-ac: NEGI2(ac)   "%0STW(T3);LDI(0);SUBW(T3);" 68
-ac: NEGI2(reg ) "LDI(0);SUBW(%0);" 48
+ac: NEGI2(ac)       "%0STW(T3);LDI(0);SUBW(T3);" 68
+ac: NEGI2(reg)      "LDI(0);SUBW(%0);" 48
+ac: NEGI2(ac)       "%0NEGW(vAC);" mincpu6(26)
+ac: NEGI2(reg)      "LDW(%0);NEGW(vAC);" mincpu6(46)
 ac: LSHI2(ac, con1) "%0LSLW();" 28
 ac: LSHU2(ac, con1) "%0LSLW();" 28
 ac: LSHI2(ac, conB) "%0_SHLI(%1);" 100

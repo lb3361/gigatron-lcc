@@ -1227,6 +1227,7 @@ def _CMPIU(d):
 def _CMPWS(d):
     '''Compare vAC (signed) with register.'''
     if args.cpu >= 5:
+        d = v(d)
         CMPHS(d+1); SUBW(d)
     else:
         lbl1 = genlabel()
@@ -1242,6 +1243,7 @@ def _CMPWS(d):
 def _CMPWU(d):
     '''Compare vAC (unsigned) with register.'''
     if args.cpu >= 5:
+        d = v(d)
         CMPHU(d+1); SUBW(d)
     else:
         lbl1 = genlabel()

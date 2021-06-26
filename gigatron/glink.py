@@ -1071,9 +1071,15 @@ def _SHRU(d):
     _CALLI('_@_shru')           # T3 >> AC --> vAC
 @vasm
 def _MUL(d):
-    STW(T3); LDW(d)
-    extern('_@_mul')
-    _CALLI('_@_mul')            # T3 * AC --> vAC
+    if 'has_at67_SYS_Multiply_s16' in rominfo:
+        STW('sysArgs0'); LDW(d)
+        extern('_@_at67_mul')
+        _CALLI('_@_at67_mul')   # sysArg0 * AC --> vAC
+        pass
+    else:
+        STW(T3); LDW(d)
+        extern('_@_mul')
+        _CALLI('_@_mul')        # T3 * AC --> vAC
 @vasm
 def _MULI(d):
     STW(T3);_LDI(d)

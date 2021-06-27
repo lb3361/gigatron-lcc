@@ -27,8 +27,6 @@ extern double floor(double);
 extern double fmod(double, double);
 extern double copysign(double, double);
 
-extern double remquo(double x, double y, int *quo);
-extern double log1p(double x);
 
 
 #endif /* __MATH */

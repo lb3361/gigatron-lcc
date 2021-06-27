@@ -1,37 +1,26 @@
 #include "_stdio.h"
-
-#if WITH_MALLOC
-
-struct more_iobuf *_more_iob = 0;
-
-static FILE *_sfindmoreiob(void)
-{
-	int i;
-	struct more_iobuf *m;
-	for (m = _more_iob; m; m = m->next)
-		if (m->_iob->_flag == 0)
-			return m->_iob;
-	if (! (m = malloc(sizeof(struct more_iobuf))))
-		return 0;
-	m->next = _more_iob;
-	_more_iob = m;
-	return m->_iob;
-}
-
-#endif
+#include "errno.h"
 
 FILE *_sfindiob(void)
 {
-	int i;
-	FILE *f = _iob;
-	for (i = 0; i != _IOB_NUM; i++, f++)
-		if (! f->_flag)
-			return f;
+	register FILE *f = _iob;
+	register struct _more_iobuf **pnext = &_more_iob;
+	for(;;) {
+		register int i;
+		for (i = 0; i != _IOB_NUM; i++, f++)
+			if  (! f->_flag)
+				return f;
 #if WITH_MALLOC
-	return _sfindmoreiob();
-#else
-	return 0;
+		if (! *pnext)
+			*pnext = calloc(1, sizeof(struct _more_iob));
 #endif
+		if (! *pnext)
+			break;
+		f = (*pnext)->_iob;
+		pnext = &(*pnext)->next;
+	}
+	errno = ENFILE;
+	return 0;
 }
 
 void  _sfreeiob(FILE *fp)

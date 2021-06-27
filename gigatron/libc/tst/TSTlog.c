@@ -21,7 +21,7 @@ void testlog(double x)
 {
 	double y = x/10;
 	printf("log(%.8g)=%.8g\n", x, log(x));
-	printf("log(1+%.8g)=%.8g   log1p(%.8g)=%.8g\n", y, log(1+y), y, log1p(y)); 
+	printf("log(1+%.8g)=%.8g\n", y, log(1+y)); 
 }
 
 int main()

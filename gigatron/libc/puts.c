@@ -6,4 +6,5 @@ int puts(register const char *s)
 	putc('\n', stdout);
 	if ((stdout->_flag & _IOLBF) == _IOLBF)
 		fflush(stdout);
+	return _fcheck(stdout);
 }

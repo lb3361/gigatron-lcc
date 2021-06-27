@@ -3,7 +3,6 @@
 #include <math.h>
 
 
-/* Using the Cephes method which is an overkill. */
 
 static double R[3] = {
 		      -7.89580278884799154124E-1,

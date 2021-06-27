@@ -1,7 +1,7 @@
 #include "_stdio.h"
 
 struct _iobuf _iob[_IOB_NUM] = { 0 };
-
+struct _more_iobuf *_more_iob = 0;
 
 int _schkwrite(register FILE *fp)
 {
@@ -90,6 +90,22 @@ int _fclose(register FILE *fp)
 	if (fp->_v->close && (*fp->_v->close)(fp) < 0)
 		r = -1;
 	return 0;
+}
+
+void _swalk(int(*func)(FILE*))
+{
+	register FILE *f = _iob;
+	register struct _more_iobuf *next = _more_iob;
+	for(;;) {
+		register char i;
+		for (i = 0; i != _IOB_NUM; f++, i++)
+			if  (f->_flag)
+				(*func)(f);
+		if (! next)
+			break;
+		f = next->_iob;
+		next = next->next;
+	}
 }
 
 static void _fcloseall(void)

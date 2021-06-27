@@ -104,6 +104,10 @@ struct _svec {
 	int  (*close)(FILE *fp);
 };
 
+/* generic flsbuf and filbuf functions for the above table */
+extern int _default_flsbuf(register int c, register FILE *fp);
+extern int _default_filbuf(register FILE *fp);
+
 /* This function is called before main() to initialize the _iob[]. 
    The default version hooks the console to stdin/stdout/stderr. */
 extern void _iob_setup(void);

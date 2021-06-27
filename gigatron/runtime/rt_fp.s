@@ -37,7 +37,66 @@ def scope():
     # naming convention for exported symbols
     # '_@_xxxx' are the public api.
     # '__@xxxx' are private.
-    
+
+    # ==== common things
+
+    def code_fexception():
+        nohop()
+        label('__@fexception')   ### SIGFPE/exception
+        LDWI(0x304);_BRA('.raise')
+        label('__@foverflow')    ### SIGFPE/overflow
+        LDWI(0x204);
+        label('.raise')
+        STLW(-2);_LDI(0xffff);STW(AM);STW(AM+2);ST(AE)
+        LDLW(-2);_CALLI('_@_raisefpe')
+        label('.vspfpe',pc()+1)        
+        LDI(0)  # this instruction is patched by fsavevsp.
+        ST(vSP);POP();RET()
+
+    def code_fsavevsp():
+        nohop()
+        label('__@fsavevsp')
+        if args.cpu <= 5:
+            LDWI('.vspfpe');STW(T2)
+            LD(vSP);POKE(T2)
+        else:
+            LDWI('.vspfpe');POKEA(vSP)
+        RET()
+        
+    module(name='rt_fexception.s',
+           code=[ ('IMPORT', '_@_raisefpe'),
+                  ('EXPORT', '__@fexception'),
+                  ('EXPORT', '__@foverflow'),
+                  ('EXPORT', '__@fsavevsp'),
+                  ('CODE', '__@fexception', code_fexception),
+                  ('CODE', '__@fsavevsp', code_fsavevsp) ] )
+
+    def code_clrfac():
+        nohop()
+        label('_@_clrfac')
+        LDI(0);ST(AE);STW(AM);STW(AM+2);ST(AM+4);ST(AS)
+        RET()
+
+    module(name='rt_clrfac.s',
+           code=[ ('EXPORT', '_@_clrfac'),
+                  ('CODE', '_@_clrfac', code_clrfac) ] )
+
+    def code_fone():
+        label('_@_fone')
+        bytes(129,0,0,0,0) # 1.0F
+
+    module(name='rt_fone.s',
+           code=[ ('EXPORT', '_@_fone'),
+                  ('DATA', '_@_fone', code_fone, 5, 1) ] )
+
+    def code_fhalf():
+        label('_@_fhalf')
+        bytes(128,0,0,0,0) # 0.5F
+
+    module(name='rt_fhalf.s',
+           code=[ ('EXPORT', '_@_fhalf'),
+                  ('DATA', '_@_fhalf', code_fhalf, 5, 1) ] )
+
     # ==== Load/store
 
     def load_mantissa(ptr, mantissa):
@@ -128,68 +187,6 @@ def scope():
            code=[ ('EXPORT', '_@_fstfac'),
                   ('CODE', '_@_fstfac', code_fstfac) ] )
                 
-    # ==== common things
-
-    def code_fexception():
-        nohop()
-        label('__@fexception')   ### SIGFPE/exception
-        LDWI(0x304);_BRA('.raise')
-        label('__@foverflow')    ### SIGFPE/overflow
-        LDWI(0x204);
-        label('.raise')
-        STLW(-2);_LDI(0xffff);STW(AM);STW(AM+2);ST(AE)
-        LDLW(-2);_CALLI('_@_raisefpe')
-        label('.vspfpe',pc()+1)        
-        LDI(0)  # this instruction is patched by fsavevsp.
-        ST(vSP);POP();RET()
-
-    def code_fsavevsp():
-        nohop()
-        label('__@fsavevsp')
-        if args.cpu <= 5:
-            LDWI('.vspfpe');STW(T2)
-            LD(vSP);POKE(T2)
-        else:
-            LDWI('.vspfpe');POKEA(vSP)
-        RET()
-        
-    module(name='rt_fexception.s',
-           code=[ ('IMPORT', '_@_raisefpe'),
-                  ('EXPORT', '__@fexception'),
-                  ('EXPORT', '__@foverflow'),
-                  ('EXPORT', '__@fsavevsp'),
-                  ('CODE', '__@fexception', code_fexception),
-                  ('CODE', '__@fsavevsp', code_fsavevsp) ] )
-
-    def code_clrfac():
-        nohop()
-        label('_@_clrfac')
-        LDI(0);ST(AE);STW(AM);STW(AM+2);ST(AM+4);ST(AS)
-        RET()
-
-    module(name='rt_clrfac.s',
-           code=[ ('EXPORT', '_@_clrfac'),
-                  ('CODE', '_@_clrfac', code_clrfac) ] )
-
-    def code_fone():
-        label('_@_fone')
-        bytes(129,0,0,0,0) # 1.0F
-
-    module(name='rt_fone.s',
-           code=[ ('EXPORT', '_@_fone'),
-                  ('DATA', '_@_fone', code_fone, 5, 1) ] )
-
-    def code_fhalf():
-        label('_@_fhalf')
-        bytes(128,0,0,0,0) # 0.5F
-
-    module(name='rt_fhalf.s',
-           code=[ ('EXPORT', '_@_fhalf'),
-                  ('DATA', '_@_fhalf', code_fhalf, 5, 1) ] )
-
-
-    # ==== load FAC 
-
     # ==== shift left
 
     def macro_shl1(r, ext=True, ret=False):

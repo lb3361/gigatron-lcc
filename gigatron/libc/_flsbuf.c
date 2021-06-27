@@ -7,7 +7,7 @@
    - can allocate a buffer when none is provided.
    - checks for errors and end-of-file condition. */
 
-static int _default_flsbuf(register int c, register FILE *fp)
+int _default_flsbuf(register int c, register FILE *fp)
 {
 	register int flag = fp->_flag;
 	register int cnt = 0;

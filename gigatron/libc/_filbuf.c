@@ -8,7 +8,7 @@
    - checks for errors and end-of-file condition.
 */
 
-static int _default_filbuf(register FILE *fp)
+int _default_filbuf(register FILE *fp)
 {
 	register int flag = fp->_flag;
 	register int n = 0;

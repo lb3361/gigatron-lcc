@@ -119,7 +119,8 @@ def scope():
         nohop()
         label('_@_fldfac')
         STW(T3)
-        DEEK();ST(AE);LD(vACH);ANDI(0x80);ST(AS)
+        PEEK();ST(AE);
+        LDI(1);ADDW(T3);PEEK();ANDI(0x80);ST(AS)
         label('__@am40load')
         LDI(0);ST(AM+4)
         _PEEKV(T3);BEQ('.zero')

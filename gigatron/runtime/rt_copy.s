@@ -118,7 +118,24 @@ def scope():
            code=[ ('EXPORT', '_@_lcvi'),
                   ('CODE', '_@_lcvi', code5) ])
 
+    # The following are merely markers indicating that _LMOV or _FMOV
+    # is used somewhere. These are useful to decide whether to import
+    # printf support for longs or floats.
+    
+    def code_dummy():
+        label('_@_using_lmov', 1)
 
+    module(name='rt_lmov',
+           code=[('EXPORT', '_@_using_lmov'),
+                 ('DATA', '_@_using_lmov', code_dummy, 0, 1) ] )
+
+    def code_dummy():
+        label('_@_using_fmov', 1)
+
+    module(name='rt_fmov',
+           code=[('EXPORT', '_@_using_fmov'),
+                 ('DATA', '_@_using_fmov', code_dummy, 0, 1) ] )
+    
 scope()
 
 # Local Variables:

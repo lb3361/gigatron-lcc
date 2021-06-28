@@ -4,7 +4,8 @@
 /* This is the generic version of fp->_vec->filbuf.
    It is similar to cons_filbuf but:
    - can use arbitrary buffer or arbitrary size.
-   - can allocate a buffer when none is provided.
+   - can allocate a buffer when none is provided,
+     but only if malloc is otherwise linked.
    - checks for errors and end-of-file condition.
 */
 
@@ -17,13 +18,13 @@ int _default_filbuf(register FILE *fp)
 
 	/* Ensure buffer */
 	if ((flag & _IOFBF) && !fp->_base) {
-#if WITH_MALLOC
-		struct _sbuf *sb = malloc(BUFSIZ);
+		struct _sbuf *sb = 0;
+		if (__glink_weak_malloc)
+			sb = __glink_weak_malloc(BUFSIZ);
 		if ((fp->_base = sb)) {
 			sb->size = BUFSIZ - sizeof(sb) + 2;
 			flag = (flag | _IOMYBUF);
 		} else
-#endif
 			flag = (flag & ~_IOLBF) | _IONBF;
 		fp->_flag = flag;
 	}

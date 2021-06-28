@@ -176,7 +176,10 @@ def check_cpu(v):
         warning(f"opcode {stb[0].name} not implemented by cpu={args.cpu}", dedup=True)
 
 def resolve(s, ignore=None):
-    '''Resolve a global symbol and return its value or None'''
+    '''Resolve a global symbol and return its value or None.
+       Symbols named '__glink_weak_xxx' are weak references to 'xxx'.
+       They resolve to the value of 'xxx' if 'xxx' is defined,
+       and to zero otherwise.'''
     if s in exporters:
         exporter = exporters[s]
         if exporter != ignore:
@@ -186,6 +189,8 @@ def resolve(s, ignore=None):
                 error(f"module {exporter.fname} exports '{s}' but does not define it", dedup=True)
     if s in symdefs:
         return symdefs[s]
+    if s.startswith('__glink_weak_'):
+        return resolve(s[13:]) or 0
     return None
         
 class Module:
@@ -200,13 +205,17 @@ class Module:
         self.used = False
         self.exports = []
         self.imports = []
+        self.cimports = []
         self.symdefs = {}
         self.sympass = {}
         for tp in self.code:
             if tp[0] == 'EXPORT':
                 self.exports.append(tp[1])
-            elif tp[0] == 'IMPORT':
+            elif tp[0] == 'IMPORT' and len(tp) == 2:
                 self.imports.append(tp[1])
+            elif tp[0] == 'IMPORT' and len(tp) > 3 and tp[2] == 'IF':
+                self.cimports.append(tp)
+
     def __repr__(self):
         return f"Module('{self.fname or self.name}',...)"
     def label(self, sym, val):
@@ -463,9 +472,9 @@ def v(x):
         if x in the_module.symdefs:
             return the_module.symdefs[x]
     r = resolve(x)
-    if final_pass and not r:
+    if final_pass and r == None:
         error(f"undefined symbol '{x}'", dedup=True)
-    return r or Unk(0xDEAD)
+    return Unk(0xDEAD) if r == None else r
 @vasm
 def lo(x):
     return v(x) & 0xff
@@ -532,7 +541,7 @@ def label(sym, val=None, hop=None):
        one needs to hop to a new page before defining the label.'''
     tryhop(hop)
     if the_pass > 0:
-        the_module.label(sym, v(val) if val else the_pc)
+        the_module.label(sym, v(val) if val != None else the_pc)
 
 @vasm
 def ST(d):
@@ -1283,6 +1292,7 @@ def _LMOV(s,d):
     s = v(s)
     d = v(d)
     if s != d:
+        extern('_@_using_lmov')
         if is_zeropage(d, 3):
             if is_zeropage(s, 3):
                 LDWI(((d & 0xff) << 8) | (s & 0xff))
@@ -1401,6 +1411,7 @@ def _FMOV(s,d):
     s = v(s)
     d = v(d)
     if s != d:
+        extern('_@_using_fmov')
         if d == FAC:
             if s != [vAC]:
                 _LDI(s)
@@ -1687,10 +1698,19 @@ def measure_fragments(m):
     the_module = None
     the_fragment = None
 
+def check_conditional_import(tp):
+    if len(tp) < 3 or tp[2] != 'IF':
+        return False
+    for sym in tp[3:]:
+        if not sym in exporters:
+            return False
+    return True
+
 def compute_closure():
     global module_list, exporters
     # compute closure from start symbol
     implist = [ args.e ]
+    cimplist = []
     for sym in implist:
         if sym in exporters:
             pass
@@ -1720,8 +1740,16 @@ def compute_closure():
                     if sym not in exporters or exporters[sym].library:
                         exporters[sym] = e
                 measure_fragments(e)               # -- check all fragment code, compute missing lengths or exports
-                for sym in e.imports:
-                    implist.append(sym)            # -- add all its imports to the list of required imports
+                for sym in e.imports:              # -- add all its imports to the list of required imports
+                    implist.append(sym)
+                for tp in e.cimports:              # -- process conditional imports
+                    cimplist.append(tp)
+                if cimplist:
+                    for i in range(len(cimplist)-1, -1, -1):
+                        if check_conditional_import(cimplist[i]):
+                            implist.append(tp[i])
+                            del cimplist[i]
+                    
     # recompute module_list
     nml = []
     for m in module_list:

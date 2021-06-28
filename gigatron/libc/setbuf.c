@@ -7,7 +7,6 @@ void setbuf(FILE *fp, char *buf)
 	setvbuf(fp, buf, buf ? _IOFBF : _IONBF, BUFSIZ);
 }
 
-
 int setvbuf(FILE *fp, char *buf, int mode, size_t sz)
 {
 	register int flag;
@@ -24,10 +23,8 @@ int setvbuf(FILE *fp, char *buf, int mode, size_t sz)
 		goto einval;
 	if ((flag & _IORW) == _IORW)
 		goto enotsup;
-#if WITH_MALLOC
 	if ((flag & _IOMYBUF) && fp->_base)
-		free(fp->_base);
-#endif
+		__glink_weak_free(fp->_base);
 	flag = (flag & ~(_IOLBF|_IOMYBUF)) | mode;
 	fp->_base = 0;
 	if (buf && sz >= sizeof(struct _sbuf)) {

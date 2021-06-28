@@ -1664,7 +1664,7 @@ static void defstring(int n, char *str)
 
 static void import(Symbol p)
 {
-  if (p->ref > 0)
+  if (p->ref > 0 && strncmp(p->x.name, "'__glink_weak_", 14) != 0)
     lprint("('IMPORT', %s)", p->x.name);
 }
 

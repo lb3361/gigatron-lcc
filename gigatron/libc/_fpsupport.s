@@ -1,8 +1,4 @@
 
-# This module is inserted whenever fp is used.
-# This (will be) used to trigger the inclusion of
-# the bulky printf/scanf code that supports floats.
-
 def scope():
 
     def code0():

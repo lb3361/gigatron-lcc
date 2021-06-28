@@ -30,8 +30,8 @@ def scope():
             _CALLJ('__@divworker')
 
         def code0():
+            nohop()
             label('__@divworker')
-            PUSH()
             LDI(0);STW(RV);ST(MV)
             label('.div0')
             LDW(XV);_BGE('.div1')
@@ -45,7 +45,7 @@ def scope():
             STW(RV);INC(XV)
             label('.div3')
             INC(MV);LD(MV);XORI(16);_BNE('.div0')
-            tryhop(2);POP();RET()
+            RET()
 
         module(name='rt_divworker.s',
                code=[ ('CODE', '__@divworker', code0),

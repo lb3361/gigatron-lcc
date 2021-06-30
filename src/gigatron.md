@@ -87,7 +87,7 @@ static int  if_zpconst(Node);
 static int  if_zpglobal(Node);
 static int  if_rmw1(Node,int);
 static int  if_rmw2(Node,int);
-static int  if_vregp_not_temp(Node);
+static int  if_not_asgn_tmp(Node,int);
 static int  if_cv_from(Node,int,int);
 static int  if_arg_reg_only(Node);
 static int  if_arg_stk(Node);
@@ -450,8 +450,6 @@ ac: SUBU2(ac,conBn) "%0ADDI(-(%1));" 27
 ac: SUBP2(ac,conBn) "%0ADDI(-(%1));" 27
 ac: NEGI2(ac)       "%0STW(T3);LDI(0);SUBW(T3);" 68
 ac: NEGI2(reg)      "LDI(0);SUBW(%0);" 48
-ac: NEGI2(ac)       "%0NEGW(vAC);" mincpu6(26)
-ac: NEGI2(reg)      "LDW(%0);NEGW(vAC);" mincpu6(46)
 ac: LSHI2(ac, con1) "%0LSLW();" 28
 ac: LSHU2(ac, con1) "%0LSLW();" 28
 ac: LSHI2(ac, conB) "%0_SHLI(%1);" 100
@@ -518,7 +516,7 @@ eac: SUBP2(eac,conBn) "%0ADDI(-(%1));" 28
 eac: LSHI2(eac, conB) "%0%{shl1}" 100
 eac: LSHU2(eac, conB) "%0%{shl1}" 100
 
-# Indirect assignments
+# More assignments (indirect and explicit addresses)
 stmt: ASGNP2(zddr,ac)  "\t%1STW(%0);\n" 20
 stmt: ASGNP2(iarg,ac)  "\t%1%[0b]DOKE(%0);\n" 28
 stmt: ASGNI2(zddr,ac)  "\t%1STW(%0);\n" 20
@@ -819,23 +817,53 @@ stmt: ASGNI2(ac,iarg)  "\t%0%[1b]DOKEA(%1);\n" mincpu6(30)
 stmt: ASGNU2(ac,iarg)  "\t%0%[1b]DOKEA(%1);\n" mincpu6(30)
 stmt: ASGNI1(ac,iarg)  "\t%0%[1b]POKEA(%1);\n" mincpu6(28)
 stmt: ASGNU1(ac,iarg)  "\t%0%[1b]POKEA(%1);\n" mincpu6(28)
-stmt: ASGNP2(ac,con)  "\t%0%[1b]DOKEI(%1);\n" mincpu6(30)
-stmt: ASGNI2(ac,con)  "\t%0%[1b]DOKEI(%1);\n" mincpu6(30)
-stmt: ASGNU2(ac,con)  "\t%0%[1b]DOKEI(%1);\n" mincpu6(30)
-stmt: ASGNI1(ac,conB) "\t%0%[1b]POKEI(%1);\n" mincpu6(28)
-stmt: ASGNI1(ac,conBs) "\t%0%[1b]POKEI(%1);\n" mincpu6(28)
-stmt: ASGNU1(ac,conB) "\t%0%[1b]POKEI(%1);\n" mincpu6(28)
+stmt: ASGNP2(ac,con)   "\t%0%[1b]DOKEI(%1);\n" mincpu6(29)
+stmt: ASGNI2(ac,con)   "\t%0%[1b]DOKEI(%1);\n" mincpu6(29)
+stmt: ASGNU2(ac,con)   "\t%0%[1b]DOKEI(%1);\n" mincpu6(29)
+stmt: ASGNI1(ac,conB)  "\t%0%[1b]POKEI(%1);\n" mincpu6(27)
+stmt: ASGNI1(ac,conBs) "\t%0%[1b]POKEI(%1);\n" mincpu6(27)
+stmt: ASGNU1(ac,conB)  "\t%0%[1b]POKEI(%1);\n" mincpu6(28)
+stmt: ASGNP2(addr,ac)  "\t%1STW2(%0);\n" mincpu6(26+28)
+stmt: ASGNI2(addr,ac)  "\t%1STW2(%0);\n" mincpu6(26+28)
+stmt: ASGNU2(addr,ac)  "\t%1STW2(%0);\n" mincpu6(26+28)
+stmt: ASGNI1(addr,ac)  "\t%1ST2(%0);\n" mincpu6(26+26)
+stmt: ASGNU1(addr,ac)  "\t%1ST2(%0);\n" mincpu6(26+26)
 reg: INDIRI2(ac) "\t%{#canVAC}%0%{dst!=vAC:DEEKA(%c)}%{dst==vAC:DEEK()};\n" mincpu6(30)
 reg: INDIRU2(ac) "\t%{#canVAC}%0%{dst!=vAC:DEEKA(%c)}%{dst==vAC:DEEK()};\n" mincpu6(30)
 reg: INDIRP2(ac) "\t%{#canVAC}%0%{dst!=vAC:DEEKA(%c)}%{dst==vAC:DEEK()};\n" mincpu6(30)
+reg: INDIRI1(ac) "\t%{#canVAC}%0%{dst!=vAC:PEEKA(%c)}%{dst==vAC:PEEK()};\n" mincpu6(28)
+reg: INDIRU1(ac) "\t%{#canVAC}%0%{dst!=vAC:PEEKA(%c)}%{dst==vAC:PEEK()};\n" mincpu6(28)
 ac: INDIRI2(reg) "%{src!=vAC:DEEKV(%0)}%{src==vAC:DEEK()};" mincpu6(30)
 ac: INDIRU2(reg) "%{src!=vAC:DEEKV(%0)}%{src==vAC:DEEK()};" mincpu6(30)
 ac: INDIRP2(reg) "%{src!=vAC:DEEKV(%0)}%{src==vAC:DEEK()};" mincpu6(30)
 ac: INDIRI1(reg) "%{src!=vAC:PEEKV(%0)}%{src==vAC:PEEK()};" mincpu6(30)
 ac: INDIRU1(reg) "%{src!=vAC:PEEKV(%0)}%{src==vAC:PEEK()};" mincpu6(30)
+ac: ADDI2(ac,con) "%0ADDWI(%1);" mincpu6(26+27)
+ac: ADDU2(ac,con) "%0ADDWI(%1);" mincpu6(26+27)
+ac: ADDP2(ac,con) "%0ADDWI(%1);" mincpu6(26+27)
+ac: SUBI2(ac,con) "%0SUBWI(%1);" mincpu6(26+27)
+ac: SUBU2(ac,con) "%0SUBWI(%1);" mincpu6(26+27)
+ac: SUBP2(ac,con) "%0SUBWI(%1);" mincpu6(26+27)
+ac: BANDI2(ac,con) "%0ANDWI(%1);" mincpu6(26+25)
+ac: BANDU2(ac,con) "%0ANDWI(%1);" mincpu6(26+25)
+ac: BORI2(ac,con)  "%0ORWI(%1);" mincpu6(26+21)
+ac: BORU2(ac,con)  "%0ORWI(%1);" mincpu6(26+21)
+ac: BXORI2(ac,con) "%0XORWI(%1);" mincpu6(26+21)
+ac: BXORU2(ac,con) "%0XORWI(%1);" mincpu6(26+21)
+ac: BANDI2(reg,conB) "ANDBK(%0,%1);" mincpu6(25)
+ac: BANDU2(reg,conB) "ANDBK(%0,%1);" mincpu6(25)
+ac: BORI2(reg,conB) "ORBK(%0,%1);" mincpu6(21)
+ac: BORU2(reg,conB) "ORBK(%0,%1);" mincpu6(21)
+ac: BXORI2(reg,conB) "XORBK(%0,%1);" mincpu6(21)
+ac: BXORU2(reg,conB) "XORBK(%0,%1);" mincpu6(21)
+ac: NEGI2(ac)  "%0NEGW(vAC);" mincpu6(26)
+ac: NEGI2(reg) "LDW(%0);NEGW(vAC);" mincpu6(46)
+ac: ADDI2(ac,CVUI2(iarg)) "%0ADDBA(%1);" mincpu6(28)
+ac: ADDU2(ac,CVUI2(iarg)) "%0ADDBA(%1);" mincpu6(28)
+ac: SUBU2(ac,CVUI2(iarg)) "%0SUBBA(%1);" mincpu6(28)
+ac: SUBI2(ac,CVUI2(iarg)) "%0SUBBA(%1);" mincpu6(28)
 
 # Read-modify-write
-
 rmw: VREGP "%a"
 rmw: zddr "%0"
 stmt: ASGNU1(rmw, LOADU1(ADDI2(CVUI2(INDIRU1(rmw)), con1))) "\tINC(%0);\n" if_rmw1(a,16) 
@@ -858,6 +886,12 @@ stmt: ASGNU2(rmw, BCOMU2(INDIRU2(rmw))) "\tNOTW(%0);\n" mincpu6(if_rmw2(a, 26))
 stmt: ASGNI2(rmw, LSHI2(INDIRI2(rmw),con1)) "\tLSLV(%0);\n" mincpu6(if_rmw2(a, 28))
 stmt: ASGNU2(rmw, LSHU2(INDIRU2(rmw),con1)) "\tLSLV(%0);\n" mincpu6(if_rmw2(a, 28))
 
+# broken
+# stmt: ASGNI2(rmw, conB) "\tMOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
+# stmt: ASGNU2(rmw, conB) "\tMOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
+# stmt: ASGNP2(rmw, conB) "\tMOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
+# stmt: ASGNI1(rmw, conB) "\tMOVQ(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,27))
+# stmt: ASGNU1(rmw, conB) "\tMOVQ(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,27))
 
 
 
@@ -999,6 +1033,18 @@ static int if_rmw2(Node p, int cost)
         return cost;
     }
   return LBURG_MAX;
+}
+
+static int if_not_asgn_tmp(Node p, int cost)
+{
+  Node n;
+  assert(p);
+  assert(generic(p->op) == ASGN);
+  assert(p->kids[0]);
+  n = p->kids[0];
+  if (n->syms[RX] && n->syms[RX]->temporary)
+    return LBURG_MAX;
+  return cost;
 }
 
 static int if_cv_from(Node p, int sz, int cost)

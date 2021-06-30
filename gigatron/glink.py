@@ -537,9 +537,10 @@ def space(d):
 @vasm
 def label(sym, val=None, hop=None):
     '''Define label `sym' to the value of PC or to `val'.
-       Unless `hop` is False, this function checks whether 
+       Unless `hop` is 0, this function checks whether a
        one needs to hop to a new page before defining the label.'''
-    tryhop(hop)
+    if hop != 0:
+        tryhop(hop)
     if the_pass > 0:
         the_module.label(sym, v(val) if val != None else the_pc)
 

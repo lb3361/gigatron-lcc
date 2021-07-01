@@ -6,6 +6,8 @@ def code0():
     label('_start');
     # save vLR, vSP
     PUSH();LDWI('_exitvsp');STW(T3);LD(vSP);POKE(T3)
+    # create stack headroom for argc and argv
+    LDWI(-4);ADDW(SP);STW(SP)
     # call init chain
     LDWI('__glink_magic_init'); _CALLI('_callchain')
     # call main

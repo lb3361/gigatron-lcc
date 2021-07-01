@@ -10,6 +10,7 @@ LN_S=ln -s
 B=${TOP}${BUILDDIR}/
 G=${TOP}gigatron/
 GTSIM_CFLAGS=-g -O3
+GLCC=${B}glcc
 
 MAPDIR=mapsim
 

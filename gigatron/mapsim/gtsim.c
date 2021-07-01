@@ -5,6 +5,21 @@
 #include <string.h>
 #include <time.h>
 #include <math.h>
+#include <errno.h>
+
+#ifndef WIN32
+# include <unistd.h>
+#else
+# include <io.h>
+# include <fcntl.h>
+# define read _read
+# define write _write
+# define lseek _lseek
+# define close _close
+# define fileno _fileno
+# warning "Untested"
+#endif
+
 
 typedef struct cpustate_s CpuState;
 
@@ -16,6 +31,7 @@ char *gt1 = 0;
 int nogt1 = 0;
 const char *trace = 0;
 int verbose = 0;
+int okopen = 0;
 int vmode = 1975;
 
 void debug(const char *fmt, ...)
@@ -177,38 +193,43 @@ typedef int8_t    sbyte;
 typedef int32_t   squad;
 
 word peek(word a) {
-  return RAM[a];
+  return RAM[a & 0xffff];
 }
 
 void poke(word a, quad x) {
-  RAM[a] = (x & 0xff);
+  RAM[a & 0xffff] = (x & 0xff);
 }
 
 word deek(word a) {
   if ((a & 0xff) > 0xfe)
     fprintf(stderr, "(gtsim) deek crosses page boundary\n");
-  return (word)RAM[a]|(word)(RAM[a+1]<<8);
+  return (word)RAM[a & 0xffff] | (word)(RAM[(a+1) & 0xffff] << 8);
 }
 
 void doke(word a, quad x) {
   if ((a & 0xff) > 0xfe)
     fprintf(stderr, "(gtsim) doke crosses page boundary\n");
-  RAM[a] = (x & 0xff);
-  RAM[a+1] = ((x >> 8) & 0xff);
+  RAM[a & 0xffff] = (x & 0xff);
+  RAM[(a+1) & 0xffff] = ((x >> 8) & 0xff);
 }
 
 quad leek(word a) {
-  if ((a & 0xff) > 0xfc)
+  if ((a & 0xff) > 0xfe)
     fprintf(stderr, "(gtsim) leek crosses page boundary\n");
-  return ((quad)RAM[a] | ((quad)RAM[a+1]<<8) |
-          ((quad)RAM[a+2]<<16) | ((quad)RAM[a+3]<<24) );
+  return ((quad)RAM[a & 0xffff] | ((quad)RAM[(a+1) & 0xffff]<<8) |
+          ((quad)RAM[(a+2) & 0xffff]<<16) | ((quad)RAM[(a+3) & 0xffff]<<24) );
+}
+
+void loke(word a, quad x) {
+  doke(a, x & 0xffff);
+  doke(a+2, (x>>16) & 0xffff);
 }
 
 double feek(word a) {
-  double sign = (RAM[a+1] & 0x80) ? -1 : +1;
-  int exp = RAM[a];
-  quad mant = ((quad)RAM[a+4] | ((quad)RAM[a+3]<<8) |
-               ((quad)RAM[a+2]<<16) | ((quad)(RAM[a+1]|0x80)<<24) );
+  double sign = (RAM[(a+1) & 0xffff] & 0x80) ? -1 : +1;
+  int exp = RAM[a & 0xffff];
+  quad mant = ((quad)RAM[(a+4) & 0xffff] | ((quad)RAM[(a+3) & 0xffff]<<8) |
+               ((quad)RAM[(a+2) & 0xffff]<<16) | ((quad)(RAM[(a+1) & 0xffff]|0x80)<<24) );
   if (exp)
     return sign * scalb((double)mant/0x100000000UL, (double)(exp-128));
   else
@@ -228,6 +249,8 @@ double feek(word a) {
 #define R8        (0x90+16)
 #define R9        (0x90+18)
 #define R10       (0x90+20)
+#define R11       (0x90+22)
+#define R12       (0x90+24)
 #define SP        (0x90+46)
 
 #define addlo(a,i)  (((a)&0xff00)|(((a)+i)&0xff))
@@ -304,6 +327,9 @@ word loadGt1(const char *gt1)
   fatal("Premature EOF in GT1 file '%s'\n", gt1);
 }
 
+
+/* LIBSIM calls */
+
 void sys_exit(void)
 {
   if (deek(R9))
@@ -368,12 +394,146 @@ void sys_printf(void)
       fmt += 1;
       n += 1;
     }
-  if (trace)
-    fflush(NULL);
-  // return value
+  fflush(stdout);
   doke(vAC, n);
 }
 
+/* LIBSIM stdio forwarding */
+
+/* Offsets in _iobuf structure (see stdio.h) */
+#define G_IOBUF_FLAG_OFFSET 4
+#define G_IOBUF_FILE_OFFSET 6
+
+/* Error codes (see errno.h) */
+#define G_EINVAL    3
+#define G_ENOENT    4
+#define G_EIO       8
+#define G_EPERM     9
+#define G_ENOTSUP  10
+
+void sys_io_write(void)
+{
+  int flg = deek(deek(R8) + G_IOBUF_FLAG_OFFSET);
+  int fd = deek(deek(R8) + G_IOBUF_FILE_OFFSET);
+  int buf = deek(R9);
+  int cnt = deek(R10);
+  int ret = 0;
+  int err = 0;
+  /* Validate */
+  if (fd < 0 || (flg & 2) == 0)
+    err = G_EINVAL;
+  if (buf + cnt >= 0x10000)
+    cnt = 0x10000 - buf;
+  if (cnt < 0)
+    err = G_EINVAL;
+  /* Write */
+  if (err == 0) {
+    if (fd <= 2)
+      fflush(stdout);
+    if ((ret = write(fd, RAM+buf, cnt)) <= 0)
+      err = G_EIO;
+  }
+  if (err) {
+    doke(deek(sysArgs0), err);
+    doke(vAC, -1);
+  } else {
+    doke(vAC, ret);
+  }
+  return;
+}
+
+void sys_io_read(void)
+{
+  int flg = deek(deek(R8) + G_IOBUF_FLAG_OFFSET);
+  int fd = deek(deek(R8) + G_IOBUF_FILE_OFFSET);
+  int buf = deek(R9);
+  int cnt = deek(R10);
+  int ret = 0;
+  int err = 0;
+  /* Validate */
+  if (fd < 0 || (flg & 1) == 0)
+    err = EINVAL;
+  if (buf + cnt >= 0x10000)
+    cnt = 0x10000 - buf;
+  if (cnt < 0)
+    err = G_EINVAL;
+  /* READ */
+  if (err == 0) {
+    if (fd <= 2)
+      fflush(stdout);
+    if ((ret = read(fd, RAM+buf, cnt)) < 0)
+      err = G_EIO;
+  }
+  /* Return */
+  if (err) {
+    doke(deek(sysArgs0), err);
+    doke(vAC, -1);
+  } else {
+    doke(vAC, ret);
+  }
+}
+
+void sys_io_lseek(void)
+{
+  int flg = deek(deek(R8) + G_IOBUF_FLAG_OFFSET);
+  int fd = deek(deek(R8) + G_IOBUF_FILE_OFFSET);
+  off_t off = leek(R9);
+  int whence = deek(R11);
+  int err = 0;
+  /* Validate */
+  if (fd < 0 || flg == 0)
+    err = G_EINVAL;
+  if (whence == 0)
+    whence = SEEK_SET;
+  else if (whence == 2)
+    whence = SEEK_END;
+  else if (whence == 1)
+    whence = SEEK_CUR;
+  else
+    err = G_EINVAL;
+  /* Seek */
+  if (err == 0) {
+    off = lseek(fd, off, whence);
+    if (off = (off_t)-1) {
+      err = G_ENOTSUP;
+      if (errno == EINVAL)
+        err = G_EINVAL;
+    }
+  }
+  /* Return */
+  if (err) {
+    doke(deek(sysArgs0), err);
+    loke(vAC, -1);
+  } else {
+    loke(vAC, (long)off);
+  }
+}
+
+void sys_io_close(void)
+{
+  int flg = deek(deek(R8) + G_IOBUF_FLAG_OFFSET);
+  int fd = deek(deek(R8) + G_IOBUF_FILE_OFFSET);
+  int err = 0;
+  /* Validate */
+  if (fd < 0 || flg == 0)
+    err = G_EINVAL;
+  /* Close */
+  if (close(fd) < 0 && err == 0)
+    err = G_EIO;
+  /* Return */
+  if (err) {
+    doke(deek(sysArgs0), err);
+    doke(vAC, -1);
+  } else {
+    doke(vAC, 0);
+  }
+}
+
+void sys_io_open(void)
+{
+  doke(vAC, G_ENOTSUP);
+  return;
+}
 
 void sys_0x3b4(CpuState *S)
 {
@@ -385,6 +545,11 @@ void sys_0x3b4(CpuState *S)
         {
         case 0xff00: sys_exit(); break;
         case 0xff01: sys_printf(); break;
+        case 0xff02: sys_io_write(); break;
+        case 0xff03: sys_io_read(); break;
+        case 0xff04: sys_io_lseek(); break;
+        case 0xff05: sys_io_close(); break;
+        case 0xff06: sys_io_open(); break;
         default: fprintf(stderr,"(gtsim) unimplemented SysFn=%#x\n", sysFn); break;
         }
       /* Return with no action and proper timing */
@@ -694,6 +859,7 @@ void usage(int exitcode)
             "Options:\n"
             "  -v: print debug messages\n"
             "  -t: trace VCPU execution\n"
+            "  -f: enable file system access\n"
             "  -nogt1: do not override main menu and run forever\n"
             "  -vmode vv: set video mode 0,1,2,3,1975\n");
     
@@ -725,6 +891,10 @@ int main(int argc, char *argv[])
       else if (! strncmp(argv[i],"-t", 2))
         {
           trace = argv[i]+2;
+        }
+      else if (! strcmp(argv[i],"-f"))
+        {
+          okopen = 1;
         }
       else if (! strcmp(argv[i],"-rom"))
         {

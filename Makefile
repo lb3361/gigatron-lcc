@@ -136,8 +136,7 @@ ${B}tst/%.gt1: tst/%.c FORCE
 	${GLCC} -map=sim -rom=${ROM} -o $@ $< 2>"${B}tst/$(*F).xx2"
 
 ${B}tst/%.xx1: ${B}tst/%.gt1 FORCE
-	@echo "${GTSIMR} $< >$@"
-	@m="tst/$(*F).0"; test -r "$m" && ${GTSIMR} $< > "$@" < "$m" || ${GTSIMR} $< > "$@"
+	${GTSIMR} $< > "$@" < "tst/$(*F).0"
 	cmp $@ ${G}tst/$(*F).1bk
 
 

@@ -21,13 +21,13 @@ O5FILES=${patsubst %.c,${B}%_5.o,${CFILES}}
 O6FILES=${patsubst %.c,${B}%_6.o,${CFILES}}
 OFILES=${O4FILES} ${O5FILES} ${O6FILES}
 
-all: ${B}${MAPDIR}/map.py ${B}${MAPDIR}/libconx.a
+all: ${B}${MAPDIR}/map.py ${B}${MAPDIR}/${LIBNAME}.a
 
 ${B}${MAPDIR}/map.py: map.py
 	-mkdir -p ${B}${MAPDIR}
 	cp map.py $@
 
-${B}${MAPDIR}/libconx.a: ${SFILES} ${O4FILES} ${O5FILES} ${O6FILES}
+${B}${MAPDIR}/${LIBNAME}.a: ${SFILES} ${O4FILES} ${O5FILES} ${O6FILES}
 	cat $+ > $@
 
 ${B}${LIBNAME}/%_4.o: ${LIBNAME}/%.c ${B}rcc
@@ -43,14 +43,14 @@ ${B}${LIBNAME}/%_6.o: ${LIBNAME}/%.c ${B}rcc
 	${GLCC} -c -cpu=6 -o $@  $<
 
 clean: FORCE
-	-rm -rf ${B}${MAPDIR}/map.py ${B}${MAPDIR}/libconx.a
+	-rm -rf ${B}${MAPDIR}/map.py ${B}${MAPDIR}/${LIBNAME}.a
 	-rm ${OFILES}
 	-rmdif ${B}${LIBNAME}
 	-rmdir ${B}${MAPDIR}
 
 install: FORCE
 	-${INSTALL} -d "${libdir}/${MAPDIR}"
-	${INSTALL} -m 0644 "${B}${MAPDIR}/libconx.a" "${libdir}/${MAPDIR}/"
+	${INSTALL} -m 0644 "${B}${MAPDIR}/${LIBNAME}.a" "${libdir}/${MAPDIR}/"
 	${INSTALL} -m 0644 "${B}${MAPDIR}/map.py" "${libdir}/${MAPDIR}/"
 
 test: FORCE

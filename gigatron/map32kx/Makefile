@@ -28,6 +28,7 @@ ${B}${MAPDIR}/map.py: map.py
 	cp map.py $@
 
 ${B}${MAPDIR}/${LIBNAME}.a: ${SFILES} ${O4FILES} ${O5FILES} ${O6FILES}
+	-mkdir -p ${B}${MAPDIR}
 	cat $+ > $@
 
 ${B}${LIBNAME}/%_4.o: ${LIBNAME}/%.c ${B}rcc

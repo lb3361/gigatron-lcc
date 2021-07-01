@@ -85,13 +85,16 @@ static void xprint_finish(void);
 /* Cost functions */
 static int  if_zpconst(Node);
 static int  if_zpglobal(Node);
-static int  if_rmw1(Node,int);
-static int  if_rmw2(Node,int);
+static int  if_rmw(Node,int);
 static int  if_not_asgn_tmp(Node,int);
 static int  if_cv_from(Node,int,int);
 static int  if_arg_reg_only(Node);
 static int  if_arg_stk(Node);
- 
+
+#define mincpu5(cost) ((cpu<5)?LBURG_MAX:(cost))
+#define mincpu6(cost) ((cpu<6)?LBURG_MAX:(cost))
+#define if_spill(cost) ((spilling)?cost:LBURG_MAX)
+
 /* Registers */
 static Symbol ireg[32], lreg[32], freg[32];
 static Symbol iregw, lregw, fregw;
@@ -106,9 +109,6 @@ static int codenum = 0;
 static int cseg = 0;
 static int cpu = 5;
 
-#define mincpu5(cost) ((cpu<5)?LBURG_MAX:(cost))
-#define mincpu6(cost) ((cpu<6)?LBURG_MAX:(cost))
-#define ifspill(cost) ((spilling)?cost:LBURG_MAX)
 
 /*---- END HEADER --*/
 %}
@@ -418,7 +418,7 @@ iarg: INDIRI2(zddr) "%0"
 iarg: INDIRU2(zddr) "%0"
 iarg: INDIRP2(zddr) "%0"
 
-spill: ADDRLP2 "_SP(%a+%F);" ifspill(50)
+spill: ADDRLP2 "_SP(%a+%F);" if_spill(50)
 spill: INDIRI2(spill) "%0DEEK();" 21
 spill: INDIRU2(spill) "%0DEEK();" 21
 spill: INDIRP2(spill) "%0DEEK();" 21
@@ -866,32 +866,31 @@ ac: SUBI2(ac,CVUI2(iarg)) "%0SUBBA(%1);" mincpu6(28)
 # Read-modify-write
 rmw: VREGP "%a"
 rmw: zddr "%0"
-stmt: ASGNU1(rmw, LOADU1(ADDI2(CVUI2(INDIRU1(rmw)), con1))) "\tINC(%0);\n" if_rmw1(a,16) 
-stmt: ASGNI1(rmw, LOADI1(ADDI2(CVII2(INDIRI1(rmw)), con1))) "\tINC(%0);\n" if_rmw1(a,16) 
-stmt: ASGNU1(rmw, LOADU1(SUBI2(CVUI2(INDIRU1(rmw)), con1))) "\tDEC(%0);\n" mincpu6(if_rmw1(a,16))
-stmt: ASGNI1(rmw, LOADI1(SUBI2(CVII2(INDIRI1(rmw)), con1))) "\tDEC(%0);\n" mincpu6(if_rmw1(a,16))
-stmt: ASGNP2(rmw, ADDP2(INDIRP2(rmw), con1)) "\tINCW(%0);\n" mincpu6(if_rmw2(a, 26))
-stmt: ASGNP2(rmw, ADDP2(INDIRP2(rmw), con1)) "\tINCW(%0);\n" mincpu6(if_rmw2(a, 26))
-stmt: ASGNU2(rmw, ADDU2(INDIRU2(rmw), con1)) "\tINCW(%0);\n" mincpu6(if_rmw2(a, 26))
-stmt: ASGNI2(rmw, ADDI2(INDIRI2(rmw), con1)) "\tINCW(%0);\n" mincpu6(if_rmw2(a, 26))
-stmt: ASGNP2(rmw, SUBP2(INDIRP2(rmw), con1)) "\tDECW(%0);\n" mincpu6(if_rmw2(a, 26))
-stmt: ASGNU2(rmw, SUBU2(INDIRU2(rmw), con1)) "\tDECW(%0);\n" mincpu6(if_rmw2(a, 26))
-stmt: ASGNI2(rmw, SUBI2(INDIRI2(rmw), con1)) "\tDECW(%0);\n" mincpu6(if_rmw2(a, 26))
-stmt: ASGNP2(rmw, ADDP2(INDIRP2(rmw), con1n)) "\tDECW(%0);\n" mincpu6(if_rmw2(a, 26))
-stmt: ASGNU2(rmw, ADDU2(INDIRU2(rmw), con1n)) "\tDECW(%0);\n" mincpu6(if_rmw2(a, 26))
-stmt: ASGNI2(rmw, ADDI2(INDIRI2(rmw), con1n)) "\tDECW(%0);\n" mincpu6(if_rmw2(a, 26))
-stmt: ASGNI2(rmw, NEGI2(INDIRI2(rmw))) "\tNEGW(%0);\n" mincpu6(if_rmw2(a, 26))
-stmt: ASGNI2(rmw, BCOMI2(INDIRI2(rmw))) "\tNOTW(%0);\n" mincpu6(if_rmw2(a, 26))
-stmt: ASGNU2(rmw, BCOMU2(INDIRU2(rmw))) "\tNOTW(%0);\n" mincpu6(if_rmw2(a, 26))
-stmt: ASGNI2(rmw, LSHI2(INDIRI2(rmw),con1)) "\tLSLV(%0);\n" mincpu6(if_rmw2(a, 28))
-stmt: ASGNU2(rmw, LSHU2(INDIRU2(rmw),con1)) "\tLSLV(%0);\n" mincpu6(if_rmw2(a, 28))
+stmt: ASGNU1(rmw, LOADU1(ADDI2(CVUI2(INDIRU1(rmw)), con1))) "\tINC(%0);\n" if_rmw(a,16) 
+stmt: ASGNI1(rmw, LOADI1(ADDI2(CVII2(INDIRI1(rmw)), con1))) "\tINC(%0);\n" if_rmw(a,16) 
+stmt: ASGNU1(rmw, LOADU1(SUBI2(CVUI2(INDIRU1(rmw)), con1))) "\tDEC(%0);\n" mincpu6(if_rmw(a,16))
+stmt: ASGNI1(rmw, LOADI1(SUBI2(CVII2(INDIRI1(rmw)), con1))) "\tDEC(%0);\n" mincpu6(if_rmw(a,16))
+stmt: ASGNP2(rmw, ADDP2(INDIRP2(rmw), con1)) "\tINCW(%0);\n" mincpu6(if_rmw(a, 26))
+stmt: ASGNP2(rmw, ADDP2(INDIRP2(rmw), con1)) "\tINCW(%0);\n" mincpu6(if_rmw(a, 26))
+stmt: ASGNU2(rmw, ADDU2(INDIRU2(rmw), con1)) "\tINCW(%0);\n" mincpu6(if_rmw(a, 26))
+stmt: ASGNI2(rmw, ADDI2(INDIRI2(rmw), con1)) "\tINCW(%0);\n" mincpu6(if_rmw(a, 26))
+stmt: ASGNP2(rmw, SUBP2(INDIRP2(rmw), con1)) "\tDECW(%0);\n" mincpu6(if_rmw(a, 26))
+stmt: ASGNU2(rmw, SUBU2(INDIRU2(rmw), con1)) "\tDECW(%0);\n" mincpu6(if_rmw(a, 26))
+stmt: ASGNI2(rmw, SUBI2(INDIRI2(rmw), con1)) "\tDECW(%0);\n" mincpu6(if_rmw(a, 26))
+stmt: ASGNP2(rmw, ADDP2(INDIRP2(rmw), con1n)) "\tDECW(%0);\n" mincpu6(if_rmw(a, 26))
+stmt: ASGNU2(rmw, ADDU2(INDIRU2(rmw), con1n)) "\tDECW(%0);\n" mincpu6(if_rmw(a, 26))
+stmt: ASGNI2(rmw, ADDI2(INDIRI2(rmw), con1n)) "\tDECW(%0);\n" mincpu6(if_rmw(a, 26))
+stmt: ASGNI2(rmw, NEGI2(INDIRI2(rmw))) "\tNEGW(%0);\n" mincpu6(if_rmw(a, 26))
+stmt: ASGNI2(rmw, BCOMI2(INDIRI2(rmw))) "\tNOTW(%0);\n" mincpu6(if_rmw(a, 26))
+stmt: ASGNU2(rmw, BCOMU2(INDIRU2(rmw))) "\tNOTW(%0);\n" mincpu6(if_rmw(a, 26))
+stmt: ASGNI2(rmw, LSHI2(INDIRI2(rmw),con1)) "\tLSLV(%0);\n" mincpu6(if_rmw(a, 28))
+stmt: ASGNU2(rmw, LSHU2(INDIRU2(rmw),con1)) "\tLSLV(%0);\n" mincpu6(if_rmw(a, 28))
 
-# broken
-# stmt: ASGNI2(rmw, conB) "\tMOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
-# stmt: ASGNU2(rmw, conB) "\tMOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
-# stmt: ASGNP2(rmw, conB) "\tMOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
-# stmt: ASGNI1(rmw, conB) "\tMOVQ(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,27))
-# stmt: ASGNU1(rmw, conB) "\tMOVQ(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,27))
+stmt: ASGNI2(rmw, conB) "\tMOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
+stmt: ASGNU2(rmw, conB) "\tMOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
+stmt: ASGNP2(rmw, conB) "\tMOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
+stmt: ASGNI1(rmw, conB) "\tMOVQ(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,27))
+stmt: ASGNU1(rmw, conB) "\tMOVQ(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,27))
 
 
 
@@ -991,45 +990,29 @@ static int sametree(Node p, Node q) {
     && sametree(p->kids[1], q->kids[1]);
 }
 
-static int if_rmw1(Node p, int cost)
+static int if_rmw(Node a, int cost)
 {
-  Node n;
-  assert(p);
-  assert(generic(p->op) == ASGN);
-  assert(p->kids[0]);
-  assert(p->kids[1]);
-  n = p->kids[1]->kids[0]->kids[0]->kids[0];
-  assert(generic(n->op) == INDIR);
-  if (sametree(p->kids[0], n->kids[0]))
-    return cost;
-  if (n->syms[RX]->temporary && n->syms[RX]->generated && n->syms[RX]->u.t.cse)
+  Node r;
+  assert(a);
+  assert(generic(a->op) == ASGN);
+  assert(a->kids[0]);
+  assert(a->kids[1]);
+  r = a->kids[1];
+  while (generic(r->op) != INDIR)
     {
-      n = n->syms[RX]->u.t.cse;
-      if (generic(n->op) == LOAD)
-        n = n->kids[0];
-      if (generic(n->op) == INDIR && sametree(p->kids[0], n->kids[0]))
-        return cost;
+      if (r->kids[0])
+        r = r->kids[0];
+      else
+        return LBURG_MAX;
     }
-  return LBURG_MAX;
-}
-
-static int if_rmw2(Node p, int cost)
-{
-  Node n;
-  assert(p);
-  assert(generic(p->op) == ASGN);
-  assert(p->kids[0]);
-  assert(p->kids[1]);
-  n = p->kids[1]->kids[0];
-  assert(generic(n->op) == INDIR);
-  if (sametree(p->kids[0], n->kids[0]))
+  if (sametree(a->kids[0], r->kids[0]))
     return cost;
-  if (n->syms[RX]->temporary && n->syms[RX]->generated && n->syms[RX]->u.t.cse)
+  if (r->syms[RX]->temporary && r->syms[RX]->generated && r->syms[RX]->u.t.cse)
     {
-      n = n->syms[RX]->u.t.cse;
-      if (generic(n->op) == LOAD)
-        n = n->kids[0];
-      if (generic(n->op) == INDIR && sametree(p->kids[0], n->kids[0]))
+      r = r->syms[RX]->u.t.cse;
+      if (generic(r->op) == LOAD && r->kids[0])
+        r = r->kids[0];
+      if (generic(r->op) == INDIR && sametree(a->kids[0], r->kids[0]))
         return cost;
     }
   return LBURG_MAX;
@@ -1042,7 +1025,7 @@ static int if_not_asgn_tmp(Node p, int cost)
   assert(generic(p->op) == ASGN);
   assert(p->kids[0]);
   n = p->kids[0];
-  if (n->syms[RX] && n->syms[RX]->temporary)
+  if (specific(n->op) == VREG+P && n->syms[0]->temporary)
     return LBURG_MAX;
   return cost;
 }

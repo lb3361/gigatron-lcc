@@ -63,7 +63,7 @@ genlabel_counter = 0
 labelchange_counter = 1
 dedup_errors = set()
 
-map_extra_modules = None
+map_modules = None
 map_extra_libs = None
 map_segments = None
 map_describe = None
@@ -1587,16 +1587,26 @@ def read_lib(l):
         fatal(f"library -l{l} not found!")
     return read_file(f)
 
-def read_map(m):
+def read_map(mn, overlays = None):
     '''Read a linker map file.'''
     dn = os.path.dirname(__file__)
-    fn = os.path.join(dn, f"map{m}", "map.py")
+    fn = os.path.join(dn, "map" + mn, "map.py")
     if not os.access(fn, os.R_OK):
-        fatal(f"cannot find linker map '{m}'")
+        fatal(f"cannot find linker map '{mn}'")
     with open(fn, 'r') as fd:
         exec(compile(fd.read(), fn, 'exec'), globals())
     if not map_segments:
-        fatal(f"map '{m}' does not define 'map_segments'")
+        fatal(f"map '{mn}' does not define 'map_segments'")
+    if not map_modules:
+        fatal(f"map '{mn}' does not define 'map_modules'")
+    for ov in overlays or []:
+        fn = ov
+        if not ov.startswith('./'):
+            fn = os.path.join(dn, "map" + mn, "x-" + ov + ".py")
+        if not os.access(fn, os.R_OK):
+            fatal(f"cannot load map overlay '{ov}'")
+        with open(fn, 'r') as fd:
+            exec(compile(fd.read(), fn, 'exec'), globals())
 
 def read_interface():
     '''Read `interface.json' as known symbols.'''
@@ -1631,6 +1641,8 @@ def read_rominfo(rom):
     else:
         print(f"glink: warning: rom '{args.rom}' is not recognized", file=sys.stderr)
         rominfo = {}
+    if romcpu and not args.cpu:
+        args.cpu = romcpu
     if romcpu and args.cpu and args.cpu > romcpu:
         print(f"glink: warning: rom '{args.rom}' does not implement cpu{args.cpu}", file=sys.stderr)
     
@@ -2117,28 +2129,34 @@ def main(argv):
                 concatenation of such files forming a library (suffix
                 .a).  The -cpu, -rom, and -map options provide values
                 than handcrafted code inside a module can test to
-                select different implementations. The -cpu option
-                enables instructions that were added in successive
-                implementations of the Gigatron VCPU.  The -rom option
-                informs the libraries about the availability of
-                natively implemented SYS functions. The -map option
-                tells at which addresses the program, the data, and
-                the stack should be located. It also tells which
-                runtime libraries should be loaded by default. The
-                final output file includes the module that exports the
-                entry point symbol, then the modules that exports all
-                the symbols that it imports, then recursively all the
-                modules that are needed to resolve imported
+                select different implementations. 
+                * The -rom option informs the libraries about 
+                  the availability of natively implemented SYS functions.
+                * The -cpu option enables instructions that were added 
+                  in successive implementations of the Gigatron VCPU.  
+                  Its default value depends on the -rom option.
+                * The -map option tells at which addresses the program, 
+                  the data, and the stack should be located. It also tells 
+                  which runtime libraries should be loaded by default. 
+                  The map argument can be a map name followed by comma
+                  separated overlay names. Overlays are python files
+                  that tweak the map. These files are searched in
+                  the map directory or in the current directory
+                  if the overlay name starts with './'.
+                The final output file includes the module that exports
+                the entry point symbol, then the modules that exports
+                all the symbols that it imports, then recursively all
+                the modules that are needed to resolve imported
                 symbols.''')
         parser.add_argument('files', type=str, nargs='*',
                             help='input files')
         parser.add_argument('-o', type=str, default='a.gt1', metavar='GT1FILE',
                             help='select the output filename (default: a.gt1)')
-        parser.add_argument('-cpu', "--cpu", type=int, action='store', default=5,
-                            help='select the target cpu version: 4, 5, 6 (default: 5).')
+        parser.add_argument('-cpu', "--cpu", type=int, action='store',
+                            help='select the target cpu version: 4, 5, 6.')
         parser.add_argument('-rom', "--rom", type=str, action='store', default='v5a',
                             help='select the target rom version: v4, v5a (default: v5a).')
-        parser.add_argument('-map', "--map", type=str, action='store', 
+        parser.add_argument('-map', "--map", type=str, action='store',
                             help='select a linker map')
         parser.add_argument('-info', "--info", action='store_true', 
                             help='describe the selected map, cpu, rom')
@@ -2186,7 +2204,9 @@ def main(argv):
         args.l = args.l or []
         args.L = args.L or []
         read_interface()
-        read_map(args.map)
+        sm = args.map.split(',')
+        args.map = sm[0]
+        read_map(args.map, sm[1:])
         args.L.append(os.path.join(lccdir,f"map{args.map}"))
         args.L.append(os.path.join(lccdir,f"cpu{args.cpu}"))
         args.L.append(lccdir)
@@ -2225,10 +2245,10 @@ def main(argv):
                 warning(f"module '{m.name}' was compiled for cpu {m.cpu} > {args.cpu}")
 
         # load modules synthetized by the map
-        if map_extra_modules:
+        if map_modules:
             global new_modules
             new_modules = []
-            map_extra_modules(romtype)
+            map_modules(romtype)
             module_list += new_modules
 
         # load libraries requested by the map

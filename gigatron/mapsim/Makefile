@@ -13,6 +13,8 @@ GTSIM_CFLAGS=-g -O3
 GLCC=${B}glcc
 
 MAPDIR=mapsim
+PYFILES=${wildcard *.py}
+PYTARGETS=${patsubst %.py,${B}${MAPDIR}/%.py,${PYFILES}}
 
 LIBNAME=libsim
 SFILES=$(wildcard ${LIBNAME}/*.s)
@@ -22,14 +24,14 @@ O5FILES=${patsubst %.c,${B}%_5.o,${CFILES}}
 O6FILES=${patsubst %.c,${B}%_6.o,${CFILES}}
 OFILES=${O4FILES} ${O5FILES} ${O6FILES}
 
-all: ${B}gtsim ${B}${MAPDIR}/map.py ${B}${MAPDIR}/${LIBNAME}.a
+all: ${B}gtsim ${PYTARGETS} ${B}${MAPDIR}/${LIBNAME}.a
 
 ${B}gtsim: gtsim.c
 	${CC} ${GTSIM_CFLAGS} -o $@ gtsim.c -lm
 
-${B}${MAPDIR}/map.py: map.py
+${B}${MAPDIR}/%.py: %.py
 	-mkdir -p ${B}${MAPDIR}
-	cp map.py $@
+	cp $+ $@
 
 ${B}${MAPDIR}/${LIBNAME}.a: ${SFILES} ${O4FILES} ${O5FILES} ${O6FILES}
 	-mkdir -p ${B}${MAPDIR}

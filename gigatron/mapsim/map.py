@@ -23,6 +23,7 @@ segments = [ (0x0060, 0x08a0, 0x0100, 0x80a0, 0),
              (0x0400, 0x7800, None,   None,   0) ]
 
 # This variant is even more extreme.
+
 # segments = [(0xfe00, 0x0200, None,   None,   0)]
 
 initsp = 0xfffe
@@ -45,7 +46,7 @@ def map_extra_libs(romtype):
     '''
     return [ 'sim' ]
 
-def map_extra_modules(romtype):
+def map_modules(romtype):
     '''
     Generate an extra modules for this map. At the minimum this should
     define a function '_gt1exec' that sets the stack pointer,

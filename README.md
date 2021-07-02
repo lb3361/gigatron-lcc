@@ -28,12 +28,9 @@ code generator is fundamentally different.
 
 There is substantial work needed on the libraries
 
-* stdio
 * malloc (there is already support to collect a heap)
 * printf (but you can printf when using -map=sim)
 * transcendental functions in libm
-* writing to the gigatron screen
-* reading lines with a pluggy keyboard.
 * adding more gigatron SYS stubs
 
 The compiler could also be improved
@@ -89,12 +86,12 @@ are documented by typing `glink -h`
 	instruction once finalized. The default CPU is the one
 	implemented by the selected ROM.
 
-  * Option `-map=<memorymap>` is also passed to the linker and specify
-	the memory layout for the generated code. The default map, `64k` 
-	uses all little bits of memory available on a 64KB Gigatron,
+  * Option `-map=<memorymap>{,<overlay>}` is also passed to the linker and specify
+	the memory layout for the generated code. The default map, `32k` 
+	uses all little bits of memory available on a 32KB Gigatron,
 	starting with the video memory holes `[0x?a0-0x?ff]`, 
-	the low memory `[0x200-0x6ff]`, and finally the 32KB of high 
-	memory `[0x8000-0xffff]`.  
+	the low memory `[0x200-0x6ff]`. There is also a `64k` map
+	and a `conx` map which uses a reduced console to save memory.
 	
 	Maps can also manipulate
 	the linker arguments, insert libraries, and define

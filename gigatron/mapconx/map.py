@@ -1,7 +1,8 @@
 
 
 def map_describe():
-    print('''  Memory map '32kx' steals screen memory on a 32KB Gigatron.
+    print('''  Memory map 'conx' uses a console with only 10 lines
+  to recover about 10k of memory from the video screen.
              
   This map uses a special version of the console that adds spacing
   between character lines in a manner that saves screen memory
@@ -11,6 +12,9 @@ def map_describe():
   0x2fa0-0x2fff and progressing towards 0x7fa0-0x7fff. Remaining code and 
   data items larger than 96 bytes can then be located in pages 2, 3, 4, 5, 
   6, and 8 to 0x2a. The stack grows from 0x2efe.
+
+  Overlays:
+  * 64k: also uses the high 32KB.
   ''')
 
 
@@ -35,7 +39,7 @@ def map_segments():
         for addr in range(tp[1], eaddr, estep):
             yield (addr, addr+tp[0], tp[4])
 
-def map_extra_libs(romtype):
+def map_libraries(romtype):
     '''
     Returns a list of extra libraries to scan before the standard ones
     '''

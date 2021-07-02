@@ -11,24 +11,27 @@ B=${TOP}${BUILDDIR}/
 G=${TOP}gigatron/
 
 MAPDIR=map32k
+PYFILES=${wildcard *.py}
+PYTARGETS=${patsubst %.py,${B}${MAPDIR}/%.py,${PYFILES}}
 
-all: ${B}${MAPDIR}/map.py
+all: ${PYTARGETS}
 
-${B}${MAPDIR}/map.py: map.py
+${B}${MAPDIR}/%.py: %.py
 	-mkdir -p ${B}${MAPDIR}
-	cp map.py $@
+	cp $+ $@
 
 clean: FORCE
-	-rm -rf ${B}${MAPDIR}/map.py 
+	-rm -rf ${PYTARGETS} ${B}${MAPDIR}/${LIBNAME}.a
 	-rmdir ${B}${MAPDIR}
 
 install: FORCE
 	-${INSTALL} -d "${libdir}/${MAPDIR}"
-	${INSTALL} -m 0644 "${B}${MAPDIR}/map.py" "${libdir}/${MAPDIR}/"
+	${INSTALL} -m 0644 ${PYTARGETS} "${libdir}/${MAPDIR}/"
 
 test: FORCE
 
 FORCE: .PHONY
 
 .PHONY: 
+
 

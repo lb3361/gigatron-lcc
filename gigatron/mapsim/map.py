@@ -9,7 +9,13 @@ def map_describe():
   executed by gtsim and prints to gtsim's standard output and function
   '_exitm' exits gtsim. It is expected that libsim will eventually
   delegate all stdio operations to gtsim.  This particularly useful
-  for the glcc test suite.  ''')
+  for the glcc test suite.  
+
+  Overlays:
+  * allout: uses almost all the 64k memory space [0x200-0xfe00] 
+            as a large linear block without regards for 
+            the video buffer (which is useless in gtsim). 
+    ''')
 
 
 # ------------size----addr----step----end---- flags (1=nocode, 2=nodata)
@@ -21,10 +27,6 @@ segments = [ (0x0060, 0x08a0, 0x0100, 0x80a0, 0),
              # overflow into screen and stack area (for the cq tests)
              (0x00a0, 0x0800, 0x0100, 0x8000, 0),
              (0x0400, 0x7800, None,   None,   0) ]
-
-# This variant is even more extreme.
-
-# segments = [(0xfe00, 0x0200, None,   None,   0)]
 
 initsp = 0xfffe
 minram = 0x100
@@ -40,7 +42,7 @@ def map_segments():
         for addr in range(tp[1], eaddr, estep):
             yield (addr, addr+tp[0], tp[4])
 
-def map_extra_libs(romtype):
+def map_libraries(romtype):
     '''
     Returns a list of extra libraries to scan before the standard ones
     '''

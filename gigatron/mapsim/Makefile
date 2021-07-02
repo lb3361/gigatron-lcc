@@ -50,15 +50,16 @@ ${B}${LIBNAME}/%_6.o: ${LIBNAME}/%.c ${B}rcc
 	${GLCC} -c -cpu=6 -o $@  $<
 
 clean: FORCE
-	-rm -rf ${B}${MAPDIR}/map.py ${B}${MAPDIR}/${LIBNAME}.a
+	-rm "${B}gtsim"
+	-rm -rf ${PYTARGETS} ${B}${MAPDIR}/${LIBNAME}.a
 	-rm ${OFILES}
-	-rmdif ${B}${LIBNAME}
+	-rmdir ${B}${LIBNAME}
 	-rmdir ${B}${MAPDIR}
 
 install: FORCE
 	-${INSTALL} -d "${libdir}/${MAPDIR}"
-	${INSTALL} -m 0644 "${B}${MAPDIR}/${LIBNAME}.a" "${libdir}/${MAPDIR}/"
-	${INSTALL} -m 0644 "${B}${MAPDIR}/map.py" "${libdir}/${MAPDIR}/"
+	${INSTALL} -m 0644 ${B}${MAPDIR}/${LIBNAME}.a "${libdir}/${MAPDIR}/"
+	${INSTALL} -m 0644 ${PYTARGETS} "${libdir}/${MAPDIR}/"
 	${INSTALL} -m 0755 "${B}gtsim" "${libdir}/"
 	${LN_S} ${libdir}/gtsim ${bindir}/gtsim
 

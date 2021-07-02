@@ -64,7 +64,7 @@ labelchange_counter = 1
 dedup_errors = set()
 
 map_modules = None
-map_extra_libs = None
+map_libraries = None
 map_segments = None
 map_describe = None
 
@@ -2252,9 +2252,9 @@ def main(argv):
             module_list += new_modules
 
         # load libraries requested by the map
-        global map_extra_libs
-        if map_extra_libs:
-            for n in map_extra_libs(romtype):
+        global map_libraries
+        if map_libraries:
+            for n in map_libraries(romtype):
                 read_lib(n)
 
         # load user-specified libraries

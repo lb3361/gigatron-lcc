@@ -33,7 +33,7 @@ def map_segments():
         for addr in range(tp[1], eaddr, estep):
             yield (addr, addr+tp[0], tp[4])
 
-def map_extra_libs(romtype):
+def map_libraries(romtype):
     '''
     Returns a list of extra libraries to scan before the standard ones
     '''

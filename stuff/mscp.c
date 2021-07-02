@@ -35,6 +35,29 @@ typedef unsigned char byte;
 #define xisspace(c) isspace((int)(c)) /* Prevent warnings on crappy Solaris */
 #define xisalpha(c) isalpha((int)(c))
 
+
+#ifndef MARCELS
+/* scanf avoidance functions */
+static void get_word(char *s, char *n) {
+	register int c = *s;
+	while (c && isspace(c))
+		{ c = *++s; }
+	while (c && !isspace(c))
+		{ *n++ = c; c = *++s; }
+	*n = 0;
+}
+static void skip_word_get_int(char *s, int *n) {
+	register int c = *s;
+	while (c && isspace(c))
+		{ c = *++s; }
+	while (c && !isspace(c))
+		{ c = *++s; }
+	*n = atoi(s);
+}
+#endif
+
+
+
 /*----------------------------------------------------------------------+
  |      data structures                                                 |
  +----------------------------------------------------------------------*/
@@ -110,7 +133,11 @@ static unsigned long zobrist[12][64];   /* Hash-key construction */
  *  so I don't want to waste space on a large table. This also makes MSCP
  *  fit well on 8bit machines.
  */
+#ifdef MARCELS
 #define CORE (2048)
+#else
+#define CORE (128)
+#endif
 static long booksize;                   /* Number of opening book entries */
 
 /* Transposition table and opening book share the same memory */
@@ -1232,7 +1259,9 @@ static void load_book(char *filename)
         fp = fopen(filename, "r");
         if (!fp) {
                 printf("no opening book: %s\n", filename);
-                //exit(EXIT_FAILURE);     /* no mercy */
+#ifdef MARCELS
+                exit(EXIT_FAILURE);     /* no mercy */
+#endif
 		return;
         }
         while (readline(line, sizeof(line), fp) >= 0) {
@@ -1861,16 +1890,24 @@ static void cmd_go(char *dummy)
 static void cmd_test(char *s)
 {
         int d = maxdepth;
+#ifdef MARCELS
         sscanf(s, "%*s%d", &d);
+#else
+	skip_word_get_int(s, &d);
+#endif
         root_search(d);
 }
 
 static void cmd_set_depth(char *s)
 {
-        if (1==sscanf(s, "%*s%d", &maxdepth)) {
+#ifdef MARCELS
+        if (1==sscanf(s, "%*s%d", &maxdepth))
+#else
+		skip_word_get_int(s, &maxdepth);
+#endif
                 maxdepth = MAX(1, MIN(maxdepth, 8));
-        }
-        printf("maximum search depth is %d plies\n", maxdepth);
+
+	printf("maximum search depth is %d plies\n", maxdepth);
 }
 
 static void cmd_new(char *dummy)
@@ -1879,7 +1916,11 @@ static void cmd_new(char *dummy)
         load_book("book.txt");
         computer[0] = 0;
         computer[1] = 1;
+#ifdef MARCELS
         rnd_seed = time(NULL);
+#else
+	rnd_seed = rand();
+#endif
 }
 
 static void cmd_xboard(char *dummy)
@@ -2001,8 +2042,11 @@ int main(void)
                 if (readline(line, sizeof(line), stdin) < 0) {
                         break;
                 }
-
+#ifdef MARCELS
                 if (1 != sscanf(line, "%s", name)) continue;
+#else
+		get_word(line, name); if (! name[0]) continue;
+#endif
 
                 for (cmd=0; mscp_commands[cmd].name != NULL; cmd++) {
                         if (0==strcmp(mscp_commands[cmd].name, name)) {

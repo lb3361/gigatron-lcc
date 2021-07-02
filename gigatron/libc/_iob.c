@@ -71,7 +71,7 @@ int _fcheck(register FILE *fp)
 	return 0;
 }
 
-void _fflush(register FILE *fp)
+int _fflush(register FILE *fp)
 {
 	register int flag;
 	flag = fp->_flag;
@@ -79,6 +79,7 @@ void _fflush(register FILE *fp)
 		_flsbuf(EOF, fp);
 	else
 		fp->_cnt = 0;
+	return _fcheck(fp);
 }
 
 int _fclose(register FILE *fp)
@@ -89,7 +90,7 @@ int _fclose(register FILE *fp)
 		r = -1;
 	if (fp->_v->close && (*fp->_v->close)(fp) < 0)
 		r = -1;
-	return 0;
+	return r;
 }
 
 void _swalk(int(*func)(FILE*))

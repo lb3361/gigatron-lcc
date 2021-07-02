@@ -112,6 +112,11 @@ extern int _default_filbuf(register FILE *fp);
    The default version hooks the console to stdin/stdout/stderr. */
 extern void _iob_setup(void);
 
+/* Low-level open function called by fopen/freopen. The default
+   version always returns -1 and sets errno to ENOTSUP.  Should be
+   called with fp->_flag containing the desired read/write mode
+   and fp->_file set to -1 or set to a desired file descriptor. */
+extern int _openf(FILE *fp, const char *fname);
 
 /* ---- Misc ---- */
 

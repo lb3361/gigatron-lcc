@@ -518,7 +518,7 @@ void sys_io_close(void)
   if (fd < 0 || flg == 0)
     err = G_EINVAL;
   /* Close */
-  if (close(fd) < 0 && err == 0)
+  if (fd > 2 && close(fd) < 0 && err == 0)
     err = G_EIO;
   /* Return */
   if (err) {

@@ -8,8 +8,7 @@ int fflush(FILE *fp)
 		return 0;
 	}
 	if (fp->_flag) {
-		_fflush(fp);
-		return _fcheck(fp);
+		return _fflush(fp);
 	}
 	errno = EINVAL;
 	return -1;

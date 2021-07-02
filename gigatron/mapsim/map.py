@@ -25,9 +25,6 @@ segments = [ (0x0060, 0x08a0, 0x0100, 0x80a0, 0),
 # This variant is even more extreme.
 # segments = [(0xfe00, 0x0200, None,   None,   0)]
 
-
-
-
 initsp = 0xfffe
 minram = 0x100
 

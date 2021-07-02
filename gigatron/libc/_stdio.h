@@ -20,7 +20,7 @@ extern int _schkread(FILE*);
 extern int _serror(FILE*, int);
 extern int _fcheck(FILE*);
 extern int _fclose(FILE*);
-extern void _fflush(FILE*);
+extern int _fflush(FILE*);
 extern size_t _fwrite(FILE*, const char*, size_t);
 extern size_t _fread(FILE*, char*, size_t);
 extern FILE *_sfindiob(void);

@@ -24,7 +24,7 @@ int _default_flsbuf(register int c, register FILE *fp)
 			sb->size = BUFSIZ - sizeof(sb) + 2;
 			flag = (flag | _IOMYBUF);
 		} else
-			flag = (flag & ~_IOLBF) | _IONBF;
+			flag = (flag & ~_IOBUFMASK) | _IONBF;
 		fp->_flag = flag;
 	}
 	/* Determine buffer */

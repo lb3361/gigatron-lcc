@@ -8,6 +8,9 @@ def code0():
     PUSH();LDWI('_exitvsp');STW(T3);LD(vSP);POKE(T3)
     # create stack headroom for argc and argv
     LDWI(-4);ADDW(SP);STW(SP)
+    # initialize bss
+    if not args.no_runtime_bss_initialization:
+        _CALLJ('_init_bss')
     # call init chain
     LDWI('__glink_magic_init'); _CALLI('_callchain')
     # call main
@@ -70,7 +73,7 @@ if args.gt1exec != args.e:
     code.append(('IMPORT', args.gt1exec))        # causes map start stub to be included
 
 if not args.no_runtime_bss_initialization:
-    code.append(('IMPORT', '__glink_magic_bss')) # causes _init1.c to be included
+    code.append(('IMPORT', '_init_bss'))         # causes _init1.c to be included
 
 module(code=code, name='_start.s');
 

@@ -2,15 +2,17 @@
 #define __STDIO
 
 #define _IOFBF   0x40  /* fully buffered */
-#define _IOLBF   0xC0  /* line buffered. */ /* note: partial impl */
+#define _IOLBF   0xC0  /* line buffered. */
 #define _IONBF   0x80  /* not buffered   */
-#define	_IOEOF   0x10  /* eof flag       */
-#define	_IOERR   0x20  /* error flag     */
-#define _IOSTR   0x08  /* sprintf/scanf  */
-#define _IOMYBUF 0x04  /* own buffer     */
-#define _IORW    0x03  /* r+ or w+       */ /* note: implies _IONBF */
+#define _IOMYBUF 0x20  /* own buffer     */
+#define _IOSTR   0x10  /* sprintf/scanf  */
+#define	_IOEOF   0x08  /* eof flag       */
+#define	_IOERR   0x04  /* error flag     */
+#define _IORW    0x03  /* r+,w+,a+       */
 #define _IOREAD  0x01  /* r              */
-#define _IOWRIT  0x02  /* w              */
+#define _IOWRIT  0x02  /* w,a            */
+#define _IOBUFMASK 0xE0
+#define _IOMODMASK 0x03
 
 #define BUFSIZ 256
 #define EOF    (-1)

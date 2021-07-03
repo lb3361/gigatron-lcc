@@ -9,6 +9,7 @@
 
 #ifndef WIN32
 # include <unistd.h>
+# include <fcntl.h>
 #else
 # include <io.h>
 # include <fcntl.h>
@@ -17,6 +18,7 @@
 # define lseek _lseek
 # define close _close
 # define fileno _fileno
+# define dup2 _dup2
 # warning "Untested"
 #endif
 
@@ -403,10 +405,12 @@ void sys_printf(void)
 /* Offsets in _iobuf structure (see stdio.h) */
 #define G_IOBUF_FLAG_OFFSET 4
 #define G_IOBUF_FILE_OFFSET 6
+#define G_IOBUF_V_OFFSET    14
 
 /* Error codes (see errno.h) */
 #define G_EINVAL    3
 #define G_ENOENT    4
+#define G_ENOTDIR   5
 #define G_EIO       8
 #define G_EPERM     9
 #define G_ENOTSUP  10
@@ -529,10 +533,62 @@ void sys_io_close(void)
   }
 }
 
-void sys_io_open(void)
+void sys_io_openf(void)
 {
-  doke(vAC, G_ENOTSUP);
-  return;
+  int flg = deek(deek(R8) + G_IOBUF_FLAG_OFFSET);
+  int rfd = deek(deek(R8) + G_IOBUF_FILE_OFFSET);
+  int err = 0;
+  
+  if (okopen)
+    {
+      int fd;
+      int oflags = 0;
+      if ((flg & 1) && (flg & 2))
+        oflags = O_RDWR;
+      else if (flg & 1)
+        oflags = O_RDONLY;
+      else if (flg & 2)
+        oflags = O_WRONLY | O_CREAT | O_TRUNC;
+      else
+        err = G_EINVAL;
+      if (flg  & 8)
+        oflags |= O_APPEND;
+      if (err == 0 && (fd = open(RAM+deek(R9), oflags, 0666)) < 0) {
+        switch (errno) {
+        default: err = EIO; break;
+        case ENOENT: err = G_ENOENT; break;
+        case EACCES: case EPERM: err = G_EPERM; break;
+        case ENOTDIR: case EISDIR: err = G_ENOTDIR; break;
+        case EINVAL: err = G_EINVAL; break;
+        }
+      }
+      if (err == 0 && rfd >= 0 && dup2(fd, rfd) >= 0) {
+        close(fd);
+        fd = rfd;
+      }
+      doke(deek(R8) + G_IOBUF_FILE_OFFSET, fd);
+      doke(deek(R8) + G_IOBUF_V_OFFSET, deek(sysArgs0+2));
+    }
+  else
+    {
+      char mode[4] = "\0\0\0\0";
+      if (flg & 1)
+        strcat(mode,"R");
+      if (flg & 2)
+        strcat(mode,"W");
+      if (flg & 8)
+        strcat(mode,"A");
+      fprintf(stderr, "\n(gtsim) denied attempt to open file '%s' %s. (allow with -f).",
+              RAM+deek(R9), mode);
+      err = G_ENOTSUP;
+    }
+  /* Return */
+  if (err) {
+    doke(deek(sysArgs0), err);
+    doke(vAC, -1);
+  } else {
+    doke(vAC, 0);
+  }
 }
 
 void sys_0x3b4(CpuState *S)
@@ -549,7 +605,7 @@ void sys_0x3b4(CpuState *S)
         case 0xff03: sys_io_read(); break;
         case 0xff04: sys_io_lseek(); break;
         case 0xff05: sys_io_close(); break;
-        case 0xff06: sys_io_open(); break;
+        case 0xff06: sys_io_openf(); break;
         default: fprintf(stderr,"(gtsim) unimplemented SysFn=%#x\n", sysFn); break;
         }
       /* Return with no action and proper timing */

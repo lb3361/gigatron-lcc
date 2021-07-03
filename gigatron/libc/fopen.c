@@ -34,6 +34,7 @@ FILE *freopen(register const char *fname, register const char *mode, register FI
 		errno = EINVAL;
 		return 0;
 	}
+	fp->_flag = nflag;
 	if (oflag) {
 		_fclose(fp);
 	} else  {

@@ -36,7 +36,7 @@ typedef unsigned char byte;
 #define xisalpha(c) isalpha((int)(c))
 
 
-#ifndef MARCELS
+#ifdef __gigatron__
 /* scanf avoidance functions */
 static void get_word(char *s, char *n) {
 	register int c = *s;
@@ -133,12 +133,13 @@ static unsigned long zobrist[12][64];   /* Hash-key construction */
  *  so I don't want to waste space on a large table. This also makes MSCP
  *  fit well on 8bit machines.
  */
-#ifdef MARCELS
-#define CORE (2048)
+#ifdef __gigatron__
+#define CORE (512)
+static int booksize;                   /* Number of opening book entries */
 #else
-#define CORE (128)
-#endif
+#define CORE (2048)
 static long booksize;                   /* Number of opening book entries */
+#endif
 
 /* Transposition table and opening book share the same memory */
 static union {
@@ -255,6 +256,21 @@ static const byte knight_dirs[64] = {
  |      simple random generator                                         |
  +----------------------------------------------------------------------*/
 
+#ifdef __gigatron__
+static long rnd_seed = 1;
+static long rnd(void)
+{
+	long r = rnd_seed;
+#if 0
+	ldiv_t d = ldiv(r, 127773L);
+	r = 16807 * d.rem - 2836 * d.quot;
+        if (r < 0) r += 0x7fffffffL;
+#else
+	r = (r * 0xa13fc965L + 1013904223L) & 0x7ffffffL;
+#endif
+        return rnd_seed = r;
+}
+#else
 static long rnd_seed = 1;
 
 static long rnd(void)
@@ -266,6 +282,7 @@ static long rnd(void)
 
         return rnd_seed = r;
 }
+#endif
 
 /*----------------------------------------------------------------------+
  |      I/O functions                                                   |
@@ -1233,8 +1250,11 @@ static int cmp_bk(const void *ap, const void *bp)
 
 static void compact_book(void)
 {
+#ifdef __gigatron
+        int b = 0, c = 0;
+#else
         long b = 0, c = 0;
-
+#endif
         qsort(BOOK, booksize, sizeof(BOOK[0]), cmp_bk);
         while (b<booksize) {
                 BOOK[c] = BOOK[b];
@@ -1245,6 +1265,9 @@ static void compact_book(void)
                 }
                 c++;
         }
+#ifdef __gigatron
+	printf("Compacted book %d -> %d\n", booksize, c);
+#endif
         booksize = c;
 }
 
@@ -1259,7 +1282,7 @@ static void load_book(char *filename)
         fp = fopen(filename, "r");
         if (!fp) {
                 printf("no opening book: %s\n", filename);
-#ifdef MARCELS
+#ifndef __gigatron__
                 exit(EXIT_FAILURE);     /* no mercy */
 #endif
 		return;
@@ -1279,8 +1302,14 @@ static void load_book(char *filename)
                                 if (booksize >= CORE) compact_book();
                         }
                         make_move(move);
+#ifdef __gigatron__
+			if (booksize >= CORE) break;
+#endif
                 }
                 while (ply>0) unmake_move(); /* @@@ wrong */
+#ifdef __gigatron__
+		if (booksize >= CORE) break;
+#endif
         }
         fclose(fp);
         compact_book();
@@ -1890,20 +1919,20 @@ static void cmd_go(char *dummy)
 static void cmd_test(char *s)
 {
         int d = maxdepth;
-#ifdef MARCELS
-        sscanf(s, "%*s%d", &d);
-#else
+#ifdef __gigatron__
 	skip_word_get_int(s, &d);
+#else
+        sscanf(s, "%*s%d", &d);
 #endif
         root_search(d);
 }
 
 static void cmd_set_depth(char *s)
 {
-#ifdef MARCELS
-        if (1==sscanf(s, "%*s%d", &maxdepth))
+#ifdef __gigatron__
+	skip_word_get_int(s, &maxdepth);
 #else
-		skip_word_get_int(s, &maxdepth);
+        if (1==sscanf(s, "%*s%d", &maxdepth))
 #endif
                 maxdepth = MAX(1, MIN(maxdepth, 8));
 
@@ -1916,10 +1945,10 @@ static void cmd_new(char *dummy)
         load_book("book.txt");
         computer[0] = 0;
         computer[1] = 1;
-#ifdef MARCELS
-        rnd_seed = time(NULL);
-#else
+#ifdef __gigatron__
 	rnd_seed = rand();
+#else
+        rnd_seed = time(NULL);
 #endif
 }
 
@@ -2042,10 +2071,10 @@ int main(void)
                 if (readline(line, sizeof(line), stdin) < 0) {
                         break;
                 }
-#ifdef MARCELS
-                if (1 != sscanf(line, "%s", name)) continue;
-#else
+#ifdef __gigatron__
 		get_word(line, name); if (! name[0]) continue;
+#else
+                if (1 != sscanf(line, "%s", name)) continue;
 #endif
 
                 for (cmd=0; mscp_commands[cmd].name != NULL; cmd++) {

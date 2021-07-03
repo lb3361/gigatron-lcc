@@ -15,19 +15,33 @@ def scope():
         def CallWorker():
             _CALLJ('__@ldivworker')
 
+
         def code_ldivworker():
             label('__@ldivworker')
             PUSH()
             LDW(LAC);STW(T2);LDW(LAC+2);STW(T2+2)
             LDI(0);ST(B1);STW(LAC);STW(LAC+2)
             label('.ldiv0')
-            LDW(LAC+2);LSLW();STW(LAC+2)
-            LDW(LAC);_BGE('.ldw1');LDI(1);ORW(LAC+2);STW(LAC+2)
-            LDW(LAC);label('.ldw1');LSLW();STW(LAC)
-            LDW(T2+2);_BGE('.ldw2');LDI(1);ORW(LAC);STW(LAC)
-            LDW(T2+2);label('.ldw2');LSLW();STW(T2+2)
-            LDW(T2);_BGE('.ldw3');LDI(1);ORW(T2+2);STW(T2+2)
-            LDW(T2);label('.ldw3');LSLW();STW(T2)
+            if args.cpu >= 6:
+                LSLV(LAC+2)
+                LDW(LAC);_BGE('.ldw1');ORBI(1,LAC+2);label('.ldw1')
+                LSLV(LAC)
+                LDW(T2+2);_BGE('.ldw2');ORBI(1,LAC);label('.ldw2')
+                LSLV(T2+2)
+                LDW(T2);_BGE('.ldw3');ORBI(1,T2+2);label('.ldw3')
+                LSLV(T2)
+            else:
+                LDW(LAC+2);LSLW();STW(LAC+2)
+                LDW(LAC);_BGE('.ldw1')
+                LDI(1);ORW(LAC+2);STW(LAC+2);LDW(LAC)
+                label('.ldw1');LSLW();STW(LAC)
+                LDW(T2+2);_BGE('.ldw2')
+                LDI(1);ORW(LAC);STW(LAC);LDW(T2+2)
+                label('.ldw2');LSLW();STW(T2+2)
+                LDW(T2);_BGE('.ldw3')
+                LDI(1);ORW(T2+2);STW(T2+2);LDW(T2)
+                label('.ldw3');LSLW();STW(T2)
+            
             _CALLJ('__@lcmpu_t0t1');_BLT('.ldiv1')
             _CALLJ('__@lsub_t0t1');INC(T2)
             label('.ldiv1')

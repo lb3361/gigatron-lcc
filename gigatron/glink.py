@@ -206,6 +206,7 @@ class Module:
         self.exports = []
         self.imports = []
         self.cimports = []
+        self.symrefs = {}
         self.symdefs = {}
         self.sympass = {}
         for tp in self.code:
@@ -347,7 +348,7 @@ def emitjcc(BCC, BNCC, JCC, d):
         elif not is_pcpage(d) and long_ok:
             BNCC(lbl)
             emit_long_jump(d)
-            label(lbl)
+            label(lbl, hop=0)
             lbranch_counter += size_long_jump()
             break;
         else:
@@ -476,6 +477,7 @@ def v(x):
     if not isinstance(x,str):
         return x
     if the_module:
+        the_module.symrefs[x] = the_pass
         if x in the_module.symdefs:
             return the_module.symdefs[x]
     r = resolve(x)
@@ -544,11 +546,21 @@ def space(d):
 @vasm
 def label(sym, val=None, hop=None):
     '''Define label `sym' to the value of PC or to `val'.
-       Unless `hop` is 0, this function checks whether a
-       one needs to hop to a new page before defining the label.'''
-    if hop != 0:
-        tryhop(hop)
+       This function tries to be smart about locating the
+       label before or after a page hop. Nothing happens
+       if hop==0 or if the label has already been referenced
+       in the current module (forward branch). However,
+       if the label has not yet been referenced (backward branch),
+       this function tries to hop to a new page before
+       defining the label. Argument 'hop' then indicates
+       how many instruction bytes after the label should
+       be available in the new page. '''
     if the_pass > 0:
+        referenced = False
+        if sym in the_module.symrefs:
+            referenced = (the_module.symrefs[sym] == the_pass)
+        if hop != 0 and not referenced:
+            tryhop(hop or 12)
         the_module.label(sym, v(val) if val != None else the_pc)
 
 @vasm
@@ -1257,7 +1269,7 @@ def _CMPWS(d):
         tryhop(18)
         STLW(-2); XORW(d); BGE(lbl1)
         LDLW(-2); ORI(1); BRA(lbl2)
-        label(lbl1)
+        label(lbl1, hop=0)
         LDLW(-2); SUBW(d)
         label(lbl2, hop=0)
 @vasm
@@ -1273,7 +1285,7 @@ def _CMPWU(d):
         tryhop(18)
         STLW(-2); XORW(d); BGE(lbl1)
         LDW(d); ORI(1); BRA(lbl2)
-        label(lbl1)
+        label(lbl1, hop=0)
         LDLW(-2); SUBW(d)
         label(lbl2, hop=0)
 @vasm

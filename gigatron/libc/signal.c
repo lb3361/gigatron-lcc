@@ -24,8 +24,8 @@ sig_handler_t signal(int signo, sig_handler_t h)
 int _sigcall(int signo, int fpeinfo)
 {
 	typedef int (*handler)(int,int);
-	handler *vec = (handler*)sigvec;
-	handler h;
+	register handler *vec = (handler*)sigvec;
+	register handler h;
 	
 	signo &= 7;
 	h = vec[signo];

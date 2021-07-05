@@ -357,7 +357,14 @@ def emitjcc(BCC, BNCC, JCC, d):
             hops_enabled = False
     hops_enabled = save_hops_enabled
 
-        
+def emit_prefx3(opcode, arg1, arg2):
+    check_cpu(6); tryhop(4)
+    if True:
+        emit(0xc7, arg2, opcode, arg1)
+    else:
+        emit(0xc7, opcode, arg1, arg2)
+
+
 # ------------- usable vocabulary for .s/.o/.a files
 
 # Each .s/.o/.a files is exec with a fresh global dictionary and a
@@ -710,10 +717,10 @@ def MOVQ(imm,d):
 def LSRB(d):
     '''LSRB: Logical shift right on a byte var, 28 cycles'''
     check_cpu(6); tryhop(2); emit(0x18, check_zp(d))
-@vasm
-def SEXT(d):
-    '''SEXT: Sign extend vAC based on a variable mask, 28 cycles'''
-    check_cpu(6); tryhop(2); emit(0x1c, check_zp(d))
+#@vasm
+#def SEXT(d):
+#    '''SEXT: Sign extend vAC based on a variable mask, 28 cycles'''
+#    check_cpu(6); tryhop(2); emit(0x1c, check_zp(d))
 @vasm
 def PEEKp(d):
     '''PEEK+: Peek byte at address contained in var, inc var, 30 cycles'''
@@ -915,65 +922,69 @@ def SUBBI(imm,d):
     '''SUBBI: Subtract a constant 0..255 from a byte var, 28 cycles'''
     check_cpu(6); tryhop(3); emit(0xe1, check_zp(imm), check_zp(d))
 @vasm
+def LSLN(d):
+    '''Shifts vAC left by d positions'''
+    check_cpu(6); tryhop(3); d=int(v(d)); emit(0x2f, 0x11, check_zp(d))
+@vasm
 def ST2(d):
     '''ST2: Store vAC.lo into 16bit immediate address, (26 + 26 cycles)'''
-    check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x11, lo(d), hi(d))
+    d=int(v(d)); emit_prefx3(0x11, lo(d), hi(d))
 @vasm
 def STW2(d):
     '''STW2: Store vAC into 16bit immediate address, (26 + 28 cycles)'''
-    check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x14, lo(d), hi(d))
+    d=int(v(d)); emit_prefx3(0x14, lo(d), hi(d))
 @vasm
 def XCHG(s,d):
     '''XCHG: Swap two zero byte variables, (26 + 30 cycles)'''
-    check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x17, check_zp(s), check_zp(d))
+    d=int(v(d)); emit_prefx3(0x17, check_zp(s), check_zp(d))
 @vasm
 def MOVW(s,d):
     '''MOVW: Move 16bits from src zero page var to dst zero page var, (26 + 28 cycles)'''
-    check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x19, check_zp(s), check_zp(d))
+    d=int(v(d)); emit_prefx3(0xc7, 0x19, check_zp(s), check_zp(d))
 @vasm
 def ADDWI(d):
     '''ADDWI: vAC += immediate 16bit value, (26 + 28 cycles)'''
-    check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x1b, lo(d), hi(d))
+    d=int(v(d)); emit_prefx3(0x1b, lo(d), hi(d))
 @vasm
 def SUBWI(d):
     '''SUBWI: vAC -= immediate 16bit value, (26 + 28 cycles)'''
-    check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x1d, lo(d), hi(d))
+    d=int(v(d)); emit_prefx3(0x1d, lo(d), hi(d))
 @vasm
 def ANDWI(d):
     '''ANDWI: vAC &= immediate 16bit value, (26 + 26 cycles)'''
-    check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x1f, lo(d), hi(d))
+    d=int(v(d)); emit_prefx3(0x1f, lo(d), hi(d))
 @vasm
 def ORWI(d):
     '''ORWI: vAC |= immediate 16bit value, (26 + 22 cycles)'''
-    check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x21, lo(d), hi(d))
+    d=int(v(d)); emit_prefx3(0x21, lo(d), hi(d))
 @vasm
 def XORWI(d):
     '''XORWI: vAC &= immediate 16bit value, (26 + 22 cycles)'''
-    check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x23, lo(d), hi(d))
+    d=int(v(d)); emit_prefx3(0x23, lo(d), hi(d))
 @vasm
 def LDPX(a,c):
     '''LDPX: Load Pixel, <address var>, <colour var>, (26 + 30 cycles)'''
-    check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x25, check_zp(a), check_zp(c))
+    d=int(v(d)); emit_prefx3(0x25, check_zp(a), check_zp(c))
 @vasm
 def STPX(a,c):
     '''STPX: Store Pixel, <address var>, <colour var>, (26 + 28 cycles)'''
-    check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x28, check_zp(a), check_zp(c))
+    d=int(v(d)); emit_prefx3(0x28, check_zp(a), check_zp(c))
 @vasm
 def CONDI(i,j):
     '''CONDI: chooses immediate operand based on condition, (vAC == 0), (26 + 26 cycles)'''
-    check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x2b, check_zp(i), check_zp(j))
+    d=int(v(d)); emit_prefx3(0x2b, check_zp(i), check_zp(j))
 @vasm
 def CONDB(v,w):
     '''CONDB: chooses zero page byte var based on condition, (vAC == 0), (26 + 28 cycles)'''
-    check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x2d, check_zp(v), check_zp(w))
+    d=int(v(d)); emit_prefx3(0x2d, check_zp(v), check_zp(w))
 @vasm
 def CONDIB(i,v):
     '''CONDIB: chooses between imm and zero page byte var based on condition, (vAC == 0), (28 + 26 cycles)'''
-    check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x30, check_zp(i), check_zp(v))
+    d=int(v(d)); emit_prefx3(0x30, check_zp(i), check_zp(v))
 @vasm
 def CONDBI(v,i):
     '''CONDBI: chooses between zero page byte var and imm based on condition, (vAC == 0), (28 + 26 cycles)'''
-    check_cpu(6); tryhop(4); d=int(v(d)); emit(0xc7, 0x33, check_zp(v), check_zp(i))
+    d=int(v(d)); emit_prefx3(0x33, check_zp(v), check_zp(i))
 
 @vasm
 def _SP(n):

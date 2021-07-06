@@ -360,10 +360,8 @@ def emitjcc(BCC, BNCC, JCC, d):
 
 def emit_prefx3(opcode, arg1, arg2):
     check_cpu(6); tryhop(4)
-    if True:
-        emit(0xc7, arg2, opcode, arg1)
-    else:
-        emit(0xc7, opcode, arg1, arg2)
+    # emit(0xc7, arg2, opcode, arg1) # experimental
+    emit(0xc7, opcode, arg1, arg2)
 
 
 # ------------- usable vocabulary for .s/.o/.a files

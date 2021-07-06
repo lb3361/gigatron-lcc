@@ -261,7 +261,7 @@ static long rnd_seed = 1;
 static long rnd(void)
 {
 	long r = rnd_seed;
-#if 1
+#if 0
 	ldiv_t d = ldiv(r, 127773L);
 	r = 16807 * d.rem - 2836 * d.quot;
         if (r < 0) r += 0x7fffffffL;

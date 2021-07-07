@@ -641,40 +641,22 @@ def BRA(d):
     emit(0x90, check_br(d)); tryhop(jump=False)
 @vasm
 def BEQ(d):
-    if args.cpu >= 6 and args.jcconly:
-        JEQ(d)
-    else:
-        tryhop(3); emit(0x35, 0x3f, check_br(d))
+    tryhop(3); emit(0x35, 0x3f, check_br(d))
 @vasm
 def BNE(d):
-    if args.cpu >= 6 and args.jcconly:
-        JNE(d)
-    else:
-        tryhop(3); emit(0x35, 0x72, check_br(d))
+    tryhop(3); emit(0x35, 0x72, check_br(d))
 @vasm
 def BLT(d):
-    if args.cpu >= 6 and args.jcconly:
-        JLT(d)
-    else:
-        tryhop(3); emit(0x35, 0x50, check_br(d))
+    tryhop(3); emit(0x35, 0x50, check_br(d))
 @vasm
 def BGT(d):
-    if args.cpu >= 6 and args.jcconly:
-        JGT(d)
-    else:
-        tryhop(3); emit(0x35, 0x4d, check_br(d))
+    tryhop(3); emit(0x35, 0x4d, check_br(d))
 @vasm
 def BLE(d):
-    if args.cpu >= 6 and args.jcconly:
-        JLE(d)
-    else:
-        tryhop(3); emit(0x35, 0x56, check_br(d))
+    tryhop(3); emit(0x35, 0x56, check_br(d))
 @vasm
 def BGE(d):
-    if args.cpu >= 6 and args.jcconly:
-        JGE(d)
-    else:
-        tryhop(3); emit(0x35, 0x53, check_br(d))
+    tryhop(3); emit(0x35, 0x53, check_br(d))
 @vasm
 def CALL(d):
     tryhop(3); emit(0xcf, check_zp(d))

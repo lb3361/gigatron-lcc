@@ -58,12 +58,12 @@ def map_modules(romtype):
     def code0():
         nohop() # instead of org(0x200)
         label(args.gt1exec)
-        _LDI(initsp);STW(SP);
+        LDWI(initsp);STW(SP);
         if romtype and romtype >= 0x80:
             LD('romType');ANDI(0xfc);XORI(romtype);BNE('.err')
         elif romtype:
             LD('romType');ANDI(0xfc);SUBI(romtype);BLT('.err')
-        _LDI(v(args.e));CALL(vAC)
+        LDWI(v(args.e));CALL(vAC)
         label('.err')
         LDI(100);STW(R8)
         LDWI('.msg');STW(R9)

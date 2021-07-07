@@ -56,7 +56,7 @@ def map_modules(romtype):
         org(0x200)
         label(args.gt1exec)
         # Set stack
-        _LDI(initsp);STW(SP);
+        LDWI(initsp);STW(SP);
         # Check rom and ram
         if romtype and romtype >= 0x80:
             LD('romType');ANDI(0xfc);XORI(romtype);BNE('.err')
@@ -67,7 +67,7 @@ def map_modules(romtype):
         else:
             LD('memSize');SUBI(1);ANDI(0xff);SUBI(minram-1);BLT('.err')
         # Call _start
-        _LDI(v(args.e));CALL(vAC)
+        LDWI(v(args.e));CALL(vAC)
         # Run Marcel's smallest program when machine check fails
         label('.err')
         LDW('frameCount');DOKE(vPC+1);BRA('.err')

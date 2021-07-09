@@ -4,11 +4,11 @@ def scope():
     def code_ldexp10p():
         label('_ldexp10p')
         bytes(22,79,177,30,173); # 1e-32
-        bytes(75,102,149,148,190); # 1e-16
-        bytes(102,43,204,119,17); # 1e-08
-        bytes(115,81,183,23,88); # 0.0001
+        bytes(75,102,149,148,191); # 1e-16
+        bytes(102,43,204,119,18); # 1e-08
+        bytes(115,81,183,23,89); # 0.0001
         bytes(122,35,215,10,61); # 0.01
-        bytes(125,76,204,204,204); # 0.1
+        bytes(125,76,204,204,205); # 0.1
 
     def code_ldexp10n():
         label('_ldexp10n')
@@ -38,16 +38,14 @@ def scope():
         LDI(80);STW(R11);_BRA('.pos1')
         label('.pos2')
         SUBI(1);STW(R11)
-        _FMOV(FAC,F8)
-        LDI(2);_FSCALB();  # *4
-        LDI(F8);_FADD();   # +1
-        LDI(1);_FSCALB();  # *2
+        _CALLJ('_@_fmul10')
         label('.pos1')
         LDW(R11);_BNE('.pos2')
         tryhop(2);POP();RET()
 
     module(name='_ldexp10',
            code=[ ('EXPORT', '_ldexp10'),
+                  ('IMPORT', '_@_fmul10'),
 	          ('DATA', '_ldexp10p', code_ldexp10p, 0, 1),
                   ('CODE', '_ldexp10n', code_ldexp10n), 
                   ('CODE', '_ldexp10', code_ldexp10) ] )

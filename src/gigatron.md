@@ -1651,7 +1651,7 @@ static void defconst(int suffix, int size, Value v)
     unsigned long mantissa;
     assert(size == 5);
     assert(isfinite(d));
-    mantissa = (unsigned long)(frexp(fabs(d),&exp) * pow(2.0, 32));
+    mantissa = (unsigned long)(frexp(fabs(d),&exp) * pow(2.0, 32) + 0.5);
     if (mantissa == 0 || exp <= -128)
       xprint("\tbytes(0,0,0,0,0);");
     else if (exp > 127)

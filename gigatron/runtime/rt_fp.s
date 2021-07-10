@@ -38,13 +38,10 @@ def scope():
     # '_@_xxxx' are the public api.
     # '__@xxxx' are private.
 
-    # How do we resolve rounding ties.
+    # How do we resolve rounding ties (do not change)
     RoundingTies = 'to-inf'
-    #RoundingTies = 'to-zero'
-    #RoundingTies = 'to-even'
 
-    # Whether we round the result of all operations
-    # to 32 bit mantissa or keep the extra LAC precision.
+    # Whether we round the result of all operations (do not change)
     RoundResults = True
     
     # ==== common things
@@ -81,14 +78,21 @@ def scope():
                   ('CODE', '__@fsavevsp', code_fsavevsp) ] )
 
     def code_clrfac():
-        '''Clear FAC / Round FAC'''
+        '''Clear FAC'''
         nohop()
         label('_@_clrfac')
         LDI(0);ST(AS);STW(AE) # [AS] [AE,AM]
         STW(AM+1);STW(AM+3)   # [AM+1,AM+2] [AM+3,AM+4]
         RET()
+        
+    module(name='rt_clrfac.s',
+           code=[ ('EXPORT', '_@_clrfac'),
+                  ('CODE', '_@_clrfac', code_clrfac) ] )
+
+    def code_rndfac():
+        '''Round FAC to 32 bit mantissa'''
+        nohop()
         label('_@_rndfac')
-        LD(AE);_BEQ('_@_clrfac')
         LD(AM);_BEQ('.ret')
         if RoundingTies == 'to-inf':
             ANDI(128);_BEQ('.rnd0')
@@ -117,9 +121,8 @@ def scope():
         RET()
 
     module(name='rt_rndfac.s',
-           code=[ ('EXPORT', '_@_clrfac'),
-                  ('EXPORT', '_@_rndfac'),
-                  ('CODE', '_@_clrfac', code_clrfac) ] )
+           code=[ ('EXPORT', '_@_rndfac'),
+                  ('CODE', '_@_rndfac', code_rndfac) ] )
 
     def code_fone():
         label('_@_fone')
@@ -143,11 +146,11 @@ def scope():
         '''Load mantissa of float [ptr] into [mantissa,mantissa+3].
            Returns high mantissa byte with sign bit.'''
         if args.cpu <= 5:
-            LDI(1);ADDW(ptr);PEEK();ORI(0x80);ST(mantissa+3)
+            LDI(4);ADDW(ptr);PEEK();ST(mantissa)
             LDI(2);ADDW(ptr);PEEK();ST(mantissa+2)
             LDI(3);ADDW(ptr);PEEK();ST(mantissa+1)
-            LDI(4);ADDW(ptr);PEEK();ST(mantissa)
-            LDI(1);ADDW(ptr);PEEK()
+            LDI(1);ADDW(ptr);PEEK();ST(vACH)
+            ORI(0x80);ST(mantissa+3);LD(vACH)
         else:
             LDW(ptr);INCW(vAC);
             PEEKAp(mantissa+3)
@@ -224,9 +227,11 @@ def scope():
         '''FAC->[vAC]'''
         label('_@_fstfac')
         PUSH();STW(T2)
-        LD(AE);POKE(T2)
+        LD(AE);POKE(T2);_BNE('.fst1')
+        _CALLJ('_@_clrfac')
+        label('.fst1')
         _CALLJ('_@_rndfac')
-        LD(T2);ANDI(0xfc);XORI(0xfc);BEQ('.slow')
+        LD(T2);SUBI(0xfc);_BGE('.fst3')
         # no page crossings
         INC(T2)
         if args.cpu <= 5:
@@ -237,23 +242,23 @@ def scope():
             LD(AS);ORI(0x7f);ANDW(AM+4);POKEp(T2)
             LD(AM+3);POKEp(T2)
             LD(AM+2);POKEp(T2)
-        label('.finish');
+        label('.fst2');
         LD(AM+1);POKE(T2)
         tryhop(2);POP();RET()
         # possible page crossings
-        label('.slow')
+        label('.fst3')
         if args.cpu <= 5:
             LDI(1);ADDW(T2);STW(T2)
             LD(AS);ORI(0x7f);ANDW(AM+4);POKE(T2);LDI(1);ADDW(T2);STW(T2)
             LD(AM+3);POKE(T2);LDI(1);ADDW(T2);STW(T2)
             LD(AM+2);POKE(T2);LDI(1);ADDW(T2);STW(T2)
-            BRA('.finish')
+            BRA('.fst2')
         else:
             INCW(T2)
             LD(AS);ORI(0x7f);ANDW(AM+4);POKE(T2);INCW(T2)
             LD(AM+3);POKE(T2);INCW(T2);
             LD(AM+2);POKE(T2);INCW(T2)
-            BRA('.finish')
+            BRA('.fst2')
 
     module(name='rt_fstfac.s',
            code=[ ('EXPORT', '_@_fstfac'),
@@ -957,7 +962,9 @@ def scope():
     def code_fcmp():
         label('_@_fcmp')
         PUSH();STW(T3)
-        ADDI(1);PEEK();XORW(AS);ANDI(128);_BEQ('.fcmp1')
+        _CALLJ('_@_rndfac')
+        LD(AE);_BNE('.nonzero');ST(AS);label('.nonzero')
+        LDW(T3);ADDI(1);PEEK();XORW(AS);ANDI(128);_BEQ('.fcmp1')
         label('.plus')
         LD(AS);XORI(128);ANDI(128);PEEK();LSLW();SUBI(1)
         tryhop(2);POP();RET()
@@ -965,10 +972,8 @@ def scope():
         LD(AS);ANDI(128);PEEK();LSLW();SUBI(1)
         tryhop(2);POP();RET()
         label('.fcmp1')
-        _CALLJ('_@_rndfac')
         _PEEKV(T3);STW(T2)
         LD(AE);SUBW(T2);_BLT('.minus');_BGT('.plus')
-        LD(AE);_BEQ('.zero')
         _CALLJ('__@bm40load')
         LDW(AM+3);_CMPWU(BM+3);_BLT('.minus');_BGT('.plus')
         LDW(AM+1);_CMPWU(BM+1);_BLT('.minus');_BGT('.plus')

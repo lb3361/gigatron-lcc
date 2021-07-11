@@ -389,7 +389,7 @@ def register_names():
           "vACL": 0x0018, "vACH": 0x0019,
           "B0":   0x0081, "B1":   0x0082, "B2":   0x0083, "LAC":  0x0084,
           # the real FAC overlaps B[0-3] and LAC with a private format
-          "FAC":  0x0FAC }
+          "FAC":  0xFAC00FAC }
     for i in range(0,4):  d[f'T{i}'] = 0x88+i+i
     for i in range(0,24): d[f'R{i}'] = 0x90+i+i
     for i in range(0,22): d[f'L{i}'] = d[f'R{i}']

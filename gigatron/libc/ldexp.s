@@ -12,29 +12,19 @@ def scope():
     module(name='ldexp.s',
            code=[ ('EXPORT', 'ldexp'),
                   ('CODE', 'ldexp', code0) ] )
-	
-
 
     def code0():
         nohop()
         label('frexp')
         PUSH()
-        LD(F8)
-        BEQ('.zero')
-        SUBI(128)
-        DOKE(R11)
-        LDI(128)
-        ST(F8)
-        BRA('.ret')
-        label('.zero')
-        LDI(0)
-        DOKE(R11)
-        label('.ret')
         _FMOV(F8,FAC)
+        _CALLJ('_@_frexp')
+        DOKE(R11)
         POP();RET()
 
     module(name='frexp.s',
            code=[ ('EXPORT', 'frexp'),
+                  ('IMPORT', '_@_frexp'),
                   ('CODE', 'frexp', code0) ] )
 	
 scope()

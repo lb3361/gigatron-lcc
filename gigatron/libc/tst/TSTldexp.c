@@ -24,7 +24,8 @@ int main()
 
 	p1 = frexp(0.0,&exp1);
 	printf("frexp(0)=%.7e * 2^%d\n", p1, exp1);
-	printf("ldexp(%.7e,%d)=%.7e\n", 0, -2, ldexp(0, -200));
+	printf("ldexp(%.7e,%d)=%.7e\n", 0.0, -2, ldexp(0, -2));
+	printf("ldexp(%.7e,%d)=%.7e\n", pi, -134, ldexp(pi, -134));
 	printf("ldexp(%.7e,%d)=%.7e\n", pi, -200, ldexp(pi, -200));
 
 	signal(SIGFPE,SIG_IGN);

@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include <string.h>
 #include <time.h>
 #include <math.h>
@@ -228,14 +229,13 @@ void loke(word a, quad x) {
 }
 
 double feek(word a) {
-  double sign = (RAM[(a+1) & 0xffff] & 0x80) ? -1 : +1;
   int exp = RAM[a & 0xffff];
   quad mant = ((quad)RAM[(a+4) & 0xffff] | ((quad)RAM[(a+3) & 0xffff]<<8) |
-               ((quad)RAM[(a+2) & 0xffff]<<16) | ((quad)(RAM[(a+1) & 0xffff]|0x80)<<24) );
+               ((quad)RAM[(a+2) & 0xffff]<<16) | ((quad)(RAM[(a+1) & 0xffff])<<24) );
+  double sign = (mant & 0x80000000UL) ? -1 : +1;
   if (exp)
-    return sign * scalb((double)mant/0x100000000UL, (double)(exp-128));
-  else
-    return 0;
+    return sign * scalb((double)(mant|0x80000000UL)/0x100000000UL, (double)(exp-128));
+  return 0;
 }
 
 
@@ -858,11 +858,17 @@ void print_trace(CpuState *S)
   if (strchr(trace, 't'))
     fprintf(stderr, " T[0-3]=%04x %04x %04x %04x",
             deek(T0), deek(T0+2), deek(T0+4), deek(T0+6));
-  if (strchr(trace, 'f')) 
-    fprintf(stderr, "\n\t S=%02x AE=%02x AM=%08x%02x FAC=%.8g",
-            peek(0x81), peek(0x82), leek(0x84), peek(0x83),
-            scalb((double)(((long long)peek(0x87)<<32)|(long long)leek(0x83)),
-                  peek(0x82)-178) * ((peek(0x81)&0x80)?-1:1) );
+  if (strchr(trace, 'f')) {
+    int as = peek(0x81);
+    int ae = peek(0x82);
+    int64_t am = leek(0x83) + ((long)peek(0x87) << 32);
+    int be = peek(0x8d);
+    int64_t bm = leek(0x88) + ((long)peek(0x8c) << 32);
+    fprintf(stderr, "\n\t AS=%02x AE=%02x AM=%010llx BE=%02x BM=%010llx\n\t FAC=%.8g FARG=%.8g",
+            as, ae, (long long)am, be, (long long)bm,
+            ((as&0x80) ? -1.0 : +1.0) * ((ae) ? scalb((double)am, ae-168) : 0.0),
+            ((as&0x80)^((as&1)<<7) ? -1.0 : +1.0) * ((be) ? scalb((double)bm, be-168) : 0.0) );
+  }
   if (strchr(trace, 'S')) {
     int i;
     fprintf(stderr, "\n\t sysFn=%04x sysArgs=%02x", deek(sysFn), peek(sysArgs0));

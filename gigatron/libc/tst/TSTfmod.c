@@ -7,8 +7,9 @@ void test_fmod(double a, double b)
 	double x, y=0, z=0;
 	printf("%.8g %% %.8g = ", a, b);
 	x = fmod(a,b);
+	printf("%.8g  ", x);
 	z = modf(a / b, &y);
-	printf("%.8g  (ratio %.8g frac %.8g -> %.8g) \n", fmod(a,b), y, z, y * b + x);
+	printf("(ratio %.8g frac %.8g -> %.8g) \n", y, z, y * b + x);
 }
 
 int main()

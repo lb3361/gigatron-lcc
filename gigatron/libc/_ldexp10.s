@@ -41,11 +41,13 @@ def scope():
         _CALLJ('_@_fmul10')
         label('.pos1')
         LDW(R11);_BNE('.pos2')
+        _CALLJ('_@_rndfac')
         tryhop(2);POP();RET()
 
     module(name='_ldexp10',
            code=[ ('EXPORT', '_ldexp10'),
                   ('IMPORT', '_@_fmul10'),
+                  ('IMPORT', '_@_rndfac'),
 	          ('DATA', '_ldexp10p', code_ldexp10p, 0, 1),
                   ('CODE', '_ldexp10n', code_ldexp10n), 
                   ('CODE', '_ldexp10', code_ldexp10) ] )

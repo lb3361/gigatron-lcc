@@ -41,8 +41,8 @@ extern int _doprint(FILE*, const char*, __va_list);
 extern int _doscan(FILE*, const char*, __va_list);
 extern int _doprint_float();
 extern int _doprint_long();
-extern int _doscan_float();
-extern int _doscan_long();
+extern int _doscan_float(FILE*, int, __va_list);
+extern int _doscan_long(FILE*, int, __va_list);
 
 /* Console definitions */
 #define CONS_BUFSIZE 80

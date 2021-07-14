@@ -31,17 +31,17 @@ extern void _swalk(int(*f)(FILE*));
    They resolve to 'xxxx' if it is defined and zero otherwise. */
 extern void *__glink_weak_malloc(size_t);
 extern void __glink_weak_free(void*);
-extern void __glink_weak__doprint_float();
-extern void __glink_weak__doscan_float();
-extern void __glink_weak__doprint_long();
-extern void __glink_weak__doscan_long();
 
-/* printf and scanf support */
+/* Printf and scanf support. 
+   The _do{print|scan}_{float|long} functions forward to their actual
+   implementation _do{print|scan}_{float|long}_imp() which may or may 
+   not be included in the link depending on whether floats or longs
+   are used in the calling program. */
 extern int _doprint(FILE*, const char*, __va_list);
 extern int _doscan(FILE*, const char*, __va_list);
 extern int _doprint_float();
-extern int _doscan_float();
 extern int _doprint_long();
+extern int _doscan_float();
 extern int _doscan_long();
 
 /* Console definitions */

@@ -9,7 +9,7 @@ static unsigned long _basen(const char **sptr, char *ovf, int base)
 	register unsigned long x = 0;
 	register int c = *s;
 	for(;;) {
-		if (c >= '0' && c <= '9')
+		if (_isdigit(c))
 			c = c - '0';
 		else {
 			c = (c & 0xdf) - (int)('A' - 10);

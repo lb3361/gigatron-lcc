@@ -29,7 +29,7 @@ extern unsigned char _ctype(unsigned int);
 #define isascii(c)      (!((c)&~0x7fU))
 #define	isalnum(c)	(_ctype(c)&_isalnum)
 #define	isalpha(c)	(_ctype(c)&_isalpha)
-#define	iscntrl(c)	(_ctype(c)&_iscntrl)
+#define	iscntrl(c)	(_ctype(c)&_iscntrl):q!
 #define	isdigit(c)	(_ctype(c)&_isdigit)
 #define	isgraph(c)	(_ctype(c)&_isgraph)
 #define	islower(c)	(_ctype(c)&_islower)
@@ -41,5 +41,14 @@ extern unsigned char _ctype(unsigned int);
 
 extern int tolower(int);
 extern int toupper(int);
+
+/* Some alternatives that might evaluate c multiple times. 
+   Using a-b?0 instead of a?b to use SUBI over _CMPWI */
+#define	_isalpha(c)	(((c)|0x20)>=-'A'>=0 && ((c)|0x20)-'Z'<=0)
+#define	_isdigit(c)	((c)-'0'>=0 && (c)-'9'<=0)
+#define	_islower(c)	((c)-'a'>=0 && (c)-'z'<=0)
+#define	_isspace(c)	((c)==32 || (c)-9>=0 && (c)-13<=0)
+#define	_isupper(c)	((c)-'A'>=0 && (c)-'Z'<=0)
+#define	_isxdigit(c)	(_isdigit(c) || ((c)|0x20)>='a' && ((c)|0x20)<='z')
 
 #endif /* __CTYPE */

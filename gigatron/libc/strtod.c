@@ -20,8 +20,8 @@ static int _exponent(register const char **sp)
 		c = *++s;
 		if (c == '+' || (c == '-' && (neg = 1)))
 			c = *++s;
-		if (c >= '0' && c <= '9') {
-			while (c >= '0' && c <= '9') {
+		if (_isdigit(c)) {
+			while (_isdigit(c)) {
 				if (exp < 250)
 					exp = exp * 10 + c - '0';
 				c = *++s;

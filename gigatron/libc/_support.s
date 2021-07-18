@@ -41,47 +41,33 @@ def scope():
     # the conditional import directive ('IMPORT', sym, 'IF', sym)
     # which are both implemented by glink.
 
-    def code_doscan_float():
+    def code_doscan_double():
         nohop()
-        label('_doscan_float')
-        _LDI('__glink_weak__doscan_float_imp')
+        label('_doscan_double')
+        _LDI('__glink_weak__doscan_double_imp')
         _BEQ('.ret')
         STW(vLR);
         label('.ret')
         RET()
 
-    module(name='_doscan_float.s',
-           code=[ ('EXPORT', '_doscan_float'),
-                  ('IMPORT', '_doscan_float_imp', 'IF', '_@_using_fmov'),
-                  ('CODE', '_doscan_float', code_doscan_float) ] )
+    module(name='_doscan_double.s',
+           code=[ ('EXPORT', '_doscan_double'),
+                  ('IMPORT', '_doscan_double_imp', 'IF', '_@_using_fmov'),
+                  ('CODE', '_doscan_double', code_doscan_double) ] )
 
-    def code_doscan_long():
+    def code_doprint_double():
         nohop()
-        label('_doscan_long')
-        _LDI('__glink_weak__doscan_long_imp')
+        label('_doprint_double')
+        _LDI('__glink_weak__doprint_double_imp')
         _BEQ('.ret')
         STW(vLR);
         label('.ret')
         RET()
 
-    module(name='_doscan_long.s',
-           code=[ ('EXPORT', '_doscan_long'),
-                  ('IMPORT', '_doscan_long_imp', 'IF', '_@_using_lmov'),
-                  ('CODE', '_doscan_long', code_doscan_long) ] )
-
-    def code_doprint_float():
-        nohop()
-        label('_doprint_float')
-        _LDI('__glink_weak__doprint_float_imp')
-        _BEQ('.ret')
-        STW(vLR);
-        label('.ret')
-        RET()
-
-    module(name='_doprint_float.s',
-           code=[ ('EXPORT', '_doprint_float'),
-                  ('IMPORT', '_doprint_float_imp', 'IF', '_@_using_fmov'),
-                  ('CODE', '_doprint_float', code_doprint_float) ] )
+    module(name='_doprint_double.s',
+           code=[ ('EXPORT', '_doprint_double'),
+                  ('IMPORT', '_doprint_double_imp', 'IF', '_@_using_fmov'),
+                  ('CODE', '_doprint_double', code_doprint_double) ] )
 
     def code_doprint_long():
         nohop()

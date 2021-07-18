@@ -2,115 +2,138 @@
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
+#include "_stdio.h"
 
-static unsigned long _basen(const char **sptr, char *ovf, int base)
+
+#define FLG_MINUS 1
+#define FLG_PLUS  2
+#define FLG_0X    4
+#define FLG_DIGIT 8
+#define FLG_OVF   128
+
+int _strtol_push(strtol_t *d, int c, int c1)
 {
-	register const char *s = *sptr;
-	register unsigned long x = 0;
-	register int c = *s;
-	for(;;) {
-		if (_isdigit(c))
-			c = c - '0';
-		else {
-			c = (c & 0xdf) - (int)('A' - 10);
-			if (c < 10)
-				break;
-		}
-		if (c >= base)
-			break;
-		if (x >= 0x00ffffff) {
-			unsigned long y = (x >> 16) * base;
-			x = (unsigned int)x * (unsigned long)base + c;
-			y = y + (x >> 16);
-			if (y != (y & 0xffff)) {
-				*ovf = 1;
-				x = ULONG_MAX;
-			} else
-				x = (unsigned int)x + (y << 16);
-		} else 
-			x = base * x + c;
-		c = *++s;
+	register int f = d->flags;
+	register int base = d->base;
+	register int fchk = 0;
+	register int v = 0;
+	unsigned long x;
+
+	if (f == 0) {
+		if (c == '-')
+			fchk = FLG_MINUS;
+		if (c == '+')
+			fchk = FLG_PLUS;
 	}
-	*sptr = s;
-	return x;
+	if (fchk) {
+		base = 10;
+		c = c1;
+	} else if (base == 0) {
+		if (f & FLG_0X) {
+			fchk = f;
+			d->base = base = 16;
+			c = c1;
+		} else if (c != '0')
+			d->base = base = 10;
+		else if ((c1 | 0x20) == 'x')
+			return (d->flags = (f | FLG_0X | FLG_DIGIT));
+		else
+			d->base = base = 8;
+	}
+	if ((v = c - '0') > 9)
+		if ((v = (c | 0x20) - 'a') >= 0)
+			v = v + 10;
+	if (v < 0 || v >= base)
+		return 0;
+	if (fchk)
+		return d->flags = fchk;
+	x = d->x;
+	if (x >= 0x00ffffff) {
+		unsigned long y = (x >> 16) * base;
+		x = (unsigned int)x * (unsigned long)base + v;
+		y = y + (x >> 16);
+		if (y != (y & 0xffff)) {
+			f |= FLG_OVF;
+			d->x = ULONG_MAX;
+		} else
+			d->x = (unsigned int)x + (y << 16);
+	} else
+		d->x = base * x + v;
+	return d->flags = (f | FLG_DIGIT);
 }
 
-static unsigned long _base0(const char **sptr, char *ovf)
+int _strtol_decode_u(strtol_t *d, unsigned long *px)
 {
-	register const char *s = *sptr;
-	register int c = *s;
-	if (c == '0' && (s[1] & 0xdf) == 'X') {
-		*sptr = s+2;
-		return _basen(sptr, ovf, 16);
-	} else if (c == '0') {
-		*sptr = s+1;
-		return _basen(sptr, ovf, 8);
+	if (d->flags & FLG_DIGIT) {
+		*px = d->x;
+		if (d->flags & FLG_OVF) {
+			errno = ERANGE;
+		} else if (d->flags & FLG_MINUS)
+			*px = (unsigned long) - (long)(d->x);
+		return 1;
 	}
-	return _basen(sptr, ovf, 10);
+	*px = 0;
+	return 0;
 }
 
-
-static unsigned long _strtoul(const char *nptr, char **endptr, register int base,
-			      register char *neg, register char *ovf)
+int _strtol_decode_s(strtol_t *d, long *px)
 {
-	register unsigned long x;
-	register const char *s = nptr;
-	register int c = *s;
-	const char *ss;
-
-	while (isspace(c))
-		c = *++s;
-	if (c == '-') {
-		*neg = 1;
-		c = *++s;
-	} else if (c == '+')
-		c = *++s;
-	ss = s;
-	if (base == 0)
-		x = _base0(&ss, ovf);
-	else if (base > 1 && base <= 36)
-		x = _basen(&ss, ovf, base);
-	else {
-		errno = EINVAL;
-		x = 0;
+	if (d->flags & FLG_DIGIT) {
+		static unsigned long lmin = (unsigned long)LONG_MIN;
+		static unsigned long lmax = LONG_MAX;
+		register unsigned long *lm = &lmax;
+		register unsigned long *pdx = &d->x;
+		if (d->flags & FLG_MINUS)
+			lm = &lmin;
+		if ((d->flags & FLG_OVF) || (*pdx > *lm)) {
+			errno = ERANGE;
+			*px = *(long*)lm;
+		} else if (d->flags & FLG_MINUS)
+			*px = -*(long*)pdx;
+		else
+			*px = *(long*)pdx;
+		return 1;
 	}
-	if (ss == s)
-		ss = nptr;
-	if (endptr)
-		*endptr = (char*)ss;
-	return x;
+	*px = 0;
+	return 0;
+}
+
+static const char *worker(register strtol_t *d, register const char *p, register int base)
+{
+	d->x = 0;
+	d->flags = 0;
+	d->base = base;
+	while (isspace(p[0]))
+		p += 1;
+	while (_strtol_push(d, p[0], p[1]))
+		p += 1;
+	return p;
 }
 
 unsigned long int strtoul(const char *nptr, char **endptr, register int base)
 {
-	char n = 0;
-	char ovf = 0;
-	register unsigned long x = _strtoul(nptr, endptr, base, &n, &ovf);
-	if (ovf)
-		errno = ERANGE;
-	else if (n) 
-		x = -(long)x;
+	strtol_t dd;
+	register strtol_t *d = &dd;
+	register const char *p = worker(d, nptr, base);
+	unsigned long x;
+	if (! _strtol_decode_u(d, &x))
+		p = nptr;
+	if (endptr)
+		*endptr = (char*)p;
 	return x;
 }
 
 long int strtol(const char *nptr, char **endptr, register int base)
 {
-	char n = 0;
-	char ovf = 0;
-	register unsigned long x = _strtoul(nptr, endptr, base, &n, &ovf);
-	if (n) {
-		if (ovf || x > -LONG_MIN) {
-			errno = ERANGE;
-			return LONG_MIN;
-		} else
-			return -(long)x;
-	} else {
-		if  (ovf || x > LONG_MAX) {
-			errno = ERANGE;
-			return LONG_MAX;
-		}
-		return x;
-	}
+	strtol_t dd;
+	register strtol_t *d = &dd;
+	register const char *p = worker(d, nptr, base);
+	long x;
+	if (! _strtol_decode_s(d, &x))
+		p = nptr;
+	if (endptr)
+		*endptr = (char*)p;
+	return x;
 }
 
 

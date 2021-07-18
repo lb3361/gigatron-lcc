@@ -32,17 +32,42 @@ extern void _swalk(int(*f)(FILE*));
 extern void *__glink_weak_malloc(size_t);
 extern void __glink_weak_free(void*);
 
+
+/* String to number conversions */
+
+typedef struct {
+	int flags, base;
+	unsigned long x;
+} strtol_t;
+
+extern int _strtol_push1(strtol_t*, int, int);
+extern int _strtol_decode_u(strtol_t*, unsigned long *px);
+extern int _strtol_decode_s(strtol_t*, long *px);
+
+
+
 /* Printf and scanf support. 
    The _do{print|scan}_{float|long} functions forward to their actual
    implementation _do{print|scan}_{float|long}_imp() which may or may 
    not be included in the link depending on whether floats or longs
    are used in the calling program. */
-extern int _doprint(FILE*, const char*, __va_list);
+
+
+typedef struct doscan_s {
+	int c;
+	FILE *fp;
+	int cnt;
+	int n;
+} doscan_t;
+
 extern int _doscan(FILE*, const char*, __va_list);
-extern int _doprint_float();
+extern int _doscan_next(doscan_t *);
+extern void _doscan_double(doscan_t *, double *);
+
+
+extern int _doprint(FILE*, const char*, __va_list);
+extern int _doprint_double();
 extern int _doprint_long();
-extern int _doscan_float(FILE*, int, __va_list);
-extern int _doscan_long(FILE*, int, __va_list);
 
 /* Console definitions */
 #define CONS_BUFSIZE 80

@@ -6,14 +6,15 @@
 #include <errno.h>
 #include <gigatron/libc.h>
 
+
+/* Buffering stuff */
+
 #define _IOB_NUM 5
 
-extern struct _more_iobuf *_more_iob;
-
-struct _more_iobuf {
+extern struct _more_iobuf {
 	struct _iobuf _iob[_IOB_NUM];
 	struct _more_iobuf *next;
-};
+} *_more_iob;
 
 extern int _schkwrite(FILE*);
 extern int _schkread(FILE*);
@@ -26,6 +27,7 @@ extern size_t _fread(FILE*, char*, size_t);
 extern FILE *_sfindiob(void);
 extern void _sfreeiob(FILE *fp);
 extern void _swalk(int(*f)(FILE*));
+
 
 /* Weak references '__glink_weak_xxxx' do not cause anything to be imported. 
    They resolve to 'xxxx' if it is defined and zero otherwise. */
@@ -40,10 +42,17 @@ typedef struct {
 	unsigned long x;
 } strtol_t;
 
-extern int _strtol_push1(strtol_t*, int, int);
+extern int _strtol_push(strtol_t*, const char*);
 extern int _strtol_decode_u(strtol_t*, unsigned long *px);
 extern int _strtol_decode_s(strtol_t*, long *px);
 
+typedef struct {
+	int flags, exp;
+	double x;
+} strtod_t;
+
+extern int _strtod_push(strtod_t*, const char*);
+extern int _strtod_decode(strtol_t*, double *px);
 
 
 /* Printf and scanf support. 
@@ -52,16 +61,15 @@ extern int _strtol_decode_s(strtol_t*, long *px);
    not be included in the link depending on whether floats or longs
    are used in the calling program. */
 
-
 typedef struct doscan_s {
-	int c;
+	char c[3];
 	FILE *fp;
 	int cnt;
 	int n;
 } doscan_t;
 
 extern int _doscan(FILE*, const char*, __va_list);
-extern int _doscan_next(doscan_t *);
+extern void _doscan_next(doscan_t *);
 extern void _doscan_double(doscan_t *, double *);
 
 

@@ -11,6 +11,7 @@ INSTALL=${TOP}/gigatron/install-sh
 LN_S=ln -s
 B=${TOP}${BUILDDIR}/
 BL=${TOP}${BUILDDIR}/libc/
+INC=${TOP}include/gigatron/
 G=${TOP}gigatron/
 GLCC=${B}glcc
 GTSIM=${B}gtsim
@@ -37,15 +38,18 @@ ${B}cpu6/libc.a: ${SFILES} ${O6FILES} ${RFILES}
 	-@mkdir -p ${B}cpu6
 	cat ${SFILES} ${O6FILES} ${RFILES} > ${B}/cpu6/libc.a
 
-${BL}%_4.o: %.c ${B}rcc
+# this is incomplete but better than nothing
+DEPS=_stdio.h ${INC}stdio.h ${INC}gigatron/libc.h ${B}rcc
+
+${BL}%_4.o: %.c ${DEPS}
 	-@mkdir -p ${BL}
 	${GLCC} -c -cpu=4 -o $@ $<
 
-${BL}%_5.o: %.c ${B}rcc
+${BL}%_5.o: %.c ${DEPS}
 	-@mkdir -p ${BL}
 	${GLCC} -c -cpu=5 -o $@ $<
 
-${BL}%_6.o: %.c ${B}rcc
+${BL}%_6.o: %.c ${DEPS}
 	-@mkdir -p ${BL}
 	${GLCC} -c -cpu=6 -o $@  $<
 

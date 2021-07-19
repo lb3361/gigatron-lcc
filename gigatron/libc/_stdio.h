@@ -68,15 +68,15 @@ extern struct _svec _cons_svec;
    are used in the calling program. */
 
 typedef struct doscan_s {
-	char c[3];
+	int c;
 	FILE *fp;
 	int cnt;
 	int n;
 } doscan_t;
 
 extern int _doscan(FILE*, const char*, __va_list);
-extern void _doscan_next(doscan_t *);
-extern void _doscan_double(doscan_t *, double *);
+extern int _doscan_next(doscan_t *);
+extern int _doscan_double(doscan_t *, double *);
 
 extern int _doprint(FILE*, const char*, __va_list);
 extern int _doprint_double();

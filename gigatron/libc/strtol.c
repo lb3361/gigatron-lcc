@@ -66,38 +66,35 @@ int _strtol_push(strtol_t *d, int c)
 
 int _strtol_decode_u(strtol_t *d, unsigned long *px)
 {
-	if (d->flags & FLG_DIGIT) {
+	if (! (d->flags & FLG_DIGIT))
+		return 0;
+	if (d->flags & FLG_OVF)
+		errno = ERANGE;
+	else if (d->flags & FLG_MINUS)
+		d->x = (unsigned long)(-(long)(d->x));
+	if (px)
 		*px = d->x;
-		if (d->flags & FLG_OVF) {
-			errno = ERANGE;
-		} else if (d->flags & FLG_MINUS)
-			*px = (unsigned long) - (long)(d->x);
-		return 1;
-	}
-	*px = 0;
-	return 0;
+	return 1;
 }
 
 int _strtol_decode_s(strtol_t *d, long *px)
 {
-	if (d->flags & FLG_DIGIT) {
-		static unsigned long lmin = (unsigned long)LONG_MIN;
-		static unsigned long lmax = LONG_MAX;
-		register unsigned long *lm = &lmax;
-		register unsigned long *pdx = &d->x;
-		if (d->flags & FLG_MINUS)
-			lm = &lmin;
-		if ((d->flags & FLG_OVF) || (*pdx > *lm)) {
-			errno = ERANGE;
-			*px = *(long*)lm;
-		} else if (d->flags & FLG_MINUS)
-			*px = -*(long*)pdx;
-		else
-			*px = *(long*)pdx;
-		return 1;
-	}
-	*px = 0;
-	return 0;
+	static unsigned long lmin = (unsigned long)LONG_MIN;
+	static unsigned long lmax = LONG_MAX;
+	register unsigned long *lm = &lmax;
+	register unsigned long *pdx = &d->x;
+	if (! (d->flags & FLG_DIGIT))
+		return 0;
+	if (d->flags & FLG_MINUS)
+		lm = &lmin;
+	if ((d->flags & FLG_OVF) || (*pdx > *lm)) {
+		errno = ERANGE;
+		*pdx = *lm;
+	} else if (d->flags & FLG_MINUS) 
+		*pdx = (unsigned long)(-(long)*pdx);
+	if (px)
+		*px = (long)*pdx;
+	return 1;
 }
 
 static const char *worker(register strtol_t *d, register const char *p, register int base)

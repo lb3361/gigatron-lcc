@@ -36,7 +36,7 @@ typedef unsigned char byte;
 #define xisalpha(c) isalpha((int)(c))
 
 
-#ifdef __gigatron__
+#ifdef AVOID_SCANF
 /* scanf avoidance functions */
 static void get_word(char *s, char *n) {
 	register int c = *s;
@@ -134,7 +134,7 @@ static unsigned long zobrist[12][64];   /* Hash-key construction */
  *  fit well on 8bit machines.
  */
 #ifdef __gigatron__
-#define CORE (512)
+#define CORE (256)
 static int booksize;                   /* Number of opening book entries */
 #else
 #define CORE (2048)
@@ -1919,7 +1919,7 @@ static void cmd_go(char *dummy)
 static void cmd_test(char *s)
 {
         int d = maxdepth;
-#ifdef __gigatron__
+#ifdef AVOID_SCANF
 	skip_word_get_int(s, &d);
 #else
         sscanf(s, "%*s%d", &d);
@@ -1929,7 +1929,7 @@ static void cmd_test(char *s)
 
 static void cmd_set_depth(char *s)
 {
-#ifdef __gigatron__
+#ifdef AVOID_SCANF
 	skip_word_get_int(s, &maxdepth);
 #else
         if (1==sscanf(s, "%*s%d", &maxdepth))
@@ -2071,7 +2071,7 @@ int main(void)
                 if (readline(line, sizeof(line), stdin) < 0) {
                         break;
                 }
-#ifdef __gigatron__
+#ifdef AVOID_SCANF
 		get_word(line, name); if (! name[0]) continue;
 #else
                 if (1 != sscanf(line, "%s", name)) continue;

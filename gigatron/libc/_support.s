@@ -44,11 +44,11 @@ def scope():
     def code_doscan_double():
         nohop()
         label('_doscan_double')
-        _LDI('__glink_weak__doscan_double_imp')
-        _BEQ('.ret')
-        STW(vLR);
+        PUSH()
+        LDWI('__glink_weak__doscan_double_imp');_BEQ('.ret')
+        CALL(vAC)
         label('.ret')
-        RET()
+        POP();RET()
 
     module(name='_doscan_double.s',
            code=[ ('EXPORT', '_doscan_double'),
@@ -58,11 +58,11 @@ def scope():
     def code_doprint_double():
         nohop()
         label('_doprint_double')
-        _LDI('__glink_weak__doprint_double_imp')
-        _BEQ('.ret')
-        STW(vLR);
+        PUSH()
+        LDWI('__glink_weak__doprint_double_imp');_BEQ('.ret')
+        CALL(vAC)
         label('.ret')
-        RET()
+        POP();RET()
 
     module(name='_doprint_double.s',
            code=[ ('EXPORT', '_doprint_double'),
@@ -72,11 +72,11 @@ def scope():
     def code_doprint_long():
         nohop()
         label('_doprint_long')
-        _LDI('__glink_weak__doprint_long_imp')
-        _BEQ('.ret')
-        STW(vLR);
+        PUSH()
+        LDWI('__glink_weak__doprint_long_imp');_BEQ('.ret')
+        CALL(vAC)
         label('.ret')
-        RET()
+        POP();RET()
 
     module(name='_doprint_long.s',
            code=[ ('EXPORT', '_doprint_long'),

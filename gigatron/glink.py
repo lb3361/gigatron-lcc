@@ -1719,9 +1719,9 @@ def measure_fragments(m):
     the_fragment = None
 
 def check_conditional_import(tp):
-    if len(tp) < 3 or tp[2] != 'IF':
+    if len(tp) < 4 or tp[3] != 'IF':
         return False
-    for sym in tp[3:]:
+    for sym in tp[4:]:
         if not sym in exporters:
             return False
     return True
@@ -1763,13 +1763,14 @@ def compute_closure():
                 for sym in e.imports:              # -- add all its imports to the list of required imports
                     implist.append(sym)
                 for tp in e.cimports:              # -- process conditional imports
-                    cimplist.append(tp)
+                    cimplist.append((e, *tp))
                 if cimplist:
-                    for i in range(len(cimplist)-1, -1, -1):
-                        if check_conditional_import(cimplist[i]):
-                            implist.append(tp[i])
+                    for i in range(len(cimplist)):
+                        tp = cimplist[i]
+                        if check_conditional_import(tp):
+                            tp[0].imports.append(tp[2])
+                            implist.append(tp[2])
                             del cimplist[i]
-                    
     # recompute module_list
     nml = []
     for m in module_list:

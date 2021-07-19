@@ -18,9 +18,9 @@ int _strtol_push(strtol_t *d, const char *p)
 	register int f = d->flags;
 	register int base = d->base;
 	register int fchk = 0;
-	register int v = 0;
 	register int c = p[0];
-	unsigned long x;
+	register int v = 0;
+	unsigned long *xp = & d->x;
 
 	if (f == 0) {
 		if (c == '-')
@@ -39,29 +39,29 @@ int _strtol_push(strtol_t *d, const char *p)
 		} else if (c != '0')
 			d->base = base = 10;
 		else if ((p[1] | 0x20) == 'x')
-			return (d->flags = (f | FLG_0X | FLG_DIGIT));
+			return (d->flags = f | (FLG_0X | FLG_DIGIT));
 		else
 			d->base = base = 8;
 	}
 	if ((v = c - '0') > 9)
 		if ((v = (c | 0x20) - 'a') >= 0)
 			v = v + 10;
-	if (v < 0 || v >= base)
+	if (v < 0 || v - base >= 0)
 		return 0;
 	if (fchk)
 		return d->flags = fchk;
-	x = d->x;
-	if (x >= 0x00ffffff) {
-		unsigned long y = (x >> 16) * base;
-		x = (unsigned int)x * (unsigned long)base + v;
+	if (*xp >= 0x00ffffff) {
+		register unsigned long lbase = (unsigned long)base;
+		register unsigned long y = ((unsigned int*)xp)[1] * lbase;
+		register unsigned long x = ((unsigned int*)xp)[0] * lbase + (unsigned)v;
 		y = y + (x >> 16);
 		if (y != (y & 0xffff)) {
 			f |= FLG_OVF;
-			d->x = ULONG_MAX;
+			*xp = ULONG_MAX;
 		} else
-			d->x = (unsigned int)x + (y << 16);
+			*xp = (unsigned int)x + (y << 16);
 	} else
-		d->x = base * x + v;
+		*xp = *xp * base + v;
 	return d->flags = (f | FLG_DIGIT);
 }
 

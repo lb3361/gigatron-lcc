@@ -104,9 +104,21 @@ def scope():
            code=[ ('EXPORT', '_@_wcopy'),
                   ('CODE', '_@_wcopy', code4) ])
 
+    # LEXTS: (vAC<0) ? -1 : 0 --> vAC
+    def code5():
+        nohop()
+        label('_@_lexts')
+        _BLT('.m1')
+        LDI(0);RET();
+        label('.m1')
+        _LDI(-1);RET()
+
+    module(name='rt_lexts.s',
+           code=[ ('EXPORT', '_@_lexts'),
+                  ('CODE', '_@_lexts', code5) ])
 
     # LCVI: AC to LAC with sign extension
-    def code5():
+    def code6():
         nohop()
         label('_@_lcvi')
         STW(LAC);
@@ -116,7 +128,7 @@ def scope():
 
     module(name='rt_lcvi.s',
            code=[ ('EXPORT', '_@_lcvi'),
-                  ('CODE', '_@_lcvi', code5) ])
+                  ('CODE', '_@_lcvi', code6) ])
 
     # The following are merely markers indicating that _LMOV or _FMOV
     # is used somewhere. These are useful to decide whether to import

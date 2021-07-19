@@ -1404,8 +1404,12 @@ def _LCMPX():
     _CALLI('_@_lcmpx')              # TST(LAC-[vAC]) --> vAC
 @vasm
 def _LCVI():
-    extern('_@_lcvi')
-    _CALLI('_@_lcvi')               # AC -> LAC (signed)
+    extern('_@_lcvi')               # vAC --> LAC
+    _CALLI('_@_lcvi')
+@vasm
+def _LEXTS():
+    extern('_@_lexts')              # (vAC<0) ? -1 : 0 --> vAC
+    _CALLI('_@_lexts')
 @vasm
 def _FMOV(s,d):
     '''Move float from reg s to d with special cases when s or d is FAC.

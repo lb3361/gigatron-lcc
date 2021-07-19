@@ -11,45 +11,43 @@
 #define FLG_DIGIT 8
 #define FLG_OVF   128
 
-int _strtol_push(strtol_t *d, const char *p)
+int _strtol_push(strtol_t *d, int c)
 {
-	/* p[0] : current char
-           p[1] : lookahead char */
 	register int f = d->flags;
 	register int base = d->base;
-	register int fchk = 0;
-	register int c = p[0];
 	register int v = 0;
 	unsigned long *xp = & d->x;
 
 	if (f == 0) {
-		if (c == '-')
-			fchk = FLG_MINUS;
-		if (c == '+')
-			fchk = FLG_PLUS;
+		if (c == '-') {
+			f = FLG_MINUS;
+			goto ret;
+		} else if (c == '+') {
+			f = FLG_PLUS;
+			goto ret;
+		}
 	}
-	if (fchk) {
-		base = 10;
-		c = p[1];
-	} else if (base == 0) {
+	if (base == 0) {
 		if (f & FLG_0X) {
-			fchk = f;
-			d->base = base = 16;
-			c = p[1];
-		} else if (c != '0')
+			if ((c | 0x20) == 'x') {
+				d->base = base = 16;
+				goto ret;
+			} else {
+				f |= FLG_DIGIT;
+				d->base = base = 8;
+			}
+		} else if (c == '0') {
+			f |= FLG_0X;
+			goto ret;
+		} else
 			d->base = base = 10;
-		else if ((p[1] | 0x20) == 'x')
-			return (d->flags = f | (FLG_0X | FLG_DIGIT));
-		else
-			d->base = base = 8;
 	}
 	if ((v = c - '0') > 9)
 		if ((v = (c | 0x20) - 'a') >= 0)
 			v = v + 10;
 	if (v < 0 || v - base >= 0)
 		return 0;
-	if (fchk)
-		return d->flags = fchk;
+	f |= FLG_DIGIT;
 	if (*xp >= 0x00ffffff) {
 		register unsigned long lbase = (unsigned long)base;
 		register unsigned long y = ((unsigned int*)xp)[1] * lbase;
@@ -62,7 +60,8 @@ int _strtol_push(strtol_t *d, const char *p)
 			*xp = (unsigned int)x + (y << 16);
 	} else
 		*xp = *xp * base + v;
-	return d->flags = (f | FLG_DIGIT);
+ ret:
+	return d->flags = f;
 }
 
 int _strtol_decode_u(strtol_t *d, unsigned long *px)
@@ -108,7 +107,7 @@ static const char *worker(register strtol_t *d, register const char *p, register
 	d->base = base;
 	while (isspace(p[0]))
 		p += 1;
-	while (_strtol_push(d, p))
+	while (_strtol_push(d, p[0]))
 		p += 1;
 	return p;
 }

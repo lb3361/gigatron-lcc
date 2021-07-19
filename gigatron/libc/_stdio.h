@@ -42,7 +42,7 @@ typedef struct {
 	unsigned long x;
 } strtol_t;
 
-extern int _strtol_push(strtol_t*, const char*);
+extern int _strtol_push(strtol_t*, int c);
 extern int _strtol_decode_u(strtol_t*, unsigned long *px);
 extern int _strtol_decode_s(strtol_t*, long *px);
 
@@ -52,7 +52,7 @@ typedef struct {
 	double x;
 } strtod_t;
 
-extern int _strtod_push(strtod_t*, const char*);
+extern int _strtod_push(strtod_t*, int c, const char *p);
 extern int _strtod_decode(strtod_t*, double *px);
 
 

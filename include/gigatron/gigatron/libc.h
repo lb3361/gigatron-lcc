@@ -118,6 +118,15 @@ extern void _iob_setup(void);
    and fp->_file set to -1 or set to a desired file descriptor. */
 extern int _openf(FILE *fp, const char *fname);
 
+
+/* ---- Bitsets ---- */
+
+extern void _bitset_clear(char *set, size_t sz);
+extern void _bitset_compl(char *set, size_t sz);
+extern void _bitset_set(char *set, unsigned int i);
+extern void _bitset_clr(char *set, unsigned int i);
+extern int  _bitset_test(char *set, unsigned int i);
+
 /* ---- Misc ---- */
 
 /* Calls srand(int) using the gigatron entropy generator */

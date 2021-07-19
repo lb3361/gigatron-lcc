@@ -3,113 +3,138 @@
 #include <ctype.h>
 #include <errno.h>
 #include <math.h>
-#include <gigatron/libc.h>
+#include <string.h>
+#include "_stdio.h"
 
-/* This code is much simpler than a numerically correct strtod. In
-   particular it is going to overflow/underflow up to one bit below
-   FLT_MAX or above FLT_MIN. */
+/* This code is much simpler than a numerically correct strtod 
+   but gets the exact numbers right. */
 
-static int _exponent(register const char **sp)
+#define ST_SIGN    0
+#define ST_MANT    1
+#define ST_ESGN    2
+#define ST_EXPN    3
+#define FLG_NEGEXP 8
+#define FLG_DIGIT  16
+#define FLG_PERIOD 32
+#define FLG_NEG    64
+#define FLG_OVF    128
+
+int _strtod_push(strtod_t *d, const char *p)
 {
-	register const char *s = *sp;
-	register int exp = 0;
-	register int c = *s;
-	register char neg = 0;
-
-	if (c == 'e' || c == 'E') {
-		c = *++s;
-		if (c == '+' || (c == '-' && (neg = 1)))
-			c = *++s;
-		if (_isdigit(c)) {
-			while (_isdigit(c)) {
-				if (exp < 250)
-					exp = exp * 10 + c - '0';
-				c = *++s;
-			}
-			*sp = s;
-			if (neg)
-				return -exp;
-			else
-				return exp;
+	/* p[0]    : current char
+           p[1..2] : lookahead chars */
+	register int c = p[0];
+	register int f = d->flags;
+	
+	if (f == 0) {
+		f = ST_MANT;
+		if (c == '-') {
+			f |= FLG_NEG;
+			goto sign;
+		} else if (c == '+') {
+		sign:   if ((c = p[1]) == '.')
+				c = p[2];
+			if (! _isdigit(c))
+				goto end;
+			goto ret;
 		}
 	}
-	return 0;
-}
-
-static double _mantissa(register const char **sp, int *pe)
-{
-	register const char *s = *sp;
-	register int c = *s;
-	register int e = 0;
-	int d = 0;
-	double x = 0.0;
-	
-	/* leading zeroes */
-	for(;; c = *++s) {
-		if (c == '.' && !d)
-			d = 1;
-		else if (c == '0')
-			e -= d;
-		else
-			break;
-	}
-	/* mantissa */
-	for(;; c = *++s) {
-		if (c == '.' && !d)
-			d = 1;
-		else if (c >= '0' && c <= '9') {
+	if ((f & 0x7) == ST_MANT) {
+		if (c == '.') {
+			if (f & FLG_PERIOD)
+				goto end;
+			f |= FLG_PERIOD;
+			if ((f & FLG_DIGIT) || _isdigit(p[1]))
+				goto ret;
+			goto end;
+		} else if (_isdigit(c)) {
+			double x = d->x;
+			f |= FLG_DIGIT;
 			if (x < 1e16) {
-				e -= d;
-				x = x * 10 + (double)(c - '0');
-			} else if (! d) 
-				e += 1;
-		} else
-			break;
+				if (f & FLG_PERIOD)
+					d->e0 -= 1;
+				d->x = x * 10 + (double)(c - '0');
+			} else if (! (f & FLG_PERIOD)) 
+					d->e0 += 1;
+			goto ret;
+		} else if ((c | 0x20) == 'e') {
+			c = p[1];
+			if (c == '+' || c == '-')
+				c = p[2];
+			if (! _isdigit(c))
+				return 0;
+			f = f ^ ((f ^ ST_ESGN) & 0x7);
+			goto ret;
+		} 
+		return 0;
 	}
-	/* return */
-	*pe = e;
-	*sp = s;
-	return x;
+	if ((f & 0x7) == ST_ESGN) {
+		f = f ^ ((f ^ ST_EXPN) & 0x7);
+		if (c == '-') {
+			f |= FLG_NEGEXP;
+			goto ret;
+		} else if (c == '+')
+			goto ret;
+	}
+	if ((f & 0x7) == ST_EXPN) {
+		int e1 = d->e1;
+		if (_isdigit(c)) {
+			if (e1 < 250)
+				d->e1 = e1 * 10 + c - '0';
+			goto ret;
+		}
+	}
+ end:
+	return 0;
+ ret:
+	return d->flags = f;
 }
 
-double strtod(const char *nptr, char **endptr)
+int _strtod_decode(strtod_t *d, double *px)
 {
-	register double x;
-	register const char *s = nptr;
-	register int c = *s;
-	int  exp = 0;
-	char neg = 0;
-
-	/* suppress raise to capture sigfpe */
+	double x = d->x;
+	register int e = d->e0;
+	register int f = d->flags;
 	void *saved_raise_disposition = _raise_disposition;
+
+	if (! (f & FLG_DIGIT))
+		return 0;
+	if (f & FLG_NEGEXP)
+		e -= d->e1;
+	else
+		e += d->e1;
 	_raise_code = 0;
 	_raise_disposition = RAISE_SETS_CODE;
-	/* skip space */
-	while (isspace(c))
-		c = *++s;
-	if ((c == '+') || ((c == '-') && (neg = 1)))
-		c = *++s;
-	/* parse number */
-	if (isdigit(c) || ((c == '.') && isdigit(s[1]))) {
-		nptr = s;
-		x = _mantissa(&nptr, &exp);
-		exp += _exponent(&nptr);
-	} else {
-		x = 0.0;
-	}
-	/* finalize */
-	x = _ldexp10(x, exp);
-	/* check for error */
-	_raise_disposition = saved_raise_disposition;
+	x = _ldexp10(x, e);
 	if (_raise_code) {
 		x = HUGE_VAL;
 		errno = ERANGE;
 	}
-	/* return */
-	if (neg)
+	_raise_disposition = saved_raise_disposition;
+	if (f & FLG_NEG)
 		x = -x;
+	if (px)
+		*px = x;
+	return 1;
+}
+
+
+double strtod(const char *nptr, char **endptr)
+{
+	strtod_t dobj;
+	double x = 0.0;
+	register strtod_t *d = &dobj;
+	register const char *p = nptr;
+
+	memset(d, 0, sizeof(dobj));
+	while (isspace(p[0]))
+		p += 1;
+	while (_strtod_push(d, p))
+		p += 1;
+	if (! _strtod_decode(d, &x))
+		p = nptr;
 	if (endptr)
-		*endptr = (char*)nptr;
+		*endptr = (char*) p;
 	return x;
 }
 
@@ -118,19 +143,5 @@ double atof(register const char *s)
 	return strtod(s, NULL);
 }
 
-
-#if TEST
-int main(int argc, char **argv)
-{
-	int i;
-	for (i=1; i<argc; i++)
-		{
-			char *endptr = 0;
-			double x = _strtod(argv[i], &endptr);
-			printf("\t[%s] : %.8g : [%s]\n\n", argv[i], x, endptr);
-		}
-	return 0;
-}
-#endif
 
 

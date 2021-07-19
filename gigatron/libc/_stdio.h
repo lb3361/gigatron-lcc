@@ -47,13 +47,19 @@ extern int _strtol_decode_u(strtol_t*, unsigned long *px);
 extern int _strtol_decode_s(strtol_t*, long *px);
 
 typedef struct {
-	int flags, exp;
+	int flags;
+	int e0, e1;
 	double x;
 } strtod_t;
 
 extern int _strtod_push(strtod_t*, const char*);
-extern int _strtod_decode(strtol_t*, double *px);
+extern int _strtod_decode(strtod_t*, double *px);
 
+
+/* Console definitions */
+
+#define CONS_BUFSIZE 80
+extern struct _svec _cons_svec;
 
 /* Printf and scanf support. 
    The _do{print|scan}_{float|long} functions forward to their actual
@@ -72,13 +78,8 @@ extern int _doscan(FILE*, const char*, __va_list);
 extern void _doscan_next(doscan_t *);
 extern void _doscan_double(doscan_t *, double *);
 
-
 extern int _doprint(FILE*, const char*, __va_list);
 extern int _doprint_double();
 extern int _doprint_long();
-
-/* Console definitions */
-#define CONS_BUFSIZE 80
-extern struct _svec _cons_svec;
 
 #endif

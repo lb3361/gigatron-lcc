@@ -118,7 +118,7 @@ unsigned long int strtoul(const char *nptr, char **endptr, register int base)
 	strtol_t dd;
 	register strtol_t *d = &dd;
 	register const char *p = worker(d, nptr, base);
-	unsigned long x;
+	unsigned long x = 0;
 	if (! _strtol_decode_u(d, &x))
 		p = nptr;
 	if (endptr)
@@ -131,7 +131,7 @@ long int strtol(const char *nptr, char **endptr, register int base)
 	strtol_t dd;
 	register strtol_t *d = &dd;
 	register const char *p = worker(d, nptr, base);
-	long x;
+	long x = 0;
 	if (! _strtol_decode_s(d, &x))
 		p = nptr;
 	if (endptr)

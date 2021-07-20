@@ -45,7 +45,7 @@ def scope():
     module(name='rt_lshrs.s',
            code= [ ('EXPORT', '_@_lshrs'),
                    ('IMPORT', '__@lshru_b0'),
-                   ('CODE', '_@_lshru', code1) ])
+                   ('CODE', '_@_lshrs', code1) ])
 
 scope()
 

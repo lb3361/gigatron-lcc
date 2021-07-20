@@ -67,7 +67,7 @@ extern struct _svec _cons_svec;
    not be included in the link depending on whether floats or longs
    are used in the calling program. */
 
-typedef struct doscan_s {
+typedef struct {
 	int c;
 	FILE *fp;
 	int cnt;
@@ -78,8 +78,32 @@ extern int _doscan(FILE*, const char*, __va_list);
 extern int _doscan_next(doscan_t *);
 extern int _doscan_double(doscan_t *, double *);
 
+#define DPR_LEFTJ   1
+#define DPR_ZEROJ   2
+#define DPR_SGN     4
+#define DPR_SPC     8
+#define DPR_ALT    16
+#define DPR_LONG   32
+#define DPR_WIDTH  64
+#define DPR_PREC  128
+
+typedef struct {
+	char flags;
+	char conv;
+	int width;
+	int prec;
+} doprintspec_t;
+
+typedef struct {
+	FILE *fp;
+	int cnt;
+} doprint_t;
+
 extern int _doprint(FILE*, const char*, __va_list);
-extern int _doprint_double();
-extern int _doprint_long();
+extern void _doprint_putc(doprint_t*, int, size_t);
+extern void _doprint_puts(doprint_t*, const char*, size_t);
+extern void _doprint_str(doprint_t*, doprintspec_t*, const char*, int);
+extern void _doprint_double(doprint_t*, doprintspec_t*, double);
+extern void _doprint_long(doprint_t*, doprintspec_t*, unsigned long);
 
 #endif

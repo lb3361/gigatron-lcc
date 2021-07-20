@@ -4,8 +4,6 @@
 #include <errno.h>
 #include "_stdio.h"
 
-static struct _svec ssv = { 0, 0, 0, 0, 0, 0 };
-
 int sscanf(register const char *str, const char *fmt, ...)
 {
 	register int r;

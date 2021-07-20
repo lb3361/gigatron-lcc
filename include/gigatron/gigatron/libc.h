@@ -127,6 +127,14 @@ extern void _bitset_set(char *set, unsigned int i);
 extern void _bitset_clr(char *set, unsigned int i);
 extern int  _bitset_test(char *set, unsigned int i);
 
+
+/* ---- Printing ---- */
+
+extern char *itoa(int value, char *buffer, int radix);
+extern char *utoa(unsigned int value, char *buffer, int radix);
+extern char *ltoa(long value, char *buffer, int radix);
+extern char *ultoa(unsigned long value, char *buffer, int radix);
+
 /* ---- Misc ---- */
 
 /* Calls srand(int) using the gigatron entropy generator */

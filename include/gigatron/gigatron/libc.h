@@ -76,7 +76,7 @@ extern double _foverflow(double defval);
 extern double _ldexp10(double x, int n);
 
 /* Returns a double y and an exponent exp such that x = y * 10^exp,
-   with y as large as possible (almost) with an exact integer part. */
+   with y as large as possible with an exact integer part. */
 extern double _frexp10(double x, int *pexp);
 
 /* Like the C99 function remquo but with fmod-style remainder. */
@@ -130,10 +130,15 @@ extern int  _bitset_test(char *set, unsigned int i);
 
 /* ---- Printing ---- */
 
-extern char *itoa(int value, char *buffer, int radix);
-extern char *utoa(unsigned int value, char *buffer, int radix);
-extern char *ltoa(long value, char *buffer, int radix);
-extern char *ultoa(unsigned long value, char *buffer, int radix);
+/* Function to convert integers to strings. Buffer should be 8 bytes
+   long for ints, 16 bytes for longs. Radix should be in range 2 to
+   36.  Note that the return value is not usually equal to buffer
+   because the digits are generated backwards. */
+
+extern char *itoa(int value, char *buffer8, int radix);
+extern char *utoa(unsigned int value, char *buffer8, int radix);
+extern char *ltoa(long value, char *buffer16, int radix);
+extern char *ultoa(unsigned long value, char *buffer16, int radix);
 
 /* ---- Misc ---- */
 

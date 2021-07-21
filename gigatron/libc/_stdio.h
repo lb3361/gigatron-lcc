@@ -99,11 +99,10 @@ typedef struct {
 	int cnt;
 } doprint_t;
 
-extern int _doprint(FILE*, const char*, __va_list);
 extern void _doprint_putc(doprint_t*, int, size_t);
 extern void _doprint_puts(doprint_t*, const char*, size_t);
-extern void _doprint_str(doprint_t*, doprintspec_t*, const char*, int);
-extern void _doprint_double(doprint_t*, doprintspec_t*, double);
-extern void _doprint_long(doprint_t*, doprintspec_t*, unsigned long);
+extern void _doprint_num(doprint_t*, doprintspec_t*, int, char*);
+extern void _doprint_double(doprint_t*, doprintspec_t*, __va_list*);
+extern void _doprint_long(doprint_t*, doprintspec_t*, int, __va_list*);
 
 #endif

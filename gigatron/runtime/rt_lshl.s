@@ -67,7 +67,7 @@ def scope():
         LDW(LAC);STW(LAC+2);LDI(0);STW(LAC)
         label('.l4')
         LD(B0);ANDI(8);_BEQ('.l5')
-        LD(LAC+2);ST(LAC+3);LDW(LAC);STW(LAC+1);LDI(0);ST(LAC)
+        LDW(LAC+1);STW(LAC+2);LD(LAC);ST(LAC+1);LDI(0);ST(LAC)
         label('.l5')
         LD(B0);ANDI(4);_BEQ('.l6')
         LDWI('SYS_LSLW4_46');STW('sysFn')

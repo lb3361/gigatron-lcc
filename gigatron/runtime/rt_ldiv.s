@@ -15,7 +15,6 @@ def scope():
         def CallWorker():
             _CALLJ('__@ldivworker')
 
-
         def code_ldivworker():
             label('__@ldivworker')
             PUSH()

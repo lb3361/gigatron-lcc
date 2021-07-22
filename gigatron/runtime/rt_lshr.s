@@ -12,7 +12,7 @@ def scope():
         LDW(LAC+2);STW(LAC);LDI(0);STW(LAC+2)
         label('.l4')
         LD(B0);ANDI(8);_BEQ('.l5')
-        LD(LAC+1);ST(LAC);LD(LAC+2);ST(LAC+1);LD(LAC+3);ST(LAC+2);LDI(0);ST(LAC+3)
+        LDW(LAC+1);STW(LAC);LD(LAC+3);STW(LAC+2)
         label('.l5')
         LD(B0);ANDI(7);_BEQ('.ret');_CALLI('__@shrsysfn')
         LDW(LAC);SYS(52);ST(LAC)

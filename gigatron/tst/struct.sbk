@@ -10,7 +10,7 @@ def code0():
 	_SP(6+0);STW(R22);
 	_SP(10+0);DEEK();STW(R21);
 	_SP(6+0);DEEK();ADDW(R21);DOKE(R22);
-	LDW(R8);STW(T2);_SP(4+0);_BMOV([vAC],[T2],4)
+	LDW(R8);STW(T2);_BMOV([SP,4+0],[T2],4)
 	label('.1');
 	tryhop(2);POP();RET()
 # ======== ('CODE', 'canonrect', code1)
@@ -53,7 +53,7 @@ def code1():
 	label('.38');
 	_SP(-2+10);STW(R22);
 	LDW(R16);DOKE(R22);
-	LDW(R8);STW(T2);_SP(-8+10);_BMOV([vAC],[T2],8)
+	LDW(R8);STW(T2);_BMOV([SP,-8+10],[T2],8)
 	label('.5');
 	_EPILOGUE(10,2,0x0);
 # ======== ('CODE', 'makepoint', code2)
@@ -64,7 +64,7 @@ def code2():
 	LDW(R9);DOKE(R22);
 	_SP(-2+6);STW(R22);
 	LDW(R10);DOKE(R22);
-	LDW(R8);STW(T2);_SP(-4+6);_BMOV([vAC],[T2],4)
+	LDW(R8);STW(T2);_BMOV([SP,-4+6],[T2],4)
 	label('.39');
 	_EPILOGUE(6,2,0x0);
 # ======== ('CODE', 'makerect', code3)
@@ -72,10 +72,10 @@ def code3():
 	label('makerect');
 	_PROLOGUE(22,12,0x80); # save=R7
 	LDW(R8);STW(R7);
-	_SP(-8+22);STW(T2);_SP(4+22);_BMOV([vAC],[T2],4)
-	_SP(-4+22);STW(T2);_SP(8+22);_BMOV([vAC],[T2],4)
+	_SP(-8+22);STW(T2);_BMOV([SP,4+22],[T2],4)
+	_SP(-4+22);STW(T2);_BMOV([SP,8+22],[T2],4)
 	LDW(R7);STW(R8);
-	_SP(4);STW(T2);_SP(-8+22);_BMOV([vAC],[T2],8);
+	_SP(4);STW(T2);_BMOV([SP,-8+22],[T2],8);
 	CALLI('canonrect');
 	label('.42');
 	_EPILOGUE(22,12,0x80);
@@ -107,11 +107,11 @@ def code5():
 def code6():
 	label('odd');
 	_PROLOGUE(10,6,0x0); # save=None
-	_SP(-3+10);STW(T2);_SP(2+10);_BMOV([vAC],[T2],3)
+	_SP(-3+10);STW(T2);_BMOV([SP,2+10],[T2],3)
 	_LDI('.56');STW(R8);
-	_SP(2);_MOV(R8,[vAC]);
+	_MOV(R8,[SP,2]);
 	_SP(-3+10);STW(R9);
-	_SP(4);_MOV(R9,[vAC]);
+	_MOV(R9,[SP,4]);
 	CALLI('printf');
 	LDI(0);
 	label('.55');
@@ -151,24 +151,24 @@ def code10():
 	_LDI(-10);STW(R22);
 	LDW(R22);STW(R9);
 	LDW(R22);STW(R10);
-	_SP(6);_MOV(R10,[vAC]);
+	_MOV(R10,[SP,6]);
 	CALLI('makepoint');
 	_SP(-44+68);STW(R8);
-	_SP(4);STW(T2);_SP(-36+68);_BMOV([vAC],[T2],4);
-	_SP(8);STW(T2);_SP(-40+68);_BMOV([vAC],[T2],4);
+	_SP(4);STW(T2);_BMOV([SP,-36+68],[T2],4);
+	_SP(8);STW(T2);_BMOV([SP,-40+68],[T2],4);
 	CALLI('addpoint');
 	_SP(-48+68);STW(R8);
 	LDI(10);STW(R9);
 	LDI(10);STW(R10);
-	_SP(6);_MOV(R10,[vAC]);
+	_MOV(R10,[SP,6]);
 	CALLI('makepoint');
 	_SP(-52+68);STW(R8);
-	_SP(4);STW(T2);_SP(-32+68);_BMOV([vAC],[T2],4);
-	_SP(8);STW(T2);_SP(-48+68);_BMOV([vAC],[T2],4);
+	_SP(4);STW(T2);_BMOV([SP,-32+68],[T2],4);
+	_SP(8);STW(T2);_BMOV([SP,-48+68],[T2],4);
 	CALLI('addpoint');
 	_SP(-24+68);STW(R8);
-	_SP(4);STW(T2);_SP(-44+68);_BMOV([vAC],[T2],4);
-	_SP(8);STW(T2);_SP(-52+68);_BMOV([vAC],[T2],4);
+	_SP(4);STW(T2);_BMOV([SP,-44+68],[T2],4);
+	_SP(8);STW(T2);_BMOV([SP,-52+68],[T2],4);
 	CALLI('makerect');
 	LDI(0);STW(R7);
 	_BRA('.64');
@@ -177,34 +177,34 @@ def code10():
 	LDW(R7);_SHLI(2);STW(R22);
 	_SP(-16+68);ADDW(R22);DEEK();STW(R9);
 	_SP(-14+68);ADDW(R22);DEEK();STW(R10);
-	_SP(6);_MOV(R10,[vAC]);
+	_MOV(R10,[SP,6]);
 	CALLI('makepoint');
 	_LDI('.65');STW(R8);
-	_SP(2);_MOV(R8,[vAC]);
+	_MOV(R8,[SP,2]);
 	_SP(-16+68);STW(R22);
 	LDW(R7);_SHLI(2);ADDW(R22);DEEK();STW(R9);
-	_SP(4);_MOV(R9,[vAC]);
+	_MOV(R9,[SP,4]);
 	_SP(-26+68);DEEK();STW(R10);
-	_SP(6);_MOV(R10,[vAC]);
+	_MOV(R10,[SP,6]);
 	CALLI('printf');
-	_SP(2);STW(T2);_SP(-28+68);_BMOV([vAC],[T2],4);
-	_SP(6);STW(T2);_SP(-24+68);_BMOV([vAC],[T2],8);
+	_SP(2);STW(T2);_BMOV([SP,-28+68],[T2],4);
+	_SP(6);STW(T2);_BMOV([SP,-24+68],[T2],8);
 	CALLI('ptinrect');
 	_BNE('.68');
 	_LDI('.70');STW(R8);
-	_SP(2);_MOV(R8,[vAC]);
+	_MOV(R8,[SP,2]);
 	CALLI('printf');
 	label('.68');
 	_LDI('.71');STW(R8);
-	_SP(2);_MOV(R8,[vAC]);
+	_MOV(R8,[SP,2]);
 	_SP(-24+68);DEEK();STW(R9);
-	_SP(4);_MOV(R9,[vAC]);
+	_MOV(R9,[SP,4]);
 	_SP(-22+68);DEEK();STW(R10);
-	_SP(6);_MOV(R10,[vAC]);
+	_MOV(R10,[SP,6]);
 	_SP(-20+68);DEEK();STW(R11);
-	_SP(8);_MOV(R11,[vAC]);
+	_MOV(R11,[SP,8]);
 	_SP(-18+68);DEEK();STW(R12);
-	_SP(10);_MOV(R12,[vAC]);
+	_MOV(R12,[SP,10]);
 	CALLI('printf');
 	label('.62');
 	LDI(1);ADDW(R7);STW(R7);
@@ -213,7 +213,7 @@ def code10():
 	_SP(2);STW(T2);_BMOV('y',[T2],3);
 	CALLI('odd');
 	LDI(0);STW(R8);
-	_SP(2);_MOV(R8,[vAC]);
+	_MOV(R8,[SP,2]);
 	CALLI('exit');
 	LDI(0);
 	label('.57');

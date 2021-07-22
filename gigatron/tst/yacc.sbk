@@ -39,7 +39,7 @@ def code2():
 	_LDI('yyout');DEEK();STW(R8);
 	_LDI('.16');STW(R9);
 	LDW(R7);STW(R10);
-	_SP(6);_MOV(R10,[vAC]);
+	_MOV(R10,[SP,6]);
 	CALLI('fprintf');
 	label('.7');
 	label('.3');
@@ -543,7 +543,7 @@ def code14():
 	label('.50');
 	label('.46');
 	LDW(R4);STW(R22);
-	STW(T1);_SP(-6+28);_MOV(R22,[vAC]);LDW(T1) #genspill
+	STW(T1);_MOV(R22,[SP,-6+28]);LDW(T1) #genspill
 	LDI(1);ADDW(R22);STW(R4);
 	_LDI('yysbuf');STW(R21);
 	_LDI('yysptr');DEEK();_CMPWU(R21);_BLE('.59');
@@ -594,7 +594,7 @@ def code14():
 	_LDI('yytchar');DEEK();STW(R0);
 	label('.56');
 	LDW(R0);STW(R3);
-	LD(R0);STW(T2);_SP(-6+28);DEEK();STW(T3);LDW(T2);POKE(T3);
+	LD(R0);STW(T2);_MOV([SP,-6+28],T3);LDW(T2);POKE(T3);
 	label('.63');
 	LDW(R5);STW(R2);
 	_LDI('yycrank');_CMPWU(R5);_BGE('.64');
@@ -742,9 +742,9 @@ def code14():
 	_LDI('yytchar');DEEK();POKE(R21);
 	label('.99');
 	LDW(R6);DEEK();ADDI(4);DEEK();STW(R8);
-	_SP(2);_MOV(R8,[vAC]);
+	_MOV(R8,[SP,2]);
 	_LDI('yyfnd');DEEK();DEEK();STW(T3);LDI(0);SUBW(T3);STW(R9);
-	_SP(4);_MOV(R9,[vAC]);
+	_MOV(R9,[SP,4]);
 	CALLI('yyback');
 	XORI(1);_BEQ('.103');
 	_LDI('yylstate');_CMPWU(R6);_BLT('.98');
@@ -982,7 +982,7 @@ def code20():
 	LDW(R8);DOKE(R22);
 	_LDI('.154');STW(R8);
 	_SP(2+6);DEEK();STW(R9);
-	_SP(4);_MOV(R9,[vAC]);
+	_MOV(R9,[SP,4]);
 	CALLI('printf');
 	LDI(0);
 	label('.153');
@@ -1612,13 +1612,13 @@ def code32():
 	label('.235');
 	_LDI('.236');STW(R8);
 	_LDI('yytext');STW(R9);
-	_SP(4);_MOV(R9,[vAC]);
+	_MOV(R9,[SP,4]);
 	CALLI('printf');
 	_BRA('.158');
 	label('.237');
 	_LDI('.154');STW(R8);
 	_LDI('yytext');STW(R9);
-	_SP(4);_MOV(R9,[vAC]);
+	_MOV(R9,[SP,4]);
 	CALLI('printf');
 	_BRA('.158');
 	label('.155');

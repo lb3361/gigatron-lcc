@@ -52,7 +52,7 @@ char *dtoa(double x, char *buf, register char fmt, register int prec)
 		exp = 0;
 	}
 	/* Round */
-	x += _ldexp10(5, tmp - per - prec);
+	x = _ldexp10(5, tmp - per - prec) + x;
 	DEBUG(("|  rounded %.2f %.8g\n", x, y));
 	DEBUG(("|  exp=%d per=%d skip=%d tmp=%d prec=%d\n", exp, per, skip, tmp, prec));
 	/* Extract digits */

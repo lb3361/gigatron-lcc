@@ -1141,19 +1141,25 @@ def _MODIU(d):
 @vasm
 def _MOV(s,d):
     '''Move word from reg/addr s to d. 
-       Also accepts [vAC] for s or d.
+       One of s or d can be [vAC] or [SP, offset].
+       When this is the case, s cannot be vAC.
        Can trash T2 and T3'''
     s = v(s)
     d = v(d)
     if s != d:
+        if type(s) == list and len(s) == 2 and s[0] == SP:
+            _SP(s[1]); s = [vAC]
+        elif type(d) == list and len(d) == 2 and d[0] == SP:
+            _SP(d[1]); d = [vAC]
         if args.cpu >= 6 and s == [vAC] and is_zeropage(d):
             DEEKA(d)
         elif args.cpu >= 6 and is_zeropage(s) and d == [vAC]:
             DOKEA(s)
         elif d == [vAC]:
             STW(T3)
-            if s != vAC:
-                _LDW(s)
+            if s == vAC:
+                error("Cannot _MOV from vAC to [vAC] or [SP, offset]")
+            _LDW(s)
             DOKE(T3)
         elif is_zeropage(d):
             if s == [vAC]:
@@ -1271,11 +1277,16 @@ def _CMPWU(d):
 @vasm
 def _BMOV(s,d,n):
     '''Move memory block of size n from addr s to d.
-       Also accepts [vAC] as s and [vAC] or [T2] as d.'''
+       One of s or d can be either [vAC] or [SP,offset].
+       Argument d can also be [T2].'''
     d = v(d)
     s = v(s)
     n = v(n)
     if s != d:
+        if type(s) == list and len(s) == 2 and s[0] == SP:
+            _SP(s[1]); s = [vAC]
+        elif type(d) == list and len(d) == 2 and d[0] == SP:
+            _SP(d[1]); d = [vAC]
         if d == [vAC]:
             STW(T2)
         if s == [vAC]:
@@ -1290,13 +1301,17 @@ def _BMOV(s,d,n):
 @vasm
 def _LMOV(s,d):
     '''Move long from reg/addr s to d.
-       Also accepts [vAC] as argument s or d.
-       Also accept [T2] as argument d.
+       One of s or d can be either [vAC] or [SP,offset].
+       Argument d can be [T2].
        Can trash T2 and T3'''
     s = v(s)
     d = v(d)
     if s != d:
         extern('_@_using_lmov')
+        if type(s) == list and len(s) == 2 and s[0] == SP:
+            _SP(s[1]); s = [vAC]
+        elif type(d) == list and len(d) == 2 and d[0] == SP:
+            _SP(d[1]); d = [vAC]
         if is_zeropage(d, 3):
             if is_zeropage(s, 3):
                 LDWI(((d & 0xff) << 8) | (s & 0xff))
@@ -1413,13 +1428,17 @@ def _LEXTS():
 @vasm
 def _FMOV(s,d):
     '''Move float from reg s to d with special cases when s or d is FAC.
-       Also accepts [vAC] as argument s or d.
-       Also accept [T2] as argument d.
+       One of s or d can be [vAC] or [SP, offset].
+       Argument d can also be [T2].
        Can trash T2 and T3'''
     s = v(s)
     d = v(d)
     if s != d:
         extern('_@_using_fmov')
+        if type(s) == list and len(s) == 2 and s[0] == SP:
+            _SP(s[1]); s = [vAC]
+        elif type(d) == list and len(d) == 2 and d[0] == SP:
+            _SP(d[1]); d = [vAC]
         if d == FAC:
             if s != [vAC]:
                 _LDI(s)

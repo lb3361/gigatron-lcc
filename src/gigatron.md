@@ -300,9 +300,9 @@ reg: LOADU1(reg)  "\t%{#alsoVAC}%{src!=vAC:LD(%0);}%{dst!=vAC:ST(%c);}\n"   34
 reg: LOADI2(reg)  "\t%{#alsoVAC}%{src!=vAC:LDW(%0);}%{dst!=vAC:STW(%c);}\n" 40
 reg: LOADU2(reg)  "\t%{#alsoVAC}%{src!=vAC:LDW(%0);}%{dst!=vAC:STW(%c);}\n" 40
 reg: LOADP2(reg)  "\t%{#alsoVAC}%{src!=vAC:LDW(%0);}%{dst!=vAC:STW(%c);}\n" 40
-reg: LOADI4(reg)  "\t_LMOV(%0,%c);\n" 148
-reg: LOADU4(reg)  "\t_LMOV(%0,%c);\n" 148
-reg: LOADF5(reg)  "\t_FMOV(%0,%c);\n" 148
+reg: LOADI4(reg)  "\t_LMOV(%0,%c);\n" 120
+reg: LOADU4(reg)  "\t_LMOV(%0,%c);\n" 120
+reg: LOADF5(reg)  "\t_FMOV(%0,%c);\n" 150
 # -- these were missing, really
 reg: LOADI1(conBs) "\tLDI(%0);%{dst!=vAC:ST(%c);}\n" 36
 reg: LOADU1(conB)  "\tLDI(%0);%{dst!=vAC:ST(%c);}\n" 36
@@ -386,7 +386,7 @@ eac:  reg  "%{src!=vAC:LDW(%0);}" 20
 eac:  eac0 "%0"
 eac0: zddr "LDI(%0);" 16
 eac:  addr "_LDI(%0);" 21
-eac:  lddr "_SP(%0);"  50
+eac:  lddr "_SP(%0);"  41
 
 
 # Loads
@@ -418,11 +418,10 @@ iarg: INDIRI2(zddr) "%0"
 iarg: INDIRU2(zddr) "%0"
 iarg: INDIRP2(zddr) "%0"
 
-spill: ADDRLP2 "_SP(%a+%F);" if_spill(50)
-spill: INDIRI2(spill) "%0DEEK();" 21
-spill: INDIRU2(spill) "%0DEEK();" 21
-spill: INDIRP2(spill) "%0DEEK();" 21
-iarg: spill "T3|STW(T2);%0STW(T3);LDW(T2);" 0
+spill: ADDRLP2 "%a+%F" if_spill(50)
+iarg: INDIRU2(spill) "T3|STW(T2);_MOV([SP,%0],T3);LDW(T2);" 21
+iarg: INDIRI2(spill) "T3|STW(T2);_MOV([SP,%0],T3);LDW(T2);" 21
+iarg: INDIRP2(spill) "T3|STW(T2);_MOV([SP,%0],T3);LDW(T2);" 21
 
 # Integer operations. This is verbose because there are variants for
 # types I2, U2, P2, variants for argument ordering, and variants for
@@ -577,17 +576,17 @@ stmt: GTU2(iarg,ac) "\t%1%[0b]_CMPWU(%0);_BLT(%a);\n" 100
 stmt: GEU2(iarg,ac) "\t%1%[0b]_CMPWU(%0);_BLE(%a);\n" 100
 
 # Nonterminals for BMOV/LMOV/FMOV:
-#   stmt: ASGNx(vdst,vsrc) "\t%[1b]%[0b]_xMOV(%1,%0);\n"
+#   stmt: ASGNx(vdst,xac) "\t%1%[0b]_xMOV(%1,%0);\n"
+#   stmt: ASGNx(vdst,reg) "\t%[0b]_xMOV(%1,%0);\n"
 #   stmt: ASGNx(pdst,INDIRx(psrc)) "\t%[0b]%[1b]_xMOV(%1,%0);\n"
-vsrc: reg "%0"
-vsrc: fac "FAC|%0"
-vsrc: lac "LAC|%0"
 vdst: addr "%0"
-vdst: eac "[vAC]|%0"
+vdst: lddr "[SP,%0]" 60
+vdst: eac "[vAC]|%0" 20
 psrc: addr "%0"
+psrc: lddr "[SP,%0]" 40
 psrc: eac "[vAC]|%0"
 pdst: addr "%0"
-pdst: ac "[T2]|%0STW(T2);" 20
+pdst: ac "[T2]|%0STW(T2);" 19
 
 # Structs
 stmt: ARGB(INDIRB(psrc))        "\t_SP(%c);STW(T2);%[0b]_BMOV(%0,[T2],%a);\n"  200
@@ -598,19 +597,23 @@ stmt: ASGNB(pdst,INDIRB(psrc)) "\t%[0b]%[1b]_BMOV(%1,%0,%a)\n" 200
 #   as well as sequence of instructions that compute the address 
 #   holding the expressiong result.
 stmt: lac "\t%0\n"
-larg: reg "LDI(%0);"
+larg: reg "LDI(%0);" 21
 larg: INDIRI4(eac) "%0" 
 larg: INDIRU4(eac) "%0" 
-reg: lac "\t%{#alsoLAC}%0%{dst!=LAC:_LMOV(LAC,%c);}\n" 80
-reg: INDIRI4(ac) "\t%0_LMOV([vAC],%c);\n" 150
-reg: INDIRU4(ac) "\t%0_LMOV([vAC],%c);\n" 150
-reg: INDIRI4(addr) "\t_LMOV(%0,%c);\n" 150
-reg: INDIRU4(addr) "\t_LMOV(%0,%c);\n" 150
-lac: reg "%{src!=LAC:_LMOV(%0,LAC);}" 80
-lac: INDIRI4(ac) "%0_LMOV([vAC],LAC);" 150
-lac: INDIRU4(ac) "%0_LMOV([vAC],LAC);" 150
-lac: INDIRI4(addr) "_LMOV(%0,LAC);" 150
-lac: INDIRU4(addr) "_LMOV(%0,LAC);" 150
+reg: lac "\t%{#alsoLAC}%0%{dst!=LAC:_LMOV(LAC,%c);}\n" 120
+reg: INDIRI4(ac)   "\t%0_LMOV([vAC],%c);\n" 120
+reg: INDIRU4(ac)   "\t%0_LMOV([vAC],%c);\n" 120
+reg: INDIRI4(lddr) "\t%_LMOV([SP,%0],%c);\n" 160
+reg: INDIRU4(lddr) "\t%_LMOV([SP,%0],%c);\n" 160
+reg: INDIRI4(addr) "\t_LMOV(%0,%c);\n" 120
+reg: INDIRU4(addr) "\t_LMOV(%0,%c);\n" 120
+lac: reg "%{src!=LAC:_LMOV(%0,LAC);}" 120
+lac: INDIRI4(ac)   "%0_LMOV([vAC],LAC);" 120
+lac: INDIRU4(ac)   "%0_LMOV([vAC],LAC);" 120
+lac: INDIRU4(lddr) "_LMOV([SP,%0],LAC);" 160
+lac: INDIRU4(lddr) "_LMOV([SP,%0],LAC);" 160
+lac: INDIRI4(addr) "_LMOV(%0,LAC);" 120
+lac: INDIRU4(addr) "_LMOV(%0,LAC);" 120
 lac: ADDI4(lac,larg) "%0%1_LADD();" 200
 lac: ADDU4(lac,larg) "%0%1_LADD();" 200
 lac: ADDI4(larg,lac) "%1%0_LADD();" 200
@@ -672,22 +675,25 @@ stmt: NEI4(larg,lac) "\t%1%0_LCMPX();_BNE(%a);\n" 100
 stmt: EQI4(larg,lac) "\t%1%0_LCMPX();_BEQ(%a);\n" 100
 stmt: NEU4(larg,lac) "\t%1%0_LCMPX();_BNE(%a);\n" 100
 stmt: EQU4(larg,lac) "\t%1%0_LCMPX();_BEQ(%a);\n" 100
-
-stmt: ASGNI4(vdst,vsrc)          "\t%[1b]%[0b]_LMOV(%1,%0);\n" 160
-stmt: ASGNI4(pdst,INDIRI4(psrc)) "\t%[0b]%[1b]_LMOV(%1,%0);\n" 160
-stmt: ASGNU4(vdst,vsrc)          "\t%[1b]%[0b]_LMOV(%1,%0);\n" 160
-stmt: ASGNU4(pdst,INDIRU4(psrc)) "\t%[0b]%[1b]_LMOV(%1,%0);\n" 160
+stmt: ASGNI4(vdst,lac)           "\t%1%[0b]_LMOV(LAC,%0);\n" 120
+stmt: ASGNI4(vdst,reg)           "\t%[0b]_LMOV(%1,%0);\n" 120
+stmt: ASGNI4(pdst,INDIRI4(psrc)) "\t%[0b]%[1b]_LMOV(%1,%0);\n" 120
+stmt: ASGNU4(vdst,lac)           "\t%1%[0b]_LMOV(LAC,%0);\n" 120
+stmt: ASGNU4(vdst,reg)           "\t%[0b]_LMOV(%1,%0);\n" 120
+stmt: ASGNU4(pdst,INDIRU4(psrc)) "\t%[0b]%[1b]_LMOV(%1,%0);\n" 120
 
 # Floats
 stmt: fac "\t%0\n"
-farg: reg "LDI(%0);"
+farg: reg "LDI(%0);" 21
 farg: INDIRF5(eac) "%0"
-reg: fac "\t%{#alsoFAC}%0%{dst!=FAC:_FMOV(FAC,%c);}\n" 200
+reg: fac "\t%{#alsoFAC}%0%{dst!=FAC:_FMOV(FAC,%c);}\n" 180
 reg: INDIRF5(ac)   "\t%0_FMOV([vAC],%c);\n" 150
+reg: INDIRF5(lddr) "\t%_FMOV([SP,%0],%c);\n" 190
 reg: INDIRF5(addr) "\t_FMOV(%0,%c);\n" 150
 fac: reg            "%{src!=FAC:_FMOV(%0,FAC);}" 150
-fac: INDIRF5(ac)    "%0_FMOV([vAC],FAC);" 150
-fac: INDIRF5(addr)  "_FMOV(%0,FAC);" 150
+fac: INDIRF5(ac)    "%0_FMOV([vAC],FAC);" 180
+fac: INDIRF5(lddr)  "_FMOV([SP,%0],FAC);" 220
+fac: INDIRF5(addr)  "_FMOV(%0,FAC);" 180
 fac: ADDF5(fac,farg) "%0%1_FADD();" 200
 fac: ADDF5(farg,fac) "%1%0_FADD();" 200
 fac: SUBF5(fac,farg) "%0%1_FSUB();" 200
@@ -708,8 +714,9 @@ stmt: LTF5(farg,fac) "\t%1%0_FCMP();_BGT(%a);\n" 200
 stmt: LEF5(farg,fac) "\t%1%0_FCMP();_BGE(%a);\n" 200
 stmt: GTF5(farg,fac) "\t%1%0_FCMP();_BLT(%a);\n" 200
 stmt: GEF5(farg,fac) "\t%1%0_FCMP();_BLE(%a);\n" 200
-stmt: ASGNF5(vdst,vsrc) "\t%[1b]%[0b]_FMOV(%1,%0);\n" 160
-stmt: ASGNF5(pdst,INDIRF5(psrc)) "\t%[0b]%[1b]_FMOV(%1,%0);\n" 160
+stmt: ASGNF5(vdst,fac) "\t%1%[0b]_FMOV(FAC,%0);\n" 180
+stmt: ASGNF5(vdst,reg) "\t%[0b]_FMOV(%1,%0);\n"    150
+stmt: ASGNF5(pdst,INDIRF5(psrc)) "\t%[0b]%[1b]_FMOV(%1,%0);\n" 150
 
 # Calls
 fac: CALLF5(addr) "CALLI(%0);" mincpu5(28)
@@ -733,12 +740,12 @@ ac: CALLP2(ac)    "%0CALL(vAC);" 26
 stmt: CALLV(addr) "\tCALLI(%0);\n" mincpu5(28)
 stmt: CALLV(reg)  "\tCALL(%0);\n" 26
 stmt: CALLV(ac)   "\t%0CALL(vAC);\n" 26
-stmt: ARGF5(reg) "\t%_SP(%c);_FMOV(%0,[vAC]);\n"  if_arg_stk(a)
-stmt: ARGI4(reg) "\t%_SP(%c);_LMOV(%0,[vAC]);\n"  if_arg_stk(a)
-stmt: ARGU4(reg) "\t%_SP(%c);_LMOV(%0,[vAC]);\n"  if_arg_stk(a)
-stmt: ARGI2(reg)  "\t_SP(%c);_MOV(%0,[vAC]);\n"   if_arg_stk(a)
-stmt: ARGU2(reg)  "\t_SP(%c);_MOV(%0,[vAC]);\n"   if_arg_stk(a)
-stmt: ARGP2(reg)  "\t_SP(%c);_MOV(%0,[vAC]);\n"   if_arg_stk(a)
+stmt: ARGF5(reg) "\t%_FMOV(%0,[SP,%c]);\n"  if_arg_stk(a)
+stmt: ARGI4(reg) "\t%_LMOV(%0,[SP,%c]);\n"  if_arg_stk(a)
+stmt: ARGU4(reg) "\t%_LMOV(%0,[SP,%c]);\n"  if_arg_stk(a)
+stmt: ARGI2(reg)  "\t_MOV(%0,[SP,%c]);\n"   if_arg_stk(a)
+stmt: ARGU2(reg)  "\t_MOV(%0,[SP,%c]);\n"   if_arg_stk(a)
+stmt: ARGP2(reg)  "\t_MOV(%0,[SP,%c]);\n"   if_arg_stk(a)
 stmt: ARGF5(reg)  "# arg\n"  if_arg_reg_only(a)
 stmt: ARGI4(reg)  "# arg\n"  if_arg_reg_only(a)
 stmt: ARGU4(reg)  "# arg\n"  if_arg_reg_only(a)
@@ -810,12 +817,12 @@ stmt: JUMPV(ac)    "\t%0CALL(vAC);\n" 14
 # More about spills: we want to save/restore vAC when genspill() inserts
 # instructions because preralloc might have decided to use vAC at this
 # precise point. We use T1 because _[LF]MOV can use T2 and T3.
-stmt: ASGNI2(spill,reg) "\tSTW(T1);%0_MOV(%1,[vAC]);LDW(T1) #genspill\n" 0
-stmt: ASGNU2(spill,reg) "\tSTW(T1);%0_MOV(%1,[vAC]);LDW(T1) #genspill\n" 0
-stmt: ASGNP2(spill,reg) "\tSTW(T1);%0_MOV(%1,[vAC]);LDW(T1) #genspill\n" 0
-stmt: ASGNI4(spill,reg) "\tSTW(T1);%0_LMOV(%1,[vAC]);LDW(T1) #genspill\n" 0
-stmt: ASGNU4(spill,reg) "\tSTW(T1);%0_LMOV(%1,[vAC]);LDW(T1) #genspill\n" 0
-stmt: ASGNF5(spill,reg) "\tSTW(T1);%0_FMOV(%1,[vAC]);LDW(T1) #genspill\n" 0
+stmt: ASGNI2(spill,reg) "\tSTW(T1);_MOV(%1,[SP,%0]);LDW(T1) #genspill\n" 0
+stmt: ASGNU2(spill,reg) "\tSTW(T1);_MOV(%1,[SP,%0]);LDW(T1) #genspill\n" 0
+stmt: ASGNP2(spill,reg) "\tSTW(T1);_MOV(%1,[SP,%0]);LDW(T1) #genspill\n" 0
+stmt: ASGNI4(spill,reg) "\tSTW(T1);_LMOV(%1,[SP,%0]);LDW(T1) #genspill\n" 0
+stmt: ASGNU4(spill,reg) "\tSTW(T1);_LMOV(%1,[SP,%0]);LDW(T1) #genspill\n" 0
+stmt: ASGNF5(spill,reg) "\tSTW(T1);_FMOV(%1,[SP,%0]);LDW(T1) #genspill\n" 0
 
 # More opcodes for cpu=6
 stmt: ASGNP2(ac,iarg)  "\t%0%[1b]DOKEA(%1);\n" mincpu6(30)
@@ -1509,10 +1516,11 @@ static void doarg(Node p)
 
 static void local(Symbol p)
 {
-  /* The size check prevents allocating registers for longs and
-     floats.  The register benefit for longs and floats is minimal
-     Best to keep them for ints and pointers. */
-  if (p->type->size > 2)
+  /* The size check prevents allocating registers for longs and floats
+     local variables (but not temporaries). The register benefit for
+     longs and floats is minimal Best to keep them for ints and
+     pointers. */
+  if (p->type->size > 2 && ! p->temporary)
     p->sclass = AUTO;
   if (askregvar(p, rmap(ttob(p->type))) == 0)
     mkauto(p);

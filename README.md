@@ -94,7 +94,7 @@ Some useful things to know:
   of finalization functions called when the program exits.
   Using `glink -h` provides some help. Using `glink --info` provides
   help for specific memory maps. But the more advanced functions
-  are documented by comments in the [source]](gigatron/glink.py)
+  are documented by comments in the [source](gigatron/glink.py)
   or comments in the library source files that use them...
   
 ## Compiling and installing

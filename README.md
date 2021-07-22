@@ -279,10 +279,13 @@ $ cp stuff/book.txt .
 
 # Using map sim with overlay allout commits all the memory
 $ ./build/glcc -map=sim,allout mscp.c -o mscp.gt1
+```
 
-# Now we can run it. option -f allows mscp to fopen book.txt.
-# Be patient...
+Now we can run it. Option -f in `gtsim` allows mscp to 
+open and read the opening book file `book.txt`.
+Be patient...
 
+```
 $ ./build/gtsim -f -rom gigatron/roms/dev.rom  mscp.gt1 
 
 This is MSCP 1.4 (Marcel's Simple Chess Program)

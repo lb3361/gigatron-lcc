@@ -10,11 +10,11 @@ Python and it features a linker writen in Python that can directly
 read these files. It also differs in important ways. For instance the
 code generator is fundamentally different.
 
-## Status
+## 1. Status
 
 The compiler is in good shape!
 
-### What works?
+### 1.1. What works?
 
 * The compiler compiles
 * The linker/assembler assembles and links.
@@ -28,7 +28,7 @@ The compiler is in good shape!
 * The compiler can generate code for at67's extended instruction set.
   Thanks to at67 for providing a lot of information and hints.
 
-### What remains to be done?
+### 1.2. What remains to be done?
 
 There is work needed on the libraries
 
@@ -56,7 +56,7 @@ The compiler could also be improved
   is harder than it seems.
 
 
-### Caveats and other details
+### 1.3. Caveats and other details
 
 Some useful things to know:
 
@@ -97,7 +97,7 @@ Some useful things to know:
   are documented by comments in the [source](gigatron/glink.py)
   or comments in the library source files that use them...
   
-## Compiling and installing
+## 2. Compiling and installing
 
 Building under Linux should just be a matter of typing
 ```
@@ -125,7 +125,7 @@ The runtime and library test files are in `gigatron/{runtime,libc,libm}/tst`.
 They give a good idea of what works at the moment.
 
 
-## Compiler invocation
+## 3 Compiler invocation
 
 Besides the options listed in the [lcc manual page](doc/lcc.1),
 the compiler driver recognizes a few Gigatron-specific options.
@@ -157,7 +157,7 @@ are documented by typing `glink -h`
 	library that redirects `printf` and all standard i/o functions to
 	the emulator itself. This is my main debugging tool.
 	
-## Basic types
+Basic types:
 
   * Types `short` and `int` are 16 bits long.  Type `long` is 32 bits
 	long. Types `float` and `double` are 40 bits long, using the
@@ -173,16 +173,16 @@ are documented by typing `glink -h`
 	preprocessor macros `__CHAR_UNSIGNED` or `CHAR_IS_SIGNED` are
 	defined accordingly.
 	
-## Examples
+## 3. Examples
 
-Running the LCC 8 queens program:
+### 3.1. Running the LCC 8 queens program:
 
 ```
 $ ./build/glcc -map=sim tst/8q.c 
 tst/8q.c:30: warning: missing return value
 tst/8q.c:37: warning: implicit declaration of function `printf'
 tst/8q.c:39: warning: missing return value
-$ ./build/gtsim a.gt1 
+$ ./build/gtsim -rom gigatron/roms/dev.rom a.gt1 
 1 5 8 6 3 7 2 4 
 1 6 8 3 7 4 2 5 
 1 7 4 6 8 2 5 3 
@@ -198,7 +198,7 @@ $ ./build/gtsim a.gt1
 ...
 ```
 
-Capturing signals:
+### 3.2. Capturing signals:
 ```
 $ cat gigatron/libc/tst/TSTsignal.c 
 #include <string.h>
@@ -242,7 +242,7 @@ int main()
 	return 0;
 }
 $ ./build/glcc -map=sim  gigatron/libc/tst/TSTsignal.c 
-$ ./build/gtsim a.gt1 
+$ ./build/gtsim  -rom gigatron/roms/dev.rom a.gt1 
 handle 4 1
 3/0 = 1234
 handle 4 1
@@ -259,18 +259,20 @@ SIGVIRQ(7): count=8
 SIGVIRQ(7): count=9
 ```
 
-Running Marcel's simple chess program:
+### 3.3. Running Marcel's simple chess program:
 
-* I found this program when studying the previous incarnation 
-  of LCC for the Gigatron, with old forums posts where Marcel
-  mentionned it as a "strech goal" for the compiler. The main
-  issue is that MSCP takes about 25KB of code and 25KB of data.
-  My main change was to reduce the size of the opening book,
-  but this is not enough. The only way to run without further
-  changed it is to use all the memory, including the video
-  memory. This is doable when using `gtsim` thanks to
-  the standard io forwarding...
-  
+I found this program when studying the previous incarnation 
+of LCC for the Gigatron, with old forums posts where Marcel
+mentionned it as a "stretch goal" for the compiler. The main
+issue is that MSCP takes about 25KB of code and 25KB of data
+meaning that we need to use the video memory. My main change 
+was to reduce the size of the opening book,
+but this is not enough. One could think about using
+the 128KB memory extention but this will require a lot
+of changes to the code. In the mean time. we can
+run it with the `gtsim` emulator which has no screen
+but can forward stdio...
+
 ```
 $ cp stuff/mscp.c .
 $ cp stuff/book.txt .
@@ -346,7 +348,7 @@ book: (88)c5
 This slows down a lot when we leave the opening book.
 But it plays!
 
-## Internals
+## 4. Internals
 
 The code generator uses two consecutive blocks of zero page locations:
   *  The first block, located at addresses `0x81-0x8f`, is dedicated to

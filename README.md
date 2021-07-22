@@ -259,6 +259,92 @@ SIGVIRQ(7): count=8
 SIGVIRQ(7): count=9
 ```
 
+Running Marcel's simple chess program:
+
+* I found this program when studying the previous incarnation 
+  of LCC for the Gigatron, with old forums posts where Marcel
+  mentionned it as a "strech goal" for the compiler. The main
+  issue is that MSCP takes about 25KB of code and 25KB of data.
+  My main change was to reduce the size of the opening book,
+  but this is not enough. The only way to run without further
+  changed it is to use all the memory, including the video
+  memory. This is doable when using `gtsim` thanks to
+  the standard io forwarding...
+  
+```
+$ cp stuff/mscp.c .
+$ cp stuff/book.txt .
+
+# Using map sim with overlay allout commits all the memory
+$ ./build/glcc -map=sim,allout mscp.c -o mscp.gt1
+
+# Now we can run it. option -f allows mscp to fopen book.txt.
+# Be patient...
+
+$ ./build/gtsim -f -rom gigatron/roms/dev.rom  mscp.gt1 
+
+This is MSCP 1.4 (Marcel's Simple Chess Program)
+
+Copyright (C)1998-2003 Marcel van Kervinck
+This program is distributed under the GNU General Public License.
+(See file COPYING or http://combinational.com/mscp/ for details.)
+
+Type 'help' for a list of commands
+
+8  r n b q k b n r
+7  p p p p p p p p
+6  - - - - - - - -
+5  - - - - - - - -
+4  - - - - - - - -
+3  - - - - - - - -
+2  P P P P P P P P
+1  R N B Q K B N R
+   a b c d e f g h
+1. White to move. KQkq 
+Compacted book 256 -> 57
+Compacted book 256 -> 94
+Compacted book 256 -> 131
+Compacted book 256 -> 155
+Compacted book 256 -> 171
+Compacted book 256 -> 182
+Compacted book 256 -> 194
+Compacted book 256 -> 204
+Compacted book 256 -> 216
+Compacted book 256 -> 231
+Compacted book 256 -> 231
+Compacted book 256 -> 242
+Compacted book 256 -> 247
+Compacted book 256 -> 251
+Compacted book 256 -> 253
+Compacted book 256 -> 253
+Compacted book 256 -> 256
+Compacted book 256 -> 256
+mscp> 
+```
+
+Now you can type `both` to make it play against itself...
+
+```
+mscp> both 
+book: (88)e4
+1. ... e2e4
+8  r n b q k b n r
+7  p p p p p p p p
+6  - - - - - - - -
+5  - - - - - - - -
+4  - - - - P - - -
+3  - - - - - - - -
+2  P P P P - P P P
+1  R N B Q K B N R
+   a b c d e f g h
+1. Black to move. KQkq 
+book: (88)c5
+1. ... c7c5
+8  r n b q k b n r
+7  p p - p p p p p
+```
+This slows down a lot when we leave the opening book.
+But it plays!
 
 ## Internals
 

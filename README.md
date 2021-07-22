@@ -84,8 +84,19 @@ Some useful things to know:
   This is one happens when one compiles with `-map=sim` which
   [forwards](gigatron/mapsim/libsim) all the stdio calls to 
   the emulator.
-
-
+  
+* Over time the linker `glink` has accumulated 
+  a lot of capabilites. It supports common symbols,
+  weak symbols, and conditional imports. It can synthetize magic lists
+  such as a list of initialization functions that are called before main,
+  a list of data segments to be cleared before running main, a list
+  of memory segments that can be used as heap by `malloc()`, or a list
+  of finalization functions called when the program exits.
+  Using `glink -h` provides some help. Using `glink --info` provides
+  help for specific memory maps. But the more advanced functions
+  are documented by comments in the [source]](gigatron/glink.py)
+  or comments in the library source files that use them...
+  
 ## Compiling and installing
 
 Building under Linux should just be a matter of typing

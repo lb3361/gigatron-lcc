@@ -12,31 +12,78 @@ code generator is fundamentally different.
 
 ## Status
 
-### What works
+The compiler is in good shape!
+
+### What works?
 
 * The compiler compiles
 * The linker/assembler assembles and links.
-* The runtime is complete (including LONG and FP support)
-* The emulator (build/gtsim) can run gt1 files and redirect printf to stdout (compile with glcc -map=sim)
-* signal(SIGVIRQ, xxx) captures vCPU interrupts
-* signal(SIGFPE, xxx) captures division by zero and floating point issues.
-* libc has optimized memset and memcpy
-* half of the standard libc functions are there.
-* sqrt() works
+* The runtime is complete (including long and floating point support)
+* The emulator (`gtsim`) can run gt1 files and redirect stdio 
+  calls to the emulator itself (compile with `glcc -map=sim`).
+* vCPU interrupts can be captured with `signal(SIGVIRQ, xxx)`.
+* Floating point exceptions can be captured with `signal(SIGFPE, xxx)`.
+* Optimized memset and memcpy are available and can use a SYS call.
+* Most of the ANSI C library functions are there (notably missing: fseek, malloc)
+* The compiler can generate code for at67's extended instruction set.
+  Thanks to at67 for providing a lot of information and hints.
 
-### What remains to be done:
+### What remains to be done?
 
-There is substantial work needed on the libraries
+There is work needed on the libraries
 
-* malloc (there is already support to collect a heap)
-* printf (but you can printf when using -map=sim)
-* transcendental functions in libm
-* adding more gigatron SYS stubs
+* malloc (the linker already provides the heap segment addresses.)
+
+* transcendental functions in libm (log, exp, sqrt are here)
+
+* adding more gigatron SYS stubs into `gigatron/libc/gigatron.s`.
 
 The compiler could also be improved
 
-* Although the code generator uses vAC quite well within a tree, it cannot use vAC at all to pass data from one tree to the next. This was improved by adding a `preralloc` callback in the lcc code generator, but the current code does not know which instructions preserve vAC and is therefore very conservative. There are multiple ways to address this. One is to write a python peephole optimizer that runs as a separable pass. The correct way would be to make the lburg code selection aware of the input state of the registers. This is much harder.
-* One could rewrite the compiler driver `glcc` to be self-contained instead of delegating much work to the historical lcc driver `lcc`. That would make option processing simpler to understand. This is harder than it seems.
+* Although the code generator uses vAC quite well within a tree, it
+  cannot use vAC at all to pass data from one tree to the next. This
+  was improved by adding a `preralloc` callback in the lcc code
+  generator, but the current code does not know which instructions
+  preserve vAC and is therefore very conservative. There are multiple
+  ways to address this. One is to write a python peephole optimizer
+  that runs as a separable pass. The correct way would be to make the
+  lburg code selection aware of the input state of the registers. This
+  is much harder.
+  
+* One could rewrite the compiler driver `glcc` to be self-contained
+  instead of delegating much work to the historical lcc driver
+  `lcc`. That would make option processing simpler to understand. This
+  is harder than it seems.
+
+
+### Caveats and other details
+
+Some useful things to know:
+
+* The traditional C standard library offers feature rich functions
+  like `printf()` and `scanf()`. These functions are present but their
+  implementation requires a lot of space. Instead one can call some of
+  the lower level functions that either are standard like `fputs()` or
+  non standard functions such as `itoa()`, `dtoa()` whose prototypes
+  are provided by [`<gigatron/libc.h>`](include/gigatron/gigatron/libc.h).
+  
+* Alternatively one can completely bypass stdio and use the 
+  low-level console functions whose prototypes are provided in
+  [`<gigatron/console.h>`](include/gigatron/gigatron/console.h).
+  Even lower-level functions are provided in 
+  [`<gigatron/sys.h>`](include/gigatron/gigatron/sys.h).
+  
+* Many parts of the main library can be overriden to provide special 
+  functionalities. For instance the console has the usual 15x26 characters, 
+  but this can be changed by linking with a library that redefines 
+  what is in `cons_geom.c`. This is what happens when one uses argument
+  `-map=conx` to save memory with a 10x26 console. Another more 
+  important example is the standard i/o library. By default
+  it is only connected to the console and `fopen()` always fail.
+  But one just has to redefine a few functions to change that.
+  This is one happens when one compiles with `-map=sim` which
+  [forwards](gigatron/mapsim/libsim) all the stdio calls to 
+  the emulator.
 
 
 ## Compiling and installing
@@ -46,7 +93,7 @@ Building under Linux should just be a matter of typing
 $ make PREFIX=/usr/local
 ```
 where variable `PREFIX` indicates where the compiler should be installed.
-You can either invoke the compilier from its build location `./build/glcc` or
+You can either invoke the compiler from its build location `./build/glcc` or
 install it into your system with command
 ```
 $ make PREFIX=/usr/local install
@@ -67,7 +114,6 @@ The runtime and library test files are in `gigatron/{runtime,libc,libm}/tst`.
 They give a good idea of what works at the moment.
 
 
-
 ## Compiler invocation
 
 Besides the options listed in the [lcc manual page](doc/lcc.1),
@@ -75,48 +121,46 @@ the compiler driver recognizes a few Gigatron-specific options.
 Additional options recognized by the assembler/linker `glink'
 are documented by typing `glink -h`
  	
-  * Option `-rom=<romversion>` is passed to the linked and
-	helps selecting runtime code that uses the SYS functions
-	implemented by the indicated rom version. The default is `v5a`
-	which does not provide much support at this point.
+  * Option `-rom=<romversion>` is passed to the linked and helps
+	selecting runtime code that uses the SYS functions implemented by
+	the indicated rom version. The default is `v5a` which does not
+	provide much support at this point.
 	
- * Option `-cpu=[456]` indicates which VCPU version should be
-	targeted.  Version 5 adds the instructions `CALLI`, `CMPHS` and
-	`CMPHU` that came with ROMv5a. Version 6 will support AT67's new
-	instruction once finalized. The default CPU is the one
-	implemented by the selected ROM.
+  * Option `-cpu=[456]` indicates which VCPU version should be
+    targeted.  Version 5 adds the instructions `CALLI`, `CMPHS` and
+    `CMPHU` that came with ROMv5a. Version 6 will support AT67's new
+    instruction once finalized. The default CPU is the one implemented
+    by the selected ROM.
 
-  * Option `-map=<memorymap>{,<overlay>}` is also passed to the linker and specify
-	the memory layout for the generated code. The default map, `32k` 
-	uses all little bits of memory available on a 32KB Gigatron,
-	starting with the video memory holes `[0x?a0-0x?ff]`, 
-	the low memory `[0x200-0x6ff]`. There is also a `64k` map
-	and a `conx` map which uses a reduced console to save memory.
+  * Option `-map=<memorymap>{,<overlay>}` is also passed to the linker
+    and specifya memory layout for the generated code. The default
+    map, `32k` uses all little bits of memory available on a 32KB
+    Gigatron, starting with the video memory holes `[0x?a0-0x?ff]`,
+    the low memory `[0x200-0x6ff]`. There is also a `64k` map and a
+    `conx` map which uses a reduced console to save memory.
 	
-	Maps can also manipulate
-	the linker arguments, insert libraries, and define
-	the initialization function that checks the rom type
-	and the ram configuration. A second map `sim` is similar
-	but produces gt1 files that run in the 
-	emulator [`gtsim`](gigatron/mapsim) with a library that
-	redirects `printf` (and only this for now) to the 
-	emulator standard output. This is my main debugging tool.
+	Maps can also manipulate the linker arguments, insert libraries,
+	and define the initialization function that checks the rom type
+	and the ram configuration. For instance, map `sim` produces gt1
+	files that run in the emulator [`gtsim`](gigatron/mapsim) with a
+	library that redirects `printf` and all standard i/o functions to
+	the emulator itself. This is my main debugging tool.
 	
 ## Basic types
 
-  * Types `short` and `int` are 16 bits long.
-	Type `long` is 32 bits long. Types `float` and `double`
-	are 40 bits long, using the Microsoft Basic floating point 
-	format. Both long arithmetic or floating point arithmetic
-	incur a significant speed penalty.
+  * Types `short` and `int` are 16 bits long.  Type `long` is 32 bits
+	long. Types `float` and `double` are 40 bits long, using the
+	Microsoft Basic floating point format. Both long arithmetic or
+	floating point arithmetic incur a significant speed penalty.
 	
   * Type `char` is unsigned by default. This is more efficient because
 	the C language always promotes `char` values into `int` values to
 	perform arithmetic. Promoting a signed byte involves a clumsy sign
 	extension. Promoting an unsigned byte comes for free with most
-	VCPU opcodes. For signed bytes, use `signed char` or use the
-	compiler option `-Wf-unsigned_char=0`. The preprocessor macros
-	`__CHAR_UNSIGNED` or `CHAR_IS_SIGNED` are defined accordingly.
+	VCPU opcodes. If you really want signed chars, use `signed char`
+	or maybe use the compiler option `-Wf-unsigned_char=0`. The
+	preprocessor macros `__CHAR_UNSIGNED` or `CHAR_IS_SIGNED` are
+	defined accordingly.
 	
 ## Examples
 
@@ -205,8 +249,6 @@ SIGVIRQ(7): count=9
 ```
 
 
-
-
 ## Internals
 
 The code generator uses two consecutive blocks of zero page locations:
@@ -225,18 +267,19 @@ The code generator uses two consecutive blocks of zero page locations:
      for temporaries. Register `R23` or `SP` is the stack pointer.
      
 The function prologue first saves `vLR` and constructs a stack frame
-by adjusting `SP`. It then saves the callee-saved registers onto the stack.
-Nonleaf functions save 'vLR' in the stack frame and copy the argument 
-passed in a registers to their final location. In contrast, leaf functions
-keep arguments passed in registers
-where they are because these registers are no longer needed for further calls.
-In the same vein, nonleaf functions allocate callee-saved registers
-for local variables, whereas leaf functions use callee-saved registers
-in last resord and often avoid having to construct a stack-frame alltogether. 
-Leaf functions that do not need to allocate space on the stack can 
-use a register to save VLR and become entirely frameless.
-Sometimes one can help this by using `register` when declaring 
-local variables. I have to find a way to make lcc more aggressive in that respect. 
+by adjusting `SP`. It then saves the callee-saved registers onto the
+stack.  Nonleaf functions save 'vLR' in the stack frame and copy the
+argument passed in a registers to their final location. In contrast,
+leaf functions keep arguments passed in registers where they are
+because these registers are no longer needed for further calls.  In
+the same vein, nonleaf functions allocate callee-saved registers for
+local variables, whereas leaf functions use callee-saved registers in
+last resord and often avoid having to construct a stack-frame
+alltogether.  Leaf functions that do not need to allocate space on the
+stack can use a register to save VLR and become entirely frameless.
+Sometimes one can help this by using `register` when declaring local
+variables. I have to find a way to make lcc more aggressive in that
+respect.
 
 Saving `vLR` allows us to use `CALLI` as a long jump
 without fearing to erase the function return address.

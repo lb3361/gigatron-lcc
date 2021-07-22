@@ -83,7 +83,7 @@ def code2():
 	_LDI(0xfffe);STW(R22);
 	LDI(8);ADDW(R7);ADDI(1);ANDW(R22);STW(R22);
 	LDW(R22);STW(R7);
-	_SP(-8+24);STW(T2);LDW(R22);SUBI(-(-8));_BMOV([vAC],[T2],8)
+	_SP(-8+24);STW(T2);LDW(R22);SUBI(-(-8));_BMOV([vAC],[T2],8);
 	_LDI('.26');STW(R8);
 	_MOV(R8,[SP,2]);
 	_SP(-8+24);DEEK();STW(R9);

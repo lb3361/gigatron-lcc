@@ -575,22 +575,25 @@ stmt: LEU2(iarg,ac) "\t%1%[0b]_CMPWU(%0);_BGE(%a);\n" 100
 stmt: GTU2(iarg,ac) "\t%1%[0b]_CMPWU(%0);_BLT(%a);\n" 100
 stmt: GEU2(iarg,ac) "\t%1%[0b]_CMPWU(%0);_BLE(%a);\n" 100
 
-# Nonterminals for BMOV/LMOV/FMOV:
+# Nonterminals for assignments with BMOV/LMOV/FMOV:
 #   stmt: ASGNx(vdst,xac) "\t%1%[0b]_xMOV(%1,%0);\n"
 #   stmt: ASGNx(vdst,reg) "\t%[0b]_xMOV(%1,%0);\n"
-#   stmt: ASGNx(pdst,INDIRx(psrc)) "\t%[0b]%[1b]_xMOV(%1,%0);\n"
+#   stmt: ASGNx(addr,INDIRx(asrc)) "\t%[1b]_xMOV(%1,%0);\n"
+#   stmt: ASGNx(ac,  INDIRx(asrc)) "\t%0STW(T2);%[1b]_xMOV(%1,[T2]);\n"
+#   stmt: ASGNx(lddr,INDIRx(lsrc)) "\t_xMOV(%1,[SP,%0]);\n"
 vdst: addr "%0"
 vdst: lddr "[SP,%0]" 60
 vdst: eac "[vAC]|%0" 20
-psrc: addr "%0"
-psrc: lddr "[SP,%0]" 40
-psrc: eac "[vAC]|%0"
-pdst: addr "%0"
-pdst: ac "[T2]|%0STW(T2);" 19
+asrc: addr "%0"
+asrc: lddr "[SP,%0]" 40
+asrc: eac "[vAC]|%0"
+lsrc: addr "%0"
 
 # Structs
-stmt: ARGB(INDIRB(psrc))        "\t_SP(%c);STW(T2);%[0b]_BMOV(%0,[T2],%a);\n"  200
-stmt: ASGNB(pdst,INDIRB(psrc)) "\t%[0b]%[1b]_BMOV(%1,%0,%a)\n" 200
+stmt: ARGB(INDIRB(asrc))        "\t_SP(%c);STW(T2);%[0b]_BMOV(%0,[T2],%a);\n"  200
+stmt: ASGNB(addr,INDIRB(asrc)) "\t%[1b]_BMOV(%1,%0,%a);\n" 200
+stmt: ASGNB(ac,  INDIRB(asrc)) "\t%0STW(T2);%[1b]_BMOV(%1,[T2],%a);\n" 200
+stmt: ASGNB(lddr,INDIRB(lsrc)) "\t_BMOV(%1,[SP,%0],%a);\n" 200
 
 # Longs
 # - larg represent argument expressions in binary tree nodes,
@@ -677,10 +680,14 @@ stmt: NEU4(larg,lac) "\t%1%0_LCMPX();_BNE(%a);\n" 100
 stmt: EQU4(larg,lac) "\t%1%0_LCMPX();_BEQ(%a);\n" 100
 stmt: ASGNI4(vdst,lac)           "\t%1%[0b]_LMOV(LAC,%0);\n" 120
 stmt: ASGNI4(vdst,reg)           "\t%[0b]_LMOV(%1,%0);\n" 120
-stmt: ASGNI4(pdst,INDIRI4(psrc)) "\t%[0b]%[1b]_LMOV(%1,%0);\n" 120
+stmt: ASGNI4(addr,INDIRI4(asrc)) "\t%[1b]_LMOV(%1,%0);\n" 120
+stmt: ASGNI4(ac,  INDIRI4(asrc)) "\t%0STW(T2);%[1b]_LMOV(%1,[T2]);\n" 120
+stmt: ASGNI4(lddr,INDIRI4(lsrc)) "\t_LMOV(%1,[SP,%0]);\n" 120
 stmt: ASGNU4(vdst,lac)           "\t%1%[0b]_LMOV(LAC,%0);\n" 120
 stmt: ASGNU4(vdst,reg)           "\t%[0b]_LMOV(%1,%0);\n" 120
-stmt: ASGNU4(pdst,INDIRU4(psrc)) "\t%[0b]%[1b]_LMOV(%1,%0);\n" 120
+stmt: ASGNU4(addr,INDIRU4(asrc)) "\t%[1b]_LMOV(%1,%0);\n" 120
+stmt: ASGNU4(ac,  INDIRU4(asrc)) "\t%0STW(T2);%[1b]_LMOV(%1,[T2]);\n" 120
+stmt: ASGNU4(lddr,INDIRU4(lsrc)) "\t_LMOV(%1,[SP,%0]);\n" 120
 
 # Floats
 stmt: fac "\t%0\n"
@@ -716,7 +723,9 @@ stmt: GTF5(farg,fac) "\t%1%0_FCMP();_BLT(%a);\n" 200
 stmt: GEF5(farg,fac) "\t%1%0_FCMP();_BLE(%a);\n" 200
 stmt: ASGNF5(vdst,fac) "\t%1%[0b]_FMOV(FAC,%0);\n" 180
 stmt: ASGNF5(vdst,reg) "\t%[0b]_FMOV(%1,%0);\n"    150
-stmt: ASGNF5(pdst,INDIRF5(psrc)) "\t%[0b]%[1b]_FMOV(%1,%0);\n" 150
+stmt: ASGNF5(addr,INDIRF5(asrc)) "\t%[1b]_FMOV(%1,%0);\n" 150
+stmt: ASGNF5(ac,  INDIRF5(asrc)) "\t%0STW(T2);%[1b]_FMOV(%1,[T2]);\n" 150
+stmt: ASGNF5(lddr,INDIRF5(lsrc)) "\t_FMOV(%1,[SP,%0]);\n" 150
 
 # Calls
 fac: CALLF5(addr) "CALLI(%0);" mincpu5(28)
@@ -1199,7 +1208,7 @@ static void clobber(Node p)
 
 /* Helper for preralloc */
 static int find_reguse_in_cover(Node p, int nt, Symbol sym,
-                                const char **lefttpl)
+                                const char **lefttpl, int *kididx)
 {
   Node n = p;
   int rulenum = (*IR->x._rule)(n->x.state, nt);
@@ -1227,12 +1236,14 @@ static int find_reguse_in_cover(Node p, int nt, Symbol sym,
       if (generic(k->op) == INDIR && specific(k->kids[0]->op) == VREG+P
           && knt == k->x.inst && k->kids[0]->syms[0] == sym) {
         count += 1;
-        if (lefttpl && i == 0 && leftkid < 0)
+        if (lefttpl && leftkid < 0) {
           *lefttpl = template;
+          *kididx = i;
+        }
       } else if (i == leftkid) {
-        count += find_reguse_in_cover(k, knt, sym, lefttpl);
+        count += find_reguse_in_cover(k, knt, sym, lefttpl, kididx);
       } else {
-        count += find_reguse_in_cover(k, knt, sym, 0);
+        count += find_reguse_in_cover(k, knt, sym, 0, 0);
       }
     }
   return count;
@@ -1278,14 +1289,18 @@ static int scan_ac_preserving_instructions(Symbol sym, Symbol r, Node q)
       /* Next instruction is not known to preserve ac.
          However it might start with the lastuse of sym. */
       if (gotlast) {
+        int kididx;
         const char *template = 0;
-        int count = find_reguse_in_cover(q, q->x.inst, sym, &template);
+        int count = find_reguse_in_cover(q, q->x.inst, sym, &template, &kididx);
         if (count == 1 && template) {
+          char buf[3] = { '%', '0' + kididx, 0 };
           /* Template expansion refers to sym as %0.
-             But it also has to be in the first opcode. */
-          const char *p0 = strstr(template,"%0");
+             But it also has to be in the first opcode.
+             Note: this test is fragile because the code above
+             does not understand the %[0b] constructs! */
+          const char *p0 = strstr(template,buf);
           const char *p1 = strchr(template,';');
-          if (p0 && p1 && p0 < p1 && !strstr(p1, "%0"))
+          if (p0 && p1 && p0 < p1 && !strstr(p1, buf))
             return 1;
         }
       }

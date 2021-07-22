@@ -9,7 +9,7 @@ def code0():
 	_SP(4+22);STW(R22);
 	LDW(R9);DOKE(R22);
 	_SP(2+22);DEEK();_CMPIS(1);_BGT('.2');
-	_SP(-5+22);STW(T2);_FMOV('.4',[T2]);
+	_FMOV('.4',[SP,-5+22]);
 	_BRA('.3');
 	label('.2');
 	_SP(4+22);DEEK();ADDI(2);DEEK();STW(R8);

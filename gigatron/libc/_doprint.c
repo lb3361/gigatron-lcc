@@ -150,19 +150,17 @@ void _doprint_num(register doprint_t *dd,  register doprintspec_t *spec, registe
 		} else if (b == 16)
 			p = "0x";
 	}
-	l = strlen(s);
 	b = strlen(p);
+	l = strlen(s) + b;
 	z = 0;
 	if (f & DPR_PREC) {
-		if ((z = spec->prec - l) < 0)
+		if ((z = spec->prec - l - b) < 0)
 			z = 0;
-		l = l + z + b;
 	} else if (f & DPR_ZEROJ) {
-		l = l + b;
 		if ((z = spec->width - l) < 0)
 			z = 0;
-		l = l + z;
 	}
+	l = l + z;
 	b = spec->width - l;
 	if (_isupper(spec->conv)) {
 		upcase(s);

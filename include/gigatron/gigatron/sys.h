@@ -94,7 +94,7 @@ typedef struct channel_s {
 #define videoTop_v5           (*(byte*)(0x01f9)) // byte  videoTop_v5;
 #define userCode              ( (void*)(0x0200)) // void *userCode;
 #define soundTable            ( (void*)(0x0700)) // byte  soundTable[]
-#define screenMemory          ( (byte*)(0x0800)) // byte *screenMemory[]
+#define screenMemory    ((byte(*)[256])(0x0800)) // byte  screenMemory[][256]
 
 #define channel1         (*(channel_t*)(0x01fa)) // chanel_t channel1
 #define channel2         (*(channel_t*)(0x02fa)) // chanel_t channel2

@@ -79,7 +79,7 @@ def code3():
 # ======== ('CODE', 'f4', code4)
 def code4():
 	label('f4');
-	_PROLOGUE(12,2,0x0); # save=None
+	_PROLOGUE(18,2,0x0); # save=None
 	LDI(0);STW(R19);
 	LDI(0);STW(R18);
 	LDI(0);STW(R17);
@@ -88,14 +88,13 @@ def code4():
 	LDI(0);STW(R14);
 	_LDI('i');DEEK();STW(R22);
 	LDW(R22);LSLW();LSLW();ADDW(R22);STW(R21);
-	_LDI('a');ADDW(R21);_FMOV([vAC],F10);
-	STW(T1);_SP(-5+12);_FMOV(F10,[vAC]);LDW(T1) #genspill
-	_LDI('b');ADDW(R21);_FMOV([vAC],F10);
-	STW(T1);_SP(-10+12);_FMOV(F10,[vAC]);LDW(T1) #genspill
-	_FMOV('.15',F10);
-	_SP(-5+12);_FMOV([vAC],FAC);_SP(-10+12);_FADD();LDI(F10);_FCMP();_BEQ('.13');
+	_LDI('a');ADDW(R21);STW(R20);
+	_SP(-5+18);STW(T2);LDW(R20);_FMOV([vAC],[T2]);
+	_LDI('b');ADDW(R21);STW(R21);
+	_SP(-10+18);STW(T2);LDW(R21);_FMOV([vAC],[T2]);
+	_SP(-5+18);_FMOV([vAC],FAC);_SP(-10+18);_FADD();_LDI('.15');_FCMP();_BEQ('.13');
 	LDW(R22);_BEQ('.13');
-	_SP(-5+12);_FMOV([vAC],FAC);_SP(-10+12);_FSUB();LDI(F10);_FCMP();_BEQ('.13');
+	_SP(-5+18);_FMOV([vAC],FAC);_SP(-10+18);_FSUB();_LDI('.15');_FCMP();_BEQ('.13');
 	LDI(1);STW(R13);
 	_BRA('.14');
 	label('.13');
@@ -105,7 +104,7 @@ def code4():
 	LDW(R13);DOKE(R22);
 	LDI(0);
 	label('.11');
-	_EPILOGUE(12,2,0x0,saveAC=True);
+	_EPILOGUE(18,2,0x0,saveAC=True);
 # ======== ('CODE', 'f5', code5)
 def code5():
 	label('f5');

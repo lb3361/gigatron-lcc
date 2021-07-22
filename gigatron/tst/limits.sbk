@@ -3,7 +3,7 @@
 # ======== ('CODE', 'main', code0)
 def code0():
 	label('main');
-	_PROLOGUE(12,12,0x0); # save=None
+	_PROLOGUE(24,12,0x0); # save=None
 	_LDI('.2');STW(R8);
 	_SP(2);_MOV(R8,[vAC]);
 	LDI(255);STW(R9);
@@ -29,10 +29,9 @@ def code0():
 	CALLI('printf');
 	_LDI('.5');STW(R8);
 	_SP(2);_MOV(R8,[vAC]);
-	_LMOV('.6',L21);
-	_LMOV(L21,L9);
+	_LMOV('.6',L9);
 	_SP(4);_LMOV(L9,[vAC]);
-	_LMOV(L21,L11);
+	_LMOV('.6',L11);
 	_SP(8);_LMOV(L11,[vAC]);
 	CALLI('printf');
 	_LDI('.7');STW(R8);
@@ -67,10 +66,9 @@ def code0():
 	CALLI('printf');
 	_LDI('.11');STW(R8);
 	_SP(2);_MOV(R8,[vAC]);
-	_LMOV('.12',L21);
-	_LMOV(L21,L9);
+	_LMOV('.12',L9);
 	_SP(4);_LMOV(L9,[vAC]);
-	_LMOV(L21,L11);
+	_LMOV('.12',L11);
 	_SP(8);_LMOV(L11,[vAC]);
 	CALLI('printf');
 	_LDI('.13');STW(R8);
@@ -106,15 +104,14 @@ def code0():
 	CALLI('printf');
 	_LDI('.17');STW(R8);
 	_SP(2);_MOV(R8,[vAC]);
-	_LMOV('.18',L21);
-	_LMOV(L21,L9);
+	_LMOV('.18',L9);
 	_SP(4);_LMOV(L9,[vAC]);
-	_LMOV(L21,L11);
+	_LMOV('.18',L11);
 	_SP(8);_LMOV(L11,[vAC]);
 	CALLI('printf');
 	LDI(0);
 	label('.1');
-	_EPILOGUE(12,12,0x0,saveAC=True);
+	_EPILOGUE(24,12,0x0,saveAC=True);
 # ======== ('DATA', '.18', code1, 0, 2)
 def code1():
 	align(2);

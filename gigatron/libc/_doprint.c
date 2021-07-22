@@ -137,7 +137,7 @@ void _doprint_num(register doprint_t *dd,  register doprintspec_t *spec, registe
 	if (*s == '-') {
 		p = "-";
 		s += 1;
-	} else if ((b == 11) && (f & DPR_SGN)) {
+	} else if ((b & 1) && (f & DPR_SGN)) {
 		p = "+";
 	}
 	if (*s == '0') {
@@ -197,16 +197,16 @@ static int _doprint_conv_info(int c)
 {
 	/* return n such that:
            -  n == 0 for incorrect conversion letter
-	   -  n == 128 for float conversions
+	   -  n == 129 for float conversions
            -  n == 32, 64, 96 for c/s/n conversions
 	   -  n & 0x1e is the radix for int conversions
-           -  n & 1 != 0 for signed int conversions
+           -  n & 0x01 is nonzero when the format is signed
 	*/
 	static char convl[] = "EGxounsFegcipdXf";
-	static char displ[] = {/* EGxo */ 128, 128,  16,   8,
-			       /* unsF */  10,  96,  64, 128,
-			       /* egci */ 128, 128,  32,  11,
-			       /* pdXf */  16,  11,  16, 128 };
+	static char displ[] = {/* EGxo */ 129, 129,  16,   8,
+			       /* unsF */  10,  96,  64, 129,
+			       /* egci */ 129, 129,  32,  11,
+			       /* pdXf */  16,  11,  16, 129 };
 	register int i = c;
 	/* perfect hash */
 	if (i & 1) i += 58;
@@ -256,7 +256,7 @@ int vfprintf(register FILE *fp, register const char *fmt, __va_list ap)
 			goto pfmt;
 		if ((spec->flags & DPR_LONG) && (c & 0x1e)) {
 			_doprint_long(dd, spec, c, &ap);
-		} else if (c == 128) {
+		} else if (c == 129) {
 			_doprint_double(dd, spec, &ap);
 		} else {
 			i = va_arg(ap, unsigned int);

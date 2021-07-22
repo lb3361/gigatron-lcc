@@ -922,19 +922,19 @@ def scope():
         _CALLJ('__@fldarg_t3')
         LD(BE);_BEQ('.zero');STW(T3)
         LD(AE);_BEQ('.zero');SUBW(T3)
-        _BLE('.ret')
+        _BLT('.zcm')
         ALLOC(-2);STLW(0)
         LD(BE);ST(AE)
         _CALLJ('__@fdivloop')
-        LDLW(0);ALLOC(2);_BEQ('.fin')
-        LDI(0);STW(CM);_BRA('.zero')
-        label('.fin')
+        LDLW(0);ALLOC(2);_BNE('.zero')
         _CALLJ('__@amshl8')
         _CALLJ('__@fnorm')
         label('.ret')
         tryhop(2);POP();RET()
         label('.zero')
         _CALLJ('_@_clrfac')
+        label('.zcm')
+        LDI(0);STW(CM)
         tryhop(2);POP();RET()
         
     module(name='rt_fmod.s',
@@ -1078,30 +1078,6 @@ def scope():
                   ('EXPORT', '_@_frndz'),
                   ('CODE', '_@_frndz', code_frndz) ] )
 
-    def code_ffrac():
-        '''Extract fractional part.
-           Leave unsigned integer part in vAC (if it fits).'''
-        label('_@_ffrac')
-        PUSH()
-        _CALLJ('__@fmask')
-        LDW(BM);ANDW(AM);ST(AM)
-        LDW(BM+1);ANDW(AM+1);STW(AM+1)
-        LDW(BM+3);STW(T3);ANDW(AM+3);STW(AM+3)
-        LD(AE);SUBI(145);XORI(255);ST(T2)
-        _CALLJ('__@fnorm')
-        LD(T2);ANDI(0xf0);_BNE('.ff1')
-        _CALLJ('__@shru_t2')
-        tryhop(2);POP();RET()
-        label('.ff1')
-        LDI(0);
-        tryhop(2);POP();RET()
-
-    module(name='rt_ffrac.s',
-           code=[ ('IMPORT', '__@fmask'),
-                  ('IMPORT', '__@fnorm'),
-                  ('IMPORT', '__@shru_t2'),
-                  ('EXPORT', '_@_ffrac'),
-                  ('CODE', '_@_ffrac', code_ffrac) ] )
 
 # create all the modules
 scope()

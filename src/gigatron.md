@@ -1509,6 +1509,11 @@ static void doarg(Node p)
 
 static void local(Symbol p)
 {
+  /* The size check prevents allocating registers for longs and
+     floats.  The register benefit for longs and floats is minimal
+     Best to keep them for ints and pointers. */
+  if (p->type->size > 2)
+    p->sclass = AUTO;
   if (askregvar(p, rmap(ttob(p->type))) == 0)
     mkauto(p);
 }

@@ -23,9 +23,9 @@ def scope():
         POP();RET()
         
     module(name='fmodquo.s',
-           code=[ ('EXPORT', 'fmodquo'),
+           code=[ ('EXPORT', '_fmodquo'),
                   ('IMPORT', '_@_fmod'),
-                  ('CODE', '_fmodquo', code0) ] )
+                  ('CODE', '_fmodquo', code1) ] )
 
     
 scope()

@@ -1,5 +1,5 @@
 
-# double copysign(double, double);
+# double fabs(double);
 
 def code0():
     nohop()

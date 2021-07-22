@@ -23,4 +23,4 @@ lfact(10)=3628800
 lfact(11)=39916800
 lfact(12)=479001600
 lfact(13)=overflow setjmp returns 1
-now i=1234 and j=4321
+now i=1234 and j=13

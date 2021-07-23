@@ -10,6 +10,7 @@
 
 static const double p9 = 1e9;
 static const double p8 = 1e8;
+static const double fivem = ((2.0 - DBL_EPSILON) / 4.0) * 10.0;
 
 char *dtoa(double x, char *buf, register char fmt, register int prec)
 {
@@ -44,7 +45,7 @@ char *dtoa(double x, char *buf, register char fmt, register int prec)
 	per = 1;
 	if (fmt == 'g' && prec > 1)
 		prec -= 1;
-	if (fmt == 'f' || fmt != 'e' && exp >= -4 && exp < prec) {
+	if (fmt == 'f' || fmt != 'e' && exp >= -4 && exp <= prec) {
 		if ((per = per + exp) <= 0) {
 			skip = 1 - per;
 			per = 1;
@@ -52,7 +53,7 @@ char *dtoa(double x, char *buf, register char fmt, register int prec)
 		exp = 0;
 	}
 	/* Round */
-	x = _ldexp10(5, tmp - per - prec) + x;
+	x = _ldexp10(fivem, tmp - per - prec) + x;
 	DEBUG(("|  rounded %.2f %.8g\n", x, y));
 	DEBUG(("|  exp=%d per=%d skip=%d tmp=%d prec=%d\n", exp, per, skip, tmp, prec));
 	/* Extract digits */

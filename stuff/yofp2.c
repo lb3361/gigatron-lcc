@@ -14,7 +14,11 @@ void pr(const char *s1, const char *s2, const char *s3, double d)
 	strcpy(buffer,s1);
 	if (s2) strcat(buffer, s2);
 	if (s3) strcat(buffer, s3);
+#if USE_GCVT
+	strcat(buffer, gcvt(d, 6, buf2));
+#else
 	strcat(buffer, dtoa(d, buf2, 'g', 6));
+#endif
 	strcat(buffer, "\n");
 	console_print(buffer, 128);
 }

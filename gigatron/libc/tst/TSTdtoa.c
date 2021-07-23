@@ -19,8 +19,13 @@ char buffer[64];
 #define TSTG(x,p) \
 	printf("dtoa(" #x ",buffer,'g',%d) -> [%s]" REF #p "g)\n", \
 	       p, dtoa(x, buffer, 'g', p), (double)x);
-#define TST(x,p) \
-	TSTE(x,p); TSTF(x,p); TSTG(x,p);
+#define TSTGCVT(x,p) \
+	printf("gvct(" #x ", %d, buffer)   -> [%s]" REF #p "g)\n", \
+	       p, gcvt(x, p, buffer), (double)x);
+
+#define TST(x,p)  \
+	printf("----\n"); \
+	TSTE(x,p); TSTF(x,p); TSTG(x,p); TSTGCVT(x, p)
 
 double pi = 3.141592653589793;
 
@@ -30,6 +35,7 @@ int main()
 {
 	TST(0,6);
 	TST(1,4);
+	TST(-37.2,4);
 	TST(pi,4);
 	TST(pi,12);
 	TST(pi*1e6,3);

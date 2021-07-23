@@ -986,9 +986,9 @@ def scope():
         PUSH()
         LD(AE);_BEQ('.done')
         LD(AS);ANDI(128);_BEQ('.plus')
-        _LDI(-1);RET()
+        _LDI(-2)
         label('.plus')
-        LDI(1)
+        INC(vAC)
         label('.done')
         tryhop(2);RET()
 

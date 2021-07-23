@@ -128,7 +128,8 @@ static void upcase(char *s)
 	}
 }
 
-void _doprint_num(register doprint_t *dd,  register doprintspec_t *spec, register int b, register char *s)
+void _doprint_num(register doprint_t *dd,  register doprintspec_t *spec,
+		  register int b, register char *s)
 {
 	register int l, z;
 	register int f = spec->flags;

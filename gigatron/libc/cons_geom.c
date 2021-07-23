@@ -40,7 +40,7 @@ static void clear(register char *addr, register int nl)
 void console_clear_screen(void)
 {
 	reset();
-	clear(screenMemory, 120);
+	clear((void*)screenMemory, 120);
 }
 
 void console_clear_line(register int y)

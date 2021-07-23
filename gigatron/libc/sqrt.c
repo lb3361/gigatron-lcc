@@ -2,27 +2,28 @@
 #include <errno.h>
 #include <gigatron/libc.h>
 
-static double sqrt1(register double x, register double u)
-{
-	register double v;
-	do {
-		v = u;
-		u = ( v + x / v ) * 0.5;
-	} while (u != v);
-	return u;
-}
 
-double sqrt(register double x)
+static double sqrt2 = 1.41421356237309504880;
+
+double sqrt(double x)
 {
-	if (x > 0) {
-		int exp = 0;
-		/* This relies on the left-to-right argument
-		   evaluation order but generates better code. */
-		return sqrt1(x, ldexp(frexp(x, &exp), exp>>2));
-	}
-	if (x < 0) {
+	if (x <= 0) {
+		if (x == 0)
+			return 0.0;
 		errno = EDOM;
 		return _fexception(-1.0);
+	} else {
+		register int i;
+		int e;
+		double w = x;
+		double z = frexp(x, &e);
+		x = 4.173075996388649989089E-1 + 5.9016206709064458299663E-1 * z;
+		if (e & 1)
+			x = x * 1.41421356237309504880;
+		x = ldexp(x, (e >> 1));
+		for (i=0; i!=3; i++)
+			x = (x + w / x) * 0.5;
+		return x;
 	}
-	return 0.0;
 }
+

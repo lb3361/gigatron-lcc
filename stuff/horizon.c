@@ -17,23 +17,13 @@
 #define color2 0x03
 #define maxV 32
 
-void BusyWait(int frames)
-{
-  byte nextFrame = frameCount;
-  while (frames-- > 0) {
-    nextFrame++;
-    while (frameCount != nextFrame)
-      ;
-  }
-}
-
 int main(void)
 {
   int y, x, i, j, v = 8;
   byte *p, *q = &videoTable[240];
 
-  #define makeEven(v) (((v) + 1) & ~1) // Odd pitches give jagged edges?
-  #define calcPitch(y) makeEven((y) + maxPitch - screenHeight + 1)
+#define makeEven(v) (((v) + 1) & ~1) // Odd pitches give jagged edges?
+#define calcPitch(y) makeEven((y) + (maxPitch - screenHeight + 1))
 
   // Draw tiles in perspective in screen memory
   for (y=screenHeight-1; y>=horizonY; y--) {
@@ -61,7 +51,11 @@ int main(void)
     // Quickly update videoTable, in steps of 2 pixel lines for more speed
     p = &videoTable[horizonY*2+1];
     i += i;
-    BusyWait(1);                // Synchronize with vertical blank
+
+    // Synchronize with vertical blank
+    { byte nextFrame = frameCount + 1;
+      while (frameCount != nextFrame) /**/ ; }
+    
     for (; p<q; p+=4) {
       *p = j >> 8;              // LCC nicely emits LD vAC+1 for the shift
       j = i + (j & 255);        // Faster operand order for LCC...

@@ -95,7 +95,61 @@ def scope():
                  ('IMPORT', 'ultoa'),
                  ('CODE', 'ltoa', code_ltoa)] )
 
-    
+    def code_utwoa():
+        '''Internal: _utwoa(int) converts a number in range 0..99 into two
+           chars returned as the high and low part of vAC.'''
+        label('_utwoa')
+        PUSH()
+        LDW(R8);_MODIU(10)
+        ADDI(48);ST(R8)
+        LD(T1);ADDI(48);ST(R8+1)
+        LDW(R8)
+        tryhop(2);POP();RET()
+
+    module(name='utwoa.s',
+           code=[('EXPORT', '_utwoa'),
+                 ('CODE', '_utwoa', code_utwoa)  ] )
+
+    def code_uftoa():
+        '''Internal: _uftoa(double x, char *buf) does the same
+           as _ultoa((unsigned long)x, buf, 10) but using _fmodquo
+           instead of a long division.'''
+        label('_uftoa')
+        PUSH()
+        _FMOV(F8,FAC)
+        LDI(10);STW(R10)
+        LDW(R11);ADDI(15);STW(R22);STW(R21)
+        LDI(0);DOKE(R22)
+        _LDI('.1e8');_CALLJ('_@_fmod');STW(R20)
+        _LDI('.1e4');_CALLJ('_@_fmod');STW(R19)
+        _FTOU();LDW(LAC);_CALLI('.uftoa1')
+        LDW(R19);_CALLI('.uftoa1')
+        LDW(R20);_CALLI('.uftoa1')
+        tryhop(2);POP();RET()
+        label('.uftoa1')
+        PUSH();STW(R8)
+        label('.uftoa2')
+        LDW(R21);XORW(R22);_BEQ('.uftoa3')
+        LDW(R21);SUBI(1);STW(R21)
+        LDI(48);POKE(R21);_BRA('.uftoa2')
+        label('.uftoa3')
+        LDW(R22);STW(R9);SUBI(4);STW(R22)
+        _CALLJ('_utoa');STW(R21)
+        tryhop(2);POP();RET()
+       
+    def code_uftoa_cst():
+        label('.1e4')
+        bytes(142,28,64,0,0) # 1e4
+        label('.1e8')
+        bytes(155,62,188,32,0) # 1e+08
+
+    module(name='uftoa.s',
+           code=[('EXPORT', '_uftoa'),
+                 ('CODE', '_uftoa', code_uftoa),
+                 ('DATA', '_uftoa', code_uftoa_cst, 0, 1),
+                 ('IMPORT', '_@_fmod'),
+                 ('IMPORT', '_utoa') ] )
+
 scope()
 # Local Variables:
 # mode: python

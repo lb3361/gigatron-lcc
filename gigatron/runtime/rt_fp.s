@@ -915,6 +915,10 @@ def scope():
     # ==== fmod
 
     def code_fmod():
+        '''Leaves in FAC the floating point remainder FAC % [vAC]
+           that is FAC - n * [vAC] where n is the quotient FAC/[vAC]
+           rounded toward zero to an integer. Returns the 16 low bits
+           of n into vAC'''
         label('_@_fmod')
         PUSH();STW(T3)
         _CALLJ('__@fsavevsp')
@@ -922,7 +926,7 @@ def scope():
         _CALLJ('__@fldarg_t3')
         LD(BE);_BEQ('.zero');STW(T3)
         LD(AE);_BEQ('.zero');SUBW(T3)
-        _BLT('.zcm')
+        _BLT('.zquo')
         ALLOC(-2);STLW(0)
         LD(BE);ST(AE)
         _CALLJ('__@fdivloop')
@@ -930,11 +934,12 @@ def scope():
         _CALLJ('__@amshl8')
         _CALLJ('__@fnorm')
         label('.ret')
+        LDW(CM)
         tryhop(2);POP();RET()
         label('.zero')
         _CALLJ('_@_clrfac')
-        label('.zcm')
-        LDI(0);STW(CM)
+        label('.zquo')
+        LDI(0)
         tryhop(2);POP();RET()
         
     module(name='rt_fmod.s',

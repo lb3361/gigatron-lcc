@@ -27,6 +27,10 @@ dtoa(pi*1e-6,buffer,'e',3) -> [3.142e-06] (%.3e)
 dtoa(pi*1e-6,buffer,'f',3) -> [0.000] (%.3f)
 dtoa(pi*1e-6,buffer,'g',3) -> [3.14e-06] (%.3g)
 ----
+dtoa(pi*1e-4,buffer,'e',6) -> [3.141593e-04] (%.6e)
+dtoa(pi*1e-4,buffer,'f',6) -> [0.000314] (%.6f)
+dtoa(pi*1e-4,buffer,'g',6) -> [0.00031] (%.6g)
+----
 dtoa(ulong_max,buffer,'e',2) -> [4.29e+09] (%.2e)
 dtoa(ulong_max,buffer,'f',2) -> [4294967295.00] (%.2f)
 dtoa(ulong_max,buffer,'g',2) -> [4.3e+09] (%.2g)

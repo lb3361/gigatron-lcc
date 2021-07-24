@@ -37,6 +37,7 @@ int main()
 	TST(pi,12);
 	TST(pi*1e6,3);
 	TST(pi*1e-6,3);
+	TST(pi*1e-4,6);
 	TST(ulong_max,2);
 	TST(1e-12,8);
 	TST(1e-38,8);	

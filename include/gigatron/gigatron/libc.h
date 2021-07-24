@@ -149,12 +149,6 @@ extern char *ultoa(unsigned long value, char *buf16, int radix);
 
 extern char *dtoa(double x, char *buf, char format, int prec);
 
-/* Function to convert doubles to strings using g format only.  The
-   buffer should be large enough for the required precision.  This
-   function is faster and smaller than dtoa but causes the long
-   division to be linked. */
-
-extern char *gcvt(double x, int prec, char *buf);
 
 /* ---- Misc ---- */
 

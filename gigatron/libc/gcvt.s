@@ -51,8 +51,11 @@ def scope():
         LDI(10);STW(R11)                       # ultoa base
         LDW(R3);STW(R10)                       # ultoa buffer
         _FTOU();_LMOV(LAC,F8)                  # convert to unsigned long
-        _CALLJ('ultoa')                        # call ultoa -> p
-        STW(R3)
+        _CALLJ('ultoa');STW(R3)                # call ultoa -> p
+        ADDW(R5);STW(R7);PEEK();_BEQ('.g4b')   # if p[nd]!=0 (rounding carry!)
+        LDI(0);POKE(R7)                        # | clears extra digit
+        LDI(1);ADDW(R2);STW(R2)                # | and increment exp
+        label('.g4b')
         LDI(4);ADDW(R2);_BLT('.g5')            # if 4+exp >= 0
         LDW(R2);SUBW(R5);_BGE('.g5')           # and exp-nd < 0
         LDI(1);ADDW(R2);STW(R5);               # | nd = 1 + exp

@@ -1,6 +1,9 @@
 
+# this file contains a lot of stuff that has not clear place
+
 def scope():
 
+    # -----------------------------------------------
     # This is loaded to handle floating point exceptions
 
     def code0():
@@ -29,6 +32,35 @@ def scope():
                   ('IMPORT', 'errno'),
                   ('CODE', '_@_raisefpe', code0) ] )
 
+    # -----------------------------------------------
+    # Floating point constants
+
+    def code_fzero():
+        label('_fzero')
+        bytes(0,0,0,0,0) # 0.0F
+
+    module(name='_fzero.s',
+           code=[ ('EXPORT', '_fzero'),
+                  ('DATA', '_fzero', code_fzero, 5, 1) ] )
+
+    def code_fone():
+        label('_fone')
+        bytes(129,0,0,0,0) # 1.0F
+
+    module(name='_fone.s',
+           code=[ ('EXPORT', '_fone'),
+                  ('DATA', '_fone', code_fone, 5, 1) ] )
+
+    def code_fhalf():
+        label('_fhalf')
+        bytes(128,0,0,0,0) # 0.5F
+
+        module(name='_fhalf.s',
+           code=[ ('EXPORT', '_fhalf'),
+                  ('DATA', '_fhalf', code_fhalf, 5, 1) ] )
+
+
+    # -----------------------------------------------
     # The following stubs define functions
     # _do{print|scan}_{long|float} that conditionally link and call
     # the actual implementation _do{print|scan}_{long|float}_imp if

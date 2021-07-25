@@ -27,14 +27,14 @@ def scope():
         _FMOV(F8, FAC)
         _CALLJ('_@_frndz')
         LDI(F8);_FCMP();_BLE('.ret')
-        _LDI('_@_fone');_FSUB()
+        _LDI('_fone');_FSUB()
         label('.ret')
         POP();RET()
     
     module(name='floor.s',
            code=[ ('EXPORT', 'floor'),
                   ('IMPORT', '_@_frndz'),
-                  ('IMPORT', '_@_fone'),
+                  ('IMPORT', '_fone'),
                   ('CODE', 'floor', code0) ] )
 
     def code0():
@@ -44,14 +44,14 @@ def scope():
         _FMOV(F8, FAC)
         _CALLJ('_@_frndz')
         LDI(F8);_FCMP();_BGE('.ret')
-        _LDI('_@_fone');_FADD()
+        _LDI('_fone');_FADD()
         label('.ret')
         POP();RET()
     
     module(name='ceil.s',
            code=[ ('EXPORT', 'ceil'),
                   ('IMPORT', '_@_frndz'),
-                  ('IMPORT', '_@_fone'),
+                  ('IMPORT', '_fone'),
                   ('CODE', 'ceil', code0) ] )
 
 scope()

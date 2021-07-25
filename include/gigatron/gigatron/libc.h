@@ -66,6 +66,12 @@ extern void _virq_handler(void);
 
 /* ---- Numerics ---- */
 
+/* Floating point constants */
+
+extern double _fzero;
+extern double _fone;
+extern double _fhalf;
+
 /* Raise a SIGFPE exception and return defval if the exception is ignored.
    If a signal handler for SIGFPE has been setup, these functions
    return what the signal handler returns. */

@@ -3,12 +3,12 @@ def scope():
 
     def code_ldexp10p():
         label('_ldexp10p')
-        bytes(22,79,177,30,173); # 1e-32
-        bytes(75,102,149,148,191); # 1e-16
-        bytes(102,43,204,119,18); # 1e-08
-        bytes(115,81,183,23,89); # 0.0001
-        bytes(122,35,215,10,61); # 0.01
-        bytes(125,76,204,204,205); # 0.1
+        bytes(235,29,197,173,168); # 1e+32
+        bytes(182,14,27,201,191); # 1e+16
+        bytes(155,62,188,32,0); # 1e+08
+        bytes(142,28,64,0,0); # 10000
+        bytes(135,72,0,0,0); # 100
+        bytes(132,32,0,0,0); # 10
 
     def code_ldexp10n():
         label('_ldexp10n')
@@ -18,11 +18,11 @@ def scope():
         LDI(80);STW(R11)
         label('.neg1')
         LDW(R11);ANDI(31);XORW(R11);_BEQ('.neg3')
-        LDW(R21);_FMUL()
+        LDW(R21);_FDIV()
         LDW(R11);SUBI(32);STW(R11);_BRA('.neg1')
         label('.neg2')
         LDW(R11);LSLW();STW(R11);ANDI(0x20);_BEQ('.neg3')
-        LDW(R21);_FMUL()
+        LDW(R21);_FDIV()
         label('.neg3')
         LDI(5);ADDW(R21);STW(R21);XORW(R20);_BNE('.neg2')
         tryhop(2);POP();RET()
@@ -48,7 +48,7 @@ def scope():
            code=[ ('EXPORT', '_ldexp10'),
                   ('IMPORT', '_@_fmul10'),
                   ('IMPORT', '_@_rndfac'),
-	          ('DATA', '_ldexp10p', code_ldexp10p, 0, 1),
+                  ('DATA', '_ldexp10p', code_ldexp10p, 0, 1),
                   ('CODE', '_ldexp10n', code_ldexp10n), 
                   ('CODE', '_ldexp10', code_ldexp10) ] )
 

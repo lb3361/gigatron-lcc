@@ -11,9 +11,9 @@ def scope():
         label('utoa')
         PUSH()
         LDI(7);ADDW(R9);STW(R9)
-        LDI(0);POKE(R9);BRA('.loop')
+        LDI(0);POKE(R9);_BRA('.loop')
         label('_utoa')
-        PUSH()
+        PUSH();STW(R8)
         label('.loop')
         LDW(R8);_MODU(R10);STW(R11)
         LDW(R9);SUBI(1);STW(R9)
@@ -24,9 +24,7 @@ def scope():
         label('.poke')
         POKE(R9)
         LDW(T1);STW(R8);_BNE('.loop')
-        LDW(R9)
-        tryhop(2);POP();RET()
-
+        tryhop(4);LDW(R9);POP();RET()
     module(name="utoa.s",
            code=[('EXPORT', 'utoa'),
                  ('EXPORT', '_utoa'),
@@ -49,7 +47,6 @@ def scope():
            code=[('EXPORT', 'itoa'),
                  ('IMPORT', 'utoa'),
                  ('CODE', 'itoa', code_itoa)] )
-
 
     def code_ultoa():
         label('ultoa')
@@ -74,7 +71,6 @@ def scope():
         
     module(name="ultoa.s",
            code=[('EXPORT', 'ultoa'),
-                 ('IMPORT', '_utoa'),
                  ('CODE', 'ultoa', code_ultoa)] )
 
     def code_ltoa():
@@ -111,31 +107,36 @@ def scope():
                  ('CODE', '_utwoa', code_utwoa)  ] )
 
     def code_uftoa():
-        '''Internal: _uftoa(double x, char *buf) does the same
-           as _ultoa((unsigned long)x, buf, 10) but using _fmodquo
-           instead of a long division.'''
+        '''Internal: _uftoa(double x, char *buf) does the same as
+           _ultoa((unsigned long)x, buf, 10) but using _@_fmod instead
+           of a long division. This code relies on the internal
+           details of utoa. Beware.'''
         label('_uftoa')
         PUSH()
         _FMOV(F8,FAC)
         LDI(10);STW(R10)
-        LDW(R11);ADDI(15);STW(R22);STW(R21)
-        LDI(0);DOKE(R22)
-        _LDI('.1e8');_CALLJ('_@_fmod');STW(R20)
-        _LDI('.1e4');_CALLJ('_@_fmod');STW(R19)
-        _FTOU();LDW(LAC);_CALLI('.uftoa1')
-        LDW(R19);_CALLI('.uftoa1')
-        LDW(R20);_CALLI('.uftoa1')
-        tryhop(2);POP();RET()
-        label('.uftoa1')
-        PUSH();STW(R8)
-        label('.uftoa2')
-        LDW(R21);XORW(R22);_BEQ('.uftoa3')
-        LDW(R21);SUBI(1);STW(R21)
-        LDI(48);POKE(R21);_BRA('.uftoa2')
-        label('.uftoa3')
-        LDW(R22);STW(R9);SUBI(4);STW(R22)
-        _CALLJ('_utoa');STW(R21)
-        tryhop(2);POP();RET()
+        LDW(R11);ADDI(15);STW(R22);STW(R9)
+        LDI(0);POKE(R22)
+        _LDI('.1e8');_CALLI('_@_fmod');STW(R20)
+        _LDI('.1e4');_CALLI('_@_fmod');STW(R19)
+        _FTOU()
+        LDWI(10000);SUBW(LAC);BGT('.good');HALT();label('.good')
+        LDW(LAC);_CALLI('_utoa')
+        _CALLJ('.sub')
+        LDW(R20);STW(R19);_BRA('.sub1')
+        label('.sub')
+        PUSH();
+        label('.sub1')
+        LDW(R22);SUBI(4);STW(R22)
+        LDW(R19);_BEQ('.ret')
+        label('.loop')
+        LDW(R9);SUBW(R22);_BLE('.go')
+        LDW(R9);SUBI(1);STW(R9)
+        LDI(48);POKE(R9);_BRA('.loop')
+        label('.go')
+        LDW(R19);_CALLI('_utoa')
+        label('.ret')
+        tryhop(4);LDW(R9);POP();RET()
        
     def code_uftoa_cst():
         label('.1e4')

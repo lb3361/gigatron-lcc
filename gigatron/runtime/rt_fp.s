@@ -109,22 +109,6 @@ def scope():
                   ('EXPORT', '_@_clrfac'),
                   ('CODE', '_@_clrfac', code_clrfac) ] )
 
-    def code_fone():
-        label('_@_fone')
-        bytes(129,0,0,0,0) # 1.0F
-
-    module(name='rt_fone.s',
-           code=[ ('EXPORT', '_@_fone'),
-                  ('DATA', '_@_fone', code_fone, 5, 1) ] )
-
-    def code_fhalf():
-        label('_@_fhalf')
-        bytes(128,0,0,0,0) # 0.5F
-
-    module(name='rt_fhalf.s',
-           code=[ ('EXPORT', '_@_fhalf'),
-                  ('DATA', '_@_fhalf', code_fhalf, 5, 1) ] )
-
     # ==== Load/store
 
     def load_mantissa(ptr, mantissa):
@@ -884,7 +868,8 @@ def scope():
         label('.fdiv1')
         LD(BE);STW(T3)
         LD(AE);SUBW(T3);ADDI(160)
-        ALLOC(-2);STLW(0);_BLE('.zero')  # - hopeless underflow
+        _BLE('.zero')                    # - hopeless underflow
+        ALLOC(-2);STLW(0)
         _CALLJ('__@fdivloop')
         _CALLJ('__@fdivrnd')
         LDLW(0);ALLOC(2)

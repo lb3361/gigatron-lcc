@@ -35,13 +35,18 @@ def scope():
     CM = T2       # extra 32 bits register
    
     # naming convention for exported symbols
-    # '_@_xxxx' are the public api.
-    # '__@xxxx' are private.
+    # '_@_xxxx' are the public api.  See their docstrings below.
+    # '__@xxxx' are private and should not be relied upon.
 
-    
+
     # ==== common things
 
     def code_fexception():
+        '''All float exceptions call _@_raisefpe which must be defined
+           elsewhere. This function is called with vAC set to 0x304
+           for a general exception and 0x204 for an overflow. If this
+           function returns, what it leaves in FAC is returned by the
+           API function (or more precisely by whoever called __@savevsp).'''
         nohop()
         label('__@fexception')   ### SIGFPE/exception
         _CALLJ('__@frestorevsp')
@@ -77,8 +82,9 @@ def scope():
                   ('CODE', '__@fsavevsp', code_fsavevsp) ] )
 
     def code_clrfac():
+        '''_@_clrfac: -- Set FAC to zero
+           _@_rndfac: -- Round FAC to 32 bit mantissa.'''
         nohop()
-        ## Clear fac
         label('_@_clrfac')
         LDI(0);STW(AE)        # [AE,AM]
         STW(AM+1);STW(AM+3)   # [AM+1,AM+2] [AM+3,AM+4]
@@ -112,8 +118,8 @@ def scope():
     # ==== Load/store
 
     def load_mantissa(ptr, mantissa):
-        '''Load mantissa of float [ptr] into [mantissa,mantissa+3].
-           Returns high mantissa byte with sign bit.'''
+        # Load mantissa of float [ptr] into [mantissa,mantissa+3].
+        # Returns high mantissa byte with sign bit.
         if args.cpu <= 5:
             LDI(4);ADDW(ptr);PEEK();ST(mantissa)
             LDI(3);ADDW(ptr);PEEK();ST(mantissa+1)
@@ -130,7 +136,7 @@ def scope():
             ORBI(0x80, mantissa+3)
 
     def code_fldfac():
-        '''[vAC]->FAC'''
+        '''_@_fldfac: Load the float at address vAC into FAC: [vAC]->FAC'''
         nohop()
         label('_@_fldfac')
         STW(T3)
@@ -156,7 +162,7 @@ def scope():
                   ('CODE', '_@_fldfac', code_fldfac) ] )
 
     def code_fldarg():
-        '''[vAC]->FARG'''
+        # [vAC]->FARG
         nohop()
         label('__@fldarg')
         STW(T3)
@@ -182,8 +188,8 @@ def scope():
                   ('CODE', '__@fldarg', code_fldarg) ] )
 
     def code_fstfac():
+        '''_@_fstfac: Store FAC at address vAC: FAC->[vAC]'''
         nohop()
-        '''FAC->[vAC]'''
         label('_@_fstfac')
         PUSH();STW(T3)
         LD(AE);POKE(T3);_BNE('.fst1')
@@ -224,12 +230,11 @@ def scope():
 
     module(name = 'rt_fstfac.s',
            code = [ ('EXPORT', '_@_fstfac'),
-                    # ('IMPORT', '_@_rndfac'),
                     ('IMPORT', '_@_clrfac'),
-                    # ('CODE', '_@_fstfac2', code_fstfac2),
                     ('CODE', '_@_fstfac', code_fstfac) ] )
 
     def code_fac2farg():
+        # Copy FAC to FARG
         nohop()
         label('__@fac2farg')
         LD(AE);ST(BE)
@@ -365,7 +370,7 @@ def scope():
         RET()
 
     def code_amshra():
-        '''shift am right by vAC positions'''
+        # shift am right by vAC positions
         label('__@amshra')
         PUSH();ALLOC(-2);STLW(0)
         ANDI(0xe0);_BEQ('.shra16')
@@ -445,6 +450,7 @@ def scope():
     # ==== normalization
 
     def code_fnorm():
+        # Normalize FAC
         label('__@fnorm')
         PUSH()
         label('.norm1a')
@@ -470,7 +476,7 @@ def scope():
         tryhop(2);POP();RET()
 
     def code_fnorm2():
-        '''Multiply by four and normalize at the same time'''
+        # Multiply FAC by four and normalize
         label('__@fnorm2')
         PUSH()
         _CALLJ('__@fnorm')
@@ -497,6 +503,8 @@ def scope():
     # ==== conversions
 
     def code_fcv():
+        '''_@_fcvu: Loads FAC with the unsigned long LAC.
+           _@_fcvi: Loads FAC with the signed long LAC.'''
         label('_@_fcvu')
         PUSH()
         LDI(0);ST(AM);ST(AS);_BRA('.fcv1')
@@ -518,6 +526,9 @@ def scope():
                   ('CODE', '_@_fcvi', code_fcv) ] )
 
     def code_ftoi():
+        '''_@_ftoi: Convert FAC into a signed long in LAC.
+           _@_ftou: Convert FAC into an unsigned long in LAC.
+           Both return 0x80000000 on overflow.'''
         label('_@_ftoi')
         PUSH()
         LD(AE);SUBI(160);_BLT('.ok')
@@ -614,6 +625,7 @@ def scope():
                   ('CODE', '__@fadd_t3', code_fadd_t3) ] )
 
     def code_fadd():
+        '''_@_fadd: Add the float at address vAC to FAC'''
         label('_@_fadd')
         PUSH();STW(T3)
         _CALLJ('__@fsavevsp')
@@ -629,6 +641,7 @@ def scope():
                   ('IMPORT', '_@_rndfac') ] )
 
     def code_fsub():
+        '''_@_fsub: Subtract the float at address vAC from FAC'''
         label('_@_fsub')
         PUSH();STW(T3)
         _CALLJ('__@fsavevsp')
@@ -650,7 +663,9 @@ def scope():
     # ==== multiplication by 10
 
     def code_fmul10():
-        '''Multiplies FAC by 10 with 38 bit mantissa precision'''
+        '''_@_fmul10: Multiplies FAC by 10 with 38 bit mantissa precision.
+           This function does not round its result to 32 bits.
+           One should call _@_rndfac before storing its result.'''
         label('_@_fmul10')
         PUSH()
         _CALLJ('__@fsavevsp')
@@ -679,8 +694,8 @@ def scope():
     # ==== multiplication
 
     def code_macbm32x8():
-        '''macbm32x8: AM += (BM>>8) * T3L (trashes T3H)
-           smacbm32x8: Do AM>>=8 first.'''
+        # macbm32x8: AM += (BM>>8) * T3L (trashes T3H)
+        # smacbm32x8: Do AM>>=8 first.
         nohop()
         label('__@smacbm32x8')
         PUSH()
@@ -723,6 +738,7 @@ def scope():
         tryhop(4);ALLOC(4);POP();RET()
 
     def code_fmul():
+        '''_@_fmul: Multiply FAC by the float at address vAC.'''
         label('_@_fmul')
         PUSH();STW(T3)
         _CALLJ('__@fsavevsp')
@@ -855,11 +871,13 @@ def scope():
                   ('CODE', '__@fdivrnd', code_fdivrnd) ] )
         
     def code_fdiv():
+        '''_@_fdiv: Divide FAC by the float at address vAC.'''
         label('_@_fdiv')
         PUSH();STW(T3)
         _CALLJ('__@fsavevsp')
         _CALLJ('_@_rndfac')
         _CALLJ('__@fldarg_t3')
+        label('__@fdivfa')
         LD(AS);ANDI(1);XORI(0xff);INC(vAC);ANDI(128);ST(AS) # sign
         LD(BE);_BNE('.fdiv0')
         _CALLJ('__@fexception')          # - divisor is zero -> exception
@@ -887,6 +905,7 @@ def scope():
 
     module(name='rt_fdiv.s',
            code=[ ('EXPORT', '_@_fdiv'),
+                  ('EXPORT', '__@fdivfa'),
                   ('IMPORT', '__@fsavevsp'),
                   ('IMPORT', '_@_rndfac'),
                   ('IMPORT', '__@fldarg_t3'),
@@ -897,10 +916,30 @@ def scope():
                   ('IMPORT', '__@foverflow'),
                   ('CODE', '_@_fdiv', code_fdiv) ] )
 
+    def code_fdivr():
+        '''_@_fdiv: Divide the float at address vAC by FAC, result in FAC.'''
+        label('_@_fdivr')
+        label('_@_fdiv')
+        PUSH();STW(T3)
+        _CALLJ('__@fsavevsp')
+        _CALLJ('_@_rndfac')
+        _CALLJ('__@fac2farg')
+        _CALLJ('__@fldfac_t3')
+        _CALLJ('__@fdivfa') # no return
+        
+    module(name='rt_fdivr.s',
+           code=[ ('EXPORT', '_@_fdivr'),
+                  ('IMPORT', '__@fsavevsp'),
+                  ('IMPORT', '_@_rndfac'),
+                  ('IMPORT', '__@fac2farg'),
+                  ('IMPORT', '__@fldfac_t3'),
+                  ('IMPORT', '__@fdivfa'),
+                  ('CODE', '_@_fdivr', code_fdivr) ] )
+    
     # ==== fmod
 
     def code_fmod():
-        '''Leaves in FAC the floating point remainder FAC % [vAC]
+        '''_@_fmod: Leaves in FAC the floating point remainder FAC % [vAC]
            that is FAC - n * [vAC] where n is the quotient FAC/[vAC]
            rounded toward zero to an integer. Returns the 16 low bits
            of n into vAC'''
@@ -940,6 +979,11 @@ def scope():
     # ==== comparisons
 
     def code_fcmp():
+        '''_@_fcmp: Compare FAC with the float at address vAC and reeturn -1,
+           0, or +1.  Note that because of the absence of subnormal
+           numbers, this function might declare that two very small
+           numbers are different even though subtracting one from the
+           other might underflow and return zero.'''
         label('_@_fcmp')
         PUSH();STW(T3)
         _CALLJ('_@_rndfac')
@@ -970,7 +1014,7 @@ def scope():
                   ('CODE', '_@_fcmp', code_fcmp) ] )
 
     def code_fsign():
-        '''returns sign of FAC into AC (-1/0/+1)'''
+        '''_@_fsign: return the sign of FAC into AC (-1/0/+1)'''
         nohop()
         label('_@_fsign')
         PUSH()
@@ -990,6 +1034,7 @@ def scope():
     # ==== misc
 
     def code_fneg():
+        '''_@_fneg: Changes the sign of FAC. Fast'''
         nohop()
         label('_@_fneg')
         LD(AS);XORI(0x81);ST(AS)
@@ -1000,6 +1045,8 @@ def scope():
                   ('CODE', '_@_fneg', code_fneg) ] )
 
     def code_frexp():
+        '''_@_frexp: Return x in FAC and exp in vAC such
+           that FAC = x * 2^exp with 0.5<=x<1.'''
         label('_@_frexp')
         PUSH()
         LD(AE);_BEQ('.frexp2')
@@ -1015,6 +1062,7 @@ def scope():
                   ('CODE', '_@_frexp', code_frexp) ] )
     
     def code_fscalb():
+        '''_@_fscalb: Multiplies FAC by 2^vAC'''
         nohop()
         label('_@_fscalb')
         PUSH();STW(T3)
@@ -1051,7 +1099,7 @@ def scope():
                   ('CODE', '__@fmask', code_fmask) ] )
 
     def code_frndz():
-        '''Make integer by rounding towards zero'''
+        '''_@_frndz: Make FAC, rounding it towards zero'''
         label('_@_frndz')
         PUSH()
         _CALLJ('__@fmask')

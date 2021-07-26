@@ -13,11 +13,11 @@ def scope():
         LDI(7);ADDW(R9);STW(R9)
         LDI(0);POKE(R9);_BRA('.loop')
         label('_utoa')
-        PUSH();STW(R8)
+        PUSH()
         label('.loop')
-        LDW(R8);_MODU(R10);STW(R11)
         LDW(R9);SUBI(1);STW(R9)
-        LDW(R11);SUBI(10);_BGE('.letter')
+        LDW(R8);_MODU(R10)
+        SUBI(10);_BGE('.letter')
         ADDI(48+10);_BRA('.poke')
         label('.letter')
         ADDI(97);
@@ -25,6 +25,7 @@ def scope():
         POKE(R9)
         LDW(T1);STW(R8);_BNE('.loop')
         tryhop(4);LDW(R9);POP();RET()
+
     module(name="utoa.s",
            code=[('EXPORT', 'utoa'),
                  ('EXPORT', '_utoa'),
@@ -115,29 +116,30 @@ def scope():
         PUSH()
         _FMOV(F8,FAC)
         LDI(10);STW(R10)
-        LDW(R11);ADDI(15);STW(R22);STW(R9)
-        LDI(0);POKE(R22)
+        LDW(R11);ADDI(11);STW(R22);ADDI(4);STW(R9)
+        LDI(0);POKE(R9)
         _LDI('.1e8');_CALLI('_@_fmod');STW(R20)
         _LDI('.1e4');_CALLI('_@_fmod');STW(R19)
         _FTOU()
-        LDWI(10000);SUBW(LAC);BGT('.good');HALT();label('.good')
-        LDW(LAC);_CALLI('_utoa')
-        _CALLJ('.sub')
-        LDW(R20);STW(R19);_BRA('.sub1')
-        label('.sub')
-        PUSH();
-        label('.sub1')
+        LDW(LAC);STW(R8);_CALLJ('_utoa')
+        LDW(R19);_CALLI('.sub')
         LDW(R22);SUBI(4);STW(R22)
-        LDW(R19);_BEQ('.ret')
+        LDW(R20)
+        tryhop(2)
+        POP()
+        label('.sub',hop=0)
+        PUSH()
+        STW(R8);_BEQ('.ret')
         label('.loop')
-        LDW(R9);SUBW(R22);_BLE('.go')
+        LDW(R9);SUBW(R22);_BLE('.sub1')
         LDW(R9);SUBI(1);STW(R9)
-        LDI(48);POKE(R9);_BRA('.loop')
-        label('.go')
-        LDW(R19);_CALLI('_utoa')
+        LDI(48);POKE(R9)
+        _BRA('.loop')
+        label('.sub1')
+        _CALLJ('_utoa')
         label('.ret')
         tryhop(4);LDW(R9);POP();RET()
-       
+
     def code_uftoa_cst():
         label('.1e4')
         bytes(142,28,64,0,0) # 1e4

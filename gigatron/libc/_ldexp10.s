@@ -5,8 +5,6 @@ def scope():
     bigcst = '.1e16'
     
     def code_ldexpcst():
-        label('.1e32')
-        bytes(235,29,197,173,168);
         label('.1e16')
         bytes(182,14,27,201,191); # 1e+16
     

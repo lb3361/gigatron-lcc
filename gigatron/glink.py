@@ -1490,13 +1490,21 @@ def _FDIV():
     extern('_@_fdiv')
     _CALLI('_@_fdiv')               # FAC/[vAC] --> FAC
 @vasm
+def _FDIVR():
+    extern('_@_fdivr')
+    _CALLI('_@_fdivr')              # [vAC]/FAC --> FAC
+@vasm
 def _FNEG():
     extern('_@_fneg')
     _CALLJ('_@_fneg')               # -FAC --> FAC
 @vasm
 def _FCMP():
     extern('_@_fcmp')
-    _CALLI('_@_fcmp')               # SGN(FAC-[vAC]) --> vAC
+    _CALLI('_@_fcmp')               # FAC?[vAC] --> vAC (-1/0/+1)
+@vasm
+def _FSGN():
+    extern('_@_fsign')
+    _CALLI('_@_fsign')               # SGN(FAC) --> vAC (-1/0/+1)
 @vasm
 def _FTOU():
     extern('_@_ftou')

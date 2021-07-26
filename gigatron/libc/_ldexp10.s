@@ -1,46 +1,48 @@
 
 def scope():
 
-    def code_ldexp10p():
-        label('_ldexp10p')
-        bytes(235,29,197,173,168); # 1e+32
+    bigstep = 16
+    bigcst = '.1e16'
+    
+    def code_ldexpcst():
+        label('.1e32')
+        bytes(235,29,197,173,168);
+        label('.1e16')
         bytes(182,14,27,201,191); # 1e+16
-        bytes(155,62,188,32,0); # 1e+08
-        bytes(142,28,64,0,0); # 10000
-        bytes(135,72,0,0,0); # 100
-        bytes(132,32,0,0,0); # 10
-
+    
     def code_ldexp10n():
-        label('_ldexp10n')
-        _LDI('_ldexp10p');STW(R21);ADDI(30);STW(R20)
-        LDI(0);SUBW(R11);STW(R11);
-        _CMPIS(80);_BLE('.neg1')
-        LDI(80);STW(R11)
-        label('.neg1')
-        LDW(R11);ANDI(31);XORW(R11);_BEQ('.neg3')
-        LDW(R21);_FDIV()
-        LDW(R11);SUBI(32);STW(R11);_BRA('.neg1')
-        label('.neg2')
-        LDW(R11);LSLW();STW(R11);ANDI(0x20);_BEQ('.neg3')
-        LDW(R21);_FDIV()
-        label('.neg3')
-        LDI(5);ADDW(R21);STW(R21);XORW(R20);_BNE('.neg2')
+        label('.neg0')
+        LDW(R11);ADDI(bigstep);_BGE('.neg2')
+        STW(R11);_LDI(bigcst);_FDIV()
+        _FSGN();_BNE('.neg0')
         tryhop(2);POP();RET()
-        
+        label('.neg2')
+        LDI(0);SUBW(R11)
+        STW(R11);_BEQ('.ret')
+        _FMOV(FAC,F8)
+        _FMOV('_fone', FAC)
+        _CALLJ('.posf')
+        LDI(F8);_FDIVR()
+        label('.ret')
+        tryhop(2);POP();RET()
+
     def code_ldexp10():
         label('_ldexp10')
         PUSH()
         _FMOV(F8,FAC)
-        LDW(R11);_BGE('.pos')
-        _CALLJ('_ldexp10n') # no return
-        label('.pos')
-        _CMPIS(80);_BLE('.pos1')
-        LDI(80);STW(R11);_BRA('.pos1')
-        label('.pos2')
-        SUBI(1);STW(R11)
-        _CALLJ('_@_fmul10')
+        LDW(R11);_BGE('.pos0')
+        _CALLJ('.neg0') # no return
+        label('.pos0')
+        LDW(R11);SUBI(bigstep);_BLE('.pos2')
+        STW(R11);_LDI(bigcst);_FMUL()
+        _BRA('.pos0')
+        label('.posf')
+        PUSH();LDW(R11)
         label('.pos1')
-        LDW(R11);_BNE('.pos2')
+        SUBI(1);STW(R11);
+        _CALLJ('_@_fmul10')
+        label('.pos2')
+        LDW(R11);_BGT('.pos1')
         _CALLJ('_@_rndfac')
         tryhop(2);POP();RET()
 
@@ -48,7 +50,8 @@ def scope():
            code=[ ('EXPORT', '_ldexp10'),
                   ('IMPORT', '_@_fmul10'),
                   ('IMPORT', '_@_rndfac'),
-                  ('DATA', '_ldexp10p', code_ldexp10p, 0, 1),
+                  ('IMPORT', '_fone'),
+                  ('DATA', '_ldexpcst', code_ldexpcst, 0, 1),
                   ('CODE', '_ldexp10n', code_ldexp10n), 
                   ('CODE', '_ldexp10', code_ldexp10) ] )
 

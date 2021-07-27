@@ -722,6 +722,10 @@ def POKEI(d):
     '''POKEI: Poke immediate byte into address contained in [vAC], 20 cycles'''
     check_cpu(6); tryhop(2); emit(0x25, check_im8s(d))
 @vasm
+def LSRV(d):
+    '''LSRV: Logical shift right word var, 52 cycles'''
+    check_cpu(6); tryhop(2);  emit(0x1c, check_zp(d))
+@vasm
 def LSLV(d):
     '''LSLV: Logical shift left word var, 28 cycles'''
     check_cpu(6); tryhop(2);  emit(0x27, check_zp(d))
@@ -918,6 +922,10 @@ def LSLN(d):
     '''Shifts vAC left by d positions'''
     check_cpu(6); tryhop(3); d=int(v(d)); emit(0x2f, 0x11, check_zp(d))
 @vasm
+def SEXT(d):
+    '''Sign extend vAC based on a variable mask (?)'''
+    check_cpu(6); tryhop(3); d=int(v(d)); emit(0x2f, 0x14, check_zp(d))
+@vasm
 def ST2(d):
     '''ST2: Store vAC.lo into 16bit immediate address, (26 + 26 cycles)'''
     d=int(v(d)); emit_prefx3(0x11, lo(d), hi(d))
@@ -1036,8 +1044,11 @@ def _SHLI(imm):
         ST('vACH');ORI(255);XORI(255)
         imm &= 0x7
     # too much overhead calling SYS_LSLW4_46
-    for i in range(0, imm):
-        LSLW()
+    if args.cpu >= 6 and imm > 0:
+        LSLN(imm)
+    else if imm > 0:
+        for i in range(0, imm):
+            LSLW()
 @vasm
 def _SHRIS(imm):
     '''Shift vAC right (signed) by imm positions'''
@@ -1046,24 +1057,26 @@ def _SHRIS(imm):
         LD(vACH);XORI(128); SUBI(128)
     elif imm == 1:
         extern("_@_shrs1")
-        _CALLI("_@_shrs1")           # T3 << 1 -> vAC
+        _CALLI("_@_shrs1")           # T3 >> 1 -> vAC
     else:
         STW(T3); LDI(imm)
         extern('_@_shrs')
-        _CALLI('_@_shrs')            # T3 << AC -> vAC
+        _CALLI('_@_shrs')            # T3 >> AC -> vAC
 @vasm
 def _SHRIU(imm):
     '''Shift vAC right (unsigned) by imm positions'''
     imm &= 0xf
     if imm == 8:
         LD(vACH)
+    elif imm == 1 and args.cpu >= 6:
+        LSRV(vAC)
     elif imm == 1:
         extern("_@_shru1")
         _CALLI("_@_shru1")
     else:
         STW(T3); LDI(imm)
         extern('_@_shru')
-        _CALLI('_@_shru')       # T3 << AC -> vAC
+        _CALLI('_@_shru')       # T3 >> AC -> vAC
 @vasm
 def _SHL(d):
     '''Shift vAC left by [d] positions'''

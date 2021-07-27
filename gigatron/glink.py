@@ -1046,7 +1046,7 @@ def _SHLI(imm):
     # too much overhead calling SYS_LSLW4_46
     if args.cpu >= 6 and imm > 0:
         LSLN(imm)
-    else if imm > 0:
+    elif imm > 0:
         for i in range(0, imm):
             LSLW()
 @vasm

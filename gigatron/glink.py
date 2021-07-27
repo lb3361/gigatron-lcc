@@ -1044,7 +1044,7 @@ def _SHLI(imm):
         ST('vACH');ORI(255);XORI(255)
         imm &= 0x7
     # too much overhead calling SYS_LSLW4_46
-    if args.cpu >= 6 and imm > 0:
+    if args.cpu >= 6 and imm > 2:
         LSLN(imm)
     elif imm > 0:
         for i in range(0, imm):
@@ -1164,7 +1164,7 @@ def _MOV(s,d):
             _SP(s[1]); s = [vAC]
         elif type(d) == list and len(d) == 2 and d[0] == SP:
             _SP(d[1]); d = [vAC]
-        if args.cpu >= 6 and s == [vAC] and is_zeropage(d):
+        if args.cpu >= 6 and s == [vAC] and is_zeropage(d) and d != vAC:
             DEEKA(d)
         elif args.cpu >= 6 and is_zeropage(s) and d == [vAC]:
             DOKEA(s)

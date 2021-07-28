@@ -106,25 +106,33 @@ static head_t *find_block(register int size)
 	return b;
 }
 
+int __chk_block_header(register head_t *b)
+{
+	if ((b->size & 1) == 1
+	    && b->bnext->bprev == b
+	    && b->bprev->bnext == b)
+		return (b->size | 1) ^ 1;
+	return 0;
+}
+
 static void check_block_header(register head_t *b)
 {
-	if ((b->size & 1) == 0
-	    || b->bnext->bprev != b
-	    || b->bprev->bnext != b)
+	if (! __chk_block_header(b))
 		_exitm(10, "Malloc heap corrupted");
 }
 
 /* ============ public functions ============ */
 
-
 void free(register void *ptr)
 {
-	register head_t *b = (head_t*)((char*)ptr - 6);
-	check_block_header(b);
-	b->size = (b->size | 1) ^ 1;
-	__refree_block(b);
-	merge_free_blocks(b, b->bnext);
-	merge_free_blocks(b->bprev, b);
+	if (ptr) {
+		register head_t *b = (head_t*)((char*)ptr - 6);
+		check_block_header(b);
+		b->size = (b->size | 1) ^ 1;
+		__refree_block(b);
+		merge_free_blocks(b, b->bnext);
+		merge_free_blocks(b->bprev, b);
+	}
 }
 
 void *malloc(register size_t sz)

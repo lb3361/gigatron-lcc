@@ -2056,7 +2056,11 @@ def process_magic_heap(s, head_module, head_addr):
         a0 = (s.pc + 1) & ~0x1
         a1 = s.eaddr &  ~0x1
         if a1 - a0 >= max(24, args.mhss or 24):
-            s.buffer.extend(builtins.bytes(4 + (s.pc & 1)))
+            s.pc = a0 + 4
+            if not s.buffer:
+                s.buffer = bytearray(4)
+            else:
+                s.buffer.extend(bytearray(s.pc - s.saddr - len(s.buffer)))
             doke_gt1(a0, a1 - a0)
             doke_gt1(a0 + 2, deek_gt1(head_addr))
             doke_gt1(head_addr, a0)

@@ -20,13 +20,10 @@ def map_describe():
 
 # ------------size----addr----step----end---- flags (1=nocode, 2=nodata)
 segments = [ (0x0060, 0x08a0, 0x0100, 0x80a0, 0),
-             (0x00fa, 0x0200, 0x0100, 0x0500, 0),
-             (0x0200, 0x0500, None,   None,   0),
              (0x0100, 0x8100, None,   None,   0),
-             (0x75c0, 0x8240, None,   None,   0),
-             # overflow into screen and stack area (for the cq tests)
-             (0x00a0, 0x0800, 0x0100, 0x8000, 0),
-             (0x0400, 0x7800, None,   None,   0) ]
+             (0x79c0, 0x8240, None,   None,   0),
+             (0x00fa, 0x0200, 0x0100, 0x0500, 0),
+             (0x0200, 0x0500, None,   None,   0) ]
 
 initsp = 0xfffe
 minram = 0x100

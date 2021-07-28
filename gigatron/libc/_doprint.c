@@ -34,7 +34,7 @@ static int pushspec(int c, doprintspec_t *spec, va_list *ap)
 	register int nf;
 
 	if (state == 0) {
-	flg: 	nf = (c ^ (c >> 2)) & 0x7; /* perfect hash */
+	 	nf = (c ^ (c >> 2)) & 0x7; /* perfect hash */
 		if (c == fl[nf]) {
 			f |= fv[nf];
 			goto ok;

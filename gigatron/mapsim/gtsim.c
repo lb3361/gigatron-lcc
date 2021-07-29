@@ -778,7 +778,7 @@ int disassemble(word addr, char **pm, char *operand)
     case 0xdd: *pm="ANDBI"; goto oper88;
     case 0xe1: *pm="SUBBI"; goto oper88;
     case 0xc7: {
-      switch(peek(addlo(addr,1)))
+      switch(peek(addlo(addr,2)))
         {
         case 0x11:  *pm = "ST2"; goto oper16p3;
         case 0x14:  *pm = "STW2"; goto oper16p3;
@@ -796,13 +796,13 @@ int disassemble(word addr, char **pm, char *operand)
         case 0x30:  *pm = "CONDIB"; goto oper88p3;
         case 0x33:  *pm = "CONDBI"; goto oper88p3;
         oper16p3:
-          sprintf(operand, "$%04x", deek(addlo(addr,2)));
+          sprintf(operand, "$%02x%02x", peek(addlo(addr,1)),peek(addlo(addr,3)));
           return 4;
         oper88p3:
-          sprintf(operand, "$%02x, $%02x", peek(addlo(addr,2)),peek(addlo(addr,3)));
+          sprintf(operand, "$%02x, $%02x", peek(addlo(addr,3)),peek(addlo(addr,1)));
           return 4;
         default:
-          return 4;;
+          return 4;
         }
     }
     default:

@@ -709,10 +709,10 @@ def MOVQ(imm,d):
 def LSRB(d):
     '''LSRB: Logical shift right on a byte var, 28 cycles'''
     check_cpu(6); tryhop(2); emit(0x18, check_zp(d))
-#@vasm
-#def SEXT(d):
-#    '''SEXT: Sign extend vAC based on a variable mask, 28 cycles'''
-#    check_cpu(6); tryhop(2); emit(0x1c, check_zp(d))
+@vasm
+def LSRV(d):
+    '''LSRV: Logical shift right word var, 52 cycles'''
+    check_cpu(6); tryhop(2);  emit(0x1c, check_zp(d))
 @vasm
 def PEEKp(d):
     '''PEEK+: Peek byte at address contained in var, inc var, 30 cycles'''
@@ -721,10 +721,6 @@ def PEEKp(d):
 def POKEI(d):
     '''POKEI: Poke immediate byte into address contained in [vAC], 20 cycles'''
     check_cpu(6); tryhop(2); emit(0x25, check_im8s(d))
-@vasm
-def LSRV(d):
-    '''LSRV: Logical shift right word var, 52 cycles'''
-    check_cpu(6); tryhop(2);  emit(0x1c, check_zp(d))
 @vasm
 def LSLV(d):
     '''LSLV: Logical shift left word var, 28 cycles'''

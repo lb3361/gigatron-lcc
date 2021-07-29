@@ -726,7 +726,7 @@ int disassemble(word addr, char **pm, char *operand)
     case 0x14: *pm="DEC"; goto oper8;
     case 0x16: *pm="MOVQ"; goto oper88;
     case 0x18: *pm="LSRB"; goto oper8;
-    case 0x1c: *pm="SEXT"; goto oper8;
+    case 0x1c: *pm="LSRV"; goto oper8;
     case 0x23: *pm="PEEK+"; goto oper8;
     case 0x25: *pm="POKEI"; goto oper8;
     case 0x27: *pm="LSLV"; goto oper8;
@@ -777,6 +777,17 @@ int disassemble(word addr, char **pm, char *operand)
     case 0xdb: *pm="TLE"; goto oper8;
     case 0xdd: *pm="ANDBI"; goto oper88;
     case 0xe1: *pm="SUBBI"; goto oper88;
+    case 0x2f: {
+      switch(peek(addlo(addr,1)))
+        {
+        case 0x11: *pm = "LSLN"; goto oper8p2;
+        case 0x14: *pm = "SEXT"; goto oper8p2;
+        oper8p2:
+          sprintf(operand, "$%02x", peek(addlo(addr,2)));
+        default:
+          return 3;
+        }
+    }
     case 0xc7: {
       switch(peek(addlo(addr,2)))
         {

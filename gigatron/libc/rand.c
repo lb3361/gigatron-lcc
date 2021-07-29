@@ -22,7 +22,7 @@ int rand(void)
 	if (!init) _srand();
 	/* Simple LCG. The multiplier comes from Steele's paper. */
 	seed = seed * 0xa13fc965L + 1013904223L;
-	return ((int*)&seed)[1];
+	return ((int*)&seed)[1] & 0x7fff;
 }
 
 

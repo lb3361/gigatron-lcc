@@ -2044,7 +2044,6 @@ def process_magic_bss(s, head_module, head_addr):
         if s.pc > s.saddr + 4 and not s.nbss:
             debug(f"BSS segment {hex(s.saddr)}-{hex(s.pc)} will be cleared at runtime")
             size = s.pc - s.saddr
-            s.pc = s.saddr + 4
             s.buffer = bytearray(4)
             doke_gt1(s.saddr, size)
             doke_gt1(s.saddr + 2, deek_gt1(head_addr))
@@ -2133,7 +2132,8 @@ def save_gt1(fname, start):
             if not s.buffer:
                 continue
             a0 = s.saddr
-            while a0 < s.pc:
+            pc = s.saddr + len(s.buffer)
+            while a0 < pc:
                 a1 = min(s.eaddr, (a0 | 0xff) + 1)
                 buffer = s.buffer[(a0-s.saddr):(a1-s.saddr)]
                 fd.write(builtins.bytes((hi(a0),lo(a0),len(buffer)&0xff)))

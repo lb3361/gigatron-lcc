@@ -19,6 +19,9 @@ static head_t head;
 /* Head initialization */
 static head_t head = { 0, &head, &head, &head, &head };
 
+#if DEBUG
+extern void _malloc_map(void);
+#endif
 
 /* ============ utilities ============ */
 
@@ -47,18 +50,18 @@ static void __list_block(head_t *b, head_t *pa)
 
 static void __assume_block_position(head_t *b, head_t *z, int size)
 {
-	head_t *pa,*pb;  /* warning: b->bnext and b->fnext */
+	head_t *pa,*pb;  /* warning: b->bprev and b->fprev */
 	b->size = size;  /* must be aleady set and correct.*/
 	pa  = z->bnext;
 	b->bnext  = pa;
-	pb  = b->bprev;
 	pa->bprev  = b;
+	pb  = b->bprev;
 	pb->bnext  = b;
-	pb  = z->fnext;
-	b->fnext  = pb;
-	pb  = b->fprev;
+	pa  = z->fnext;
+	b->fnext  = pa;
 	pa->fprev  = b;
-	pb->fnext  = b;  /* :-) */
+	pb  = b->fprev;
+	pb->fnext  = b;
 }
 
 static int try_merge_with_next(register head_t *b)
@@ -114,10 +117,14 @@ void free(register void *ptr)
 	if (ptr) {
 		register head_t *b;
 		register int size = __chk_block_header(b = (head_t*)((char*)ptr - 6)); 
-		if (! (b->size = size))
-			_exitm(10, "Heap is corrupted");
-		if (! try_merge_with_next(b) )
-			__free_block(b);
+		if (! (b->size = size)) {
+#if DEBUG
+			malloc_map();
+#endif
+			_exitm(10, "free: corrupted heap!");
+		}
+		__free_block(b);
+		try_merge_with_next(b);
 		try_merge_with_next(b->bprev);
 	}
 }
@@ -142,7 +149,7 @@ static void malloc_init(void)
 {
 	register head_t *p = __glink_magic_heap;
 	__glink_magic_heap = 0;
-	while (p) {
+	while (p && p != (void*)0xBEEF) {
 		register head_t *n = p->bnext;
 		__list_block(p, head.bnext);
 		__free_block(p);

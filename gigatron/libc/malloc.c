@@ -16,46 +16,27 @@ typedef struct head_s {
 /* The list head */
 static head_t head;
 
-/* Fake freelist entries */
-#define f00 (&head)
-#define f48 ((head_t*)&fake[0])
-#define f96 ((head_t*)&fake[2])
-
 /* Head initialization */
-static head_t *fake[] = { 0, 0, 0, f96, f00, f00, f48 };
-static head_t head = { 0, &head, &head, f48, f96 };
+static head_t head = { 0, &head, &head, &head, &head };
 
-#define GET_SHORTCUT_HEAD(h, sz) \
-	do{h=f96;if((sz-96)<=0){h=f48;if((sz-48)<=0){h=f00;}}}while(0)
 
 /* ============ utilities ============ */
 
-static void  __unfree_block(register head_t *b)
-{
-	register int size = b->size;
-	b->fnext->fprev = b->fprev;
-	b->fprev->fnext = b->fnext;
-}
-
-static void __refree_block(register head_t *b)
+static void __free_block(register head_t *b)
 {
 	register int size = b->size;
 	register head_t *pa, *pb;
-	GET_SHORTCUT_HEAD(pb, size);
-	pa = pb->fnext;
+	pa = b->bnext;
+	while (pa->size & 1)
+		pa = pa->bnext;
+	pb = pa->fprev;
 	b->fprev = pb;
 	pb->fnext = b;
 	b->fnext = pa;
 	pa->fprev = b;
 }
 
-static void __unlist_block(register head_t *b)
-{
-	b->bnext->bprev = b->bprev;
-	b->bprev->bnext = b->bnext;
-}
-
-static void __relist_block(head_t *b, head_t *pa)
+static void __list_block(head_t *b, head_t *pa)
 {
 	head_t *pb = pa->bprev;
 	b->bprev = pb;
@@ -64,26 +45,38 @@ static void __relist_block(head_t *b, head_t *pa)
 	pa->bprev = b;
 }
 
-static void merge_free_blocks(register head_t *b1, register head_t *b2)
+static void __assume_block_position(head_t *b, head_t *z, int size)
 {
-	register int sz1 = b1->size;
-	register int sz2 = b2->size;
-	if (((sz1 | sz2) & 1) == 0 && (char*)b1 + sz1 == (char*)b2 ) {
-		__unfree_block(b2);
-		__unlist_block(b2);
-		__unfree_block(b1);
-		__unlist_block(b1);
-		b1->size = sz1 + sz2;
-		__relist_block(b1, b2->bnext);
-		__refree_block(b1);
-	}
+	head_t *pa,*pb;  /* warning: b->bnext and b->fnext */
+	b->size = size;  /* must be aleady set and correct.*/
+	pa  = z->bnext;
+	b->bnext  = pa;
+	pb  = b->bprev;
+	pa->bprev  = b;
+	pb->bnext  = b;
+	pb  = z->fnext;
+	b->fnext  = pb;
+	pb  = b->fprev;
+	pa->fprev  = b;
+	pb->fnext  = b;  /* :-) */
+}
+
+static int try_merge_with_next(register head_t *b)
+{
+	register head_t *p = b->bnext;
+	register int size, s;
+	if (((size = b->size) & 1) ||
+	    ((s = p->size) & 1) ||
+	    (char*)b + size != (char*) p)
+		return 0;
+	__assume_block_position(b, p, size + s);
+	return 1;
 }
 
 static head_t *find_block(register int size)
 {
 	register int d;
-	register head_t *b;
-	GET_SHORTCUT_HEAD(b, size);
+	register head_t *b = &head;
 	for(;;) {
 		b = b->fnext;
 		if (b == &head)
@@ -91,18 +84,17 @@ static head_t *find_block(register int size)
 		if ((d = b->size - size) >= 0)
 			break;
 	}
-	__unfree_block(b);
-	if (d > 0) {
+	if (d == 0) {
+		b->fnext->fprev = b->fprev;
+		b->fprev->fnext = b->fnext;
+	} else {
 		register head_t *nb = (head_t*)((char*)b + size);
-		__unlist_block(b);
-		b->size = size;
-		nb->size = d;
-		__relist_block(nb, b->bnext);
-		__relist_block(b, nb);
-		__refree_block(nb);
-	}
-	__unfree_block(b);
-	b->size |= 1;
+		nb->bprev = b->bprev;
+		nb->fprev = b->fprev;
+		__assume_block_position(nb, b, d);
+		__list_block(b, nb);
+	} 
+	b->size = size | 1;
 	return b;
 }
 
@@ -115,23 +107,18 @@ int __chk_block_header(register head_t *b)
 	return 0;
 }
 
-static void check_block_header(register head_t *b)
-{
-	if (! __chk_block_header(b))
-		_exitm(10, "Malloc heap corrupted");
-}
-
 /* ============ public functions ============ */
 
 void free(register void *ptr)
 {
 	if (ptr) {
-		register head_t *b = (head_t*)((char*)ptr - 6);
-		check_block_header(b);
-		b->size = (b->size | 1) ^ 1;
-		__refree_block(b);
-		merge_free_blocks(b, b->bnext);
-		merge_free_blocks(b->bprev, b);
+		register head_t *b;
+		register int size = __chk_block_header(b = (head_t*)((char*)ptr - 6)); 
+		if (! (b->size = size))
+			_exitm(10, "Heap is corrupted");
+		if (! try_merge_with_next(b) )
+			__free_block(b);
+		try_merge_with_next(b->bprev);
 	}
 }
 
@@ -155,10 +142,10 @@ static void malloc_init(void)
 {
 	register head_t *p = __glink_magic_heap;
 	__glink_magic_heap = 0;
-	while(p) {
+	while (p) {
 		register head_t *n = p->bnext;
-		__relist_block(p, head.bnext);
-		__refree_block(p);
+		__list_block(p, head.bnext);
+		__free_block(p);
 		p = n;
 	}
 }
@@ -193,20 +180,22 @@ void malloc_map(void)
 		q = p;
 		p = p->bnext;
 	}
-	printf("\nFree:\t[F00] ");
+	printf("\nFree:\t");
 	q = &head;
 	p = head.fnext;
 	i = 0;
 	while(p != &head) {
 		if (++i % 8 == 0)
 			printf("\n\t");
+#if 0
 		if (p == f00)
 			{printf("[F00!!] "); i=0;}
 		else if (p == f48)
 			{printf("\n\t[F48] "); i=0;}
 		else if (p == f96)
 			{printf("\n\t[F96] "); i=0;}
-		else 
+		else
+#endif
 			printf("%04x(%d) ", p, p->size);
 		if (p->fprev != q)
 			printf("{bad fprev %04x} ", p->fprev);

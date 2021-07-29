@@ -1,7 +1,7 @@
 
 # ------------size----addr----step----end---- flags (1=nocode, 2=nodata)
 
-segments = segments + [(0x7c00, 0x8200, None, None, 0)]
+segments = segments + [(0x7a00, 0x8200, None, None, 0)]
 initsp = 0xfffe
 minram = 0x100
 

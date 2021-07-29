@@ -133,7 +133,7 @@ ${B}tst/%.s: tst/%.c FORCE
 
 ${B}tst/%.gt1: tst/%.c FORCE
 	@test -d ${B}tst || mkdir ${B}tst
-	${GLCC} -map=sim,over -rom=${ROM} -o $@ $< 2>"${B}tst/$(*F).xx2"
+	${GLCC} -map=sim,allout -rom=${ROM} -o $@ $< 2>"${B}tst/$(*F).xx2"
 
 ${B}tst/%.xx1: ${B}tst/%.gt1 FORCE
 	${GTSIMR} $< > "$@" < "tst/$(*F).0"

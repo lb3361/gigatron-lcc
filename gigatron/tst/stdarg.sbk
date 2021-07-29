@@ -119,7 +119,8 @@ def code2():
 	label('.38');
 	_LDI('.39');STW(R8);
 	_MOV(R8,[SP,2]);
-	LDI(2);ADDW(R7);
+	_LDI(0xfffe);STW(R22);
+	LDI(2);ADDW(R7);ADDI(1);ANDW(R22);
 	STW(R7);
 	SUBI(-(-2));DEEK();STW(R9);
 	_MOV(R9,[SP,4]);

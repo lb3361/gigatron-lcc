@@ -314,8 +314,9 @@ def code8():
 	align(2);
 	label('I');
 	space(2);
-# ======== ('COMMON', 'S', code9, 2, 1)
+# ======== ('COMMON', 'S', code9, 2, 2)
 def code9():
+	align(2);
 	label('S');
 	space(2);
 # ======== ('COMMON', 'C', code10, 1, 1)
@@ -332,8 +333,9 @@ def code12():
 	align(2);
 	label('i');
 	space(2);
-# ======== ('COMMON', 's', code13, 2, 1)
+# ======== ('COMMON', 's', code13, 2, 2)
 def code13():
+	align(2);
 	label('s');
 	space(2);
 # ======== ('COMMON', 'c', code14, 1, 1)
@@ -384,11 +386,11 @@ code=[
 	('COMMON', 'f', code6, 5, 1),
 	('COMMON', 'L', code7, 4, 2),
 	('COMMON', 'I', code8, 2, 2),
-	('COMMON', 'S', code9, 2, 1),
+	('COMMON', 'S', code9, 2, 2),
 	('COMMON', 'C', code10, 1, 1),
 	('COMMON', 'l', code11, 4, 2),
 	('COMMON', 'i', code12, 2, 2),
-	('COMMON', 's', code13, 2, 1),
+	('COMMON', 's', code13, 2, 2),
 	('COMMON', 'c', code14, 1, 1),
 	('DATA', '.8', code15, 0, 1),
 	('DATA', '.7', code16, 0, 1),

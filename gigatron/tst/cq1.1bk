@@ -31,7 +31,7 @@ Register count for int is unreliable.
 Section s81     returned 0.
 Section s84     returned 0.
 char alignment: 1
-short alignment: 1
+short alignment: 2
 int alignment: 2
 long alignment: 2
 unsigned alignment: 2

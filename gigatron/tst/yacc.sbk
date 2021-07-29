@@ -987,8 +987,9 @@ def code20():
 	LDI(0);
 	label('.153');
 	_EPILOGUE(6,6,0x0,saveAC=True);
-# ======== ('DATA', 'yyexca', code21, 0, 1)
+# ======== ('DATA', 'yyexca', code21, 0, 2)
 def code21():
+	align(2);
 	label('yyexca');
 	words(65535); # -1
 	words(1); # 1
@@ -996,8 +997,9 @@ def code21():
 	words(65535); # -1
 	words(65534); # -2
 	words(0); # 0
-# ======== ('DATA', 'yyact', code22, 0, 1)
+# ======== ('DATA', 'yyact', code22, 0, 2)
 def code22():
+	align(2);
 	label('yyact');
 	words(12); # 12
 	words(2); # 2
@@ -1248,8 +1250,9 @@ def code22():
 	words(0); # 0
 	words(4); # 4
 	words(6); # 6
-# ======== ('DATA', 'yypact', code23, 0, 1)
+# ======== ('DATA', 'yypact', code23, 0, 2)
 def code23():
+	align(2);
 	label('yypact');
 	words(64536); # -1000
 	words(65527); # -9
@@ -1277,16 +1280,18 @@ def code23():
 	words(64536); # -1000
 	words(64536); # -1000
 	words(64536); # -1000
-# ======== ('DATA', 'yypgo', code24, 0, 1)
+# ======== ('DATA', 'yypgo', code24, 0, 2)
 def code24():
+	align(2);
 	label('yypgo');
 	words(0); # 0
 	words(21); # 21
 	words(20); # 20
 	words(17); # 17
 	words(11); # 11
-# ======== ('DATA', 'yyr1', code25, 0, 1)
+# ======== ('DATA', 'yyr1', code25, 0, 2)
 def code25():
+	align(2);
 	label('yyr1');
 	words(0); # 0
 	words(1); # 1
@@ -1303,8 +1308,9 @@ def code25():
 	words(4); # 4
 	words(4); # 4
 	words(3); # 3
-# ======== ('DATA', 'yyr2', code26, 0, 1)
+# ======== ('DATA', 'yyr2', code26, 0, 2)
 def code26():
+	align(2);
 	label('yyr2');
 	words(0); # 0
 	words(0); # 0
@@ -1321,8 +1327,9 @@ def code26():
 	words(1); # 1
 	words(1); # 1
 	words(1); # 1
-# ======== ('DATA', 'yychk', code27, 0, 1)
+# ======== ('DATA', 'yychk', code27, 0, 2)
 def code27():
+	align(2);
 	label('yychk');
 	words(64536); # -1000
 	words(65535); # -1
@@ -1350,8 +1357,9 @@ def code27():
 	words(65532); # -4
 	words(65532); # -4
 	words(41); # 41
-# ======== ('DATA', 'yydef', code28, 0, 1)
+# ======== ('DATA', 'yydef', code28, 0, 2)
 def code28():
+	align(2);
 	label('yydef');
 	words(1); # 1
 	words(65534); # -2
@@ -1389,8 +1397,9 @@ def code30():
 	align(2);
 	label('yynerrs');
 	words(0); # 0
-# ======== ('DATA', 'yyerrflag', code31, 2, 1)
+# ======== ('DATA', 'yyerrflag', code31, 2, 2)
 def code31():
+	align(2);
 	label('yyerrflag');
 	words(0); # 0
 # ======== ('CODE', 'yyparse', code32)
@@ -1816,27 +1825,27 @@ code=[
 	('EXPORT', 'yyerror'),
 	('CODE', 'yyerror', code20),
 	('EXPORT', 'yyexca'),
-	('DATA', 'yyexca', code21, 0, 1),
+	('DATA', 'yyexca', code21, 0, 2),
 	('EXPORT', 'yyact'),
-	('DATA', 'yyact', code22, 0, 1),
+	('DATA', 'yyact', code22, 0, 2),
 	('EXPORT', 'yypact'),
-	('DATA', 'yypact', code23, 0, 1),
+	('DATA', 'yypact', code23, 0, 2),
 	('EXPORT', 'yypgo'),
-	('DATA', 'yypgo', code24, 0, 1),
+	('DATA', 'yypgo', code24, 0, 2),
 	('EXPORT', 'yyr1'),
-	('DATA', 'yyr1', code25, 0, 1),
+	('DATA', 'yyr1', code25, 0, 2),
 	('EXPORT', 'yyr2'),
-	('DATA', 'yyr2', code26, 0, 1),
+	('DATA', 'yyr2', code26, 0, 2),
 	('EXPORT', 'yychk'),
-	('DATA', 'yychk', code27, 0, 1),
+	('DATA', 'yychk', code27, 0, 2),
 	('EXPORT', 'yydef'),
-	('DATA', 'yydef', code28, 0, 1),
+	('DATA', 'yydef', code28, 0, 2),
 	('EXPORT', 'yychar'),
 	('DATA', 'yychar', code29, 2, 2),
 	('EXPORT', 'yynerrs'),
 	('DATA', 'yynerrs', code30, 2, 2),
 	('EXPORT', 'yyerrflag'),
-	('DATA', 'yyerrflag', code31, 2, 1),
+	('DATA', 'yyerrflag', code31, 2, 2),
 	('EXPORT', 'yyparse'),
 	('CODE', 'yyparse', code32),
 	('DATA', '.213', code33, 0, 2),

@@ -1794,7 +1794,7 @@ static void space(int n)
 
 Interface gigatronIR = {
         1, 1, 0,  /* char */
-        2, 1, 0,  /* short */
+        2, 2, 0,  /* short */
         2, 2, 0,  /* int */
         4, 2, 1,  /* long */
         4, 2, 1,  /* long long */

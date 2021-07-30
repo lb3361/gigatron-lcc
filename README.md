@@ -24,15 +24,13 @@ The compiler is in good shape!
 * vCPU interrupts can be captured with `signal(SIGVIRQ, xxx)`.
 * Floating point exceptions can be captured with `signal(SIGFPE, xxx)`.
 * Optimized memset and memcpy are available and can use a SYS call.
-* Most of the ANSI C library functions are there (notably missing: fseek, malloc)
+* There is an ANSI C library (missing only some transcendental math functions.)
 * The compiler can generate code for at67's extended instruction set.
   Thanks to at67 for providing a lot of information and hints.
 
 ### 1.2. What remains to be done?
 
 There is work needed on the libraries
-
-* malloc (the linker already provides the heap segment addresses.)
 
 * transcendental functions in libm (log, exp, sqrt are here)
 

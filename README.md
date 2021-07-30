@@ -125,7 +125,7 @@ The runtime and library test files are in `gigatron/{runtime,libc,libm}/tst`.
 
 Besides the options listed in the [lcc manual page](doc/lcc.1),
 the compiler driver recognizes a few Gigatron-specific options.
-Additional options recognized by the assembler/linker `glink'
+Additional options recognized by the assembler/linker `glink`
 are documented by typing `glink -h`
  	
   * Option `-rom=<romversion>` is passed to the linked and helps
@@ -145,6 +145,8 @@ are documented by typing `glink -h`
     Gigatron, starting with the video memory holes `[0x?a0-0x?ff]`,
     the low memory `[0x200-0x6ff]`. There is also a `64k` map and a
     `conx` map which uses a reduced console to save memory.
+    Additional information about each map can be displayed by 
+    using option `-info` as in `glcc -map=sim -info`
 	
 	Maps can also manipulate the linker arguments, insert libraries,
 	and define the initialization function that checks the rom type
@@ -165,9 +167,9 @@ Basic types:
 	perform arithmetic. Promoting a signed byte involves a clumsy sign
 	extension. Promoting an unsigned byte comes for free with most
 	VCPU opcodes. If you really want signed chars, use `signed char`
-	or maybe use the compiler option `-Wf-unsigned_char=0`. The
-	preprocessor macros `__CHAR_UNSIGNED` or `CHAR_IS_SIGNED` are
-	defined accordingly.
+	or maybe use the compiler option `-Wf-unsigned_char=0`. This
+	is not recommended. The preprocessor macros `__CHAR_UNSIGNED` 
+	or `CHAR_IS_SIGNED` are defined accordingly.
 	
 ## 3. Examples
 

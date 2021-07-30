@@ -454,6 +454,7 @@ void sys_io_read(void)
   int cnt = deek(R10);
   int ret = 0;
   int err = 0;
+
   /* Validate */
   if (fd < 0 || (flg & 1) == 0)
     err = EINVAL;
@@ -481,9 +482,10 @@ void sys_io_lseek(void)
 {
   int flg = deek(deek(R8) + G_IOBUF_FLAG_OFFSET);
   int fd = deek(deek(R8) + G_IOBUF_FILE_OFFSET);
-  off_t off = leek(R9);
+  off_t off = (squad)leek(R9);
   int whence = deek(R11);
   int err = 0;
+
   /* Validate */
   if (fd < 0 || flg == 0)
     err = G_EINVAL;
@@ -498,7 +500,7 @@ void sys_io_lseek(void)
   /* Seek */
   if (err == 0) {
     off = lseek(fd, off, whence);
-    if (off = (off_t)-1) {
+    if (off == (off_t)-1) {
       err = G_ENOTSUP;
       if (errno == EINVAL)
         err = G_EINVAL;
@@ -507,9 +509,9 @@ void sys_io_lseek(void)
   /* Return */
   if (err) {
     doke(deek(sysArgs0), err);
-    loke(vAC, -1);
+    loke(LAC, -1);
   } else {
-    loke(vAC, (long)off);
+    loke(LAC, (long)off);
   }
 }
 
@@ -578,9 +580,9 @@ void sys_io_openf(void)
         strcat(mode,"W");
       if (flg & 8)
         strcat(mode,"A");
-      fprintf(stderr, "\n(gtsim) denied attempt to open file '%s' %s. (allow with -f).",
+      fprintf(stderr, "\n(gtsim) denied attempt to open file '%s' %s. (allow with -f)\n",
               RAM+deek(R9), mode);
-      err = G_ENOTSUP;
+      err = G_EPERM;
     }
   /* Return */
   if (err) {

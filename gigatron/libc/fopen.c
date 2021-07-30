@@ -34,12 +34,13 @@ FILE *freopen(register const char *fname, register const char *mode, register FI
 		errno = EINVAL;
 		return 0;
 	}
-	fp->_flag = nflag;
 	if (oflag) {
 		_fclose(fp);
 	} else  {
 		fp->_file = -1;
+		nflag |= _IOFBF;
 	}
+	fp->_flag = nflag;
 	if (_openf(fp, fname) >= 0) {
 		clearerr(fp);
 		return fp;

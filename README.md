@@ -109,9 +109,8 @@ $ make PREFIX=/usr/local install
 ```
 This command copies the compiler files into `${PREFIX}/lib/gigatron-lcc/` 
 and symlinks the compiler driver `glcc` and linker driver `glink` 
-into `${PREFIX}/bin`. A minimal set of include files are copied 
-into `${PREFIX}/lib/gigatron-lcc/include` but very little of what 
-they define is currently implemented.
+into `${PREFIX}/bin`. Include files are copied 
+into `${PREFIX}/lib/gigatron-lcc/include`.
 
 There is also 
 ```
@@ -120,7 +119,6 @@ $ make test
 to run the current test suite. The LCC test files are in `tst`
 but some need pieces of the runtime or library that are still missing.
 The runtime and library test files are in `gigatron/{runtime,libc,libm}/tst`.
-They give a good idea of what works at the moment.
 
 
 ## 3 Compiler invocation

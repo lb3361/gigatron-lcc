@@ -14,7 +14,7 @@
 #define _IOBUFMASK 0xE0
 #define _IOMODMASK 0x03
 
-#define BUFSIZ 256
+#define BUFSIZ 80
 #define EOF    (-1)
 
 extern struct _iobuf {

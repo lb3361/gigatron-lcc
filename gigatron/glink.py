@@ -1765,7 +1765,7 @@ def check_conditional_import(tp):
 def compute_closure():
     global module_list, exporters
     # compute closure from start symbol
-    implist = [ args.e ]
+    implist = [ args.e ] + args.r
     cimplist = []
     for sym in implist:
         if sym in exporters:
@@ -1833,20 +1833,28 @@ def convert_common_symbols():
 def check_undefined_symbols():
     und = {}
     comma = ", "
+    def check(s):
+        if s not in exporters and s not in symdefs:
+            mn = f"'{m.fname}'"
+            if s in und:
+                und[s].append(mn)
+            else:
+                und[s] = [mn]
     for m in module_list:
         for s in m.imports:
-            if s not in exporters and s not in symdefs:
-                mn = f"'{m.fname}'"
-                if s in und:
-                    und[s].append(mn)
-                else:
-                    und[s] = [mn]
+            check(s)
+    for s in args.r:
+        check(s)
     for s in und:
         error(f"undefined symbol '{s}' imported by {comma.join(und[s])}", dedup=True)
 
 
 
 # ------------- passes
+
+class Stop(Exception):
+    def __init__(self, msg):
+        self.msg = msg
 
 def round_used_segments():
     '''Split all segments containing code or data into 
@@ -1942,7 +1950,7 @@ def assemble_code_fragments(m, placed=False):
                 lfss = args.lfss or 32
                 the_segment = find_code_segment(min(lfss, 256))
                 if not the_segment:
-                    fatal(f"map memory exhausted while fitting code fragment '{frag[1]}'")
+                    raise Stop(f"map memory exhausted while fitting code fragment '{frag[1]}'")
                 if the_segment and (args.d >= 2 or final_pass):
                     debug(f"assembling code fragment '{frag[1]}' at {hex(the_segment.pc)} in {the_segment}")
             the_pc = the_segment.pc
@@ -1961,7 +1969,7 @@ def assemble_data_fragments(m, cseg):
             hops_enabled = False
             the_segment = find_data_segment(frag[3], align=frag[4])
             if not the_segment:
-                fatal(f"map memory exhausted while fitting {cseg} fragment '{frag[1]}'")
+                raise Stop(f"map memory exhausted while fitting {cseg} fragment '{frag[1]}'")
             elif args.d >= 2 or final_pass:
                 debug(f"assembling {cseg} fragment '{frag[1]}' at {hex(the_segment.pc)} in {the_segment}")
             the_pc = the_segment.pc
@@ -1983,23 +1991,26 @@ def run_pass():
     for (s,e,d) in map_segments():
         segment_list.append(Segment(s,e,d))
     debug(f"pass {the_pass}")
-    # code segments with explicit address
-    for m in module_list:
-        assemble_code_fragments(m, placed=True)
-    # remaining code segments
-    for m in module_list:
-        assemble_code_fragments(m, placed=False)
-    # data segments
-    for m in module_list:
-        assemble_data_fragments(m, 'DATA')
-    round_used_segments()
-    # bss segments
-    for m in module_list:
-        assemble_data_fragments(m, 'BSS')
+    try:
+        # code segments with explicit address
+        for m in module_list:
+            assemble_code_fragments(m, placed=True)
+        # remaining code segments
+        for m in module_list:
+            assemble_code_fragments(m, placed=False)
+        # data segments
+        for m in module_list:
+            assemble_data_fragments(m, 'DATA')
+        round_used_segments()
+        # bss segments
+        for m in module_list:
+            assemble_data_fragments(m, 'BSS')
+    except Stop as stop:
+        if final_pass:
+            fatal(stop.msg)
     # cleanup
     the_module = None
     the_fragment = None
-
     
 def run_passes():
     global final_pass
@@ -2222,6 +2233,8 @@ def main(argv):
         parser.add_argument('--gt1-exec-address', dest='gt1exec', metavar='ADDR',
                             type=str, action='store', default='_gt1exec',
                             help='select the gt1 execution address (default _gt1exec)')
+        parser.add_argument('-r', '--require', type=str, action='append', dest='r', metavar='SYM',
+                            help='enter a symbol as undefined and require it to be resolved by the link')
         parser.add_argument('--short-function-size-threshold', dest='sfst',
                             metavar='SIZE', type=int, action='store',
                             help='attempts to fit functions smaller than this threshold into a single page.')
@@ -2251,6 +2264,7 @@ def main(argv):
         args.e = args.e or "_start"
         args.l = args.l or []
         args.L = args.L or []
+        args.r = args.r or []
         read_interface()
         sm = args.map.split(',')
         args.map = sm[0]

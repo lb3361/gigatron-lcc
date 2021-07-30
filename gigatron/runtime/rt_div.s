@@ -123,7 +123,7 @@ def scope():
             NEGW(vAC);XORBI(3,B2)
         else:
             STW(YV);
-            LDI(0);STW(B2)
+            LDI(0);ST(B2)
             LDW(YV);_BGT('.divs1');_BEQ('.zdiv')
             LDI(0);SUBW(YV);STW(YV);INC(B2)
             label('.divs1')

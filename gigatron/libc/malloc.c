@@ -1,5 +1,6 @@
 #include <stddef.h>
 #include <stdlib.h>
+#include <assert.h>
 #include <gigatron/libc.h>
 
 
@@ -78,26 +79,27 @@ static int try_merge_with_next(register head_t *b)
 
 static head_t *find_block(register int size)
 {
-	register int d;
+	register int d, bsize;
 	register head_t *b = &head;
 	for(;;) {
 		b = b->fnext;
 		if (b == &head)
 			return 0;
-		if ((d = b->size - size) >= 0)
+		if ((d = (bsize = b->size) - size) >= 0)
 			break;
 	}
-	if (d == 0) {
+	if (d - 12 < 0) {
 		b->fnext->fprev = b->fprev;
 		b->fprev->fnext = b->fnext;
+		b->size = bsize | 1;
 	} else {
 		register head_t *nb = (head_t*)((char*)b + size);
 		nb->bprev = b->bprev;
 		nb->fprev = b->fprev;
 		__assume_block_position(nb, b, d);
+		b->size = size | 1;
 		__list_block(b, nb);
 	} 
-	b->size = size | 1;
 	return b;
 }
 
@@ -132,7 +134,9 @@ void free(register void *ptr)
 void *malloc(register size_t sz)
 {
 	register head_t *b;
-	if ((sz = (sz + (6 + 7)) & 0xfff8) < 0x8000u)
+	if (sz < 3)
+		sz = 3;
+	if ((sz = (((sz + 9) | 3) ^ 3)) < 0x8000u)
 		if (b = find_block(sz))
 			return (char*)b + 6;
 	return 0;

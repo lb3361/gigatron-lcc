@@ -2,18 +2,17 @@
 def map_describe():
     print('''  Memory map 'sim' targets the simulator 'gtsim'.
              
-  Code and data are placed as with memory map '64k' then overflow into
-  the screen and stack area in order to run the large 'cq' tests.  The
-  memory map causes the linker to load library 'libsim' which
-  overrides various libc components. Function 'printf' is directly
-  executed by gtsim and prints to gtsim's standard output and function
-  '_exitm' exits gtsim. It is expected that libsim will eventually
-  delegate all stdio operations to gtsim.  This particularly useful
-  for the glcc test suite.  
+  Code and data are placed as with memory map '64k'.  The memory map
+  also causes the linker to load library 'libsim' which overrides
+  various libc components. Function 'printf' is directly executed by
+  gtsim and prints to gtsim's standard output and function '_exitm'
+  exits gtsim. Libsim also intercepts all the stdio operations and
+  delegates them to gtsim (option -f is needed to open a file
+  other than stdin/stdout/stderr.)
 
   Overlays:
-  * allout: uses almost all the 64k memory space [0x200-0xfe00] 
-            as a large linear block without regards for 
+  * allout: uses almost all the 64k memory space [0x200-0xfc00]
+            as a large linear block without regards for
             the video buffer (which is useless in gtsim). 
     ''')
 

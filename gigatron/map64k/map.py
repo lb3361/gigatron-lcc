@@ -13,6 +13,9 @@ def map_describe():
  effect of moving all long functions in high memory, minimizing the
  need to hop from page to page inside the same function. Function
  placement can be seen with glink option '-d' or glcc option '-Wl-d'.
+ Overlay 'hionly' can be used to place all the code in the high
+ memory 0x8000-0xffff with the only exception of the start stub
+ at 0x200.
  ''')
 
 # Note: this map compiles a small stub in 0x200 that checks that the

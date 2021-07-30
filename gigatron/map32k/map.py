@@ -6,12 +6,13 @@ def map_describe():
   Program and data are scattered in the video memory holes starting in
   0x8a0-0x8ff and progressing towards 0x7fa0-0x7fff. Data items larger
   than 96 bytes can be located in page 2 to 5. The stack grows
-  downwards from 0x6fe.
+  downwards from 0x6fe. This memory map is very constraining because
+  it only provides space for a couple data items larger than 96
+  bytes. Problems can arise if the stack grows into a data region.
 
-  This memory map is very constraining because it only provides space
-  for a couple data items larger than 96 bytes. Problems can arise if
-  the stack grows into a data region.
-  ''')
+  Overlay 'nochan' can be used to overwrite the memory areas reserved
+  to sound channels 2, 3, and 4. Doing so provides a contiguous memory
+  area from 0x200 to 0x6ff.  ''')
 
 
 # ------------size----addr----step----end---- flags (1=nocode, 2=nodata)

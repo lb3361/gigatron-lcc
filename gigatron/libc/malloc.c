@@ -20,6 +20,8 @@ static head_t head;
 /* Head initialization */
 static head_t head = { 0, &head, &head, &head, &head };
 
+#define DEBUG 0
+
 #if DEBUG
 extern void _malloc_map(void);
 #endif
@@ -88,7 +90,7 @@ static head_t *find_block(register int size)
 		if ((d = (bsize = b->size) - size) >= 0)
 			break;
 	}
-	if (d - 12 < 0) {  /* why 12 and not sizeof(head_t) ? */
+	if ((int)(d - sizeof(head_t)) < 0) {
 		b->fnext->fprev = b->fprev;
 		b->fprev->fnext = b->fnext;
 		b->size = bsize | 1;
@@ -116,9 +118,10 @@ int __chk_block_header(register head_t *b)
 
 void free(register void *ptr)
 {
+	register head_t *b;
+	register int size;	
 	if (ptr) {
-		register head_t *b;
-		register int size = __chk_block_header(b = (head_t*)((char*)ptr - 6)); 
+		size = __chk_block_header(b = (head_t*)((char*)ptr - 6)); 
 		if (! (b->size = size)) {
 #if DEBUG
 			malloc_map();
@@ -129,6 +132,10 @@ void free(register void *ptr)
 		try_merge_with_next(b);
 		try_merge_with_next(b->bprev);
 	}
+#if DEBUG
+	printf("After free(%04x) blk=%04x asz=%d\n", ptr, b, size);
+	malloc_map();
+#endif
 }
 
 void *malloc(register size_t sz)
@@ -137,8 +144,13 @@ void *malloc(register size_t sz)
 	if (sz < 4)
 		sz = 4;
 	if ((sz = (((sz + 7) | 1) ^ 1)) < 0x8000u)
-		if (b = find_block(sz))
+		if (b = find_block(sz)) {
+#if DEBUG
+			printf("After malloc() sz=%d blk=%04x\n", sz, b);
+			malloc_map();
+#endif
 			return (char*)b + 6;
+		}
 	return 0;
 }
 
@@ -180,7 +192,7 @@ void malloc_map(void)
 	int i;
 	head_t *q = &head;
 	head_t *p = head.bnext;
-	printf("Blocks:\t");
+	printf(" Blks:\t");
 	i = 0;
 	while (p != &head) {
 		if (++i % 8 == 0)
@@ -191,23 +203,14 @@ void malloc_map(void)
 		q = p;
 		p = p->bnext;
 	}
-	printf("\nFree:\t");
+	printf("\n Free:\t");
 	q = &head;
 	p = head.fnext;
 	i = 0;
 	while(p != &head) {
 		if (++i % 8 == 0)
 			printf("\n\t");
-#if 0
-		if (p == f00)
-			{printf("[F00!!] "); i=0;}
-		else if (p == f48)
-			{printf("\n\t[F48] "); i=0;}
-		else if (p == f96)
-			{printf("\n\t[F96] "); i=0;}
-		else
-#endif
-			printf("%04x(%d) ", p, p->size);
+		printf("%04x(%d) ", p, p->size);
 		if (p->fprev != q)
 			printf("{bad fprev %04x} ", p->fprev);
 		q = p;

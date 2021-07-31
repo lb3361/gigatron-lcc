@@ -2,6 +2,9 @@
 #include <gigatron/libc.h>
 #include <gigatron/sys.h>
 
+extern void _exits(register int signo, register int fpeinfo);
+extern void _virq_handler(void);
+
 static sig_handler_t sigvec[8];
 
 sig_handler_t signal(int signo, sig_handler_t h)

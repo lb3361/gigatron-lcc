@@ -22,10 +22,6 @@ extern void _exit(int retcode);
 extern void _exitm(int ret, const char *msg);
 extern void (*_exitm_msgfunc)(int ret, const char *msg);
 
-/* Exits after receiving an unrecoverable signal.
-   Just calls _exitm() with retcode 20 and an appropriate message. */
-extern void _exits(register int signo, register int fpeinfo);
-
 /* Arrange for initialization function func() to be called before main(). 
    Only one of those can exist per c file. */
 #define DECLARE_INIT_FUNCTION(func) \
@@ -59,9 +55,6 @@ extern const char _raise_sets_code;
    simply writes the signal code into this variable.
    Low byte is the signal code, high byte is the fp code. */
 extern int _raise_code;
-
-/* This is the vIRQ handler than emits SIGIRQ. Do not call. */
-extern void _virq_handler(void);
 
 
 /* ---- Numerics ---- */

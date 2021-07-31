@@ -94,7 +94,7 @@ avlnode_t *_avl_add(register avlnode_t **proot,
 	while (--sp, *(*sp = proot)) {
 		register int c;
 		if ((c = cmp(elt, *proot)) == 0)
-			return 0;
+			return *proot;
 		else if (c < 0)
 			proot = &((*proot)->left);
 		else
@@ -103,7 +103,7 @@ avlnode_t *_avl_add(register avlnode_t **proot,
 	elt->left = elt->right = 0;
 	*proot = elt;
 	__avl_rebal(sp);
-	return elt;
+	return 0;
 }
 
 avlnode_t *_avl_del(register avlnode_t **proot,

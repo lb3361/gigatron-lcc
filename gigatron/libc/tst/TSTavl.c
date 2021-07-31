@@ -70,7 +70,7 @@ int main()
 		for (j=0; j!=SIZE; j++) {
 			mynode_t *n = malloc(sizeof(*n));
 			arr[j] = n->payload = rand() & 0x3f;
-			if (! _avl_add(&root, (avlnode_t*)n, cmp))
+			if (_avl_add(&root, (avlnode_t*)n, cmp))
 				free(n);
 			if (j % 8 == 0 || j + 1 == SIZE) {
 				print_tree(root);

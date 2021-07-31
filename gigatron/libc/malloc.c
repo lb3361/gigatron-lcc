@@ -88,7 +88,7 @@ static head_t *find_block(register int size)
 		if ((d = (bsize = b->size) - size) >= 0)
 			break;
 	}
-	if (d - 12 < 0) {
+	if (d - 12 < 0) {  /* why 12 and not sizeof(head_t) ? */
 		b->fnext->fprev = b->fprev;
 		b->fprev->fnext = b->fnext;
 		b->size = bsize | 1;
@@ -134,9 +134,9 @@ void free(register void *ptr)
 void *malloc(register size_t sz)
 {
 	register head_t *b;
-	if (sz < 3)
-		sz = 3;
-	if ((sz = (((sz + 9) | 3) ^ 3)) < 0x8000u)
+	if (sz < 4)
+		sz = 4;
+	if ((sz = (((sz + 7) | 1) ^ 1)) < 0x8000u)
 		if (b = find_block(sz))
 			return (char*)b + 6;
 	return 0;

@@ -25,9 +25,10 @@ typedef int (*avlcmp_t)(avlnode_t*, avlnode_t*);
 /* _avl_add: adds node elt to the tree. Argument proot should point
    to the tree head. Argument elt should point to a node and its
    payload.  If no node in the tree has a payload equal to elt's, the
-   node elt is inserted into the tree, and the function returns elt to
-   indicate that it nows belongs to the tree.  Otherwise the function
-   returns 0. */
+   node elt is inserted into the tree, the function returns 0,
+   and elt nows belongs to the tree.  Otherwise the function
+   a pointer to the tree element whose payload is equal to that
+   of elt. */
 
 extern avlnode_t *_avl_add(avlnode_t **proot, avlnode_t *elt, avlcmp_t cmp);
 

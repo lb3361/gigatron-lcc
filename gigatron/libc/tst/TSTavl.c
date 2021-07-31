@@ -10,32 +10,7 @@ typedef struct {
 
 avlnode_t *root;
 
-
-#define HEAPSIZE 100
-mynode_t heap[HEAPSIZE];
-mynode_t *freelist = 0;
-
 #define PAYLOAD(n) ((mynode_t*)(n))->payload
-
-static mynode_t *node_alloc(void)
-{
-	mynode_t *n = freelist;
-	freelist = (mynode_t*)(n->node.left);
-	return n;
-}
-
-static void node_free(mynode_t *n)
-{
-	n->node.left = (avlnode_t*)freelist;
-	freelist = n;
-}
-
-static void init_heap(void)
-{
-	int i;
-	for (i=0; i!=HEAPSIZE; i++)
-		node_free(heap+i);
-}
 
 static int cmp(avlnode_t *a, avlnode_t *b)
 {
@@ -89,15 +64,14 @@ int arr[SIZE];
 int main()
 {
 	int i, j;
-	init_heap();
 	srand(314);
 	for (i=0; i!=REPS; i++) {
 		printf("Rep#%d\n", i+1);
 		for (j=0; j!=SIZE; j++) {
-			mynode_t *n = node_alloc();
+			mynode_t *n = malloc(sizeof(*n));
 			arr[j] = n->payload = rand() & 0x3f;
 			if (! _avl_add(&root, (avlnode_t*)n, cmp))
-				node_free(n);
+				free(n);
 			if (j % 8 == 0 || j + 1 == SIZE) {
 				print_tree(root);
 				printf("\n");
@@ -109,7 +83,7 @@ int main()
 			dummy.payload = arr[j];
 			n = (mynode_t*)_avl_del(&root, (avlnode_t*)&dummy, cmp);
 			if (n)
-				node_free(n);
+				free(n);
 			if (j % 8 == 0 || j + 1 == SIZE) {
 				print_tree(root);
 				printf("\n");

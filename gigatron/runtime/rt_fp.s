@@ -201,7 +201,6 @@ def scope():
             LD(AS);ORI(0x7f);ANDW(AM+4);POKE(T3);INC(T3)
             LD(AM+3);POKE(T3);INC(T3)
             LD(AM+2);POKE(T3);INC(T3)
-            LD(AM+1);POKE(T3)
         else:
             LD(AS);ORI(0x7f);ANDW(AM+4);POKEp(T3)
             LD(AM+3);POKEp(T3)

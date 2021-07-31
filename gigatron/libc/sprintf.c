@@ -6,7 +6,6 @@
 
 static int str_flsbuf(register int c, register FILE *fp)
 {
-	printf("flsbuf: [%c] %d\n", c, c);
 	fp->_cnt = 0;
 	return c;
 }

@@ -1284,7 +1284,7 @@ def _CMPWU(d):
         LDLW(-2); SUBW(d)
         label(lbl2, hop=0)
 @vasm
-def _BMOV(s,d,n):
+def _BMOV(s,d,n,align=1):
     '''Move memory block of size n from addr s to d.
        One of s or d can be either [vAC] or [SP,offset].
        Argument d can also be [T2].'''
@@ -1305,8 +1305,12 @@ def _BMOV(s,d,n):
         if s != [vAC]:
             _LDI(s); STW(T3)
         _LDI(n);ADDW(T3);STW(T1)
-        extern('_@_bcopy')
-        _CALLI('_@_bcopy')         # [T3..T1) --> [T2..]
+        if align == 2:
+            extern('_@_wcopy')
+            _CALLI('_@_wcopy')         # [T3..T1) --> [T2..]
+        else:
+            extern('_@_bcopy')
+            _CALLI('_@_bcopy')         # [T3..T1) --> [T2..]
 @vasm
 def _LMOV(s,d):
     '''Move long from reg/addr s to d.
@@ -2176,7 +2180,7 @@ def main(argv):
 
         ## Parse arguments
         parser = argparse.ArgumentParser(
-            conflict_handler='resolve',allow_abbrev=False,
+            conflict_handler='resolve',
             usage='glink [options] {<files.o>} -l<lib> -o <outfile.gt1>',
             description='Collects gigatron .{s,o,a} files into a .gt1 file.',
             epilog=''' 

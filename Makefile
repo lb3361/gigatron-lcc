@@ -12,6 +12,7 @@ G=${TOP}gigatron/
 TARGET=gigatron
 CFLAGS=-g -Wno-abi
 LDFLAGS=-g
+PYTHON=python3
 HOSTFILE=${TOP}etc/gigatron-lcc.c
 GLCC=${B}glcc
 GTSIM=${B}gtsim
@@ -103,7 +104,7 @@ ${B}glink: ${G}glink
 
 ${B}glink.py: ${G}glink.py
 	cp ${G}glink.py ${B}glink.py
-	python -m compileall -b ${B}glink.py
+	${PYTHON} -m compileall -b ${B}glink.py
 
 ${B}glcc: ${G}glcc
 	cp ${G}glcc ${B}glcc

@@ -327,6 +327,7 @@ word loadGt1(const char *gt1)
  eof:
   fclose(fp);
   fatal("Premature EOF in GT1 file '%s'\n", gt1);
+  return addr;
 }
 
 
@@ -555,7 +556,7 @@ void sys_io_openf(void)
         err = G_EINVAL;
       if (flg  & 8)
         oflags |= O_APPEND;
-      if (err == 0 && (fd = open(RAM+deek(R9), oflags, 0666)) < 0) {
+      if (err == 0 && (fd = open((void*)(RAM+deek(R9)), oflags, 0666)) < 0) {
         switch (errno) {
         default: err = EIO; break;
         case ENOENT: err = G_ENOENT; break;

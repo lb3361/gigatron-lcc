@@ -36,12 +36,12 @@ int main()
 	printf("strchr(str1,'o')=str1+%d\n", strchr(str1,'o')-str1);
 	printf("strchr(str2,'A')=str2+%d\n", strchr(str2,'A')-str2);
 	printf("strchr(str2,'B')=str2+%d\n", strchr(str2,'B')-str2);
-	printf("strchr(str2,'C')=%p\n", strchr(str2,'C'));
+	printf("strchr(str2,'C')=%#x\n", strchr(str2,'C'));
 
 	printf("strrchr(str1,'o')=str1+%d\n", strrchr(str1,'o')-str1);
 	printf("strrchr(str2,'A')=str2+%d\n", strrchr(str2,'A')-str2);
 	printf("strrchr(str2,'B')=str2+%d\n", strrchr(str2,'B')-str2);
-	printf("strrchr(str2,'C')=%p\n", strrchr(str2,'C'));
+	printf("strrchr(str2,'C')=%#x\n", strrchr(str2,'C'));
 
 	printf("strcpy(str3, str1)=\"%s\"\n", strcpy(str3, str1));
 

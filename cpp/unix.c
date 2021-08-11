@@ -107,7 +107,7 @@ setup(int argc, char **argv)
 /* memmove is defined here because some vendors don't provide it at
    all and others do a terrible job (like calling malloc) */
 void *
-memmove(void *dp, const void *sp, size_t n)
+(memmove)(void *dp, const void *sp, size_t n)
 {
 	unsigned char *cdp, *csp;
 

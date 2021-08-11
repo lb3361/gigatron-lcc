@@ -45,12 +45,12 @@ def code1():
 	_MOV(R14,[SP,14]);
 	CALLI('print');
 	_LDI('.11');STW(R8);
-	_SP(4);STW(T2);_BMOV('x',[T2],8);
-	_SP(12);STW(T2);_BMOV('x',[T2],8);
-	_SP(20);STW(T2);_BMOV('x',[T2],8);
-	_SP(28);STW(T2);_BMOV('x',[T2],8);
-	_SP(36);STW(T2);_BMOV('x',[T2],8);
-	_SP(44);STW(T2);_BMOV('x',[T2],8);
+	_SP(4);STW(T2);_BMOV('x',[T2],8,2);
+	_SP(12);STW(T2);_BMOV('x',[T2],8,2);
+	_SP(20);STW(T2);_BMOV('x',[T2],8,2);
+	_SP(28);STW(T2);_BMOV('x',[T2],8,2);
+	_SP(36);STW(T2);_BMOV('x',[T2],8,2);
+	_SP(44);STW(T2);_BMOV('x',[T2],8,2);
 	CALLI('print');
 	LDI(0);
 	label('.1');
@@ -83,7 +83,7 @@ def code2():
 	_LDI(0xfffe);STW(R22);
 	LDI(8);ADDW(R7);ADDI(1);ANDW(R22);STW(R22);
 	LDW(R22);STW(R7);
-	_SP(-8+24);STW(T2);LDW(R22);SUBI(-(-8));_BMOV([vAC],[T2],8);
+	_SP(-8+24);STW(T2);LDW(R22);SUBI(-(-8));_BMOV([vAC],[T2],8,2);
 	_LDI('.26');STW(R8);
 	_MOV(R8,[SP,2]);
 	_SP(-8+24);DEEK();STW(R9);

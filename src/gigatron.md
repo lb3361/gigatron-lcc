@@ -590,10 +590,10 @@ asrc: eac "[vAC]|%0"
 lsrc: addr "%0"
 
 # Structs
-stmt: ARGB(INDIRB(asrc))        "\t_SP(%c);STW(T2);%[0b]_BMOV(%0,[T2],%a);\n"  200
-stmt: ASGNB(addr,INDIRB(asrc)) "\t%[1b]_BMOV(%1,%0,%a);\n" 200
-stmt: ASGNB(ac,  INDIRB(asrc)) "\t%0STW(T2);%[1b]_BMOV(%1,[T2],%a);\n" 200
-stmt: ASGNB(lddr,INDIRB(lsrc)) "\t_BMOV(%1,[SP,%0],%a);\n" 200
+stmt: ARGB(INDIRB(asrc))        "\t_SP(%c);STW(T2);%[0b]_BMOV(%0,[T2],%a,%b);\n"  200
+stmt: ASGNB(addr,INDIRB(asrc)) "\t%[1b]_BMOV(%1,%0,%a,%b);\n" 200
+stmt: ASGNB(ac,  INDIRB(asrc)) "\t%0STW(T2);%[1b]_BMOV(%1,[T2],%a,%b);\n" 200
+stmt: ASGNB(lddr,INDIRB(lsrc)) "\t_BMOV(%1,[SP,%0],%a,%b);\n" 200
 
 # Longs
 # - larg represent argument expressions in binary tree nodes,
@@ -1185,8 +1185,8 @@ static void clobber(Node p)
     Symbol r = p->syms[1];
     if (p->x.argno == 0)
       argmask = 0;
-    if (r) {
-      assert(r->x.regnode && r->x.regnode->set == 0);
+    if (r && r->x.regnode) {
+      assert(r->x.regnode->set == 0);
       argmask |= r->x.regnode->mask;
       freemask[0] &= ~r->x.regnode->mask;
     }
@@ -1526,7 +1526,8 @@ static void doarg(Node p)
   offset = mkactual(p->syms[1]->u.c.v.i, p->syms[0]->u.c.v.i);
   p->x.argno = argno++;
   p->syms[2] = (r && p->x.argno < argmaxno) ? 0 : intconst(offset);
-  p->syms[1] = r;
+  if (optype(p->op) != B) /* keep alignment info for structures */
+    p->syms[1] = r;
 }
 
 static void local(Symbol p)

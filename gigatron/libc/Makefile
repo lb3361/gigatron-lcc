@@ -86,3 +86,5 @@ FORCE: .PHONY
 
 .PHONY: 
 
+# fixes "No rule to make target"-bug using GNU make 4.3 under Cygwin 
+cygwin: ${B}rcc 

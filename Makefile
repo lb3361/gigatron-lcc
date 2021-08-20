@@ -18,7 +18,7 @@ GLCC=${B}glcc
 GTSIM=${B}gtsim
 
 SUBDIRS=${G}runtime ${G}libc ${G}map32k ${G}map64k ${G}mapsim ${G}mapconx
-GFILES=${B}glcc ${B}glink ${B}glink.py ${B}interface.json ${B}roms.json
+GFILES=${B}glcc ${B}glink ${B}glcc.bat ${B}glink.bat ${B}glink.py ${B}interface.json ${B}roms.json
 ROMFILES=${wildcard ${G}roms/*.rom}
 ROMS=${patsubst ${G}roms/%.rom,%,${ROMFILES}}
 
@@ -86,9 +86,9 @@ gigatron-clean: FORCE
 
 gigatron-install: FORCE
 	-${INSTALL} -d ${libdir}
-	${INSTALL} -m 755 "${B}cpp" "${libdir}/cpp"
-	${INSTALL} -m 755 "${B}rcc" "${libdir}/rcc"
-	${INSTALL} -m 755 "${B}lcc" "${libdir}/lcc"
+	${INSTALL} -m 755 "${B}cpp${E}" "${libdir}/cpp${E}"
+	${INSTALL} -m 755 "${B}rcc${E}" "${libdir}/rcc${E}"
+	${INSTALL} -m 755 "${B}lcc${E}" "${libdir}/lcc${E}"
 	for n in ${GFILES}; do \
 	    mode=644; test -x "$$n" && mode=755 ; \
 	    ${INSTALL} -m $$mode "$$n" ${libdir}/ ; done
@@ -99,8 +99,15 @@ gigatron-install: FORCE
 	for n in "${B}include/gigatron/"*.h ; do \
 	    ${INSTALL} -m 0644 "$$n" "${libdir}/include/gigatron/" ; done
 	-${INSTALL} -d ${bindir}
+ifeq ($(E),)
 	${LN_S} ${libdir}/glcc ${bindir}/glcc
 	${LN_S} ${libdir}/glink ${bindir}/glink
+else
+	-${LN_S} ${libdir}/glcc ${bindir}/glcc
+	-${LN_S} ${libdir}/glink ${bindir}/glink
+	echo "@py -3 ${libdir}\\glcc %*" > ${bindir}/glcc.bat
+	echo "@py -3 ${libdir}\\glink %*" > ${bindir}/glink.bat
+endif
 
 gigatron-include: FORCE
 	-mkdir -p ${B}include

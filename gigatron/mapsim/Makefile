@@ -61,8 +61,13 @@ install: FORCE
 	-${INSTALL} -d "${libdir}/${MAPDIR}"
 	${INSTALL} -m 0644 ${B}${MAPDIR}/${LIBNAME}.a "${libdir}/${MAPDIR}/"
 	${INSTALL} -m 0644 ${PYTARGETS} "${libdir}/${MAPDIR}/"
-	${INSTALL} -m 0755 "${B}gtsim" "${libdir}/"
-	${LN_S} ${libdir}/gtsim ${bindir}/gtsim
+	${INSTALL} -m 0755 "${B}gtsim${E}" "${libdir}/gtsim${E}"
+ifeq ($(E),)
+	${LN_S} ${libdir}/gtsim${E} ${bindir}/gtsim${E}
+else
+	-${LN_S} ${libdir}/gtsim${E} ${bindir}/gtsim${E}
+	echo "@${libdir}\\gtsim.exe %*" > ${bindir}/gtsim.bat
+endif
 
 test: FORCE
 

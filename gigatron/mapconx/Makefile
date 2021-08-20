@@ -10,6 +10,7 @@ LN_S=ln -s
 B=${TOP}${BUILDDIR}/
 G=${TOP}gigatron/
 GLCC=${B}glcc
+E=
 
 MAPDIR=mapconx
 PYFILES=${wildcard *.py}
@@ -33,15 +34,15 @@ ${B}${MAPDIR}/${LIBNAME}.a: ${SFILES} ${O4FILES} ${O5FILES} ${O6FILES}
 	-mkdir -p ${B}${MAPDIR}
 	cat $+ > $@
 
-${B}${LIBNAME}/%_4.o: ${LIBNAME}/%.c ${B}rcc
+${B}${LIBNAME}/%_4.o: ${LIBNAME}/%.c ${B}rcc${E}
 	-@mkdir -p ${B}${LIBNAME}
 	${GLCC} -c -cpu=4 -o $@ $<
 
-${B}${LIBNAME}/%_5.o: ${LIBNAME}/%.c ${B}rcc
+${B}${LIBNAME}/%_5.o: ${LIBNAME}/%.c ${B}rcc${E}
 	-@mkdir -p ${B}${LIBNAME}
 	${GLCC} -c -cpu=5 -o $@ $<
 
-${B}${LIBNAME}/%_6.o: ${LIBNAME}/%.c ${B}rcc
+${B}${LIBNAME}/%_6.o: ${LIBNAME}/%.c ${B}rcc${E}
 	-@mkdir -p ${B}${LIBNAME}
 	${GLCC} -c -cpu=6 -o $@  $<
 

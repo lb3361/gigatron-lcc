@@ -11,6 +11,7 @@ B=${TOP}${BUILDDIR}/
 G=${TOP}gigatron/
 GTSIM_CFLAGS=-g -O3
 GLCC=${B}glcc
+E=
 
 MAPDIR=mapsim
 PYFILES=${wildcard *.py}
@@ -24,9 +25,9 @@ O5FILES=${patsubst %.c,${B}%_5.o,${CFILES}}
 O6FILES=${patsubst %.c,${B}%_6.o,${CFILES}}
 OFILES=${O4FILES} ${O5FILES} ${O6FILES}
 
-all: ${B}gtsim ${PYTARGETS} ${B}${MAPDIR}/${LIBNAME}.a
+all: ${B}gtsim${E} ${PYTARGETS} ${B}${MAPDIR}/${LIBNAME}.a
 
-${B}gtsim: gtsim.c
+${B}gtsim${E}: gtsim.c
 	${CC} ${GTSIM_CFLAGS} -o $@ gtsim.c -lm
 
 ${B}${MAPDIR}/%.py: %.py
@@ -37,15 +38,15 @@ ${B}${MAPDIR}/${LIBNAME}.a: ${SFILES} ${O4FILES} ${O5FILES} ${O6FILES}
 	-mkdir -p ${B}${MAPDIR}
 	cat $+ > $@
 
-${B}${LIBNAME}/%_4.o: ${LIBNAME}/%.c ${B}rcc
+${B}${LIBNAME}/%_4.o: ${LIBNAME}/%.c ${B}rcc${E}
 	-@mkdir -p ${B}${LIBNAME}
 	${GLCC} -c -cpu=4 -o $@ $<
 
-${B}${LIBNAME}/%_5.o: ${LIBNAME}/%.c ${B}rcc
+${B}${LIBNAME}/%_5.o: ${LIBNAME}/%.c ${B}rcc${E}
 	-@mkdir -p ${B}${LIBNAME}
 	${GLCC} -c -cpu=5 -o $@ $<
 
-${B}${LIBNAME}/%_6.o: ${LIBNAME}/%.c ${B}rcc
+${B}${LIBNAME}/%_6.o: ${LIBNAME}/%.c ${B}rcc${E}
 	-@mkdir -p ${B}${LIBNAME}
 	${GLCC} -c -cpu=6 -o $@  $<
 

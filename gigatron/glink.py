@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 #   Copyright (c) 2021, LB3361
 #
 #    Redistribution and use in source and binary forms, with or
@@ -2169,7 +2171,7 @@ def print_symbols(allsymbols=False):
 # ------------- main function
 
 
-def main(argv):
+def glink(argv):
 
     '''Main entry point'''
     global lccdir, args, symdefs, module_list
@@ -2362,7 +2364,7 @@ def main(argv):
 
 
 if __name__ == '__main__':
-    sys.exit(main(sys.argv[1:]))
+    sys.exit(glink(sys.argv[1:]))
 
 # Local Variables:
 # mode: python

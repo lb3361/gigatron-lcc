@@ -22,6 +22,12 @@ GFILES=${B}glcc ${B}glink ${B}glink.py ${B}interface.json ${B}roms.json
 ROMFILES=${wildcard ${G}roms/*.rom}
 ROMS=${patsubst ${G}roms/%.rom,%,${ROMFILES}}
 
+ifdef $(COMSPEC)
+E=.exe
+else
+E=
+endif
+
 default: all
 
 all: build-dir lcc-all gigatron-all
@@ -56,6 +62,7 @@ lcc-%: FORCE
                 "TARGET=${TARGET}" \
 		"CFLAGS=${CFLAGS}" \
 		"LDFLAGS=${LDFLAGS}" \
+		"E=${E}" \
 		`echo $@ | sed -e 's/^lcc-//'`
 
 subdirs-%: FORCE
@@ -66,6 +73,7 @@ subdirs-%: FORCE
 		"DESTDIR=${DESTDIR}" \
 		"CFLAGS=${CFLAGS}" \
 		"LDFLAGS=${LDFLAGS}" \
+		"E=${E}" \
 		"ROM=${ROM}" \
 		`echo $@ | sed -e 's/^subdirs-//'` || exit; \
 	   done
@@ -139,10 +147,6 @@ ${B}tst/%.gt1: tst/%.c FORCE
 ${B}tst/%.xx1: ${B}tst/%.gt1 FORCE
 	${GTSIMR} $< > "$@" < "tst/$(*F).0"
 	cmp $@ ${G}tst/$(*F).1bk
-
-
-sbk-test:
-
 
 FORCE: .PHONY
 

@@ -35,10 +35,10 @@ if sys.version_info < (3, 6):
     print('glink: fatal error: python 3.6.0 or higher is required.')
     sys.exit(1)
 
-from glink import *
+from glink import glink
 
 if __name__ == '__main__':
-    sys.exit(main(sys.argv[1:]))
+    sys.exit(glink(sys.argv[1:]))
 
 # Local Variables:
 # mode: python

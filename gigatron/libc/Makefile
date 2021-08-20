@@ -15,6 +15,7 @@ INC=${TOP}include/gigatron/
 G=${TOP}gigatron/
 GLCC=${B}glcc
 GTSIM=${B}gtsim
+E=
 
 SFILES=$(wildcard *.s)
 CFILES=$(wildcard *.c)
@@ -39,7 +40,7 @@ ${B}cpu6/libc.a: ${SFILES} ${O6FILES} ${RFILES}
 	cat ${SFILES} ${O6FILES} ${RFILES} > ${B}/cpu6/libc.a
 
 # this is incomplete but better than nothing
-DEPS=_stdio.h ${INC}stdio.h ${INC}gigatron/libc.h ${B}rcc
+DEPS=_stdio.h ${INC}stdio.h ${INC}gigatron/libc.h ${B}rcc${E}
 
 ${BL}%_4.o: %.c ${DEPS}
 	-@mkdir -p ${BL}

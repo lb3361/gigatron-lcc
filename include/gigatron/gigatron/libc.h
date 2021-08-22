@@ -64,6 +64,7 @@ extern int _raise_code;
 extern double _fzero;
 extern double _fone;
 extern double _fhalf;
+extern double _fminus;
 
 /* Raise a SIGFPE exception and return defval if the exception is ignored.
    If a signal handler for SIGFPE has been setup, these functions

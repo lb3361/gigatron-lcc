@@ -2,16 +2,13 @@
 #include <errno.h>
 #include <gigatron/libc.h>
 
-
-static double sqrt2 = 1.41421356237309504880;
-
 double sqrt(double x)
 {
-	if (x <= 0) {
-		if (x == 0)
-			return 0.0;
+	if (x <= _fzero) {
+		if (x == _fzero)
+			return _fzero;
 		errno = EDOM;
-		return _fexception(-1.0);
+		return _fexception(_fminus);
 	} else {
 		register int i;
 		int e;
@@ -22,7 +19,7 @@ double sqrt(double x)
 			x = x * 1.41421356237309504880;
 		x = ldexp(x, (e >> 1));
 		for (i=0; i!=3; i++)
-			x = (x + w / x) * 0.5;
+			x = (x + w / x) * _fhalf;
 		return x;
 	}
 }

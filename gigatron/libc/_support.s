@@ -63,9 +63,9 @@ def scope():
         label('_ftwo')
         bytes(130,0,0,0,0) # 2.0F
 
-    module(name='_fhalf.s',
-           code=[ ('EXPORT', '_fhalf'),
-                  ('DATA', '_fhalf', code_fhalf, 5, 1) ] )
+    module(name='_ftwo.s',
+           code=[ ('EXPORT', '_ftwo'),
+                  ('DATA', '_ftwo', code_ftwo, 5, 1) ] )
 
     def code_fminus():
         label('_fminus')

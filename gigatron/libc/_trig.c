@@ -3,7 +3,7 @@
 #include <errno.h>
 #include <gigatron/libc.h>
 
-static double PIO4   =  7.85398163397448309616E-1;    /* pi/4 */
+static double _pi_over_4 = 7.85398163397448309616E-1;    /* pi/4 */
 
 /* Constants from the cephes library
  *
@@ -30,16 +30,14 @@ static double coscof[6] = {
  4.16666666666665929218E-2,
 };
 
-static double ksin(double x) {
-	double xx = x * x;
-	double z = _polevl(xx, sincof, 5);
-	return x * ( _fone + xx * z );
+double __k_sin_over_x(double x) {
+	x *= x;
+	return _fone + _polevl(x, sincof, 5) * x;
 }
 
-static double kcos(double x) {
-	double xx = x * x;
-	double z = _polevl(xx, coscof, 5);
-	return _fone - _fhalf * xx + xx * xx * z; 
+double __k_cos(double x) {
+	x *= x;
+	return _fone - _fhalf * x + _polevl(x, coscof, 5) * x * x; 
 }
 
 /* The rest uses fmodquo and forgetting about PIO4 != pi/4 */

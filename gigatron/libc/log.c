@@ -32,8 +32,8 @@ double log(register double x)
 		x = ldexp(x,1);
 		e -= 1;
 	}
-	z = x - 0.5;
-	x = (z - 0.5) / (0.5 * x + 0.5);
+	z = x - _fhalf;
+	x = (z - _fhalf) / (_fhalf * x + _fhalf);
 	z = x * x;
 	z = x * ( z * _polevl( z, R, 2 ) / _p1evl( z, S, 3 ) );
 	return x + z + e * LOG2;

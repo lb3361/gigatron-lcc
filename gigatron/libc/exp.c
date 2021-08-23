@@ -37,5 +37,5 @@ double exp(register double x)
 	xx = x * x;
 	px = x * _polevl(xx, P, 2);
 	x = px / (_polevl(xx, Q, 3) - px);
-	return ldexp(1.0 + 2.0 * x, n);
+	return ldexp(_fone + _ftwo * x, n);
 }

@@ -22,7 +22,7 @@ GFILES=${B}glcc ${B}glink ${B}glcc.bat ${B}glink.bat ${B}glink.py ${B}interface.
 ROMFILES=${wildcard ${G}roms/*.rom}
 ROMS=${patsubst ${G}roms/%.rom,%,${ROMFILES}}
 
-ifdef $(COMSPEC)
+ifdef COMSPEC
 E=.exe
 else
 E=

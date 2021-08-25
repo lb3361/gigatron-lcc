@@ -97,12 +97,17 @@ Some useful things to know:
   
 ## 2. Compiling and installing
 
-Building under Linux should just be a matter of typing
+### 2.1 Building gigatron-lcc under Linux
+
+Because the primary development platform is Linux. 
+building `gigatron-lcc` under Linux should work very easily provided
+that gcc >= 2.0, gnu-make >= 4.0, and python >= 3.8 are installed.
+Simply type:
 ```
 $ make PREFIX=/usr/local
 ```
 where variable `PREFIX` indicates where the compiler should be installed.
-You can either invoke the compiler from its build location `./build/glcc` or
+Then you can either invoke the compiler from its build location `./build/glcc` or
 install it into your system with command
 ```
 $ make PREFIX=/usr/local install
@@ -119,6 +124,45 @@ $ make test
 to run the current test suite. The LCC test files are in `tst`
 but some need pieces of the runtime or library that are still missing.
 The runtime and library test files are in `gigatron/{runtime,libc,libm}/tst`.
+
+### 2.2 Building gigatron-lcc under MacOS
+
+The same steps should also work on MacOS provided that the c compiler
+has been installed, for instance with `xcode-select –install`, and 
+that command `python3` runs a version of python >= 3.8.
+
+### 2.3 Building gigatron-lcc under Windows using Cygwin
+
+Thanks to the feedback of axelb, the same steps can also be used
+to compile gigatron-lcc under cygwin. For this, you must first
+install cygwin >= 3.2 from http://cygwin.org, make sure to 
+select the packages `gcc-core`, `make`, and `python3`, then issue
+the `make`, `make install`, or `make test` command from the cygwin shell.
+
+The main drawback of building `gigatron-lcc` under cygwin is
+that you have to execute it from the cygwin shell as well since
+it depends on the cygwin infrastructure.
+
+### 2.4 Building gigatron-lcc under Windows using Mingw64
+
+It is also possible to build `gigatron-lcc` using Mingw64 using
+different routes. One promising but yet untested route consists in
+installing the mingw64 compiler under cygwin and compile as usual. 
+The better tested route was to install [MSYS2](https://www.msys2.org)
+with the package group `mingw-w64-i686-toolchain` and `python` >= 3.8,
+then issue the commands `make` and `make install` from the mingw32 
+terminal.
+
+The resulting executables depend only on Microsoft's `msvcrt.dll`
+and can be executed from a normal Windows command line. However 
+it remains necessary to install the Windows version of python
+with the python launcher `py` installed for everyone's use.
+The command `make install` creates batch files `glcc.bat` and
+`glink.bat` in the binary directory that can then be used
+to invoke gigatron-lcc from the Windows command line. These batch
+files simply invoke the python launcher `py -3` with the full
+path name of the python scripts `glcc` or `glink`. If you move
+the gigatron-lcc installation elsewhere, you need to edit this path name.
 
 
 ## 3 Compiler invocation

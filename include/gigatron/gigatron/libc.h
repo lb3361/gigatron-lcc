@@ -59,13 +59,11 @@ extern int _raise_code;
 
 /* ---- Numerics ---- */
 
-/* Floating point constants */
+/* Elementary floating point constants */
+extern double _fzero, _fone, _fhalf, _ftwo, _fminus;
 
-extern double _fzero;
-extern double _fone;
-extern double _fhalf;
-extern double _ftwo;
-extern double _fminus;
+/* Value of PI assumed correct by the trigonometric functions! */
+extern double _pi, _pi_over_2, _pi_over_4;
 
 /* Raise a SIGFPE exception and return defval if the exception is ignored.
    If a signal handler for SIGFPE has been setup, these functions

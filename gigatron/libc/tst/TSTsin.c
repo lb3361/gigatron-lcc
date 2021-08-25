@@ -37,24 +37,27 @@ void go(double x)
 {
 	double s = sin(x);
 	double c = cos(x);
-	printf("x=%+5.1f sin=%+11.9f %s %s cos=%+11.9f",
+	printf("x=%+5.1f sin=%+11.8f %s %s cos=%+11.8f",
 	       x, s, mercury(s), mercury(c), c );
 	printf(" tan=%+.8g\n", tan(x));
 }
 
-double pi = 3.14159265359;
+#ifdef __gigatron
+extern double _pi, _pi_over_4;
+#else
+double _pi = M_PI, _pi_over_4 = M_PI_4;
+#endif
 
 int main()
 {
-	double x;
 	int i;
 #ifdef __gigatron__
 	signal(SIGFPE, (sig_handler_t)handler);
 #endif
-	for (x = -5; x <= +5; x += 0.1)
-		go(x);
+	for (i = -50; i <= 50; i+=2)
+		go(i * 0.1);
 	printf("\n");
 	for (i = 0; i != 8; i++)
-		go (pi * (i / 4.0));
+		go (_pi_over_4 * i);
 	return 0;
 }

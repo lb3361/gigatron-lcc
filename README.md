@@ -143,13 +143,11 @@ The main drawback of building `gigatron-lcc` under cygwin is
 that you have to execute it from the cygwin shell as well since
 it depends on the cygwin infrastructure.
 
-### 2.4 Building gigatron-lcc under Windows using Mingw64
+### 2.4 Building gigatron-lcc under Windows using Msys/Mingw64
 
-It is also possible to build `gigatron-lcc` using Mingw64 using
-different routes. One promising but yet untested route consists in
-installing the mingw64 compiler under cygwin and compile as usual. 
-The better tested route was to install [MSYS2](https://www.msys2.org)
-with the package group `mingw-w64-i686-toolchain` and `python` >= 3.8,
+It is also possible to build `gigatron-lcc` using Mingw64.
+First install [MSYS2](https://www.msys2.org) with the package 
+group `mingw-w64-i686-toolchain` and `python` >= 3.8,
 then issue the commands `make` and `make install` from the mingw32 
 terminal.
 

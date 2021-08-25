@@ -99,12 +99,10 @@ gigatron-install: FORCE
 	for n in "${B}include/gigatron/"*.h ; do \
 	    ${INSTALL} -m 0644 "$$n" "${libdir}/include/gigatron/" ; done
 	-${INSTALL} -d ${bindir}
-ifeq ($(E),)
+ifndef MSYSTEM
 	${LN_S} ${libdir}/glcc ${bindir}/glcc
 	${LN_S} ${libdir}/glink ${bindir}/glink
 else
-	-${LN_S} ${libdir}/glcc ${bindir}/glcc
-	-${LN_S} ${libdir}/glink ${bindir}/glink
 	echo "@py -3 ${libdir}\\glcc %*" > ${bindir}/glcc.bat
 	echo "@py -3 ${libdir}\\glink %*" > ${bindir}/glink.bat
 endif

@@ -33,20 +33,28 @@ double handler(int signo)
 }
 #endif
 
+#ifdef __gigatron
+extern double _pi, _pi_over_2, _pi_over_4;
+#else
+double _pi = M_PI, _pi_over_2 = M_PI_2, _pi_over_4 = M_PI_4;
+#endif
+
+
 void go(double x)
 {
 	double s = sin(x);
 	double c = cos(x);
+	double t;
 	printf("x=%+5.1f sin=%+11.8f %s %s cos=%+11.8f",
 	       x, s, mercury(s), mercury(c), c );
-	printf(" tan=%+.8g\n", tan(x));
+	t = tan(x);
+	printf(" tan=%+12.8e", t);
+	if (x <= _pi_over_2 && x >= -_pi_over_2)
+		printf(" atan=%+6.4f asin=%+6.4f", atan(t), asin(s));
+	if (x <= _pi && x >= 0)
+		printf(" acos=%+6.4f", acos(c));
+	printf("\n");
 }
-
-#ifdef __gigatron
-extern double _pi, _pi_over_4;
-#else
-double _pi = M_PI, _pi_over_4 = M_PI_4;
-#endif
 
 int main()
 {

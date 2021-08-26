@@ -12,7 +12,7 @@ code generator is fundamentally different.
 
 ## 1. Status
 
-The compiler is in good shape!
+This project provides a complete toolchain and C library for ANSI C 1989.
 
 ### 1.1. What works?
 
@@ -99,7 +99,7 @@ Some useful things to know:
 
 Because the primary development platform is Linux. 
 building `gigatron-lcc` under Linux should work very easily provided
-that gcc >= 2.0, gnu-make >= 4.0, and python >= 3.8 are installed.
+that gcc, bison, gnu-make >= 4.0, and python >= 3.8 are installed.
 Simply type:
 ```
 $ make PREFIX=/usr/local
@@ -134,7 +134,7 @@ that command `python3` runs a version of python >= 3.8.
 Thanks to the feedback of axelb, the same steps can also be used
 to compile gigatron-lcc under cygwin. For this, you must first
 install cygwin >= 3.2 from http://cygwin.org, make sure to 
-select the packages `gcc-core`, `make`, and `python3`, then issue
+select the packages `gcc-core`, `make`, `bison`, and `python3`, then issue
 the `make`, `make install`, or `make test` command from the cygwin shell.
 
 The main drawback of building `gigatron-lcc` under cygwin is
@@ -144,13 +144,21 @@ it depends on the cygwin infrastructure.
 ### 2.4 Building gigatron-lcc under Windows using Msys/Mingw64
 
 It is also possible to build `gigatron-lcc` using Mingw64.
-First install [MSYS2](https://www.msys2.org) with the package 
-group `mingw-w64-i686-toolchain` and `python` >= 3.8,
-then issue the commands `make` and `make install` from the mingw32 
-terminal.
-
+First install [MSYS2](https://www.msys2.org) then use `pacman`
+to install the necessary packages:
+```
+$ pacman -S mingw-w64-i686-toolchain bison python
+```
+Then issue the commands `make` and `make install`
+```
+# cd gigatron-lcc
+$ make
+$ make install PREFIX=/c/somedir
+```
+A precompiled version can be found attached to the forum 
+post https://forum.gigatron.io/viewtopic.php?p=2463.
 The resulting executables depend only on Microsoft's `msvcrt.dll`
-and can be executed from a normal Windows command line. However 
+and can therefore be executed from a normal Windows command line. However 
 it remains necessary to install the Windows version of python
 with the python launcher `py` installed for everyone's use.
 The command `make install` creates simple batch files `glcc.bat` and

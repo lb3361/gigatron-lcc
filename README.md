@@ -406,10 +406,10 @@ The code generator uses two consecutive blocks of zero page locations:
      occasionally used as scratch registers by the code generator.
   *  The second block, located at addresses `0x90-0xbf`, contains 24 general 
      purpose sixteen bits registers named `R0` to `R23`. 
-     Register pairs named can hold longs. Register triplets named
-     can hold floats. Registers `R0` to `R7` are callee-saved
-     registers. Registers `R8` to `R15` are used to pass
-     arguments to functions. Registers `R15` to `R22` are used
+     Register pairs named `L0` to `L22` can hold longs. 
+     Register triplets named `F0` to `F21 can hold floats. 
+     Registers `R0` to `R7` are callee-saved and are often used for local variables.
+     Registers `R8` to `R15` are used to pass arguments to functions. Registers `R15` to `R22` are used
      for temporaries. Register `R23` or `SP` is the stack pointer.
      
 The function prologue first saves `vLR` and constructs a stack frame
@@ -439,7 +439,7 @@ in ways that not only produce less efficient code, but often result
 in an infinite loop because the spilling code must itself use `AC`.
 Instead, the GLCC code generator produces VCPU instructions in bursts 
 that are packed on a single line of the generated assembly code. 
-Each burst is in fact what LCC calls an instruction. Bursts are
+Each burst is in fact what LCC calls one instruction. Bursts are
 produced by subverting the mechanisms defined by LCC to construct 
 various parts of a typical CPU instruction such as the mnemonic, 
 the address mode, etc. The VCPU accumulator `AC` is treated as a scratch 

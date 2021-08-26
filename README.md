@@ -19,22 +19,20 @@ The compiler is in good shape!
 * The compiler compiles
 * The linker/assembler assembles and links.
 * The runtime is complete (including long and floating point support)
-* The emulator (`gtsim`) can run gt1 files and redirect stdio 
-  calls to the emulator itself (compile with `glcc -map=sim`).
+* The C library is complete (implements ANSI-C-89).
+* The emulator `gtsim` can run gt1 files and redirect stdio 
+  calls to the emulator itself (when one compiles with option `-map=sim`).
 * vCPU interrupts can be captured with `signal(SIGVIRQ, xxx)`.
 * Floating point exceptions can be captured with `signal(SIGFPE, xxx)`.
 * Optimized memset and memcpy are available and can use a SYS call.
-* There is an ANSI C library (missing only some transcendental math functions.)
 * The compiler can generate code for at67's extended instruction set.
   Thanks to at67 for providing a lot of information and hints.
 
 ### 1.2. What remains to be done?
 
-There is work needed on the libraries
-
-* transcendental functions in libm (log, exp, sqrt are here)
-
-* adding more gigatron SYS stubs into `gigatron/libc/gigatron.s`.
+The library implements ANSI C 89 but few Gigatron specific functions.
+For instance, one could add more Gigatron SYS stubs into `gigatron/libc/gigatron.s`,
+one could provide a graphic and sprite library, etc.
 
 The compiler could also be improved
 
@@ -155,13 +153,11 @@ The resulting executables depend only on Microsoft's `msvcrt.dll`
 and can be executed from a normal Windows command line. However 
 it remains necessary to install the Windows version of python
 with the python launcher `py` installed for everyone's use.
-The command `make install` creates batch files `glcc.bat` and
-`glink.bat` in the binary directory that can then be used
-to invoke gigatron-lcc from the Windows command line. These batch
-files simply invoke the python launcher `py -3` with the full
-path name of the python scripts `glcc` or `glink`. If you move
-the gigatron-lcc installation elsewhere, you need to edit this path name.
-
+The command `make install` creates simple batch files `glcc.bat` and
+`glink.bat` in the `bin` directory. These files can be used
+to invoke gigatron-lcc from the Windows command line. The
+simplest way to use them is to add the `bin` directory to the
+executable search path.
 
 ## 3 Compiler invocation
 

@@ -65,7 +65,7 @@ install: FORCE
 ifndef MSYSTEM
 	${LN_S} ${libdir}/gtsim${E} ${bindir}/gtsim${E}
 else
-	echo "@${libdir}\\gtsim.exe %*" > ${bindir}/gtsim.bat
+	echo '@"%~dp0\\..\\lib\\gigatron-lcc\\%~n0.exe" %*' > ${bindir}/gtsim.bat
 endif
 
 test: FORCE

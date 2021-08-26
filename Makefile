@@ -103,8 +103,8 @@ ifndef MSYSTEM
 	${LN_S} ${libdir}/glcc ${bindir}/glcc
 	${LN_S} ${libdir}/glink ${bindir}/glink
 else
-	echo "@py -3 ${libdir}\\glcc %*" > ${bindir}/glcc.bat
-	echo "@py -3 ${libdir}\\glink %*" > ${bindir}/glink.bat
+	echo '@py -3 "%~dp0\\..\\lib\\gigatron-lcc\\%~n0" %*' > ${bindir}/glcc.bat
+	echo '@py -3 "%~dp0\\..\\lib\\gigatron-lcc\\%~n0" %*' > ${bindir}/glink.bat
 endif
 
 gigatron-include: FORCE

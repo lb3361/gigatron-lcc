@@ -1207,15 +1207,15 @@ static void clobber(Node p)
 }
 
 /* Helper for preralloc */
-static int find_reguse_in_cover(Node p, int nt, Symbol sym,
-                                const char **lefttpl, int *kididx)
+static int find_reguse(Node p, int nt, Symbol sym,
+                       const char **lefttpl, int *leftkid)
 {
   Node n = p;
   int rulenum = (*IR->x._rule)(n->x.state, nt);
   const short *nts = IR->x._nts[rulenum];
   const char *template = IR->x._templates[rulenum];
   Node kids[10];
-  int leftkid = -1;
+  int leftidx = -1;
   int count = 0;
   int i;
 
@@ -1225,7 +1225,7 @@ static int find_reguse_in_cover(Node p, int nt, Symbol sym,
     if (template[0]=='%' && template[1]=='{' && template[2] == '#')
       { template = strchr(template,'}'); continue; }
     if (template[0] == '%' && isdigit(template[1]))
-      { leftkid = template[1] - '0'; break; }
+      { leftidx = template[1] - '0'; break; }
     break;
   }
   (*IR->x._kids)(n, rulenum, kids);
@@ -1233,17 +1233,18 @@ static int find_reguse_in_cover(Node p, int nt, Symbol sym,
     {
       Node k = kids[i];
       int knt = nts[i];
-      if (generic(k->op) == INDIR && specific(k->kids[0]->op) == VREG+P
-          && knt == k->x.inst && k->kids[0]->syms[0] == sym) {
-        count += 1;
-        if (lefttpl && leftkid < 0) {
-          *lefttpl = template;
-          *kididx = i;
+      if (knt == k->x.inst) {
+        if (k->syms[RX] == sym) {
+          count += 1;
+          if (lefttpl && leftidx < 0) {
+            *lefttpl = template;
+            *leftkid = i;
+          }
         }
-      } else if (i == leftkid) {
-        count += find_reguse_in_cover(k, knt, sym, lefttpl, kididx);
+      } else if (i == leftidx) {
+        count += find_reguse(k, knt, sym, lefttpl, leftkid);
       } else {
-        count += find_reguse_in_cover(k, knt, sym, 0, 0);
+        count += find_reguse(k, knt, sym, 0, 0);
       }
     }
   return count;
@@ -1252,8 +1253,14 @@ static int find_reguse_in_cover(Node p, int nt, Symbol sym,
 /* Helper for preralloc */
 static int scan_ac_preserving_instructions(Symbol sym, Symbol r, Node q)
 {
-  int gotlast = 0;
-  
+  int count, usecount;
+  const char *lefttpl;
+  int leftkid;
+  Node p;
+  /* count temporary variable uses */
+  usecount = -1;
+  for (p = sym->x.lastuse; p; p = p->x.prevuse)
+    usecount += 1;
   /* scan instructions until finding the last use of sym */
   for(; ; q = q->x.next)
     {
@@ -1264,8 +1271,7 @@ static int scan_ac_preserving_instructions(Symbol sym, Symbol r, Node q)
          we only recognize a couple common cases. */
       if (! q)
         return 0;
-      if (sym->temporary && q == sym->x.lastuse)
-        gotlast = 1;
+      /* Instructions that generate no code */
       if (generic(q->op)==INDIR && specific(q->kids[0]->op) == VREG+P)
         /* matches INDIR(VREGP) rule which does not generate code */
         continue;
@@ -1273,36 +1279,38 @@ static int scan_ac_preserving_instructions(Symbol sym, Symbol r, Node q)
           && q->kids[1]->x.inst == _reg_NT)
         /* matches ASGN(VREGP,reg) which does not generate code */
         continue;
+      /* For instructions that generate code, we start
+         by counting how many times the instruction uses sym. */
+      lefttpl = 0;
+      count = find_reguse(q, q->x.inst, sym, &lefttpl, &leftkid);
+      usecount -= count;
       if (generic(q->op)==ASGN && specific(q->kids[0]->op) == VREG+P
-          && q->kids[0]->syms[0] != sym && q->kids[0]->syms[0] != ireg[31] )
+          && q->kids[0]->syms[0] != sym && q->kids[0]->syms[0] != ireg[31]
+          && count == 0)
         /* matches a RMW rule whose code preserves vAC/LAC/FAC */
         continue;
       if (generic(q->op)==LOAD && q->kids[0]->x.inst == _reg_NT
           && generic(q->kids[0]->op) == INDIR
           && specific(q->kids[0]->kids[0]->op) == VREG+P
           && q->kids[0]->kids[0]->syms[0] == sym)
+        /* matches a move instruction whose source is sym */
         {
-          if (gotlast)
+          if (usecount == 0)
             return 1;
           continue;
         }
       /* Next instruction is not known to preserve ac.
          However it might start with the lastuse of sym. */
-      if (gotlast) {
-        int kididx;
-        const char *template = 0;
-        int count = find_reguse_in_cover(q, q->x.inst, sym, &template, &kididx);
-        if (count == 1 && template) {
-          char buf[3] = { '%', '0' + kididx, 0 };
-          /* Template expansion refers to sym as %0.
-             But it also has to be in the first opcode.
-             Note: this test is fragile because the code above
-             does not understand the %[0b] constructs! */
-          const char *p0 = strstr(template,buf);
-          const char *p1 = strchr(template,';');
-          if (p0 && p1 && p0 < p1 && !strstr(p1, buf))
-            return 1;
-        }
+      if (usecount == 0 && count == 1 && lefttpl) {
+        char buf[3] = { '%', '0' + leftkid, 0 };
+        /* Template expansion refers to sym as %0.
+           But it also has to be in the first opcode.
+           Note: this test is fragile because the code above
+           does not understand the %[0b] constructs! */
+        const char *p0 = strstr(lefttpl, buf);
+        const char *p1 = strchr(lefttpl, ';');
+        if (p0 && p1 && p0 < p1 && !strstr(p1, buf))
+          return 1;
       }
       return 0;
     }

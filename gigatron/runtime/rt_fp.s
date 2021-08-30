@@ -50,14 +50,11 @@ def scope():
         nohop()
         label('__@fexception')   ### SIGFPE/exception
         _CALLJ('__@frestorevsp')
-        LDWI(0x304);_BRA('.raise')
+        _CALLJ('_@_raise_ferr')
         label('__@foverflow')    ### SIGFPE/overflow
         _CALLJ('__@frestorevsp')
-        LDWI(0x204);
-        label('.raise')
-        STLW(-2);_LDI(0xffff);STW(AM+1);STW(AM+3);ST(AE);LDI(0);ST(AM)
-        LDLW(-2);_CALLI('_@_raisefpe')
-        POP();RET()
+        _LDI(0xffff);STW(AM+1);STW(AM+3);ST(AE);LDI(0);ST(AM)
+        _CALLJ('_@_raise_fovf')
 
     def code_fsavevsp():
         nohop()
@@ -73,7 +70,8 @@ def scope():
         ST(vSP);RET()        
         
     module(name='rt_fexception.s',
-           code=[ ('IMPORT', '_@_raisefpe'),
+           code=[ ('IMPORT', '_@_raise_ferr'),
+                  ('IMPORT', '_@_raise_fovf'),
                   ('EXPORT', '__@fexception'),
                   ('EXPORT', '__@foverflow'),
                   ('EXPORT', '__@fsavevsp'),

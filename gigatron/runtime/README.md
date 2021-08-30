@@ -26,12 +26,13 @@ As explained in the main [`README.md`](../../README.md) file, these functions
 operate entirely using the `[0x81-0x8f]` block of zero page memory and 
 they only use the normal VCPU stack.
 
-The only runtime function that is not defined here is `_@_raisefpe`
-which is used to raise an exception when dividing by zero or computing
-a floating point value that overflows. This function is defined in the
-libc file [`_fpsupport.s`](../libc/_fpsupport.s). It takes a signal
-number in vACL and the fpe exception code in vACH as defined by the
-include file [`signal.h`](../../include/gigatron/signal.h).
+The only runtime function that is not defined here are
+`_@_raise_ferr`, `_@_raise_fovf`, and `_@_raise_zdiv` which are used
+to raise exceptions for respectively floating point errors, floating
+point overflow, and integer division by zero. If the exception is
+resumed, these functions do not return, but pop the return address of
+the calling function and jump there. These functions are defined
+in file `_suppport.s` in the C library.
 
 Symbols named `__@xxxx` are private to the runtime.
 

@@ -58,7 +58,9 @@ def scope():
     def code2():
         label('_@_divu')
         PUSH()
-        STW(YV);_BLT('.bigy');_BEQ('.zdiv')
+        STW(YV);_BLT('.bigy');_BNE('.divu1')
+        _CALLJ('_@_raise_zdiv')                    # divide by zero error (no return)
+        label('.divu1')
         LDW(T3)
         if XV != T3: STW(XV)
         _BLT('.bigx');
@@ -82,13 +84,10 @@ def scope():
         LDW(XV);STW(RV)                            # - for modu
         LDW(MV)
         tryhop(2);POP();RET()
-        label('.zdiv')
-        LDWI(0x0104);_CALLI('_@_raise')            # divide by zero error
-        tryhop(2);POP();RET()
 
     module(name='rt_divu.s',
            code=[ ('CODE', '_@_divu', code2),
-                  ('IMPORT', '_@_raise'),
+                  ('IMPORT', '_@_raise_zdiv'),
                   ('EXPORT', '_@_divu') ] + morecode )
 
     # MODU: T3 % T2 -> AC
@@ -115,7 +114,9 @@ def scope():
         PUSH()
         if args.cpu >= 6:
             MOVQ(0,B2)
-            _BGT('.divs1');_BEQ('.zdiv')
+            _BGT('.divs1');_BNE('.divs0')
+            _CALLJ('_@_raise_zdiv')
+            label('.divs0')
             NEGW(vAC);INC(B2)
             label('.divs1')
             STW(YV)
@@ -124,7 +125,9 @@ def scope():
         else:
             STW(YV);
             LDI(0);ST(B2)
-            LDW(YV);_BGT('.divs1');_BEQ('.zdiv')
+            LDW(YV);_BGT('.divs1');_BNE('.divs0')
+            _CALLJ('_@_raise_zdiv')
+            label('.divs0')
             LDI(0);SUBW(YV);STW(YV);INC(B2)
             label('.divs1')
             LDW(T3);_BGE('.divs2')
@@ -142,13 +145,10 @@ def scope():
         label('.divs4')
         LDW(XV)
         tryhop(2);POP();RET()
-        label('.zdiv')
-        LDWI(0x0104);_CALLI('_@_raise')  # divide by zero error
-        tryhop(2);POP();RET()
 
     module(name='rt_divs.s',
            code=[ ('CODE', '_@_divs', code2),
-                  ('IMPORT', '_@_raise'),
+                  ('IMPORT', '_@_raise_zdiv'),
                   ('EXPORT', '_@_divs') ] + morecode )
 
     # MODS: T3 % T2 -> AC

@@ -62,14 +62,13 @@ def scope():
         STW(T3);DEEK();STW(T0);
         LDW(T3);ADDI(2);DEEK();STW(T0+2);
         ORW(T0);_BNE('.ldp1')
-        LDWI(0x0104);_CALLI('_@_raise')
-        POP() # get return address from caller
+        _CALLJ('_@_raise_zdiv')
         label('.ldp1')
         RET()
 
     module(name='rt_ldivprep.s',
            code=[ ('EXPORT', '__@ldivprep'),
-                  ('IMPORT', '_@_raise'),
+                  ('IMPORT', '_@_raise_zdiv'),
                   ('CODE',   '__@ldivprep', code_ldivprep) ] )
 
     def code_ldivu():

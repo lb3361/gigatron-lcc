@@ -4,7 +4,5 @@
 
 void abort(void)
 {
-	raise(SIGABRT);
-	_raise_disposition = 0;  /* in case somebody changed it... */
-	raise(SIGABRT);
+	_raisem(SIGABRT, "Abort");
 }

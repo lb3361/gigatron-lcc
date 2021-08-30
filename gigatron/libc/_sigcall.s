@@ -7,16 +7,18 @@
 
 def code0():
     '''Redirected from _@_raise with vLR saved in [SP].'''
+    nohop()
     label('_raise_emits_signal')
-    STW(T0)
+    STW(T0);ALLOC(-2);LDW(T3);STLW(0)
     label('.sigcall1')
     # create a stack frame and save R8-R22
-    _SP(-36);STW(SP);ADDI(6);STW(T2);LDI(R8);STW(T3);LDI(R23);STW(T1);_CALLJ('_@_wcopy')
+    _SP(-38);STW(SP);ADDI(8);STW(T2);LDI(R8);STW(T3);LDI(R23);STW(T1);_CALLJ('_@_wcopy')
     # call _sigcall(signo,fpeinfo)
     # _sigcall saves R0-R7 if used.
-    LD(T0);STW(R8);LD(T0+1);STW(R9);_CALLJ('_sigcall');STW(T0)
+    LD(T0);STW(R8);LD(T0+1);STW(R9);LDLW(0);STW(R10);ALLOC(2)
+    _CALLJ('_sigcall');STW(T0)
     # restore R8-R22 and SP
-    _SP(6);STW(T3);ADDI(30);STW(T1);STW(SP);LDI(R8);STW(T2);_CALLJ('_@_wcopy')
+    _SP(8);STW(T3);ADDI(30);STW(T1);STW(SP);LDI(R8);STW(T2);_CALLJ('_@_wcopy')
     # return to vLR saved by raise()
     LDW(SP);DEEK();tryhop(5);STW(vLR);LDW(T0);RET()
 
@@ -33,7 +35,8 @@ def code1():
     LDW(SP);SUBI(22);STW(SP);ADDI(2);STW(T2)
     LDI(B0-1);STW(T3);LDI(T1);STW(T1);_CALLJ('_@_wcopy')
     LDI('sysFn');STW(T3);LDI(v('sysArgs7')+1);STW(T1);_CALLJ('_@_wcopy')
-    LDWI('.rti');DOKE(SP);LDI(7);STW(T0);_CALLJ('.sigcall1')  # call sigcall0
+    LDWI('.rti');DOKE(SP)
+    LDI(0);STW(T3);LDI(7);_CALLJ('_raise_emits_signal')
 
 def code2():
     '''vIRQ return'''

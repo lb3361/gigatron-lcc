@@ -9,45 +9,71 @@ def scope():
     def code0():
         nohop()
         label('_@_raise_zdiv')
+        LDWI('.msg');STW(T3)
         LDWI(0x104)
-        _CALLI('_@_raise')
+        _CALLI('__@raisem')
         POP();RET()
 
+    def code0m():
+        label('.msg') # "Division by zero"
+        bytes(68,105,118,105,115,105,111,110);
+        bytes(32,98,121,32,122,101,114,111);
+        bytes(0);
+
     module(name='raise_zdiv.s',
-           code=[ ('IMPORT', '_@_raise'),
+           code=[ ('IMPORT', '__@raisem'),
                   ('EXPORT', '_@_raise_zdiv'),
-                  ('CODE', '_@_raise_zdiv', code0) ] )
+                  ('CODE', '_@_raise_zdiv', code0),
+                  ('DATA', '.msg', code0m, 0, 1) ] )
 
     def code1():
         nohop()
         label('_fexception')
         PUSH();_FMOV(F8,FAC);
         label('_@_raise_ferr')
+        LDWI('.msg');STW(T3)
         LDWI(0x304)
-        _CALLI('_@_raise')
+        _CALLI('__@raisem')
         POP();RET()
 
+    def code1m():
+        label('.msg') # "Floating point exception"
+        bytes(70,108,111,97,116,105,110,103);
+        bytes(32,112,111,105,110,116,32,101);
+        bytes(120,99,101,112,116,105,111,110);
+        bytes(0);
+
     module(name='_fexception.s',
-           code=[ ('IMPORT', '_@_raise'),
+           code=[ ('IMPORT', '__@raisem'),
                   ('EXPORT', '_fexception'),
                   ('EXPORT', '_@_raise_ferr'),
-                  ('CODE', '_fexception', code1) ] )
+                  ('CODE', '_fexception', code1),
+                  ('DATA', '.msg', code1m, 0, 1) ] )
 
     def code2():
+        nohop()
         label('_foverflow')
         PUSH();_FMOV(F8,FAC);
         label('_@_raise_fovf')
         _LDI('errno');STW(T2);LDI(2);POKE(T2);  # set errno=ERANGE on overflow.
+        LDWI('.msg');STW(T3)
         LDWI(0x204)
-        _CALLI('_@_raise')
+        _CALLI('__@raisem')
         POP();RET()
 
+    def code2m():
+        label('.msg') # "Floating point overflow"
+        bytes(70,108,111,97,116,105,110,103);
+        bytes(32,112,111,105,110,116,32,111);
+        bytes(118,101,114,102,108,111,119,0);
+
     module(name='_foverflow.s',
-           code=[ ('IMPORT', '_@_raise'),
+           code=[ ('IMPORT', '__@raisem'),
                   ('IMPORT', 'errno'),
                   ('EXPORT', '_foverflow'),
                   ('EXPORT', '_@_raise_fovf'),
-                  ('CODE', '_foverflow', code2) ] )
+                  ('CODE', '_foverflow', code2),
+                  ('DATA', '.msg', code2m, 0, 1) ] )
 
     # -----------------------------------------------
     # Floating point constants

@@ -9,11 +9,11 @@
 
 /* ---- Program startup and exit ---- */
 
-/* Exits the program without running the finalization functions like exit().
+/* Exit the program without running the finalization functions like exit().
    This just calls _exitm() without message. */
 extern void _exit(int retcode);
 
-/* Exits with a return code_and an optional message. 
+/* Exit with a return code_and an optional message.
    The libc version of _exitm does the following:
    - restore vSP to the value it had in `_start`.
    - calls the function pointer `_exitm_msgfunc` if nonzero
@@ -36,6 +36,9 @@ extern void (*_exitm_msgfunc)(int ret, const char *msg);
 
 
 /* ----- Raising signals ----- */
+
+/* Raising signal with an error message */
+extern void _raisem(int signo, const char *msg);
 
 /* The following vector changes what raise() does
    without requiring all the context saving that

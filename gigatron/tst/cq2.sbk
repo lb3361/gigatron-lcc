@@ -104,11 +104,11 @@ def code7():
 	_SP(-36+62);STW(R20);
 	LDI(1);ADDW(R21);DOKE(R20);
 	LDW(R21);PEEK();STW(R21);
-	LDW(R21);POKE(R22);
+	POKE(R22);
 	LD(R21);_BNE('.32');
 	LDI(5);STW(R4);
 	LDI(2);STW(R0);
-	LD(R0);ST(R4);
+	ST(R4);
 	LD(R4);XORI(2);_BEQ('.35');
 	LDI(1);STW(R5);
 	LDW(R6);_BEQ('.37');
@@ -204,7 +204,7 @@ def code7():
 	LDI(5);STW(R3);
 	LDI(2);STW(R0);
 	LD(R0);STW(R3);
-	LDW(R3);XORI(2);_BEQ('.66');
+	XORI(2);_BEQ('.66');
 	LDI(8);STW(R5);
 	LDW(R6);_BEQ('.68');
 	_LDI('.29');STW(R8);
@@ -218,7 +218,7 @@ def code7():
 	_SP(-6+62);STW(R22);
 	LDI(2);DOKE(R22);
 	_SP(-6+62);DEEK();STW(R3);
-	LDW(R3);XORI(2);_BEQ('.70');
+	XORI(2);_BEQ('.70');
 	LDI(9);STW(R5);
 	LDW(R6);_BEQ('.72');
 	_LDI('.29');STW(R8);
@@ -232,7 +232,7 @@ def code7():
 	_SP(-8+62);STW(R22);
 	LDI(2);DOKE(R22);
 	_SP(-8+62);DEEK();STW(R3);
-	LDW(R3);XORI(2);_BEQ('.74');
+	XORI(2);_BEQ('.74');
 	LDI(10);STW(R5);
 	LDW(R6);_BEQ('.76');
 	_LDI('.29');STW(R8);
@@ -246,7 +246,7 @@ def code7():
 	_LMOV('.47',[SP,-12+62]);
 	_LMOV([SP,-12+62],L21);
 	LDW(L21);STW(R3);
-	LDW(R3);XORI(2);_BEQ('.78');
+	XORI(2);_BEQ('.78');
 	LDI(11);STW(R5);
 	LDW(R6);_BEQ('.80');
 	_LDI('.29');STW(R8);
@@ -260,7 +260,7 @@ def code7():
 	_SP(-14+62);STW(R22);
 	LDI(2);DOKE(R22);
 	_SP(-14+62);DEEK();STW(R3);
-	LDW(R3);XORI(2);_BEQ('.82');
+	XORI(2);_BEQ('.82');
 	LDI(12);STW(R5);
 	LDW(R6);_BEQ('.84');
 	_LDI('.29');STW(R8);
@@ -273,7 +273,7 @@ def code7():
 	LDI(5);STW(R3);
 	_FMOV('.56',[SP,-29+62]);
 	_FMOV([SP,-29+62],FAC);_FTOI();LDW(LAC);STW(R3);
-	LDW(R3);XORI(2);_BEQ('.86');
+	XORI(2);_BEQ('.86');
 	LDI(13);STW(R5);
 	LDW(R6);_BEQ('.88');
 	_LDI('.29');STW(R8);
@@ -286,7 +286,7 @@ def code7():
 	LDI(5);STW(R3);
 	_FMOV('.61',[SP,-34+62]);
 	_FMOV([SP,-34+62],FAC);_FTOI();LDW(LAC);STW(R3);
-	LDW(R3);XORI(2);_BEQ('.90');
+	XORI(2);_BEQ('.90');
 	LDI(14);STW(R5);
 	LDW(R6);_BEQ('.92');
 	_LDI('.29');STW(R8);
@@ -299,7 +299,7 @@ def code7():
 	LDI(5);STW(R2);
 	LDI(2);STW(R0);
 	LD(R0);STW(R2);
-	LDW(R2);XORI(2);_BEQ('.94');
+	XORI(2);_BEQ('.94');
 	LDI(15);STW(R5);
 	LDW(R6);_BEQ('.96');
 	_LDI('.29');STW(R8);
@@ -313,7 +313,7 @@ def code7():
 	_SP(-6+62);STW(R22);
 	LDI(2);DOKE(R22);
 	_SP(-6+62);DEEK();STW(R2);
-	LDW(R2);XORI(2);_BEQ('.98');
+	XORI(2);_BEQ('.98');
 	LDI(16);STW(R5);
 	LDW(R6);_BEQ('.100');
 	_LDI('.29');STW(R8);
@@ -327,7 +327,7 @@ def code7():
 	_SP(-8+62);STW(R22);
 	LDI(2);DOKE(R22);
 	_SP(-8+62);DEEK();STW(R2);
-	LDW(R2);XORI(2);_BEQ('.102');
+	XORI(2);_BEQ('.102');
 	LDI(17);STW(R5);
 	LDW(R6);_BEQ('.104');
 	_LDI('.29');STW(R8);
@@ -341,7 +341,7 @@ def code7():
 	_LMOV('.47',[SP,-12+62]);
 	_LMOV([SP,-12+62],L21);
 	LDW(L21);STW(R2);
-	LDW(R2);XORI(2);_BEQ('.106');
+	XORI(2);_BEQ('.106');
 	LDI(18);STW(R5);
 	LDW(R6);_BEQ('.108');
 	_LDI('.29');STW(R8);
@@ -355,7 +355,7 @@ def code7():
 	_SP(-14+62);STW(R22);
 	LDI(2);DOKE(R22);
 	_SP(-14+62);DEEK();STW(R2);
-	LDW(R2);XORI(2);_BEQ('.110');
+	XORI(2);_BEQ('.110');
 	LDI(19);STW(R5);
 	LDW(R6);_BEQ('.112');
 	_LDI('.29');STW(R8);
@@ -368,7 +368,7 @@ def code7():
 	LDI(5);STW(R2);
 	_FMOV('.56',[SP,-29+62]);
 	_FMOV([SP,-29+62],FAC);_FTOI();LDW(LAC);STW(R2);
-	LDW(R2);XORI(2);_BEQ('.114');
+	XORI(2);_BEQ('.114');
 	LDI(20);STW(R5);
 	LDW(R6);_BEQ('.116');
 	_LDI('.29');STW(R8);
@@ -381,7 +381,7 @@ def code7():
 	LDI(5);STW(R2);
 	_FMOV('.61',[SP,-34+62]);
 	_FMOV([SP,-34+62],FAC);_FTOI();LDW(LAC);STW(R2);
-	LDW(R2);XORI(2);_BEQ('.118');
+	XORI(2);_BEQ('.118');
 	LDI(21);STW(R5);
 	LDW(R6);_BEQ('.120');
 	_LDI('.29');STW(R8);
@@ -489,7 +489,7 @@ def code7():
 	LDI(5);STW(R1);
 	LDI(2);STW(R0);
 	LD(R0);STW(R1);
-	LDW(R1);XORI(2);_BEQ('.151');
+	XORI(2);_BEQ('.151');
 	LDI(29);STW(R5);
 	LDW(R6);_BEQ('.153');
 	_LDI('.29');STW(R8);
@@ -503,7 +503,7 @@ def code7():
 	_SP(-6+62);STW(R22);
 	LDI(2);DOKE(R22);
 	_SP(-6+62);DEEK();STW(R1);
-	LDW(R1);XORI(2);_BEQ('.155');
+	XORI(2);_BEQ('.155');
 	LDI(30);STW(R5);
 	LDW(R6);_BEQ('.157');
 	_LDI('.29');STW(R8);
@@ -517,7 +517,7 @@ def code7():
 	_SP(-8+62);STW(R22);
 	LDI(2);DOKE(R22);
 	_SP(-8+62);DEEK();STW(R1);
-	LDW(R1);XORI(2);_BEQ('.159');
+	XORI(2);_BEQ('.159');
 	LDI(31);STW(R5);
 	LDW(R6);_BEQ('.161');
 	_LDI('.29');STW(R8);
@@ -531,7 +531,7 @@ def code7():
 	_LMOV('.47',[SP,-12+62]);
 	_LMOV([SP,-12+62],L21);
 	LDW(L21);STW(R1);
-	LDW(R1);XORI(2);_BEQ('.163');
+	XORI(2);_BEQ('.163');
 	LDI(32);STW(R5);
 	LDW(R6);_BEQ('.165');
 	_LDI('.29');STW(R8);
@@ -545,7 +545,7 @@ def code7():
 	_SP(-14+62);STW(R22);
 	LDI(2);DOKE(R22);
 	_SP(-14+62);DEEK();STW(R1);
-	LDW(R1);XORI(2);_BEQ('.167');
+	XORI(2);_BEQ('.167');
 	LDI(33);STW(R5);
 	LDW(R6);_BEQ('.169');
 	_LDI('.29');STW(R8);
@@ -558,7 +558,7 @@ def code7():
 	LDI(5);STW(R1);
 	_FMOV('.56',[SP,-29+62]);
 	_FMOV([SP,-29+62],FAC);_FTOU();LDW(LAC);STW(R1);
-	LDW(R1);XORI(2);_BEQ('.171');
+	XORI(2);_BEQ('.171');
 	LDI(34);STW(R5);
 	LDW(R6);_BEQ('.173');
 	_LDI('.29');STW(R8);
@@ -571,7 +571,7 @@ def code7():
 	LDI(5);STW(R1);
 	_FMOV('.61',[SP,-34+62]);
 	_FMOV([SP,-34+62],FAC);_FTOU();LDW(LAC);STW(R1);
-	LDW(R1);XORI(2);_BEQ('.175');
+	XORI(2);_BEQ('.175');
 	LDI(35);STW(R5);
 	LDW(R6);_BEQ('.177');
 	_LDI('.29');STW(R8);
@@ -872,7 +872,7 @@ def code7():
 	LDI(5);STW(R3);
 	LDI(2);STW(R0);
 	LD(R0);ADDW(R3);STW(R3);
-	LDW(R3);XORI(7);_BEQ('.265');
+	XORI(7);_BEQ('.265');
 	LDI(57);STW(R5);
 	LDW(R6);_BEQ('.267');
 	_LDI('.29');STW(R8);
@@ -886,7 +886,7 @@ def code7():
 	_SP(-6+62);STW(R22);
 	LDI(2);DOKE(R22);
 	_SP(-6+62);DEEK();ADDW(R3);STW(R3);
-	LDW(R3);XORI(7);_BEQ('.269');
+	XORI(7);_BEQ('.269');
 	LDI(58);STW(R5);
 	LDW(R6);_BEQ('.271');
 	_LDI('.29');STW(R8);
@@ -900,7 +900,7 @@ def code7():
 	_SP(-8+62);STW(R22);
 	LDI(2);DOKE(R22);
 	_SP(-8+62);DEEK();ADDW(R3);STW(R3);
-	LDW(R3);XORI(7);_BEQ('.273');
+	XORI(7);_BEQ('.273');
 	LDI(59);STW(R5);
 	LDW(R6);_BEQ('.275');
 	_LDI('.29');STW(R8);
@@ -913,7 +913,7 @@ def code7():
 	LDI(5);STW(R3);
 	_LMOV('.47',[SP,-12+62]);
 	LDW(R3);_LCVI();_SP(-12+62);_LADD();LDW(LAC);STW(R3);
-	LDW(R3);XORI(7);_BEQ('.277');
+	XORI(7);_BEQ('.277');
 	LDI(60);STW(R5);
 	LDW(R6);_BEQ('.279');
 	_LDI('.29');STW(R8);
@@ -927,7 +927,7 @@ def code7():
 	_SP(-14+62);STW(R22);
 	LDI(2);DOKE(R22);
 	_SP(-14+62);DEEK();ADDW(R3);STW(R3);
-	LDW(R3);XORI(7);_BEQ('.281');
+	XORI(7);_BEQ('.281');
 	LDI(61);STW(R5);
 	LDW(R6);_BEQ('.283');
 	_LDI('.29');STW(R8);
@@ -940,7 +940,7 @@ def code7():
 	LDI(5);STW(R3);
 	_FMOV('.56',[SP,-29+62]);
 	LDW(R3);_LCVI();_FCVI();_SP(-29+62);_FADD();_FTOI();LDW(LAC);STW(R3);
-	LDW(R3);XORI(7);_BEQ('.285');
+	XORI(7);_BEQ('.285');
 	LDI(62);STW(R5);
 	LDW(R6);_BEQ('.287');
 	_LDI('.29');STW(R8);
@@ -953,7 +953,7 @@ def code7():
 	LDI(5);STW(R3);
 	_FMOV('.61',[SP,-34+62]);
 	LDW(R3);_LCVI();_FCVI();_SP(-34+62);_FADD();_FTOI();LDW(LAC);STW(R3);
-	LDW(R3);XORI(7);_BEQ('.289');
+	XORI(7);_BEQ('.289');
 	LDI(63);STW(R5);
 	LDW(R6);_BEQ('.291');
 	_LDI('.29');STW(R8);
@@ -966,7 +966,7 @@ def code7():
 	LDI(5);STW(R2);
 	LDI(2);STW(R0);
 	LD(R0);ADDW(R2);STW(R2);
-	LDW(R2);XORI(7);_BEQ('.293');
+	XORI(7);_BEQ('.293');
 	LDI(64);STW(R5);
 	LDW(R6);_BEQ('.295');
 	_LDI('.29');STW(R8);
@@ -980,7 +980,7 @@ def code7():
 	_SP(-6+62);STW(R22);
 	LDI(2);DOKE(R22);
 	_SP(-6+62);DEEK();ADDW(R2);STW(R2);
-	LDW(R2);XORI(7);_BEQ('.297');
+	XORI(7);_BEQ('.297');
 	LDI(65);STW(R5);
 	LDW(R6);_BEQ('.299');
 	_LDI('.29');STW(R8);
@@ -994,7 +994,7 @@ def code7():
 	_SP(-8+62);STW(R22);
 	LDI(2);DOKE(R22);
 	_SP(-8+62);DEEK();ADDW(R2);STW(R2);
-	LDW(R2);XORI(7);_BEQ('.301');
+	XORI(7);_BEQ('.301');
 	LDI(66);STW(R5);
 	LDW(R6);_BEQ('.303');
 	_LDI('.29');STW(R8);
@@ -1007,7 +1007,7 @@ def code7():
 	LDI(5);STW(R2);
 	_LMOV('.47',[SP,-12+62]);
 	LDW(R2);_LCVI();_SP(-12+62);_LADD();LDW(LAC);STW(R2);
-	LDW(R2);XORI(7);_BEQ('.305');
+	XORI(7);_BEQ('.305');
 	LDI(67);STW(R5);
 	LDW(R6);_BEQ('.307');
 	_LDI('.29');STW(R8);
@@ -1021,7 +1021,7 @@ def code7():
 	_SP(-14+62);STW(R22);
 	LDI(2);DOKE(R22);
 	_SP(-14+62);DEEK();ADDW(R2);STW(R2);
-	LDW(R2);XORI(7);_BEQ('.309');
+	XORI(7);_BEQ('.309');
 	LDI(68);STW(R5);
 	LDW(R6);_BEQ('.311');
 	_LDI('.29');STW(R8);
@@ -1034,7 +1034,7 @@ def code7():
 	LDI(5);STW(R2);
 	_FMOV('.56',[SP,-29+62]);
 	LDW(R2);_LCVI();_FCVI();_SP(-29+62);_FADD();_FTOI();LDW(LAC);STW(R2);
-	LDW(R2);XORI(7);_BEQ('.313');
+	XORI(7);_BEQ('.313');
 	LDI(69);STW(R5);
 	LDW(R6);_BEQ('.315');
 	_LDI('.29');STW(R8);
@@ -1047,7 +1047,7 @@ def code7():
 	LDI(5);STW(R2);
 	_FMOV('.61',[SP,-34+62]);
 	LDW(R2);_LCVI();_FCVI();_SP(-34+62);_FADD();_FTOI();LDW(LAC);STW(R2);
-	LDW(R2);XORI(7);_BEQ('.317');
+	XORI(7);_BEQ('.317');
 	LDI(70);STW(R5);
 	LDW(R6);_BEQ('.319');
 	_LDI('.29');STW(R8);
@@ -1154,7 +1154,7 @@ def code7():
 	LDI(5);STW(R1);
 	LDI(2);STW(R0);
 	LD(R0);ADDW(R1);STW(R1);
-	LDW(R1);XORI(7);_BEQ('.350');
+	XORI(7);_BEQ('.350');
 	LDI(78);STW(R5);
 	LDW(R6);_BEQ('.352');
 	_LDI('.29');STW(R8);
@@ -1168,7 +1168,7 @@ def code7():
 	_SP(-6+62);STW(R22);
 	LDI(2);DOKE(R22);
 	_SP(-6+62);DEEK();ADDW(R1);STW(R1);
-	LDW(R1);XORI(7);_BEQ('.354');
+	XORI(7);_BEQ('.354');
 	LDI(79);STW(R5);
 	LDW(R6);_BEQ('.356');
 	_LDI('.29');STW(R8);
@@ -1182,7 +1182,7 @@ def code7():
 	_SP(-8+62);STW(R22);
 	LDI(2);DOKE(R22);
 	_SP(-8+62);DEEK();ADDW(R1);STW(R1);
-	LDW(R1);XORI(7);_BEQ('.358');
+	XORI(7);_BEQ('.358');
 	LDI(80);STW(R5);
 	LDW(R6);_BEQ('.360');
 	_LDI('.29');STW(R8);
@@ -1195,7 +1195,7 @@ def code7():
 	LDI(5);STW(R1);
 	_LMOV('.47',[SP,-12+62]);
 	LDW(R1);STW(LAC);LDI(0);STW(LAC+2);_SP(-12+62);_LADD();LDW(LAC);STW(R1);
-	LDW(R1);XORI(7);_BEQ('.362');
+	XORI(7);_BEQ('.362');
 	LDI(81);STW(R5);
 	LDW(R6);_BEQ('.364');
 	_LDI('.29');STW(R8);
@@ -1209,7 +1209,7 @@ def code7():
 	_SP(-14+62);STW(R22);
 	LDI(2);DOKE(R22);
 	_SP(-14+62);DEEK();ADDW(R1);STW(R1);
-	LDW(R1);XORI(7);_BEQ('.366');
+	XORI(7);_BEQ('.366');
 	LDI(82);STW(R5);
 	LDW(R6);_BEQ('.368');
 	_LDI('.29');STW(R8);
@@ -1222,7 +1222,7 @@ def code7():
 	LDI(5);STW(R1);
 	_FMOV('.56',[SP,-29+62]);
 	LDW(R1);STW(LAC);LDI(0);STW(LAC+2);_FCVU();_SP(-29+62);_FADD();_FTOU();LDW(LAC);STW(R1);
-	LDW(R1);XORI(7);_BEQ('.370');
+	XORI(7);_BEQ('.370');
 	LDI(83);STW(R5);
 	LDW(R6);_BEQ('.372');
 	_LDI('.29');STW(R8);
@@ -1235,7 +1235,7 @@ def code7():
 	LDI(5);STW(R1);
 	_FMOV('.61',[SP,-34+62]);
 	LDW(R1);STW(LAC);LDI(0);STW(LAC+2);_FCVU();_SP(-34+62);_FADD();_FTOU();LDW(LAC);STW(R1);
-	LDW(R1);XORI(7);_BEQ('.374');
+	XORI(7);_BEQ('.374');
 	LDI(84);STW(R5);
 	LDW(R6);_BEQ('.376');
 	_LDI('.29');STW(R8);
@@ -1535,7 +1535,7 @@ def code7():
 	LDI(2);STW(R0);
 	LD(R0);STW(R22);
 	LDW(R3);SUBW(R22);STW(R3);
-	LDW(R3);XORI(3);_BEQ('.464');
+	XORI(3);_BEQ('.464');
 	LDI(106);STW(R5);
 	LDW(R6);_BEQ('.466');
 	_LDI('.29');STW(R8);
@@ -1550,7 +1550,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-6+62);DEEK();STW(R22);
 	LDW(R3);SUBW(R22);STW(R3);
-	LDW(R3);XORI(3);_BEQ('.468');
+	XORI(3);_BEQ('.468');
 	LDI(107);STW(R5);
 	LDW(R6);_BEQ('.470');
 	_LDI('.29');STW(R8);
@@ -1565,7 +1565,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-8+62);DEEK();STW(R22);
 	LDW(R3);SUBW(R22);STW(R3);
-	LDW(R3);XORI(3);_BEQ('.472');
+	XORI(3);_BEQ('.472');
 	LDI(108);STW(R5);
 	LDW(R6);_BEQ('.474');
 	_LDI('.29');STW(R8);
@@ -1578,7 +1578,7 @@ def code7():
 	LDI(5);STW(R3);
 	_LMOV('.47',[SP,-12+62]);
 	LDW(R3);_LCVI();_SP(-12+62);_LSUB();LDW(LAC);STW(R3);
-	LDW(R3);XORI(3);_BEQ('.476');
+	XORI(3);_BEQ('.476');
 	LDI(109);STW(R5);
 	LDW(R6);_BEQ('.478');
 	_LDI('.29');STW(R8);
@@ -1593,7 +1593,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-14+62);DEEK();STW(R22);
 	LDW(R3);SUBW(R22);STW(R3);
-	LDW(R3);XORI(3);_BEQ('.480');
+	XORI(3);_BEQ('.480');
 	LDI(110);STW(R5);
 	LDW(R6);_BEQ('.482');
 	_LDI('.29');STW(R8);
@@ -1606,7 +1606,7 @@ def code7():
 	LDI(5);STW(R3);
 	_FMOV('.56',[SP,-29+62]);
 	LDW(R3);_LCVI();_FCVI();_SP(-29+62);_FSUB();_FTOI();LDW(LAC);STW(R3);
-	LDW(R3);XORI(3);_BEQ('.484');
+	XORI(3);_BEQ('.484');
 	LDI(111);STW(R5);
 	LDW(R6);_BEQ('.486');
 	_LDI('.29');STW(R8);
@@ -1619,7 +1619,7 @@ def code7():
 	LDI(5);STW(R3);
 	_FMOV('.61',[SP,-34+62]);
 	LDW(R3);_LCVI();_FCVI();_SP(-34+62);_FSUB();_FTOI();LDW(LAC);STW(R3);
-	LDW(R3);XORI(3);_BEQ('.488');
+	XORI(3);_BEQ('.488');
 	LDI(112);STW(R5);
 	LDW(R6);_BEQ('.490');
 	_LDI('.29');STW(R8);
@@ -1633,7 +1633,7 @@ def code7():
 	LDI(2);STW(R0);
 	LD(R0);STW(R22);
 	LDW(R2);SUBW(R22);STW(R2);
-	LDW(R2);XORI(3);_BEQ('.492');
+	XORI(3);_BEQ('.492');
 	LDI(113);STW(R5);
 	LDW(R6);_BEQ('.494');
 	_LDI('.29');STW(R8);
@@ -1648,7 +1648,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-6+62);DEEK();STW(R22);
 	LDW(R2);SUBW(R22);STW(R2);
-	LDW(R2);XORI(3);_BEQ('.496');
+	XORI(3);_BEQ('.496');
 	LDI(114);STW(R5);
 	LDW(R6);_BEQ('.498');
 	_LDI('.29');STW(R8);
@@ -1663,7 +1663,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-8+62);DEEK();STW(R22);
 	LDW(R2);SUBW(R22);STW(R2);
-	LDW(R2);XORI(3);_BEQ('.500');
+	XORI(3);_BEQ('.500');
 	LDI(115);STW(R5);
 	LDW(R6);_BEQ('.502');
 	_LDI('.29');STW(R8);
@@ -1676,7 +1676,7 @@ def code7():
 	LDI(5);STW(R2);
 	_LMOV('.47',[SP,-12+62]);
 	LDW(R2);_LCVI();_SP(-12+62);_LSUB();LDW(LAC);STW(R2);
-	LDW(R2);XORI(3);_BEQ('.504');
+	XORI(3);_BEQ('.504');
 	LDI(116);STW(R5);
 	LDW(R6);_BEQ('.506');
 	_LDI('.29');STW(R8);
@@ -1691,7 +1691,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-14+62);DEEK();STW(R22);
 	LDW(R2);SUBW(R22);STW(R2);
-	LDW(R2);XORI(3);_BEQ('.508');
+	XORI(3);_BEQ('.508');
 	LDI(117);STW(R5);
 	LDW(R6);_BEQ('.510');
 	_LDI('.29');STW(R8);
@@ -1704,7 +1704,7 @@ def code7():
 	LDI(5);STW(R2);
 	_FMOV('.56',[SP,-29+62]);
 	LDW(R2);_LCVI();_FCVI();_SP(-29+62);_FSUB();_FTOI();LDW(LAC);STW(R2);
-	LDW(R2);XORI(3);_BEQ('.512');
+	XORI(3);_BEQ('.512');
 	LDI(118);STW(R5);
 	LDW(R6);_BEQ('.514');
 	_LDI('.29');STW(R8);
@@ -1717,7 +1717,7 @@ def code7():
 	LDI(5);STW(R2);
 	_FMOV('.61',[SP,-34+62]);
 	LDW(R2);_LCVI();_FCVI();_SP(-34+62);_FSUB();_FTOI();LDW(LAC);STW(R2);
-	LDW(R2);XORI(3);_BEQ('.516');
+	XORI(3);_BEQ('.516');
 	LDI(119);STW(R5);
 	LDW(R6);_BEQ('.518');
 	_LDI('.29');STW(R8);
@@ -1829,7 +1829,7 @@ def code7():
 	LDI(2);STW(R0);
 	LD(R0);STW(R22);
 	LDW(R1);SUBW(R22);STW(R1);
-	LDW(R1);XORI(3);_BEQ('.549');
+	XORI(3);_BEQ('.549');
 	LDI(127);STW(R5);
 	LDW(R6);_BEQ('.551');
 	_LDI('.29');STW(R8);
@@ -1844,7 +1844,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-6+62);DEEK();STW(R22);
 	LDW(R1);SUBW(R22);STW(R1);
-	LDW(R1);XORI(3);_BEQ('.553');
+	XORI(3);_BEQ('.553');
 	LDI(128);STW(R5);
 	LDW(R6);_BEQ('.555');
 	_LDI('.29');STW(R8);
@@ -1859,7 +1859,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-8+62);DEEK();STW(R22);
 	LDW(R1);SUBW(R22);STW(R1);
-	LDW(R1);XORI(3);_BEQ('.557');
+	XORI(3);_BEQ('.557');
 	LDI(129);STW(R5);
 	LDW(R6);_BEQ('.559');
 	_LDI('.29');STW(R8);
@@ -1872,7 +1872,7 @@ def code7():
 	LDI(5);STW(R1);
 	_LMOV('.47',[SP,-12+62]);
 	LDW(R1);STW(LAC);LDI(0);STW(LAC+2);_SP(-12+62);_LSUB();LDW(LAC);STW(R1);
-	LDW(R1);XORI(3);_BEQ('.561');
+	XORI(3);_BEQ('.561');
 	LDI(130);STW(R5);
 	LDW(R6);_BEQ('.563');
 	_LDI('.29');STW(R8);
@@ -1887,7 +1887,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-14+62);DEEK();STW(R22);
 	LDW(R1);SUBW(R22);STW(R1);
-	LDW(R1);XORI(3);_BEQ('.565');
+	XORI(3);_BEQ('.565');
 	LDI(131);STW(R5);
 	LDW(R6);_BEQ('.567');
 	_LDI('.29');STW(R8);
@@ -1900,7 +1900,7 @@ def code7():
 	LDI(5);STW(R1);
 	_FMOV('.56',[SP,-29+62]);
 	LDW(R1);STW(LAC);LDI(0);STW(LAC+2);_FCVU();_SP(-29+62);_FSUB();_FTOU();LDW(LAC);STW(R1);
-	LDW(R1);XORI(3);_BEQ('.569');
+	XORI(3);_BEQ('.569');
 	LDI(132);STW(R5);
 	LDW(R6);_BEQ('.571');
 	_LDI('.29');STW(R8);
@@ -1913,7 +1913,7 @@ def code7():
 	LDI(5);STW(R1);
 	_FMOV('.61',[SP,-34+62]);
 	LDW(R1);STW(LAC);LDI(0);STW(LAC+2);_FCVU();_SP(-34+62);_FSUB();_FTOU();LDW(LAC);STW(R1);
-	LDW(R1);XORI(3);_BEQ('.573');
+	XORI(3);_BEQ('.573');
 	LDI(133);STW(R5);
 	LDW(R6);_BEQ('.575');
 	_LDI('.29');STW(R8);
@@ -2212,7 +2212,7 @@ def code7():
 	LDI(5);STW(R3);
 	LDI(2);STW(R0);
 	LD(R0);_MUL(R3);STW(R3);
-	LDW(R3);XORI(10);_BEQ('.663');
+	XORI(10);_BEQ('.663');
 	LDI(155);STW(R5);
 	LDW(R6);_BEQ('.665');
 	_LDI('.29');STW(R8);
@@ -2226,7 +2226,7 @@ def code7():
 	_SP(-6+62);STW(R22);
 	LDI(2);DOKE(R22);
 	_SP(-6+62);DEEK();_MUL(R3);STW(R3);
-	LDW(R3);XORI(10);_BEQ('.667');
+	XORI(10);_BEQ('.667');
 	LDI(156);STW(R5);
 	LDW(R6);_BEQ('.669');
 	_LDI('.29');STW(R8);
@@ -2240,7 +2240,7 @@ def code7():
 	_SP(-8+62);STW(R22);
 	LDI(2);DOKE(R22);
 	_SP(-8+62);DEEK();_MUL(R3);STW(R3);
-	LDW(R3);XORI(10);_BEQ('.671');
+	XORI(10);_BEQ('.671');
 	LDI(157);STW(R5);
 	LDW(R6);_BEQ('.673');
 	_LDI('.29');STW(R8);
@@ -2253,7 +2253,7 @@ def code7():
 	LDI(5);STW(R3);
 	_LMOV('.47',[SP,-12+62]);
 	LDW(R3);_LCVI();_SP(-12+62);_LMUL();LDW(LAC);STW(R3);
-	LDW(R3);XORI(10);_BEQ('.675');
+	XORI(10);_BEQ('.675');
 	LDI(158);STW(R5);
 	LDW(R6);_BEQ('.677');
 	_LDI('.29');STW(R8);
@@ -2267,7 +2267,7 @@ def code7():
 	_SP(-14+62);STW(R22);
 	LDI(2);DOKE(R22);
 	_SP(-14+62);DEEK();_MUL(R3);STW(R3);
-	LDW(R3);XORI(10);_BEQ('.679');
+	XORI(10);_BEQ('.679');
 	LDI(159);STW(R5);
 	LDW(R6);_BEQ('.681');
 	_LDI('.29');STW(R8);
@@ -2280,7 +2280,7 @@ def code7():
 	LDI(5);STW(R3);
 	_FMOV('.56',[SP,-29+62]);
 	LDW(R3);_LCVI();_FCVI();_SP(-29+62);_FMUL();_FTOI();LDW(LAC);STW(R3);
-	LDW(R3);XORI(10);_BEQ('.683');
+	XORI(10);_BEQ('.683');
 	LDI(160);STW(R5);
 	LDW(R6);_BEQ('.685');
 	_LDI('.29');STW(R8);
@@ -2293,7 +2293,7 @@ def code7():
 	LDI(5);STW(R3);
 	_FMOV('.61',[SP,-34+62]);
 	LDW(R3);_LCVI();_FCVI();_SP(-34+62);_FMUL();_FTOI();LDW(LAC);STW(R3);
-	LDW(R3);XORI(10);_BEQ('.687');
+	XORI(10);_BEQ('.687');
 	LDI(161);STW(R5);
 	LDW(R6);_BEQ('.689');
 	_LDI('.29');STW(R8);
@@ -2306,7 +2306,7 @@ def code7():
 	LDI(5);STW(R2);
 	LDI(2);STW(R0);
 	LD(R0);_MUL(R2);STW(R2);
-	LDW(R2);XORI(10);_BEQ('.691');
+	XORI(10);_BEQ('.691');
 	LDI(162);STW(R5);
 	LDW(R6);_BEQ('.693');
 	_LDI('.29');STW(R8);
@@ -2320,7 +2320,7 @@ def code7():
 	_SP(-6+62);STW(R22);
 	LDI(2);DOKE(R22);
 	_SP(-6+62);DEEK();_MUL(R2);STW(R2);
-	LDW(R2);XORI(10);_BEQ('.695');
+	XORI(10);_BEQ('.695');
 	LDI(163);STW(R5);
 	LDW(R6);_BEQ('.697');
 	_LDI('.29');STW(R8);
@@ -2334,7 +2334,7 @@ def code7():
 	_SP(-8+62);STW(R22);
 	LDI(2);DOKE(R22);
 	_SP(-8+62);DEEK();_MUL(R2);STW(R2);
-	LDW(R2);XORI(10);_BEQ('.699');
+	XORI(10);_BEQ('.699');
 	LDI(164);STW(R5);
 	LDW(R6);_BEQ('.701');
 	_LDI('.29');STW(R8);
@@ -2347,7 +2347,7 @@ def code7():
 	LDI(5);STW(R2);
 	_LMOV('.47',[SP,-12+62]);
 	LDW(R2);_LCVI();_SP(-12+62);_LMUL();LDW(LAC);STW(R2);
-	LDW(R2);XORI(10);_BEQ('.703');
+	XORI(10);_BEQ('.703');
 	LDI(165);STW(R5);
 	LDW(R6);_BEQ('.705');
 	_LDI('.29');STW(R8);
@@ -2361,7 +2361,7 @@ def code7():
 	_SP(-14+62);STW(R22);
 	LDI(2);DOKE(R22);
 	_SP(-14+62);DEEK();_MUL(R2);STW(R2);
-	LDW(R2);XORI(10);_BEQ('.707');
+	XORI(10);_BEQ('.707');
 	LDI(166);STW(R5);
 	LDW(R6);_BEQ('.709');
 	_LDI('.29');STW(R8);
@@ -2374,7 +2374,7 @@ def code7():
 	LDI(5);STW(R2);
 	_FMOV('.56',[SP,-29+62]);
 	LDW(R2);_LCVI();_FCVI();_SP(-29+62);_FMUL();_FTOI();LDW(LAC);STW(R2);
-	LDW(R2);XORI(10);_BEQ('.711');
+	XORI(10);_BEQ('.711');
 	LDI(167);STW(R5);
 	LDW(R6);_BEQ('.713');
 	_LDI('.29');STW(R8);
@@ -2387,7 +2387,7 @@ def code7():
 	LDI(5);STW(R2);
 	_FMOV('.61',[SP,-34+62]);
 	LDW(R2);_LCVI();_FCVI();_SP(-34+62);_FMUL();_FTOI();LDW(LAC);STW(R2);
-	LDW(R2);XORI(10);_BEQ('.715');
+	XORI(10);_BEQ('.715');
 	LDI(168);STW(R5);
 	LDW(R6);_BEQ('.717');
 	_LDI('.29');STW(R8);
@@ -2494,7 +2494,7 @@ def code7():
 	LDI(5);STW(R1);
 	LDI(2);STW(R0);
 	LD(R0);_MUL(R1);STW(R1);
-	LDW(R1);XORI(10);_BEQ('.748');
+	XORI(10);_BEQ('.748');
 	LDI(176);STW(R5);
 	LDW(R6);_BEQ('.750');
 	_LDI('.29');STW(R8);
@@ -2508,7 +2508,7 @@ def code7():
 	_SP(-6+62);STW(R22);
 	LDI(2);DOKE(R22);
 	_SP(-6+62);DEEK();_MUL(R1);STW(R1);
-	LDW(R1);XORI(10);_BEQ('.752');
+	XORI(10);_BEQ('.752');
 	LDI(177);STW(R5);
 	LDW(R6);_BEQ('.754');
 	_LDI('.29');STW(R8);
@@ -2522,7 +2522,7 @@ def code7():
 	_SP(-8+62);STW(R22);
 	LDI(2);DOKE(R22);
 	_SP(-8+62);DEEK();_MUL(R1);STW(R1);
-	LDW(R1);XORI(10);_BEQ('.756');
+	XORI(10);_BEQ('.756');
 	LDI(178);STW(R5);
 	LDW(R6);_BEQ('.758');
 	_LDI('.29');STW(R8);
@@ -2535,7 +2535,7 @@ def code7():
 	LDI(5);STW(R1);
 	_LMOV('.47',[SP,-12+62]);
 	LDW(R1);STW(LAC);LDI(0);STW(LAC+2);_SP(-12+62);_LMUL();LDW(LAC);STW(R1);
-	LDW(R1);XORI(10);_BEQ('.760');
+	XORI(10);_BEQ('.760');
 	LDI(179);STW(R5);
 	LDW(R6);_BEQ('.762');
 	_LDI('.29');STW(R8);
@@ -2549,7 +2549,7 @@ def code7():
 	_SP(-14+62);STW(R22);
 	LDI(2);DOKE(R22);
 	_SP(-14+62);DEEK();_MUL(R1);STW(R1);
-	LDW(R1);XORI(10);_BEQ('.764');
+	XORI(10);_BEQ('.764');
 	LDI(180);STW(R5);
 	LDW(R6);_BEQ('.766');
 	_LDI('.29');STW(R8);
@@ -2562,7 +2562,7 @@ def code7():
 	LDI(5);STW(R1);
 	_FMOV('.56',[SP,-29+62]);
 	LDW(R1);STW(LAC);LDI(0);STW(LAC+2);_FCVU();_SP(-29+62);_FMUL();_FTOU();LDW(LAC);STW(R1);
-	LDW(R1);XORI(10);_BEQ('.768');
+	XORI(10);_BEQ('.768');
 	LDI(181);STW(R5);
 	LDW(R6);_BEQ('.770');
 	_LDI('.29');STW(R8);
@@ -2575,7 +2575,7 @@ def code7():
 	LDI(5);STW(R1);
 	_FMOV('.61',[SP,-34+62]);
 	LDW(R1);STW(LAC);LDI(0);STW(LAC+2);_FCVU();_SP(-34+62);_FMUL();_FTOU();LDW(LAC);STW(R1);
-	LDW(R1);XORI(10);_BEQ('.772');
+	XORI(10);_BEQ('.772');
 	LDI(182);STW(R5);
 	LDW(R6);_BEQ('.774');
 	_LDI('.29');STW(R8);
@@ -2875,7 +2875,7 @@ def code7():
 	LDI(2);STW(R0);
 	LD(R0);STW(R22);
 	LDW(R3);_DIVS(R22);STW(R3);
-	LDW(R3);XORI(2);_BEQ('.862');
+	XORI(2);_BEQ('.862');
 	LDI(204);STW(R5);
 	LDW(R6);_BEQ('.864');
 	_LDI('.29');STW(R8);
@@ -2890,7 +2890,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-6+62);DEEK();STW(R22);
 	LDW(R3);_DIVS(R22);STW(R3);
-	LDW(R3);XORI(2);_BEQ('.866');
+	XORI(2);_BEQ('.866');
 	LDI(205);STW(R5);
 	LDW(R6);_BEQ('.868');
 	_LDI('.29');STW(R8);
@@ -2905,7 +2905,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-8+62);DEEK();STW(R22);
 	LDW(R3);_DIVS(R22);STW(R3);
-	LDW(R3);XORI(2);_BEQ('.870');
+	XORI(2);_BEQ('.870');
 	LDI(206);STW(R5);
 	LDW(R6);_BEQ('.872');
 	_LDI('.29');STW(R8);
@@ -2918,7 +2918,7 @@ def code7():
 	LDI(5);STW(R3);
 	_LMOV('.47',[SP,-12+62]);
 	LDW(R3);_LCVI();_SP(-12+62);_LDIVS();LDW(LAC);STW(R3);
-	LDW(R3);XORI(2);_BEQ('.874');
+	XORI(2);_BEQ('.874');
 	LDI(207);STW(R5);
 	LDW(R6);_BEQ('.876');
 	_LDI('.29');STW(R8);
@@ -2933,7 +2933,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-14+62);DEEK();STW(R22);
 	LDW(R3);_DIVU(R22);STW(R3);
-	LDW(R3);XORI(2);_BEQ('.878');
+	XORI(2);_BEQ('.878');
 	LDI(208);STW(R5);
 	LDW(R6);_BEQ('.880');
 	_LDI('.29');STW(R8);
@@ -2946,7 +2946,7 @@ def code7():
 	LDI(5);STW(R3);
 	_FMOV('.56',[SP,-29+62]);
 	LDW(R3);_LCVI();_FCVI();_SP(-29+62);_FDIV();_FTOI();LDW(LAC);STW(R3);
-	LDW(R3);XORI(2);_BEQ('.882');
+	XORI(2);_BEQ('.882');
 	LDI(209);STW(R5);
 	LDW(R6);_BEQ('.884');
 	_LDI('.29');STW(R8);
@@ -2959,7 +2959,7 @@ def code7():
 	LDI(5);STW(R3);
 	_FMOV('.61',[SP,-34+62]);
 	LDW(R3);_LCVI();_FCVI();_SP(-34+62);_FDIV();_FTOI();LDW(LAC);STW(R3);
-	LDW(R3);XORI(2);_BEQ('.886');
+	XORI(2);_BEQ('.886');
 	LDI(210);STW(R5);
 	LDW(R6);_BEQ('.888');
 	_LDI('.29');STW(R8);
@@ -2973,7 +2973,7 @@ def code7():
 	LDI(2);STW(R0);
 	LD(R0);STW(R22);
 	LDW(R2);_DIVS(R22);STW(R2);
-	LDW(R2);XORI(2);_BEQ('.890');
+	XORI(2);_BEQ('.890');
 	LDI(211);STW(R5);
 	LDW(R6);_BEQ('.892');
 	_LDI('.29');STW(R8);
@@ -2988,7 +2988,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-6+62);DEEK();STW(R22);
 	LDW(R2);_DIVS(R22);STW(R2);
-	LDW(R2);XORI(2);_BEQ('.894');
+	XORI(2);_BEQ('.894');
 	LDI(212);STW(R5);
 	LDW(R6);_BEQ('.896');
 	_LDI('.29');STW(R8);
@@ -3003,7 +3003,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-8+62);DEEK();STW(R22);
 	LDW(R2);_DIVS(R22);STW(R2);
-	LDW(R2);XORI(2);_BEQ('.898');
+	XORI(2);_BEQ('.898');
 	LDI(213);STW(R5);
 	LDW(R6);_BEQ('.900');
 	_LDI('.29');STW(R8);
@@ -3016,7 +3016,7 @@ def code7():
 	LDI(5);STW(R2);
 	_LMOV('.47',[SP,-12+62]);
 	LDW(R2);_LCVI();_SP(-12+62);_LDIVS();LDW(LAC);STW(R2);
-	LDW(R2);XORI(2);_BEQ('.902');
+	XORI(2);_BEQ('.902');
 	LDI(214);STW(R5);
 	LDW(R6);_BEQ('.904');
 	_LDI('.29');STW(R8);
@@ -3031,7 +3031,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-14+62);DEEK();STW(R22);
 	LDW(R2);_DIVU(R22);STW(R2);
-	LDW(R2);XORI(2);_BEQ('.906');
+	XORI(2);_BEQ('.906');
 	LDI(215);STW(R5);
 	LDW(R6);_BEQ('.908');
 	_LDI('.29');STW(R8);
@@ -3044,7 +3044,7 @@ def code7():
 	LDI(5);STW(R2);
 	_FMOV('.56',[SP,-29+62]);
 	LDW(R2);_LCVI();_FCVI();_SP(-29+62);_FDIV();_FTOI();LDW(LAC);STW(R2);
-	LDW(R2);XORI(2);_BEQ('.910');
+	XORI(2);_BEQ('.910');
 	LDI(216);STW(R5);
 	LDW(R6);_BEQ('.912');
 	_LDI('.29');STW(R8);
@@ -3057,7 +3057,7 @@ def code7():
 	LDI(5);STW(R2);
 	_FMOV('.61',[SP,-34+62]);
 	LDW(R2);_LCVI();_FCVI();_SP(-34+62);_FDIV();_FTOI();LDW(LAC);STW(R2);
-	LDW(R2);XORI(2);_BEQ('.914');
+	XORI(2);_BEQ('.914');
 	LDI(217);STW(R5);
 	LDW(R6);_BEQ('.916');
 	_LDI('.29');STW(R8);
@@ -3170,7 +3170,7 @@ def code7():
 	LDI(2);STW(R0);
 	LD(R0);STW(R22);
 	LDW(R1);_DIVU(R22);STW(R1);
-	LDW(R1);XORI(2);_BEQ('.946');
+	XORI(2);_BEQ('.946');
 	LDI(225);STW(R5);
 	LDW(R6);_BEQ('.948');
 	_LDI('.29');STW(R8);
@@ -3185,7 +3185,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-6+62);DEEK();STW(R22);
 	LDW(R1);_DIVU(R22);STW(R1);
-	LDW(R1);XORI(2);_BEQ('.950');
+	XORI(2);_BEQ('.950');
 	LDI(226);STW(R5);
 	LDW(R6);_BEQ('.952');
 	_LDI('.29');STW(R8);
@@ -3200,7 +3200,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-8+62);DEEK();STW(R22);
 	LDW(R1);_DIVU(R22);STW(R1);
-	LDW(R1);XORI(2);_BEQ('.954');
+	XORI(2);_BEQ('.954');
 	LDI(227);STW(R5);
 	LDW(R6);_BEQ('.956');
 	_LDI('.29');STW(R8);
@@ -3213,7 +3213,7 @@ def code7():
 	LDI(5);STW(R1);
 	_LMOV('.47',[SP,-12+62]);
 	LDW(R1);STW(LAC);LDI(0);STW(LAC+2);_SP(-12+62);_LDIVS();LDW(LAC);STW(R1);
-	LDW(R1);XORI(2);_BEQ('.958');
+	XORI(2);_BEQ('.958');
 	LDI(228);STW(R5);
 	LDW(R6);_BEQ('.960');
 	_LDI('.29');STW(R8);
@@ -3228,7 +3228,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-14+62);DEEK();STW(R22);
 	LDW(R1);_DIVU(R22);STW(R1);
-	LDW(R1);XORI(2);_BEQ('.962');
+	XORI(2);_BEQ('.962');
 	LDI(229);STW(R5);
 	LDW(R6);_BEQ('.964');
 	_LDI('.29');STW(R8);
@@ -3241,7 +3241,7 @@ def code7():
 	LDI(5);STW(R1);
 	_FMOV('.56',[SP,-29+62]);
 	LDW(R1);STW(LAC);LDI(0);STW(LAC+2);_FCVU();_SP(-29+62);_FDIV();_FTOU();LDW(LAC);STW(R1);
-	LDW(R1);XORI(2);_BEQ('.966');
+	XORI(2);_BEQ('.966');
 	LDI(230);STW(R5);
 	LDW(R6);_BEQ('.968');
 	_LDI('.29');STW(R8);
@@ -3254,7 +3254,7 @@ def code7():
 	LDI(5);STW(R1);
 	_FMOV('.61',[SP,-34+62]);
 	LDW(R1);STW(LAC);LDI(0);STW(LAC+2);_FCVU();_SP(-34+62);_FDIV();_FTOU();LDW(LAC);STW(R1);
-	LDW(R1);XORI(2);_BEQ('.970');
+	XORI(2);_BEQ('.970');
 	LDI(231);STW(R5);
 	LDW(R6);_BEQ('.972');
 	_LDI('.29');STW(R8);
@@ -3538,7 +3538,7 @@ def code7():
 	LDI(2);STW(R0);
 	LD(R0);STW(R22);
 	LDW(R3);_MODS(R22);STW(R3);
-	LDW(R3);XORI(1);_BEQ('.1051');
+	XORI(1);_BEQ('.1051');
 	LDI(251);STW(R5);
 	LDW(R6);_BEQ('.1053');
 	_LDI('.29');STW(R8);
@@ -3553,7 +3553,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-6+62);DEEK();STW(R22);
 	LDW(R3);_MODS(R22);STW(R3);
-	LDW(R3);XORI(1);_BEQ('.1055');
+	XORI(1);_BEQ('.1055');
 	LDI(252);STW(R5);
 	LDW(R6);_BEQ('.1057');
 	_LDI('.29');STW(R8);
@@ -3568,7 +3568,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-8+62);DEEK();STW(R22);
 	LDW(R3);_MODS(R22);STW(R3);
-	LDW(R3);XORI(1);_BEQ('.1059');
+	XORI(1);_BEQ('.1059');
 	LDI(253);STW(R5);
 	LDW(R6);_BEQ('.1061');
 	_LDI('.29');STW(R8);
@@ -3581,7 +3581,7 @@ def code7():
 	LDI(5);STW(R3);
 	_LMOV('.47',[SP,-12+62]);
 	LDW(R3);_LCVI();_SP(-12+62);_LMODS();LDW(LAC);STW(R3);
-	LDW(R3);XORI(1);_BEQ('.1063');
+	XORI(1);_BEQ('.1063');
 	LDI(254);STW(R5);
 	LDW(R6);_BEQ('.1065');
 	_LDI('.29');STW(R8);
@@ -3596,7 +3596,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-14+62);DEEK();STW(R22);
 	LDW(R3);_MODU(R22);STW(R3);
-	LDW(R3);XORI(1);_BEQ('.1067');
+	XORI(1);_BEQ('.1067');
 	LDI(255);STW(R5);
 	LDW(R6);_BEQ('.1069');
 	_LDI('.29');STW(R8);
@@ -3610,7 +3610,7 @@ def code7():
 	LDI(2);STW(R0);
 	LD(R0);STW(R22);
 	LDW(R2);_MODS(R22);STW(R2);
-	LDW(R2);XORI(1);_BEQ('.1071');
+	XORI(1);_BEQ('.1071');
 	_LDI(256);STW(R5);
 	LDW(R6);_BEQ('.1073');
 	_LDI('.29');STW(R8);
@@ -3625,7 +3625,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-6+62);DEEK();STW(R22);
 	LDW(R2);_MODS(R22);STW(R2);
-	LDW(R2);XORI(1);_BEQ('.1075');
+	XORI(1);_BEQ('.1075');
 	_LDI(257);STW(R5);
 	LDW(R6);_BEQ('.1077');
 	_LDI('.29');STW(R8);
@@ -3640,7 +3640,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-8+62);DEEK();STW(R22);
 	LDW(R2);_MODS(R22);STW(R2);
-	LDW(R2);XORI(1);_BEQ('.1079');
+	XORI(1);_BEQ('.1079');
 	_LDI(258);STW(R5);
 	LDW(R6);_BEQ('.1081');
 	_LDI('.29');STW(R8);
@@ -3653,7 +3653,7 @@ def code7():
 	LDI(5);STW(R2);
 	_LMOV('.47',[SP,-12+62]);
 	LDW(R2);_LCVI();_SP(-12+62);_LMODS();LDW(LAC);STW(R2);
-	LDW(R2);XORI(1);_BEQ('.1083');
+	XORI(1);_BEQ('.1083');
 	_LDI(259);STW(R5);
 	LDW(R6);_BEQ('.1085');
 	_LDI('.29');STW(R8);
@@ -3668,7 +3668,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-14+62);DEEK();STW(R22);
 	LDW(R2);_MODU(R22);STW(R2);
-	LDW(R2);XORI(1);_BEQ('.1087');
+	XORI(1);_BEQ('.1087');
 	_LDI(260);STW(R5);
 	LDW(R6);_BEQ('.1089');
 	_LDI('.29');STW(R8);
@@ -3754,7 +3754,7 @@ def code7():
 	LDI(2);STW(R0);
 	LD(R0);STW(R22);
 	LDW(R1);_MODU(R22);STW(R1);
-	LDW(R1);XORI(1);_BEQ('.1112');
+	XORI(1);_BEQ('.1112');
 	_LDI(266);STW(R5);
 	LDW(R6);_BEQ('.1114');
 	_LDI('.29');STW(R8);
@@ -3769,7 +3769,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-6+62);DEEK();STW(R22);
 	LDW(R1);_MODU(R22);STW(R1);
-	LDW(R1);XORI(1);_BEQ('.1116');
+	XORI(1);_BEQ('.1116');
 	_LDI(267);STW(R5);
 	LDW(R6);_BEQ('.1118');
 	_LDI('.29');STW(R8);
@@ -3784,7 +3784,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-8+62);DEEK();STW(R22);
 	LDW(R1);_MODU(R22);STW(R1);
-	LDW(R1);XORI(1);_BEQ('.1120');
+	XORI(1);_BEQ('.1120');
 	_LDI(268);STW(R5);
 	LDW(R6);_BEQ('.1122');
 	_LDI('.29');STW(R8);
@@ -3797,7 +3797,7 @@ def code7():
 	LDI(5);STW(R1);
 	_LMOV('.47',[SP,-12+62]);
 	LDW(R1);STW(LAC);LDI(0);STW(LAC+2);_SP(-12+62);_LMODS();LDW(LAC);STW(R1);
-	LDW(R1);XORI(1);_BEQ('.1124');
+	XORI(1);_BEQ('.1124');
 	_LDI(269);STW(R5);
 	LDW(R6);_BEQ('.1126');
 	_LDI('.29');STW(R8);
@@ -3812,7 +3812,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-14+62);DEEK();STW(R22);
 	LDW(R1);_MODU(R22);STW(R1);
-	LDW(R1);XORI(1);_BEQ('.1128');
+	XORI(1);_BEQ('.1128');
 	_LDI(270);STW(R5);
 	LDW(R6);_BEQ('.1130');
 	_LDI('.29');STW(R8);
@@ -3900,7 +3900,7 @@ def code7():
 	LDI(2);STW(R0);
 	LD(R0);STW(R22);
 	LDW(R3);_SHRS(R22);STW(R3);
-	LDW(R3);XORI(1);_BEQ('.1152');
+	XORI(1);_BEQ('.1152');
 	_LDI(276);STW(R5);
 	LDW(R6);_BEQ('.1154');
 	_LDI('.29');STW(R8);
@@ -3915,7 +3915,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-6+62);DEEK();STW(R22);
 	LDW(R3);_SHRS(R22);STW(R3);
-	LDW(R3);XORI(1);_BEQ('.1156');
+	XORI(1);_BEQ('.1156');
 	_LDI(277);STW(R5);
 	LDW(R6);_BEQ('.1158');
 	_LDI('.29');STW(R8);
@@ -3930,7 +3930,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-8+62);DEEK();STW(R22);
 	LDW(R3);_SHRS(R22);STW(R3);
-	LDW(R3);XORI(1);_BEQ('.1160');
+	XORI(1);_BEQ('.1160');
 	_LDI(278);STW(R5);
 	LDW(R6);_BEQ('.1162');
 	_LDI('.29');STW(R8);
@@ -3945,7 +3945,7 @@ def code7():
 	_LMOV([SP,-12+62],L21);
 	LDW(L21);STW(R22);
 	LDW(R3);_SHRS(R22);STW(R3);
-	LDW(R3);XORI(1);_BEQ('.1164');
+	XORI(1);_BEQ('.1164');
 	_LDI(279);STW(R5);
 	LDW(R6);_BEQ('.1166');
 	_LDI('.29');STW(R8);
@@ -3960,7 +3960,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-14+62);DEEK();STW(R22);
 	LDW(R3);_SHRS(R22);STW(R3);
-	LDW(R3);XORI(1);_BEQ('.1168');
+	XORI(1);_BEQ('.1168');
 	_LDI(280);STW(R5);
 	LDW(R6);_BEQ('.1170');
 	_LDI('.29');STW(R8);
@@ -3974,7 +3974,7 @@ def code7():
 	LDI(2);STW(R0);
 	LD(R0);STW(R22);
 	LDW(R2);_SHRS(R22);STW(R2);
-	LDW(R2);XORI(1);_BEQ('.1172');
+	XORI(1);_BEQ('.1172');
 	_LDI(281);STW(R5);
 	LDW(R6);_BEQ('.1174');
 	_LDI('.29');STW(R8);
@@ -3989,7 +3989,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-6+62);DEEK();STW(R22);
 	LDW(R2);_SHRS(R22);STW(R2);
-	LDW(R2);XORI(1);_BEQ('.1176');
+	XORI(1);_BEQ('.1176');
 	_LDI(282);STW(R5);
 	LDW(R6);_BEQ('.1178');
 	_LDI('.29');STW(R8);
@@ -4004,7 +4004,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-8+62);DEEK();STW(R22);
 	LDW(R2);_SHRS(R22);STW(R2);
-	LDW(R2);XORI(1);_BEQ('.1180');
+	XORI(1);_BEQ('.1180');
 	_LDI(283);STW(R5);
 	LDW(R6);_BEQ('.1182');
 	_LDI('.29');STW(R8);
@@ -4019,7 +4019,7 @@ def code7():
 	_LMOV([SP,-12+62],L21);
 	LDW(L21);STW(R22);
 	LDW(R2);_SHRS(R22);STW(R2);
-	LDW(R2);XORI(1);_BEQ('.1184');
+	XORI(1);_BEQ('.1184');
 	_LDI(284);STW(R5);
 	LDW(R6);_BEQ('.1186');
 	_LDI('.29');STW(R8);
@@ -4034,7 +4034,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-14+62);DEEK();STW(R22);
 	LDW(R2);_SHRS(R22);STW(R2);
-	LDW(R2);XORI(1);_BEQ('.1188');
+	XORI(1);_BEQ('.1188');
 	_LDI(285);STW(R5);
 	LDW(R6);_BEQ('.1190');
 	_LDI('.29');STW(R8);
@@ -4122,7 +4122,7 @@ def code7():
 	LDI(2);STW(R0);
 	LD(R0);STW(R22);
 	LDW(R1);_SHRU(R22);STW(R1);
-	LDW(R1);XORI(1);_BEQ('.1212');
+	XORI(1);_BEQ('.1212');
 	_LDI(291);STW(R5);
 	LDW(R6);_BEQ('.1214');
 	_LDI('.29');STW(R8);
@@ -4137,7 +4137,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-6+62);DEEK();STW(R22);
 	LDW(R1);_SHRU(R22);STW(R1);
-	LDW(R1);XORI(1);_BEQ('.1216');
+	XORI(1);_BEQ('.1216');
 	_LDI(292);STW(R5);
 	LDW(R6);_BEQ('.1218');
 	_LDI('.29');STW(R8);
@@ -4152,7 +4152,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-8+62);DEEK();STW(R22);
 	LDW(R1);_SHRU(R22);STW(R1);
-	LDW(R1);XORI(1);_BEQ('.1220');
+	XORI(1);_BEQ('.1220');
 	_LDI(293);STW(R5);
 	LDW(R6);_BEQ('.1222');
 	_LDI('.29');STW(R8);
@@ -4167,7 +4167,7 @@ def code7():
 	_LMOV([SP,-12+62],L21);
 	LDW(L21);STW(R22);
 	LDW(R1);_SHRU(R22);STW(R1);
-	LDW(R1);XORI(1);_BEQ('.1224');
+	XORI(1);_BEQ('.1224');
 	_LDI(294);STW(R5);
 	LDW(R6);_BEQ('.1226');
 	_LDI('.29');STW(R8);
@@ -4182,7 +4182,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-14+62);DEEK();STW(R22);
 	LDW(R1);_SHRU(R22);STW(R1);
-	LDW(R1);XORI(1);_BEQ('.1228');
+	XORI(1);_BEQ('.1228');
 	_LDI(295);STW(R5);
 	LDW(R6);_BEQ('.1230');
 	_LDI('.29');STW(R8);
@@ -4270,7 +4270,7 @@ def code7():
 	LDI(2);STW(R0);
 	LD(R0);STW(R22);
 	LDW(R3);_SHL(R22);STW(R3);
-	LDW(R3);XORI(20);_BEQ('.1252');
+	XORI(20);_BEQ('.1252');
 	_LDI(301);STW(R5);
 	LDW(R6);_BEQ('.1254');
 	_LDI('.29');STW(R8);
@@ -4285,7 +4285,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-6+62);DEEK();STW(R22);
 	LDW(R3);_SHL(R22);STW(R3);
-	LDW(R3);XORI(20);_BEQ('.1256');
+	XORI(20);_BEQ('.1256');
 	_LDI(302);STW(R5);
 	LDW(R6);_BEQ('.1258');
 	_LDI('.29');STW(R8);
@@ -4300,7 +4300,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-8+62);DEEK();STW(R22);
 	LDW(R3);_SHL(R22);STW(R3);
-	LDW(R3);XORI(20);_BEQ('.1260');
+	XORI(20);_BEQ('.1260');
 	_LDI(303);STW(R5);
 	LDW(R6);_BEQ('.1262');
 	_LDI('.29');STW(R8);
@@ -4315,7 +4315,7 @@ def code7():
 	_LMOV([SP,-12+62],L21);
 	LDW(L21);STW(R22);
 	LDW(R3);_SHL(R22);STW(R3);
-	LDW(R3);XORI(20);_BEQ('.1264');
+	XORI(20);_BEQ('.1264');
 	_LDI(304);STW(R5);
 	LDW(R6);_BEQ('.1266');
 	_LDI('.29');STW(R8);
@@ -4330,7 +4330,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-14+62);DEEK();STW(R22);
 	LDW(R3);_SHL(R22);STW(R3);
-	LDW(R3);XORI(20);_BEQ('.1268');
+	XORI(20);_BEQ('.1268');
 	_LDI(305);STW(R5);
 	LDW(R6);_BEQ('.1270');
 	_LDI('.29');STW(R8);
@@ -4344,7 +4344,7 @@ def code7():
 	LDI(2);STW(R0);
 	LD(R0);STW(R22);
 	LDW(R2);_SHL(R22);STW(R2);
-	LDW(R2);XORI(20);_BEQ('.1272');
+	XORI(20);_BEQ('.1272');
 	_LDI(306);STW(R5);
 	LDW(R6);_BEQ('.1274');
 	_LDI('.29');STW(R8);
@@ -4359,7 +4359,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-6+62);DEEK();STW(R22);
 	LDW(R2);_SHL(R22);STW(R2);
-	LDW(R2);XORI(20);_BEQ('.1276');
+	XORI(20);_BEQ('.1276');
 	_LDI(307);STW(R5);
 	LDW(R6);_BEQ('.1278');
 	_LDI('.29');STW(R8);
@@ -4374,7 +4374,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-8+62);DEEK();STW(R22);
 	LDW(R2);_SHL(R22);STW(R2);
-	LDW(R2);XORI(20);_BEQ('.1280');
+	XORI(20);_BEQ('.1280');
 	_LDI(308);STW(R5);
 	LDW(R6);_BEQ('.1282');
 	_LDI('.29');STW(R8);
@@ -4389,7 +4389,7 @@ def code7():
 	_LMOV([SP,-12+62],L21);
 	LDW(L21);STW(R22);
 	LDW(R2);_SHL(R22);STW(R2);
-	LDW(R2);XORI(20);_BEQ('.1284');
+	XORI(20);_BEQ('.1284');
 	_LDI(309);STW(R5);
 	LDW(R6);_BEQ('.1286');
 	_LDI('.29');STW(R8);
@@ -4404,7 +4404,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-14+62);DEEK();STW(R22);
 	LDW(R2);_SHL(R22);STW(R2);
-	LDW(R2);XORI(20);_BEQ('.1288');
+	XORI(20);_BEQ('.1288');
 	_LDI(310);STW(R5);
 	LDW(R6);_BEQ('.1290');
 	_LDI('.29');STW(R8);
@@ -4492,7 +4492,7 @@ def code7():
 	LDI(2);STW(R0);
 	LD(R0);STW(R22);
 	LDW(R1);_SHL(R22);STW(R1);
-	LDW(R1);XORI(20);_BEQ('.1313');
+	XORI(20);_BEQ('.1313');
 	_LDI(316);STW(R5);
 	LDW(R6);_BEQ('.1315');
 	_LDI('.29');STW(R8);
@@ -4507,7 +4507,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-6+62);DEEK();STW(R22);
 	LDW(R1);_SHL(R22);STW(R1);
-	LDW(R1);XORI(20);_BEQ('.1317');
+	XORI(20);_BEQ('.1317');
 	_LDI(317);STW(R5);
 	LDW(R6);_BEQ('.1319');
 	_LDI('.29');STW(R8);
@@ -4522,7 +4522,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-8+62);DEEK();STW(R22);
 	LDW(R1);_SHL(R22);STW(R1);
-	LDW(R1);XORI(20);_BEQ('.1321');
+	XORI(20);_BEQ('.1321');
 	_LDI(318);STW(R5);
 	LDW(R6);_BEQ('.1323');
 	_LDI('.29');STW(R8);
@@ -4537,7 +4537,7 @@ def code7():
 	_LMOV([SP,-12+62],L21);
 	LDW(L21);STW(R22);
 	LDW(R1);_SHL(R22);STW(R1);
-	LDW(R1);XORI(20);_BEQ('.1325');
+	XORI(20);_BEQ('.1325');
 	_LDI(319);STW(R5);
 	LDW(R6);_BEQ('.1327');
 	_LDI('.29');STW(R8);
@@ -4552,7 +4552,7 @@ def code7():
 	LDI(2);DOKE(R22);
 	_SP(-14+62);DEEK();STW(R22);
 	LDW(R1);_SHL(R22);STW(R1);
-	LDW(R1);XORI(20);_BEQ('.1329');
+	XORI(20);_BEQ('.1329');
 	_LDI(320);STW(R5);
 	LDW(R6);_BEQ('.1331');
 	_LDI('.29');STW(R8);
@@ -4637,7 +4637,7 @@ def code7():
 	LDI(12);STW(R3);
 	LDI(10);STW(R0);
 	LD(R0);ANDW(R3);STW(R3);
-	LDW(R3);XORI(8);_BEQ('.1353');
+	XORI(8);_BEQ('.1353');
 	_LDI(326);STW(R5);
 	LDW(R6);_BEQ('.1355');
 	_LDI('.29');STW(R8);
@@ -4651,7 +4651,7 @@ def code7():
 	_SP(-6+62);STW(R22);
 	LDI(10);DOKE(R22);
 	_SP(-6+62);DEEK();ANDW(R3);STW(R3);
-	LDW(R3);XORI(8);_BEQ('.1357');
+	XORI(8);_BEQ('.1357');
 	_LDI(327);STW(R5);
 	LDW(R6);_BEQ('.1359');
 	_LDI('.29');STW(R8);
@@ -4665,7 +4665,7 @@ def code7():
 	_SP(-8+62);STW(R22);
 	LDI(10);DOKE(R22);
 	_SP(-8+62);DEEK();ANDW(R3);STW(R3);
-	LDW(R3);XORI(8);_BEQ('.1361');
+	XORI(8);_BEQ('.1361');
 	_LDI(328);STW(R5);
 	LDW(R6);_BEQ('.1363');
 	_LDI('.29');STW(R8);
@@ -4678,7 +4678,7 @@ def code7():
 	LDI(12);STW(R3);
 	_LMOV('.721',[SP,-12+62]);
 	LDW(R3);_LCVI();_SP(-12+62);_LAND();LDW(LAC);STW(R3);
-	LDW(R3);XORI(8);_BEQ('.1365');
+	XORI(8);_BEQ('.1365');
 	_LDI(329);STW(R5);
 	LDW(R6);_BEQ('.1367');
 	_LDI('.29');STW(R8);
@@ -4692,7 +4692,7 @@ def code7():
 	_SP(-14+62);STW(R22);
 	LDI(10);DOKE(R22);
 	_SP(-14+62);DEEK();ANDW(R3);STW(R3);
-	LDW(R3);XORI(8);_BEQ('.1369');
+	XORI(8);_BEQ('.1369');
 	_LDI(330);STW(R5);
 	LDW(R6);_BEQ('.1371');
 	_LDI('.29');STW(R8);
@@ -4705,7 +4705,7 @@ def code7():
 	LDI(12);STW(R2);
 	LDI(10);STW(R0);
 	LD(R0);ANDW(R2);STW(R2);
-	LDW(R2);XORI(8);_BEQ('.1373');
+	XORI(8);_BEQ('.1373');
 	_LDI(331);STW(R5);
 	LDW(R6);_BEQ('.1375');
 	_LDI('.29');STW(R8);
@@ -4719,7 +4719,7 @@ def code7():
 	_SP(-6+62);STW(R22);
 	LDI(10);DOKE(R22);
 	_SP(-6+62);DEEK();ANDW(R2);STW(R2);
-	LDW(R2);XORI(8);_BEQ('.1377');
+	XORI(8);_BEQ('.1377');
 	_LDI(332);STW(R5);
 	LDW(R6);_BEQ('.1379');
 	_LDI('.29');STW(R8);
@@ -4733,7 +4733,7 @@ def code7():
 	_SP(-8+62);STW(R22);
 	LDI(10);DOKE(R22);
 	_SP(-8+62);DEEK();ANDW(R2);STW(R2);
-	LDW(R2);XORI(8);_BEQ('.1381');
+	XORI(8);_BEQ('.1381');
 	_LDI(333);STW(R5);
 	LDW(R6);_BEQ('.1383');
 	_LDI('.29');STW(R8);
@@ -4746,7 +4746,7 @@ def code7():
 	LDI(12);STW(R2);
 	_LMOV('.721',[SP,-12+62]);
 	LDW(R2);_LCVI();_SP(-12+62);_LAND();LDW(LAC);STW(R2);
-	LDW(R2);XORI(8);_BEQ('.1385');
+	XORI(8);_BEQ('.1385');
 	_LDI(334);STW(R5);
 	LDW(R6);_BEQ('.1387');
 	_LDI('.29');STW(R8);
@@ -4760,7 +4760,7 @@ def code7():
 	_SP(-14+62);STW(R22);
 	LDI(10);DOKE(R22);
 	_SP(-14+62);DEEK();ANDW(R2);STW(R2);
-	LDW(R2);XORI(8);_BEQ('.1389');
+	XORI(8);_BEQ('.1389');
 	_LDI(335);STW(R5);
 	LDW(R6);_BEQ('.1391');
 	_LDI('.29');STW(R8);
@@ -4841,7 +4841,7 @@ def code7():
 	LDI(12);STW(R1);
 	LDI(10);STW(R0);
 	LD(R0);ANDW(R1);STW(R1);
-	LDW(R1);XORI(8);_BEQ('.1415');
+	XORI(8);_BEQ('.1415');
 	_LDI(341);STW(R5);
 	LDW(R6);_BEQ('.1417');
 	_LDI('.29');STW(R8);
@@ -4855,7 +4855,7 @@ def code7():
 	_SP(-6+62);STW(R22);
 	LDI(10);DOKE(R22);
 	_SP(-6+62);DEEK();ANDW(R1);STW(R1);
-	LDW(R1);XORI(8);_BEQ('.1419');
+	XORI(8);_BEQ('.1419');
 	_LDI(342);STW(R5);
 	LDW(R6);_BEQ('.1421');
 	_LDI('.29');STW(R8);
@@ -4869,7 +4869,7 @@ def code7():
 	_SP(-8+62);STW(R22);
 	LDI(10);DOKE(R22);
 	_SP(-8+62);DEEK();ANDW(R1);STW(R1);
-	LDW(R1);XORI(8);_BEQ('.1423');
+	XORI(8);_BEQ('.1423');
 	_LDI(343);STW(R5);
 	LDW(R6);_BEQ('.1425');
 	_LDI('.29');STW(R8);
@@ -4882,7 +4882,7 @@ def code7():
 	LDI(12);STW(R1);
 	_LMOV('.721',[SP,-12+62]);
 	LDW(R1);STW(LAC);LDI(0);STW(LAC+2);_SP(-12+62);_LAND();LDW(LAC);STW(R1);
-	LDW(R1);XORI(8);_BEQ('.1427');
+	XORI(8);_BEQ('.1427');
 	_LDI(344);STW(R5);
 	LDW(R6);_BEQ('.1429');
 	_LDI('.29');STW(R8);
@@ -4896,7 +4896,7 @@ def code7():
 	_SP(-14+62);STW(R22);
 	LDI(10);DOKE(R22);
 	_SP(-14+62);DEEK();ANDW(R1);STW(R1);
-	LDW(R1);XORI(8);_BEQ('.1431');
+	XORI(8);_BEQ('.1431');
 	_LDI(345);STW(R5);
 	LDW(R6);_BEQ('.1433');
 	_LDI('.29');STW(R8);
@@ -4981,7 +4981,7 @@ def code7():
 	LDI(12);STW(R3);
 	LDI(10);STW(R0);
 	LD(R0);XORW(R3);STW(R3);
-	LDW(R3);XORI(6);_BEQ('.1455');
+	XORI(6);_BEQ('.1455');
 	_LDI(351);STW(R5);
 	LDW(R6);_BEQ('.1457');
 	_LDI('.29');STW(R8);
@@ -4995,7 +4995,7 @@ def code7():
 	_SP(-6+62);STW(R22);
 	LDI(10);DOKE(R22);
 	_SP(-6+62);DEEK();XORW(R3);STW(R3);
-	LDW(R3);XORI(6);_BEQ('.1459');
+	XORI(6);_BEQ('.1459');
 	_LDI(352);STW(R5);
 	LDW(R6);_BEQ('.1461');
 	_LDI('.29');STW(R8);
@@ -5009,7 +5009,7 @@ def code7():
 	_SP(-8+62);STW(R22);
 	LDI(10);DOKE(R22);
 	_SP(-8+62);DEEK();XORW(R3);STW(R3);
-	LDW(R3);XORI(6);_BEQ('.1463');
+	XORI(6);_BEQ('.1463');
 	_LDI(353);STW(R5);
 	LDW(R6);_BEQ('.1465');
 	_LDI('.29');STW(R8);
@@ -5022,7 +5022,7 @@ def code7():
 	LDI(12);STW(R3);
 	_LMOV('.721',[SP,-12+62]);
 	LDW(R3);_LCVI();_SP(-12+62);_LXOR();LDW(LAC);STW(R3);
-	LDW(R3);XORI(6);_BEQ('.1467');
+	XORI(6);_BEQ('.1467');
 	_LDI(354);STW(R5);
 	LDW(R6);_BEQ('.1469');
 	_LDI('.29');STW(R8);
@@ -5036,7 +5036,7 @@ def code7():
 	_SP(-14+62);STW(R22);
 	LDI(10);DOKE(R22);
 	_SP(-14+62);DEEK();XORW(R3);STW(R3);
-	LDW(R3);XORI(6);_BEQ('.1471');
+	XORI(6);_BEQ('.1471');
 	_LDI(355);STW(R5);
 	LDW(R6);_BEQ('.1473');
 	_LDI('.29');STW(R8);
@@ -5049,7 +5049,7 @@ def code7():
 	LDI(12);STW(R2);
 	LDI(10);STW(R0);
 	LD(R0);XORW(R2);STW(R2);
-	LDW(R2);XORI(6);_BEQ('.1475');
+	XORI(6);_BEQ('.1475');
 	_LDI(356);STW(R5);
 	LDW(R6);_BEQ('.1477');
 	_LDI('.29');STW(R8);
@@ -5063,7 +5063,7 @@ def code7():
 	_SP(-6+62);STW(R22);
 	LDI(10);DOKE(R22);
 	_SP(-6+62);DEEK();XORW(R2);STW(R2);
-	LDW(R2);XORI(6);_BEQ('.1479');
+	XORI(6);_BEQ('.1479');
 	_LDI(357);STW(R5);
 	LDW(R6);_BEQ('.1481');
 	_LDI('.29');STW(R8);
@@ -5077,7 +5077,7 @@ def code7():
 	_SP(-8+62);STW(R22);
 	LDI(10);DOKE(R22);
 	_SP(-8+62);DEEK();XORW(R2);STW(R2);
-	LDW(R2);XORI(6);_BEQ('.1483');
+	XORI(6);_BEQ('.1483');
 	_LDI(358);STW(R5);
 	LDW(R6);_BEQ('.1485');
 	_LDI('.29');STW(R8);
@@ -5090,7 +5090,7 @@ def code7():
 	LDI(12);STW(R2);
 	_LMOV('.721',[SP,-12+62]);
 	LDW(R2);_LCVI();_SP(-12+62);_LXOR();LDW(LAC);STW(R2);
-	LDW(R2);XORI(6);_BEQ('.1487');
+	XORI(6);_BEQ('.1487');
 	_LDI(359);STW(R5);
 	LDW(R6);_BEQ('.1489');
 	_LDI('.29');STW(R8);
@@ -5104,7 +5104,7 @@ def code7():
 	_SP(-14+62);STW(R22);
 	LDI(10);DOKE(R22);
 	_SP(-14+62);DEEK();XORW(R2);STW(R2);
-	LDW(R2);XORI(6);_BEQ('.1491');
+	XORI(6);_BEQ('.1491');
 	_LDI(360);STW(R5);
 	LDW(R6);_BEQ('.1493');
 	_LDI('.29');STW(R8);
@@ -5185,7 +5185,7 @@ def code7():
 	LDI(12);STW(R1);
 	LDI(10);STW(R0);
 	LD(R0);XORW(R1);STW(R1);
-	LDW(R1);XORI(6);_BEQ('.1516');
+	XORI(6);_BEQ('.1516');
 	_LDI(366);STW(R5);
 	LDW(R6);_BEQ('.1518');
 	_LDI('.29');STW(R8);
@@ -5199,7 +5199,7 @@ def code7():
 	_SP(-6+62);STW(R22);
 	LDI(10);DOKE(R22);
 	_SP(-6+62);DEEK();XORW(R1);STW(R1);
-	LDW(R1);XORI(6);_BEQ('.1520');
+	XORI(6);_BEQ('.1520');
 	_LDI(367);STW(R5);
 	LDW(R6);_BEQ('.1522');
 	_LDI('.29');STW(R8);
@@ -5213,7 +5213,7 @@ def code7():
 	_SP(-8+62);STW(R22);
 	LDI(10);DOKE(R22);
 	_SP(-8+62);DEEK();XORW(R1);STW(R1);
-	LDW(R1);XORI(6);_BEQ('.1524');
+	XORI(6);_BEQ('.1524');
 	_LDI(368);STW(R5);
 	LDW(R6);_BEQ('.1526');
 	_LDI('.29');STW(R8);
@@ -5226,7 +5226,7 @@ def code7():
 	LDI(12);STW(R1);
 	_LMOV('.721',[SP,-12+62]);
 	LDW(R1);STW(LAC);LDI(0);STW(LAC+2);_SP(-12+62);_LXOR();LDW(LAC);STW(R1);
-	LDW(R1);XORI(6);_BEQ('.1528');
+	XORI(6);_BEQ('.1528');
 	_LDI(369);STW(R5);
 	LDW(R6);_BEQ('.1530');
 	_LDI('.29');STW(R8);
@@ -5240,7 +5240,7 @@ def code7():
 	_SP(-14+62);STW(R22);
 	LDI(10);DOKE(R22);
 	_SP(-14+62);DEEK();XORW(R1);STW(R1);
-	LDW(R1);XORI(6);_BEQ('.1532');
+	XORI(6);_BEQ('.1532');
 	_LDI(370);STW(R5);
 	LDW(R6);_BEQ('.1534');
 	_LDI('.29');STW(R8);
@@ -5325,7 +5325,7 @@ def code7():
 	LDI(12);STW(R3);
 	LDI(10);STW(R0);
 	LD(R0);ORW(R3);STW(R3);
-	LDW(R3);XORI(14);_BEQ('.1556');
+	XORI(14);_BEQ('.1556');
 	_LDI(376);STW(R5);
 	LDW(R6);_BEQ('.1558');
 	_LDI('.29');STW(R8);
@@ -5339,7 +5339,7 @@ def code7():
 	_SP(-6+62);STW(R22);
 	LDI(10);DOKE(R22);
 	_SP(-6+62);DEEK();ORW(R3);STW(R3);
-	LDW(R3);XORI(14);_BEQ('.1560');
+	XORI(14);_BEQ('.1560');
 	_LDI(377);STW(R5);
 	LDW(R6);_BEQ('.1562');
 	_LDI('.29');STW(R8);
@@ -5353,7 +5353,7 @@ def code7():
 	_SP(-8+62);STW(R22);
 	LDI(10);DOKE(R22);
 	_SP(-8+62);DEEK();ORW(R3);STW(R3);
-	LDW(R3);XORI(14);_BEQ('.1564');
+	XORI(14);_BEQ('.1564');
 	_LDI(378);STW(R5);
 	LDW(R6);_BEQ('.1566');
 	_LDI('.29');STW(R8);
@@ -5366,7 +5366,7 @@ def code7():
 	LDI(12);STW(R3);
 	_LMOV('.721',[SP,-12+62]);
 	LDW(R3);_LCVI();_SP(-12+62);_LOR();LDW(LAC);STW(R3);
-	LDW(R3);XORI(14);_BEQ('.1568');
+	XORI(14);_BEQ('.1568');
 	_LDI(379);STW(R5);
 	LDW(R6);_BEQ('.1570');
 	_LDI('.29');STW(R8);
@@ -5380,7 +5380,7 @@ def code7():
 	_SP(-14+62);STW(R22);
 	LDI(10);DOKE(R22);
 	_SP(-14+62);DEEK();ORW(R3);STW(R3);
-	LDW(R3);XORI(14);_BEQ('.1572');
+	XORI(14);_BEQ('.1572');
 	_LDI(380);STW(R5);
 	LDW(R6);_BEQ('.1574');
 	_LDI('.29');STW(R8);
@@ -5393,7 +5393,7 @@ def code7():
 	LDI(12);STW(R2);
 	LDI(10);STW(R0);
 	LD(R0);ORW(R2);STW(R2);
-	LDW(R2);XORI(14);_BEQ('.1576');
+	XORI(14);_BEQ('.1576');
 	_LDI(381);STW(R5);
 	LDW(R6);_BEQ('.1578');
 	_LDI('.29');STW(R8);
@@ -5407,7 +5407,7 @@ def code7():
 	_SP(-6+62);STW(R22);
 	LDI(10);DOKE(R22);
 	_SP(-6+62);DEEK();ORW(R2);STW(R2);
-	LDW(R2);XORI(14);_BEQ('.1580');
+	XORI(14);_BEQ('.1580');
 	_LDI(382);STW(R5);
 	LDW(R6);_BEQ('.1582');
 	_LDI('.29');STW(R8);
@@ -5421,7 +5421,7 @@ def code7():
 	_SP(-8+62);STW(R22);
 	LDI(10);DOKE(R22);
 	_SP(-8+62);DEEK();ORW(R2);STW(R2);
-	LDW(R2);XORI(14);_BEQ('.1584');
+	XORI(14);_BEQ('.1584');
 	_LDI(383);STW(R5);
 	LDW(R6);_BEQ('.1586');
 	_LDI('.29');STW(R8);
@@ -5434,7 +5434,7 @@ def code7():
 	LDI(12);STW(R2);
 	_LMOV('.721',[SP,-12+62]);
 	LDW(R2);_LCVI();_SP(-12+62);_LOR();LDW(LAC);STW(R2);
-	LDW(R2);XORI(14);_BEQ('.1588');
+	XORI(14);_BEQ('.1588');
 	_LDI(384);STW(R5);
 	LDW(R6);_BEQ('.1590');
 	_LDI('.29');STW(R8);
@@ -5448,7 +5448,7 @@ def code7():
 	_SP(-14+62);STW(R22);
 	LDI(10);DOKE(R22);
 	_SP(-14+62);DEEK();ORW(R2);STW(R2);
-	LDW(R2);XORI(14);_BEQ('.1592');
+	XORI(14);_BEQ('.1592');
 	_LDI(385);STW(R5);
 	LDW(R6);_BEQ('.1594');
 	_LDI('.29');STW(R8);
@@ -5529,7 +5529,7 @@ def code7():
 	LDI(12);STW(R1);
 	LDI(10);STW(R0);
 	LD(R0);ORW(R1);STW(R1);
-	LDW(R1);XORI(14);_BEQ('.1617');
+	XORI(14);_BEQ('.1617');
 	_LDI(391);STW(R5);
 	LDW(R6);_BEQ('.1619');
 	_LDI('.29');STW(R8);
@@ -5543,7 +5543,7 @@ def code7():
 	_SP(-6+62);STW(R22);
 	LDI(10);DOKE(R22);
 	_SP(-6+62);DEEK();ORW(R1);STW(R1);
-	LDW(R1);XORI(14);_BEQ('.1621');
+	XORI(14);_BEQ('.1621');
 	_LDI(392);STW(R5);
 	LDW(R6);_BEQ('.1623');
 	_LDI('.29');STW(R8);
@@ -5557,7 +5557,7 @@ def code7():
 	_SP(-8+62);STW(R22);
 	LDI(10);DOKE(R22);
 	_SP(-8+62);DEEK();ORW(R1);STW(R1);
-	LDW(R1);XORI(14);_BEQ('.1625');
+	XORI(14);_BEQ('.1625');
 	_LDI(393);STW(R5);
 	LDW(R6);_BEQ('.1627');
 	_LDI('.29');STW(R8);
@@ -5570,7 +5570,7 @@ def code7():
 	LDI(12);STW(R1);
 	_LMOV('.721',[SP,-12+62]);
 	LDW(R1);STW(LAC);LDI(0);STW(LAC+2);_SP(-12+62);_LOR();LDW(LAC);STW(R1);
-	LDW(R1);XORI(14);_BEQ('.1629');
+	XORI(14);_BEQ('.1629');
 	_LDI(394);STW(R5);
 	LDW(R6);_BEQ('.1631');
 	_LDI('.29');STW(R8);
@@ -5584,7 +5584,7 @@ def code7():
 	_SP(-14+62);STW(R22);
 	LDI(10);DOKE(R22);
 	_SP(-14+62);DEEK();ORW(R1);STW(R1);
-	LDW(R1);XORI(14);_BEQ('.1633');
+	XORI(14);_BEQ('.1633');
 	_LDI(395);STW(R5);
 	LDW(R6);_BEQ('.1635');
 	_LDI('.29');STW(R8);

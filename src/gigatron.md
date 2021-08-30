@@ -1220,9 +1220,24 @@ static void clobber(Node p)
   }
 }
 
+
+/* Helper for preralloc */
+static const char *skip_comment_in_template(const char *tpl)
+{
+  const char *s;
+  for (s = tpl; s && *s; s++) {
+    if (! strncmp(s, "%{#", 3)) {
+      if (! (s = strchr(s, '}')))
+        return tpl;
+    } else if (!isspace(*s))
+      break;
+  }
+  return s;
+}
+
 /* Helper for preralloc */
 static int find_reguse(Node p, int nt, Symbol sym,
-                       const char **lefttpl, int *leftkid)
+                       const char **lefttpl, int *leftkid, Node *leftkn)
 {
   Node n = p;
   int rulenum = (*IR->x._rule)(n->x.state, nt);
@@ -1233,15 +1248,9 @@ static int find_reguse(Node p, int nt, Symbol sym,
   int count = 0;
   int i;
 
-  for(;template;template++) {
-    if (isspace(template[0]))
-      { continue; }
-    if (template[0]=='%' && template[1]=='{' && template[2] == '#')
-      { template = strchr(template,'}'); continue; }
-    if (template[0] == '%' && isdigit(template[1]))
-      { leftidx = template[1] - '0'; break; }
-    break;
-  }
+  template = skip_comment_in_template(template);
+  if (template[0] == '%' && isdigit(template[1]))
+    leftidx = template[1] - '0';
   (*IR->x._kids)(n, rulenum, kids);
   for (i=0; nts[i] && i<NELEMS(kids); i++)
     {
@@ -1253,19 +1262,38 @@ static int find_reguse(Node p, int nt, Symbol sym,
           if (lefttpl && leftidx < 0) {
             *lefttpl = template;
             *leftkid = i;
+            *leftkn = k;
           }
         }
       } else if (i == leftidx) {
-        count += find_reguse(k, knt, sym, lefttpl, leftkid);
+        count += find_reguse(k, knt, sym, lefttpl, leftkid, leftkn);
       } else {
-        count += find_reguse(k, knt, sym, 0, 0);
+        count += find_reguse(k, knt, sym, 0, 0, 0);
       }
     }
   return count;
 }
 
 /* Helper for preralloc */
-static int scan_ac_preserving_instructions(Symbol sym, Symbol r, Node q)
+static void change_sym_to_ac(Node p, Symbol sym, Symbol ac)
+{
+  assert(p->syms[RX] == sym);
+  p->syms[RX] = ac;
+  p->x.registered = 1;
+  if (sym->temporary) {
+    Node *q = &sym->x.lastuse;
+    while (*q) {
+      if (*q == p)
+        *q = (*q)->x.prevuse;
+      else
+        q = &(*q)->x.prevuse;
+    }
+  }
+  p->x.prevuse = 0;
+}
+
+/* Helper for preralloc */
+static int scan_ac_preserving_instructions(Symbol sym, Symbol r, Node q, Symbol pr)
 {
   int count, usecount;
   const char *lefttpl;
@@ -1296,7 +1324,7 @@ static int scan_ac_preserving_instructions(Symbol sym, Symbol r, Node q)
       /* For instructions that generate code, we start
          by counting how many times the instruction uses sym. */
       lefttpl = 0;
-      count = find_reguse(q, q->x.inst, sym, &lefttpl, &leftkid);
+      count = find_reguse(q, q->x.inst, sym, &lefttpl, &leftkid, &p);
       usecount -= count;
       if (generic(q->op)==ASGN && specific(q->kids[0]->op) == VREG+P
           && q->kids[0]->syms[0] != sym && q->kids[0]->syms[0] != ireg[31]
@@ -1309,13 +1337,37 @@ static int scan_ac_preserving_instructions(Symbol sym, Symbol r, Node q)
           && q->kids[0]->kids[0]->syms[0] == sym)
         /* matches a move instruction whose source is sym */
         {
+          if (pr && lefttpl && count == 1 && p)
+            change_sym_to_ac(p, sym, pr);
           if (usecount == 0)
+            /* signal that we've reached the last use of sym */
             return 1;
           continue;
         }
       /* Next instruction is not known to preserve ac.
-         However it might start with the lastuse of sym. */
-      if (usecount == 0 && count == 1 && lefttpl) {
+         But its first opcode might be the last use of sym */
+#define ONLY_ELIDED_OPCODES 1
+#if ONLY_ELIDED_OPCODES
+      if (lefttpl && leftkid == 0) {
+        char buf[32];
+        sprintf(buf,"%%{src!=%s:", r->x.name);
+        lefttpl = skip_comment_in_template(lefttpl);
+        if (! strncmp(lefttpl, buf, strlen(buf)))
+          for(; *lefttpl && *lefttpl != '}'; lefttpl++)
+            if (*lefttpl == ';' && !strstr(lefttpl, "%0")) {
+              /* First opcode can be elided and no reference to %0 follows.
+                 We could also have checked that %0 appears in the opcode. */
+              if (pr)
+                change_sym_to_ac(p, sym, pr);
+              if (count == 1 && usecount == 0)
+                /* signal we've reached the last use of sym */
+                return 1;
+            }
+      }
+#else
+      /* This older variation catches a couple 
+         more cases but feels more risky */
+      if (lefttpl) {
         char buf[3] = { '%', '0' + leftkid, 0 };
         /* Template expansion refers to sym as %0.
            But it also has to be in the first opcode.
@@ -1323,9 +1375,14 @@ static int scan_ac_preserving_instructions(Symbol sym, Symbol r, Node q)
            does not understand the %[0b] constructs! */
         const char *p0 = strstr(lefttpl, buf);
         const char *p1 = strchr(lefttpl, ';');
-        if (p0 && p1 && p0 < p1 && !strstr(p1, buf))
-          return 1;
+        if (p0 && p1 && p0 < p1 && !strstr(p1, buf)) {
+          if (pr)
+            change_sym_to_ac(p, sym, pr);
+          if (count == 1 && usecount == 0)
+            return 1;
+        }
       }
+#endif
       return 0;
     }
 }
@@ -1339,33 +1396,35 @@ static void preralloc(Node p)
   Symbol r = 0;
   Node q = p->x.next;
   
-  if (sym->temporary) {
-    /* Try to eliminate useless data moving operations between
-       successive trees in the same forest, by using vAC/LAC/FAC instead
-       of allocating a temporary register. */
-    if (!strncmp(template,"\t%{#alsoVAC}", 12))
-      r = ireg[31]; 
-    else if (!strncmp(template,"\t%{#alsoLAC}", 12))
-      r = lreg[31];
-    else if (!strncmp(template,"\t%{#alsoFAC}", 12))
-      r = freg[31];
-    else if (sym->temporary && !strncmp(template,"\t%{#canVAC}", 11))
-      r = ireg[31];
-    if (r && q && generic(q->op) == ASGN && q->kids[0]->op == VREG+P)
-      {
-        /* In order to use vAC/LAC/FAC instead of allocating a
-           temporary register, we must be sure that the value of
-           vAC/LAC/FAC is unchanged whenever the code needs it.*/
-        if (scan_ac_preserving_instructions(sym, r, q->x.next) && sym->temporary)
-          {
-            r->x.lastuse = sym->x.lastuse;
-            for (q = sym->x.lastuse; q; q = q->x.prevuse) {
-              q->syms[RX] = r;
-              q->x.registered = 1;
-            }
+  /* Try to eliminate useless data moving operations between
+     successive trees in the same forest, by using vAC/LAC/FAC instead
+     of allocating a temporary register. */
+  Symbol patch = 0;
+  if (!strncmp(template,"\t%{#alsoVAC}", 12))
+    patch = r = ireg[31];
+  else if (!strncmp(template,"\t%{#alsoLAC}", 12))
+    patch = r = lreg[31];
+  else if (!strncmp(template,"\t%{#alsoFAC}", 12))
+    patch = r = freg[31];
+  else if (sym->temporary && !strncmp(template,"\t%{#canVAC}", 11))
+    r = ireg[31];
+  if (r && q && generic(q->op) == ASGN && q->kids[0]->op == VREG+P)
+    {
+      /* in order to use vAC/LAC/FAC instead of a temporary register,
+         we must be sure that the value of vAC/LAC/FAC is unchanged
+         whenever the code needs it.*/
+      if (scan_ac_preserving_instructions(sym, r, q->x.next, patch)
+          && sym->temporary)
+        {
+          /* optimize the temporary out of existence because 
+             we have reached its last use. */
+          r->x.lastuse = sym->x.lastuse;
+          for (q = sym->x.lastuse; q; q = q->x.prevuse) {
+            q->syms[RX] = r;
+            q->x.registered = 1;
           }
-      }
-  }
+        }
+    }
 }
 
 static void myemitfmt(const char *fmt, Node p, Node *kids, short *nts)

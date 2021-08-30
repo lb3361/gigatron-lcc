@@ -144,7 +144,7 @@ def code1():
 	_LDI('S');STW(R22);
 	LDI(6);DOKE(R22);
 	LDW(R22);DEEK();STW(R22);
-	LDW(R22);STW(R21);
+	STW(R21);
 	_LDI('c');STW(R20);
 	LD(R21);POKE(R20);
 	_LDI('s');STW(R20);
@@ -165,7 +165,7 @@ def code1():
 	_LDI('I');STW(R22);
 	LDI(7);DOKE(R22);
 	LDW(R22);DEEK();STW(R22);
-	LDW(R22);STW(R21);
+	STW(R21);
 	_LDI('c');STW(R20);
 	LD(R21);POKE(R20);
 	_LDI('s');STW(R20);
@@ -273,7 +273,7 @@ def code1():
 	LDI(0);DOKE(R22);
 	LDI(0);DOKE(R22);
 	_LDI('P');STW(R21);
-	LDW(R21);DEEK();DOKE(R22);
+	DEEK();DOKE(R22);
 	LDI(0);DOKE(R21);
 	LDI(0);DOKE(R21);
 	LDI(0);DOKE(R21);

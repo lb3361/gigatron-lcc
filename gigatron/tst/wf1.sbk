@@ -15,7 +15,7 @@ def code0():
 	_SP(-22+28);STW(R9);
 	_MOV(R9,[SP,4]);
 	CALLI('lookup');STW(R22);
-	LDW(R22);DEEK();ADDI(1);DOKE(R22);
+	DEEK();ADDI(1);DOKE(R22);
 	label('.3');
 	_SP(-20+28);STW(R8);
 	_MOV(R8,[SP,2]);
@@ -52,7 +52,7 @@ def code2():
 	label('.8');
 	label('.9');
 	CALLI('getchar');STW(R22);
-	LDW(R22);STW(R6);
+	STW(R6);
 	_LDI(-1);XORW(R22);_BEQ('.11');
 	LDW(R6);STW(R8);
 	_MOV(R8,[SP,2]);
@@ -163,11 +163,11 @@ def code4():
 	_MOV(R9,[SP,4]);
 	CALLI('strcpy');
 	_LDI('next');STW(R22);
-	LDW(R22);DEEK();STW(R21);
+	DEEK();STW(R21);
 	LDI(1);ADDW(R21);DOKE(R22);
 	_LDI('words');STW(R22);
 	LDW(R21);_SHLI(3);ADDW(R22);STW(R22);
-	LDW(R22);DOKE(R6);
+	DOKE(R6);
 	LDW(R22);
 	label('.23');
 	_EPILOGUE(12,6,0xc0,saveAC=True);

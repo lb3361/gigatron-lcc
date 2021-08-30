@@ -72,7 +72,7 @@ def code3():
 	STW(R18);
 	PEEK();STW(R19);
 	LDW(R18);STW(R22);
-	LDW(R22);SUBI(-(-1));STW(R18);
+	SUBI(-(-1));STW(R18);
 	LDW(R22);PEEK();STW(R19);
 	LDW(R18);SUBI(-(-1));
 	STW(R18);
@@ -91,7 +91,7 @@ def code4():
 	STW(R18);
 	DEEK();STW(R19);
 	LDW(R18);STW(R22);
-	LDW(R22);SUBI(-(-2));STW(R18);
+	SUBI(-(-2));STW(R18);
 	LDW(R22);DEEK();STW(R19);
 	LDW(R18);SUBI(-(-2));
 	STW(R18);

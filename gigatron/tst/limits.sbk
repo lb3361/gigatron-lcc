@@ -14,7 +14,7 @@ def code0():
 	_LDI('.3');STW(R8);
 	_MOV(R8,[SP,2]);
 	_LDI(0xffff);STW(R22);
-	LDW(R22);STW(R9);
+	STW(R9);
 	_MOV(R9,[SP,4]);
 	LDW(R22);STW(R10);
 	_MOV(R10,[SP,6]);
@@ -22,7 +22,7 @@ def code0():
 	_LDI('.4');STW(R8);
 	_MOV(R8,[SP,2]);
 	_LDI(0xffff);STW(R22);
-	LDW(R22);STW(R9);
+	STW(R9);
 	_MOV(R9,[SP,4]);
 	LDW(R22);STW(R10);
 	_MOV(R10,[SP,6]);
@@ -52,7 +52,7 @@ def code0():
 	_LDI('.9');STW(R8);
 	_MOV(R8,[SP,2]);
 	_LDI(32767);STW(R22);
-	LDW(R22);STW(R9);
+	STW(R9);
 	_MOV(R9,[SP,4]);
 	LDW(R22);STW(R10);
 	_MOV(R10,[SP,6]);
@@ -60,7 +60,7 @@ def code0():
 	_LDI('.10');STW(R8);
 	_MOV(R8,[SP,2]);
 	_LDI(32767);STW(R22);
-	LDW(R22);STW(R9);
+	STW(R9);
 	_MOV(R9,[SP,4]);
 	LDW(R22);STW(R10);
 	_MOV(R10,[SP,6]);
@@ -83,7 +83,7 @@ def code0():
 	_LDI('.14');STW(R8);
 	_MOV(R8,[SP,2]);
 	_LDI(-128);STW(R22);
-	LDW(R22);STW(R9);
+	STW(R9);
 	_MOV(R9,[SP,4]);
 	LDW(R22);STW(R10);
 	_MOV(R10,[SP,6]);
@@ -91,7 +91,7 @@ def code0():
 	_LDI('.15');STW(R8);
 	_MOV(R8,[SP,2]);
 	_LDI(-32768);STW(R22);
-	LDW(R22);STW(R9);
+	STW(R9);
 	_MOV(R9,[SP,4]);
 	LDW(R22);STW(R10);
 	_MOV(R10,[SP,6]);
@@ -99,7 +99,7 @@ def code0():
 	_LDI('.16');STW(R8);
 	_MOV(R8,[SP,2]);
 	_LDI(-32768);STW(R22);
-	LDW(R22);STW(R9);
+	STW(R9);
 	_MOV(R9,[SP,4]);
 	LDW(R22);STW(R10);
 	_MOV(R10,[SP,6]);

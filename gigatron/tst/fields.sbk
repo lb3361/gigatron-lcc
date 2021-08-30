@@ -46,7 +46,7 @@ def code3():
 	_LDI('.10');STW(R8);
 	_MOV(R8,[SP,2]);
 	_LDI('y');DEEK();STW(R22);
-	LDW(R22);ANDI(3);STW(R9);
+	ANDI(3);STW(R9);
 	_MOV(R9,[SP,4]);
 	LDW(R22);_SHRIU(2);ANDI(15);STW(R10);
 	_MOV(R10,[SP,6]);
@@ -84,7 +84,7 @@ def code3():
 	_LDI('.10');STW(R8);
 	_MOV(R8,[SP,2]);
 	_LDI('y');DEEK();STW(R22);
-	LDW(R22);ANDI(3);STW(R9);
+	ANDI(3);STW(R9);
 	_MOV(R9,[SP,4]);
 	LDW(R22);_SHRIU(2);ANDI(15);STW(R10);
 	_MOV(R10,[SP,6]);
@@ -117,7 +117,7 @@ def code4():
 	_LDI('.25');STW(R8);
 	_MOV(R8,[SP,2]);
 	LDW(R7);DEEK();STW(R22);
-	LDW(R22);ANDI(3);STW(R9);
+	ANDI(3);STW(R9);
 	_MOV(R9,[SP,4]);
 	LDW(R22);_SHRIU(2);ANDI(15);STW(R10);
 	_MOV(R10,[SP,6]);

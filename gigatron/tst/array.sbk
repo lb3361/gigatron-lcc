@@ -27,14 +27,14 @@ def code0():
 	label('.10');
 	_SP(-24+36);STW(R22);
 	LDW(R6);_SHLI(3);ADDW(R22);STW(R22);
-	LDW(R22);STW(R5);
+	STW(R5);
 	_LDI('y');STW(R21);
 	LDW(R6);LSLW();ADDW(R21);STW(R21);
 	LDW(R22);DOKE(R21);
 	LDI(0);STW(R7);
 	label('.14');
 	LDW(R7);LSLW();STW(R22);
-	LDW(R22);ADDW(R5);STW(R21);
+	ADDW(R5);STW(R21);
 	_LDI('x');STW(R20);
 	LDW(R6);_SHLI(3);ADDW(R20);ADDW(R22);DEEK();DOKE(R21);
 	label('.15');

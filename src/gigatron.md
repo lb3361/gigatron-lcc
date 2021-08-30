@@ -368,7 +368,7 @@ zddr: conB "%0"
 #    into register vAC, potentially clobbeting LAC, FAC, and the scratch registers.
 # -- lac and fac are the same but respectively compute long results and fp results
 #    into registers LAC or FAC, potentially clobbering vAC, LAC, FAC, and T0-T3.
-# -- eac is like ac but cannot clobber LAC, FAC or T0-T3.
+# -- eac is like ac but cannot clobber LAC, FAC or T2.
 # -- ac0/eac0 mean that the high byte of ac is known to be zero
 
 stmt: reg  ""
@@ -419,9 +419,9 @@ iarg: INDIRU2(zddr) "%0"
 iarg: INDIRP2(zddr) "%0"
 
 spill: ADDRLP2 "%a+%F" if_spill(50)
-iarg: INDIRU2(spill) "T3|STW(T2);_MOV([SP,%0],T3);LDW(T2);" 21
-iarg: INDIRI2(spill) "T3|STW(T2);_MOV([SP,%0],T3);LDW(T2);" 21
-iarg: INDIRP2(spill) "T3|STW(T2);_MOV([SP,%0],T3);LDW(T2);" 21
+iarg: INDIRU2(spill) "T3|STW(T1);_MOV([SP,%0],T3);LDW(T1);" 21
+iarg: INDIRI2(spill) "T3|STW(T1);_MOV([SP,%0],T3);LDW(T1);" 21
+iarg: INDIRP2(spill) "T3|STW(T1);_MOV([SP,%0],T3);LDW(T1);" 21
 
 # Integer operations. This is verbose because there are variants for
 # types I2, U2, P2, variants for argument ordering, and variants for
@@ -512,8 +512,22 @@ eac: SUBP2(eac,conB) "%0SUBI(%1);" 28
 eac: SUBI2(eac,conBn) "%0ADDI(-(%1));" 28
 eac: SUBU2(eac,conBn) "%0ADDI(-(%1));" 28
 eac: SUBP2(eac,conBn) "%0ADDI(-(%1));" 28
-eac: LSHI2(eac, conB) "%0%{shl1}" 100
-eac: LSHU2(eac, conB) "%0%{shl1}" 100
+eac: LSHI2(eac, con1) "%0LSLW();" 28
+eac: LSHU2(eac, con1) "%0LSLW();" 28
+eac: LSHI2(eac, conB) "%0_SHLI(%1);" 100
+eac: LSHU2(eac, conB) "%0_SHLI(%1);" 100
+eac: MULI2(conB, eac) "%1%{mul0}" 100
+eac: MULI2(conB, eac) "%1%{mul0}" 100
+# More eac variants involving iarg because iarg spills preserve T2
+eac: ADDI2(eac,iarg) "%0%[1b]ADDW(%1);" 28
+eac: ADDU2(eac,iarg) "%0%[1b]ADDW(%1);" 28
+eac: ADDP2(eac,iarg) "%0%[1b]ADDW(%1);" 28
+eac: ADDI2(iarg,eac) "%1%[0b]ADDW(%0);" 28
+eac: ADDU2(iarg,eac) "%1%[0b]ADDW(%0);" 28
+eac: ADDP2(iarg,eac) "%1%[0b]ADDW(%0);" 28
+eac: SUBI2(eac,iarg) "%0%[1b]SUBW(%1);" 28
+eac: SUBU2(eac,iarg) "%0%[1b]SUBW(%1);" 28
+eac: SUBP2(eac,iarg) "%0%[1b]SUBW(%1);" 28
 
 # More assignments (indirect and explicit addresses)
 stmt: ASGNP2(zddr,ac)  "\t%1STW(%0);\n" 20

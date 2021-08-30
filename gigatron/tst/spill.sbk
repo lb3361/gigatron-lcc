@@ -72,7 +72,7 @@ def code3():
 	_SP(-6+26);STW(R22);
 	LDI(0);DOKE(R22);
 	label('.10');
-	_SP(-6+26);DEEK();STW(T2);_MOV([SP,-8+26],T3);LDW(T2);DOKE(T3);
+	_SP(-6+26);DEEK();STW(T1);_MOV([SP,-8+26],T3);LDW(T1);DOKE(T3);
 	LDI(0);
 	label('.7');
 	_EPILOGUE(26,2,0xff,saveAC=True);

@@ -594,7 +594,7 @@ def code14():
 	_LDI('yytchar');DEEK();STW(R0);
 	label('.56');
 	LDW(R0);STW(R3);
-	LD(R0);STW(T2);_MOV([SP,-6+28],T3);LDW(T2);POKE(T3);
+	LD(R0);STW(T1);_MOV([SP,-6+28],T3);LDW(T1);POKE(T3);
 	label('.63');
 	LDW(R5);STW(R2);
 	_LDI('yycrank');_CMPWU(R5);_BGE('.64');

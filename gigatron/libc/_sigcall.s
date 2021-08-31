@@ -10,7 +10,6 @@ def code0():
     nohop()
     label('_raise_emits_signal')
     STW(T0);ALLOC(-2);LDW(T3);STLW(0)
-    label('.sigcall1')
     # create a stack frame and save R8-R22
     _SP(-38);STW(SP);ADDI(8);STW(T2);LDI(R8);STW(T3);LDI(R23);STW(T1);_CALLJ('_@_wcopy')
     # call _sigcall(signo,fpeinfo)
@@ -52,7 +51,6 @@ code=[
     ('IMPORT', '_@_wcopy'),
     ('EXPORT', '_raise_emits_signal'),
     ('EXPORT', '_virq_handler'),
-    ('EXPORT', '_set_virq_handler'),
     ('CODE', '_raise_emits_signal', code0),
     ('CODE', '_virq_handler', code1),
     ('CODE', '.rti', code2) ] 

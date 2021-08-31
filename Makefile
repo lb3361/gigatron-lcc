@@ -36,6 +36,11 @@ all: build-dir lcc-all gigatron-all
 clean: lcc-clean gigatron-clean subdirs-clean build-dir-clean
 
 install: all gigatron-install subdirs-install
+ifdef MSYSTEM
+	echo "Calling Mingw post-installation script"
+	PREFIX=${PREFIX} INSTALL=${INSTALL} \
+	  bindir=${bindir} libdir=${libdir} ${G}mingw-install-sh   
+endif
 
 test: all
 	@for rom in ${ROMS}; do \
@@ -85,26 +90,23 @@ gigatron-clean: FORCE
 	-rm -rf ${B}tst[0-9]
 
 gigatron-install: FORCE
-	-${INSTALL} -d ${libdir}
+	-${INSTALL} -d "${libdir}"
 	${INSTALL} -m 755 "${B}cpp${E}" "${libdir}/cpp${E}"
 	${INSTALL} -m 755 "${B}rcc${E}" "${libdir}/rcc${E}"
 	${INSTALL} -m 755 "${B}lcc${E}" "${libdir}/lcc${E}"
 	for n in ${GFILES}; do \
 	    mode=644; test -x "$$n" && mode=755 ; \
-	    ${INSTALL} -m $$mode "$$n" ${libdir}/ ; done
+	    ${INSTALL} -m $$mode "$$n" "${libdir}/" ; done
 	-${INSTALL} -d "${libdir}/include"
 	for n in "${B}include/"*.h ; do \
 	    ${INSTALL} -m 0644 "$$n" "${libdir}/include/" ; done
 	-${INSTALL} -d "${libdir}/include/gigatron"
 	for n in "${B}include/gigatron/"*.h ; do \
 	    ${INSTALL} -m 0644 "$$n" "${libdir}/include/gigatron/" ; done
-	-${INSTALL} -d ${bindir}
 ifndef MSYSTEM
-	${LN_S} ${libdir}/glcc ${bindir}/glcc
-	${LN_S} ${libdir}/glink ${bindir}/glink
-else
-	echo '@py -3 "%~dp0\\..\\lib\\gigatron-lcc\\%~n0" %*' > ${bindir}/glcc.bat
-	echo '@py -3 "%~dp0\\..\\lib\\gigatron-lcc\\%~n0" %*' > ${bindir}/glink.bat
+	-${INSTALL} -d "${bindir}"
+	${LN_S} "${libdir}/glcc" "${bindir}/glcc"
+	${LN_S} "${libdir}/glink" "${bindir}/glink"
 endif
 
 gigatron-include: FORCE

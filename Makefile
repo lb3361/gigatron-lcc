@@ -18,7 +18,7 @@ GLCC=${B}glcc
 GTSIM=${B}gtsim
 
 SUBDIRS=${G}runtime ${G}libc ${G}map32k ${G}map64k ${G}mapsim ${G}mapconx
-GFILES=${B}glcc ${B}glink ${B}glcc.bat ${B}glink.bat ${B}glink.py ${B}interface.json ${B}roms.json
+GFILES=${B}glcc ${B}glink ${B}glink.py ${B}interface.json ${B}roms.json
 ROMFILES=${wildcard ${G}roms/*.rom}
 ROMS=${patsubst ${G}roms/%.rom,%,${ROMFILES}}
 

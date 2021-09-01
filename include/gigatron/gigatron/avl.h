@@ -26,7 +26,7 @@ typedef int (*avlcmp_t)(avlnode_t*, avlnode_t*);
    to the tree head. Argument elt should point to a node and its
    payload.  If no node in the tree has a payload equal to elt's, the
    node elt is inserted into the tree, the function returns 0,
-   and elt nows belongs to the tree.  Otherwise the function
+   and elt nows belongs to the tree.  Otherwise the function returns
    a pointer to the tree element whose payload is equal to that
    of elt. */
 

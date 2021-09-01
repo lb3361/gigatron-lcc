@@ -7,9 +7,9 @@
 
 #define CONSOLE_DEFAULT_FGBG 0x3f20
 
-/* Print up to len characters of zero terminated string s.
+/* Print up to len characters of the zero terminated string s.
    Understands control characters "\a\t\b\n\r\f". 
-   Returns number of printed characters. */
+   Return the number of printed characters. */
 extern int console_print(const char *s, int len);
 
 /* Reset the video tables and clear the screen. */

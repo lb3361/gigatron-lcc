@@ -34,23 +34,13 @@ The library implements ANSI C 89 but few Gigatron specific functions.
 For instance, one could add more Gigatron SYS stubs into `gigatron/libc/gigatron.s`,
 one could provide a graphic and sprite library, etc.
 
-The compiler could also be improved
-
-* Although the code generator uses vAC quite well within a tree, it
-  cannot use vAC at all to pass data from one tree to the next. This
-  was improved by adding a `preralloc` callback in the lcc code
-  generator, but the current code does not know which instructions
-  preserve vAC and is therefore very conservative. There are multiple
-  ways to address this. One is to write a python peephole optimizer
-  that runs as a separable pass. The correct way would be to make the
-  lburg code selection aware of the input state of the registers. This
-  is much harder.
-  
-* One could rewrite the compiler driver `glcc` to be self-contained
-  instead of delegating much work to the historical lcc driver
-  `lcc`. That would make option processing simpler to understand. This
-  is harder than it seems.
-
+The compiler could also be improved but with diminishing returns.
+A way to begin could be, for instance, to rewrite the python
+compiler driver `glcc` to be self-contained. The current version
+delegates a lot of work to the historical lcc driver `lcc` which
+then calls the python assembler and linker. Cleaning this up 
+would make option processing simpler to understand. This
+is harder than it seems.
 
 ### 1.3. Caveats and other details
 
@@ -149,7 +139,6 @@ in [MSYS2](https://www.msys2.org).  After a bit of experimentation,
 the recommended approach is to download the 32 bits version of 
 [Git for Windows SDK](https://github.com/git-for-windows/build-extra/releases/latest).
 This is certainly an overkill, but a very reliable one.
-
 You can then start the Git for Windows SDK shell, clone the Gigatron LCC repository,
 and simply type the commands
 ```
@@ -186,7 +175,7 @@ are documented by typing `glink -h`
     Additional information about each map can be displayed by 
     using option `-info` as in `glcc -map=sim -info`
 	
-	Maps can also manipulate the linker arguments, insert libraries,
+    Maps can also manipulate the linker arguments, insert libraries,
 	and define the initialization function that checks the rom type
 	and the ram configuration. For instance, map `sim` produces gt1
 	files that run in the emulator [`gtsim`](gigatron/mapsim) with a
@@ -390,12 +379,14 @@ But it plays!
 ## 4. Internals
 
 The code generator uses two consecutive blocks of zero page locations:
+
   *  The first block, located at addresses `0x81-0x8f`, is dedicated to
      the routines that implement long and float arithmetic. The long accumulator `LAC`
      uses locations `0x84-0x87`. The floating point accumulator `FAC` uses location `0x81-0x87`.
      The remaining locations `0x88-0x8f` are working space for these routines.
      They are also known as registers `T0` to `T3` which are
      occasionally used as scratch registers by the code generator.
+     
   *  The second block, located at addresses `0x90-0xbf`, contains 24 general 
      purpose sixteen bits registers named `R0` to `R23`. 
      Register pairs named `L0` to `L22` can hold longs. 

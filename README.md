@@ -141,31 +141,23 @@ The main drawback of building `gigatron-lcc` under cygwin is
 that you have to execute it from the cygwin shell as well since
 it depends on the cygwin infrastructure.
 
-### 2.4 Building gigatron-lcc under Windows using Msys/Mingw64
+### 2.4 Building gigatron-lcc under Windows using Git-for-Windows-SDK
 
 It is also possible to build `gigatron-lcc` using Mingw64.
-First install [MSYS2](https://www.msys2.org) then use `pacman`
-to install the necessary packages:
+The mingw64 compiler comes in various guises, e.g. as a package
+in [MSYS2](https://www.msys2.org).  After a bit of experimentation,
+the recommended approach is to download the 32 bits version of 
+[Git for Windows SDK](https://github.com/git-for-windows/build-extra/releases/latest).
+This is certainly an overkill, but a very reliable one.
+
+You can then start the Git for Windows SDK shell, clone the Gigatron LCC repository,
+and simply type the commands
 ```
-$ pacman -S mingw-w64-i686-toolchain bison python
-```
-Then issue the commands `make` and `make install`
-```
-# cd gigatron-lcc
 $ make
-$ make install PREFIX=/c/somedir
+$ make install PREFIX=/c/glcc
 ```
-A precompiled version can be found attached to the forum 
-post https://forum.gigatron.io/viewtopic.php?p=2463.
-The resulting executables depend only on Microsoft's `msvcrt.dll`
-and can therefore be executed from a normal Windows command line. However 
-it remains necessary to install the Windows version of python
-with the python launcher `py` installed for everyone's use.
-The command `make install` creates simple batch files `glcc.bat` and
-`glink.bat` in the `bin` directory. These files can be used
-to invoke gigatron-lcc from the Windows command line. The
-simplest way to use them is to add the `bin` directory to the
-executable search path.
+A precompiled version with installation and usage instructions can be found 
+in the forum post https://forum.gigatron.io/viewtopic.php?p=2484#p2484.
 
 ## 3 Compiler invocation
 

@@ -17,7 +17,7 @@ static int str_write(FILE *fp, const void *buf, size_t sz)
 
 static struct _svec v = { str_flsbuf, str_write, 0, 0, 0, 0 };
 
-int vsprintf(char *s, const char *fmt, va_list ap)
+int vsprintf(register char *s, register const char *fmt, register va_list ap)
 {
 	int r;
 	struct _iobuf f;
@@ -34,12 +34,10 @@ int vsprintf(char *s, const char *fmt, va_list ap)
 	return r;
 }
 
-int sprintf(char *s, const char *fmt, ...)
+int sprintf(register char *s, const char *fmt, ...)
 {
-	register int r;
-	va_list ap;
+	register va_list ap;
 	va_start(ap, fmt);
-	r = vsprintf(s, fmt, ap);
-	va_end(ap);
-	return r;
+	return vsprintf(s, fmt, ap);
+	// va_end(ap) is a no-op
 }

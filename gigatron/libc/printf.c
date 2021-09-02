@@ -3,10 +3,8 @@
 
 int printf(const char *fmt, ...)
 {
-	register int r;
-	va_list ap;
+	register va_list ap;
 	va_start(ap, fmt);
-	r = vfprintf(stdout, fmt, ap);
-	va_end(ap);
-	return r;
+	return vfprintf(stdout, fmt, ap);
+	// va_end(ap) is a noop
 }

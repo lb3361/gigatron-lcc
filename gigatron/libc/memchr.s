@@ -11,10 +11,11 @@ def scope():
         def m_prepScanMemory():
             LDWI(addr);STW('sysFn')
         def m_ScanMemory():
-            # copy without page crossings
-            # takes destination ptr in sysArgs0/1
-            # takes source ptr in sysArgs2/3
+            # scan memory without page crossings
+            # takes data ptr in sysArgs0/1
+            # takes two byte targets in sysArgs2/3
             # takes length in vACL (0 means 256)
+            # returns pointer to target or 0
             SYS(cycs)
     else:
         def m_prepScanMemory():

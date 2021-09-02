@@ -4,7 +4,6 @@
 
 int main()
 {
-	char buffer[20];
 	const char *s = "pi";
 	double x = 3.141592653589793;
 	double y;
@@ -18,7 +17,6 @@ int main()
 		printf("- log(y)=%.8g\n", log(y));
 		s = "x";
 		printf("\nYour number? ");
-		fgets(buffer, 20, stdin);
-		x = atof(buffer);
+		scanf("%f%*[^\r\n]", &x);
 	}
 }

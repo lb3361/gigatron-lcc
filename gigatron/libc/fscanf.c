@@ -4,20 +4,16 @@
 
 int fscanf(register FILE *fp, const char *fmt, ...)
 {
-	register int r;
-	va_list ap;
+	register va_list ap;
 	va_start(ap, fmt);
-	r = _doscan(fp, fmt, ap);
-	va_end(ap);
-	return r;
+	return _doscan(fp, fmt, ap);
+	// va_end(ap) is a no-op
 }
 
 int scanf(const char *fmt, ...)
 {
-	register int r;
-	va_list ap;
+	register va_list ap;
 	va_start(ap, fmt);
-	r = _doscan(stdin, fmt, ap);
-	va_end(ap);
-	return r;
+	return _doscan(stdin, fmt, ap);
+	// va_end(ap) is a no-op
 }

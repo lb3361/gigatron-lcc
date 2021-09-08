@@ -36,13 +36,10 @@ echo '@"%~dp0\\'"$cmd_to_lib"'\\gtsim.exe" %*'  > "${cmddir}/gtsim.cmd"
 # create and populate bin directory
 
 ${INSTALL} -d "${bindir}" || true
-${INSTALL} "gigatron/exec-sh" "${bindir}/glcc"
-${INSTALL} "gigatron/exec-sh" "${bindir}/glink"
+sed -e "s:@BINTOLIB@:${bin_to_lib}:g" "gigatron/exec-sh.in" > "${bindir}/glcc"
+sed -e "s:@BINTOLIB@:${bin_to_lib}:g" "gigatron/exec-sh.in" > "${bindir}/glink"
 test -r "${bindir}/gtsim.exe" && rm "${bindir}/gtsim.exe"
 ln -s "${libdir}/gtsim.exe" "${bindir}/gtsim.exe"
-if [ "${bin_to_lib}" != "../lib/gigatron-lcc" ] ; then
-   echo "Warning: \$libdir!=\$PREFIX/lib/gigatron-lcc. Check gigatron/exec-sh!"
-fi
 
 # add useful programs to the bin directory
 

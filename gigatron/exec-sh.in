@@ -1,6 +1,6 @@
 #!/bin/sh
 
-### When compiling using Mingw63, `make install` copies
+### When compiling using Mingw64, `make install` copies
 ### this script into ${bindir} instead of creating a symlink.
 ### One reason is that msys often copies the file instead
 ### of creating a true symlink. The other reason is that
@@ -25,20 +25,12 @@ EOF
     done
 fi
 progdir=`cd $progdir ; pwd`
-while [ -L "$progdir/$progname" ]
-do
-    tmpvar=`ls -ld $progdir/$progname`
-    tmpvar=`expr "$tmpvar" : '.*-> *\(.*\)'`
-    progname=`basename $tmpvar` 
-    tmpvar=`dirname $tmpvar` 
-    progdir=`cd $progdir ; cd $tmpvar ; pwd` 
-done
 if [ ! -x "$progdir/$progname" ]
 then
    echo 1>&2 "$progname: command not found"
    exit 10
 fi
 
-## Exec the original using the python launcher
+## Exec the intended command (which uses $progdir)
 
-exec py "$progdir/@BINTOLIB@/$progname" "$@"
+exec @EXECCMD@ "$@"

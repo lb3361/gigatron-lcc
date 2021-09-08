@@ -1,11 +1,11 @@
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.16)
 
 project(glcc)
 enable_language(C)
 
 if (NOT "${CMAKE_BUILD_TYPE}")
-  SET(CMAKE_BUILD_TYPE "Release")
+  SET(CMAKE_BUILD_TYPE "RelWithDebInfo")
 endif()
 
 # --- only support out-of-directory builds
@@ -90,8 +90,9 @@ foreach(fn ${gigatron_targets})
     VERBATIM)
 endforeach()
 
+set(cmd_target "")
 if (WIN32)
-  list(APPEND gigatron_targets glcc-cmd)
+  set(cmd_target glcc-cmd)
   add_custom_target(glcc-cmd
     COMMAND "${CMAKE_COMMAND}" "-E" "echo"
     "@py -3 \"%~dp0\\%~n0\" %*" ">" "glcc.cmd"
@@ -104,7 +105,7 @@ add_custom_target(glcc-ready ALL
   COMMAND "${CMAKE_COMMAND}" "-E" "copy_directory"
   "${CMAKE_CURRENT_SOURCE_DIR}/include/gigatron/"
   "${CMAKE_CURRENT_BINARY_DIR}/include"
-  DEPENDS "cpp" "rcc" "lcc" ${gigatron_targets}
+  DEPENDS "cpp" "rcc" "lcc" ${gigatron_targets} ${cmd_target}
   VERBATIM)
 
 # --- MAPS
@@ -185,9 +186,9 @@ add_glcc_library("libc6" "cpu6/libc.a" CPU 6 "gigatron/libc/*.c" "gigatron/libc/
 
 # ---- INSTALL
 
-set(glcc_install_libdir "${CMAKE_INSTALL_PREFIX}/lib/gigatron-lcc")
-set(glcc_install_bindir "${CMAKE_INSTALL_PREFIX}/bin")
-set(glcc_install_cmddir "${CMAKE_INSTALL_PREFIX}/cmd")
+set(glcc_install_libdir "lib/gigatron-lcc")
+set(glcc_install_bindir "bin")
+set(glcc_install_cmddir "cmd")
 
 install(TARGETS cpp rcc lcc gtsim
   RUNTIME DESTINATION "${glcc_install_libdir}")
@@ -212,35 +213,38 @@ endforeach()
 
 
 if (WIN32)
-  file(RELATIVE_PATH bin_to_lib "${glcc_install_bindir}" "${glcc_install_libdir}")
-  file(RELATIVE_PATH cmd_to_lib "${glcc_install_cmddir}" "${glcc_install_libdir}")
+  file(RELATIVE_PATH bin_to_lib "/${glcc_install_bindir}" "/${glcc_install_libdir}")
+  file(RELATIVE_PATH cmd_to_lib "/${glcc_install_cmddir}" "/${glcc_install_libdir}")
   string(REPLACE "/" "\\\\" cmd_to_lib "${cmd_to_lib}")
-  install(CODE "execute_process( \
-     COMMAND ${CMAKE_COMMAND} -E make_directory \"\$ENV{DESTDIR}${glcc_install_cmddir}\")")
-  install(CODE "execute_process( \
-     COMMAND ${CMAKE_COMMAND} -E make_directory \"\$ENV{DESTDIR}${glcc_install_bindir}\")")
+  install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory
+             \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${glcc_install_cmddir}\")")
+  install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory
+             \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${glcc_install_bindir}\")")
   foreach(pgm glcc glink gtsim)
     if ("${pgm}" STREQUAL gtsim)
       set(py "")
     else()
       set(py "py -3 ")
     endif()
-    install(CODE "execute_process( \
-     COMMAND ${CMAKE_COMMAND} -E echo \"${py}\\\"%~dp0\\\\${cmd_to_lib}\\\\%~n0\\\" %*\"
-             OUTPUT_FILE \"\$ENV{DESTDIR}${glcc_install_cmddir}/${pgm}\") ")
-    install(CODE "set(BINTOLIB \"${bin_to_lib}\")
+    set(output "\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${glcc_install_cmddir}/${pgm}.cmd")
+    install(CODE "message(STATUS \"Installing: ${output}\")
+                  execute_process(COMMAND ${CMAKE_COMMAND} -E echo
+                                     \"${py}\\\"%~dp0\\\\${cmd_to_lib}\\\\%~n0\\\" %*\"
+                                  OUTPUT_FILE \"${output}\") ")
+    set(output "\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${glcc_install_bindir}/${pgm}")
+    install(CODE "message(STATUS \"Installing: ${output}\")
+                  set(EXECCMD \"${py}\\\"\\\$progdir/${bin_to_lib}/${pgm}\\\"\")
                   configure_file(\"${CMAKE_CURRENT_SOURCE_DIR}/gigatron/exec-sh.in\"
-                                 \"\$ENV{DESTDIR}${glcc_install_bindir}/${pgm}\" @ONLY)" )
+                    \"${output}\" @ONLY)" )
   endforeach()
 else()
-  file(RELATIVE_PATH bin_to_lib "${glcc_install_bindir}" "${glcc_install_libdir}")
-  install(CODE "execute_process( \
-     COMMAND ${CMAKE_COMMAND} -E make_directory
-         \"\$ENV{DESTDIR}${glcc_install_bindir}\")")
+  file(RELATIVE_PATH bin_to_lib "/${glcc_install_bindir}" "/${glcc_install_libdir}")
+  install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory
+            \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${glcc_install_bindir}\")")
   foreach(pgm glcc glink gtsim)
-    install(CODE "execute_process( \
-     COMMAND ${CMAKE_COMMAND} -E create_symlink
-         \"${bin_to_lib}/${pgm}\"
-         \"\$ENV{DESTDIR}${glcc_install_bindir}/${pgm}\"  )")
+    set(output "\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${glcc_install_bindir}/${pgm}")
+    install(CODE "message(STATUS \"Creating symlink: ${output}\")
+                  execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
+                     \"${bin_to_lib}/${pgm}\" \"${output}\" )")
   endforeach()
 endif()

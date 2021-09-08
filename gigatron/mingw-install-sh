@@ -36,10 +36,10 @@ echo '@"%~dp0\\'"$cmd_to_lib"'\\gtsim.exe" %*'  > "${cmddir}/gtsim.cmd"
 # create and populate bin directory
 
 ${INSTALL} -d "${bindir}" || true
-sed -e "s:@BINTOLIB@:${bin_to_lib}:g" "gigatron/exec-sh.in" > "${bindir}/glcc"
-sed -e "s:@BINTOLIB@:${bin_to_lib}:g" "gigatron/exec-sh.in" > "${bindir}/glink"
-test -r "${bindir}/gtsim.exe" && rm "${bindir}/gtsim.exe"
-ln -s "${libdir}/gtsim.exe" "${bindir}/gtsim.exe"
+for pgm in glcc glink gtsim ; do
+    test $pgm == gtsim && py='' || py='py -3 '
+    sed -e "s:@EXECCMD@:${py}\"\$progdir/${bin_to_lib}/${pgm}\":g" gigatron/exec-sh.in > "${bindir}/${pgm}"
+done
 
 # add useful programs to the bin directory
 

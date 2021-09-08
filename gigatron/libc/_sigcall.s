@@ -35,7 +35,7 @@ def code1():
     LDI(B0-1);STW(T3);LDI(T1);STW(T1);_CALLJ('_@_wcopy')
     LDI('sysFn');STW(T3);LDI(v('sysArgs7')+1);STW(T1);_CALLJ('_@_wcopy')
     LDWI('.rti');DOKE(SP)
-    LDI(0);STW(T3);LDI(7);_CALLJ('_raise_emits_signal')
+    LDI(0);STW(T3);LDI(7);_CALLI('_raise_emits_signal')
 
 def code2():
     '''vIRQ return'''

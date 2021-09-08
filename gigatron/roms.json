@@ -20,13 +20,13 @@
 	      "romType" : "0xf8",
 	      "inherits" : "v5a",
 	      "has_SYS_CopyMemory" : { "addr" : "0xe9", "cycs" : 80 },
-	      "has_SYS_CopyMemoryExt" : { "addr" : "0xec", "cycs" : 94 }
+	      "has_SYS_CopyMemoryExt" : { "addr" : "0xec", "cycs" : 94 },
+	      "has_SYS_ScanMemory" : { "addr" : "0xe6", "cycs" : 50 }
 	    },
 
     "exp" : { "cpu" : 5,
 	      "romType" : "0xf8",
-	      "inherits" : "dev",
-	      "has_SYS_ScanMemory" : { "addr" : "0xe6", "cycs" : 50 }
+	      "inherits" : "dev"
 	    },
 
     "at67x" : { "cpu" : 6,

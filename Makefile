@@ -97,6 +97,8 @@ gigatron-install: FORCE
 	for n in ${GFILES}; do \
 	    mode=644; test -x "$$n" && mode=755 ; \
 	    ${INSTALL} -m $$mode "$$n" "${libdir}/" ; done
+	test -r ${B}glink.pyc && \
+	    ${INSTALL} -m 644 ${B}glink.pyc "${libdir}/"
 	-${INSTALL} -d "${libdir}/include"
 	for n in "${B}include/"*.h ; do \
 	    ${INSTALL} -m 0644 "$$n" "${libdir}/include/" ; done

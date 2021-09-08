@@ -4,9 +4,9 @@ cmake_minimum_required(VERSION 3.10)
 project(glcc)
 enable_language(C)
 
-#if (NOT "${CMAKE_BUILD_TYPE}")
-#  SET(CMAKE_BUILD_TYPE "Release")
-#endif()
+if (NOT "${CMAKE_BUILD_TYPE}")
+  SET(CMAKE_BUILD_TYPE "Release")
+endif()
 
 # --- only support out-of-directory builds
 
@@ -24,13 +24,12 @@ add_executable(cpp
 
 target_include_directories(cpp PUBLIC cpp)
 
+
 # --- LBURG
 
 add_executable(lburg lburg/lburg.c lburg/gram.c)
 
 target_include_directories(lburg PUBLIC lburg)
-
-# --- RUN LBURG
 
 set(srcs_md_c "")
 
@@ -125,8 +124,8 @@ function(add_glcc_map mapname)
     DEPENDS ${map_targets} VERBATIM)
 endfunction()
 
-file(GLOB maps  CONFIGURE_DEPENDS "gigatron/map*")
-foreach(map ${maps})
+file(GLOB gigatron_maps  CONFIGURE_DEPENDS "gigatron/map*")
+foreach(map ${gigatron_maps})
   get_filename_component(mapname "${map}" NAME)
   add_glcc_map("${mapname}")
 endforeach()
@@ -184,3 +183,64 @@ add_glcc_library("libc5" "cpu5/libc.a" CPU 5 "gigatron/libc/*.c" "gigatron/libc/
 add_glcc_library("libc6" "cpu6/libc.a" CPU 6 "gigatron/libc/*.c" "gigatron/libc/*.s" "gigatron/runtime/*.s") 
 
 
+# ---- INSTALL
+
+set(glcc_install_libdir "${CMAKE_INSTALL_PREFIX}/lib/gigatron-lcc")
+set(glcc_install_bindir "${CMAKE_INSTALL_PREFIX}/bin")
+set(glcc_install_cmddir "${CMAKE_INSTALL_PREFIX}/cmd")
+
+install(TARGETS cpp rcc lcc gtsim
+  RUNTIME DESTINATION "${glcc_install_libdir}")
+
+foreach(fn ${gigatron_targets})
+  get_filename_component(ext "${fn}" EXT)
+  if ("${ext}" STREQUAL ".json")
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${fn}"
+      DESTINATION "${glcc_install_libdir}")
+  else()
+    install(PROGRAMS "${CMAKE_CURRENT_BINARY_DIR}/${fn}"
+      DESTINATION "${glcc_install_libdir}")
+  endif()
+endforeach()
+
+
+foreach(fdn include cpu4 cpu5 cpu6 ${gigatron_maps})
+  get_filename_component(dn "${fdn}" NAME)
+  install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${dn}"
+    DESTINATION "${glcc_install_libdir}")
+endforeach()
+
+
+if (WIN32)
+  file(RELATIVE_PATH bin_to_lib "${glcc_install_bindir}" "${glcc_install_libdir}")
+  file(RELATIVE_PATH cmd_to_lib "${glcc_install_cmddir}" "${glcc_install_libdir}")
+  string(REPLACE "/" "\\\\" cmd_to_lib "${cmd_to_lib}")
+  install(CODE "execute_process( \
+     COMMAND ${CMAKE_COMMAND} -E make_directory \"\$ENV{DESTDIR}${glcc_install_cmddir}\")")
+  install(CODE "execute_process( \
+     COMMAND ${CMAKE_COMMAND} -E make_directory \"\$ENV{DESTDIR}${glcc_install_bindir}\")")
+  foreach(pgm glcc glink gtsim)
+    if ("${pgm}" STREQUAL gtsim)
+      set(py "")
+    else()
+      set(py "py -3 ")
+    endif()
+    install(CODE "execute_process( \
+     COMMAND ${CMAKE_COMMAND} -E echo \"${py}\\\"%~dp0\\\\${cmd_to_lib}\\\\%~n0\\\" %*\"
+             OUTPUT_FILE \"\$ENV{DESTDIR}${glcc_install_cmddir}/${pgm}\") ")
+    install(CODE "set(BINTOLIB \"${bin_to_lib}\")"
+                 "configure_file(\"${CMAKE_CURRENT_SOURCE_DIR}/gigatron/exec-sh.in\"
+                                 \"\$ENV{DESTDIR}${glcc_install_bindir}/${pgm}\" @ONLY)" )
+  endforeach()
+else()
+  file(RELATIVE_PATH bin_to_lib "${glcc_install_bindir}" "${glcc_install_libdir}")
+  install(CODE "execute_process( \
+     COMMAND ${CMAKE_COMMAND} -E make_directory
+         \"\$ENV{DESTDIR}${glcc_install_bindir}\")")
+  foreach(pgm glcc glink gtsim)
+    install(CODE "execute_process( \
+     COMMAND ${CMAKE_COMMAND} -E create_symlink
+         \"${bin_to_lib}/${pgm}\"
+         \"\$ENV{DESTDIR}${glcc_install_bindir}/${pgm}\"  )")
+  endforeach()
+endif()

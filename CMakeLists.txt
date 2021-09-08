@@ -228,8 +228,8 @@ if (WIN32)
     install(CODE "execute_process( \
      COMMAND ${CMAKE_COMMAND} -E echo \"${py}\\\"%~dp0\\\\${cmd_to_lib}\\\\%~n0\\\" %*\"
              OUTPUT_FILE \"\$ENV{DESTDIR}${glcc_install_cmddir}/${pgm}\") ")
-    install(CODE "set(BINTOLIB \"${bin_to_lib}\")"
-                 "configure_file(\"${CMAKE_CURRENT_SOURCE_DIR}/gigatron/exec-sh.in\"
+    install(CODE "set(BINTOLIB \"${bin_to_lib}\")
+                  configure_file(\"${CMAKE_CURRENT_SOURCE_DIR}/gigatron/exec-sh.in\"
                                  \"\$ENV{DESTDIR}${glcc_install_bindir}/${pgm}\" @ONLY)" )
   endforeach()
 else()

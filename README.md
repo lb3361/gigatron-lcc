@@ -14,37 +14,22 @@ code generator is fundamentally different.
 
 This project provides a complete toolchain and C library for ANSI C 1989.
 
-### 1.1. What works?
-
-* The compiler compiles
-* The linker/assembler assembles and links.
-* The runtime is complete (including long and floating point support)
-* The C library is complete (implements ANSI-C-89).
-* The emulator `gtsim` can run gt1 files and redirect stdio 
-  calls to the emulator itself (when one compiles with option `-map=sim`).
-* vCPU interrupts can be captured with `signal(SIGVIRQ, xxx)`.
-* Floating point exceptions can be captured with `signal(SIGFPE, xxx)`.
-* Optimized memset and memcpy are available and can use a SYS call.
-* The compiler can generate code for at67's extended instruction set.
-  Thanks to at67 for providing a lot of information and hints.
-
-### 1.2. What remains to be done?
-
-The library implements ANSI C 89 but few Gigatron specific functions.
-For instance, one could add more Gigatron SYS stubs into `gigatron/libc/gigatron.s`,
-one could provide a graphic and sprite library, etc.
-
-The compiler could also be improved but with diminishing returns.
-A way to begin could be, for instance, to rewrite the python
-compiler driver `glcc` to be self-contained. The current version
-delegates a lot of work to the historical lcc driver `lcc` which
-then calls the python assembler and linker. Cleaning this up 
-would make option processing simpler to understand. This
-is harder than it seems.
-
-### 1.3. Caveats and other details
+### 1.1. Implementation details and caveats
 
 Some useful things to know:
+
+  * Types `short` and `int` are 16 bits long.  Type `long` is 32 bits
+	long. Types `float` and `double` are 40 bits long, using the
+	Microsoft Basic floating point format. Both long arithmetic or
+	floating point arithmetic incur a significant speed penalty.
+	
+  * Type `char` is unsigned by default. This is more efficient because
+	the C language always promotes `char` values into `int` values to
+	perform arithmetic. Promoting a signed byte involves a clumsy sign
+	extension. Promoting an unsigned byte comes for free with most
+	VCPU opcodes. If you really want signed chars, use `signed char`
+	or maybe use the compiler option `-Wf-unsigned_char=0`. This
+	is not recommended. 
 
 * The traditional C standard library offers feature rich functions
   like `printf()` and `scanf()`. These functions are present but their
@@ -83,75 +68,147 @@ Some useful things to know:
   are documented by comments in the [source](gigatron/glink.py)
   or comments in the library source files that use them...
   
+### 1.2. What remains to be done?
+
+*  The library implements ANSI C 89 but few Gigatron specific functions.
+   For instance, one could add more Gigatron SYS stubs into `gigatron/libc/gigatron.s`,
+   one could provide a graphic and sprite library, etc.
+
+*   The compiler could also be improved but with diminishing returns.
+    A way to begin could be, for instance, to rewrite the python
+    compiler driver `glcc` to be self-contained. The current version
+    delegates a lot of work to the historical lcc driver `lcc` which
+    then calls the python assembler and linker. Cleaning this up 
+    would make option processing simpler to understand. This
+    is harder than it seems.
+
 ## 2. Compiling and installing
 
-### 2.1 Building gigatron-lcc under Linux
+You can build GLCC from source using two methods.
 
-Because the primary development platform is Linux. 
-building `gigatron-lcc` under Linux should work very easily provided
-that gcc, bison, gnu-make >= 4.0, and python >= 3.8 are installed.
+* The first method relies on the traditional `make` command
+  using the usual Posix command line utilities. This is the method used
+  for development and therefore is the recommended method
+  for Linux machines or Macs. It can also be used
+  on Windows when compiling with `cygwin` (https://cygwin.org) 
+  or `mingw64/msys2` (https://www.mingw-w64.org/). 
+  
+* The second method relies on `cmake` (https://cmake.org)
+  and supports many different toolchains such as Microsoft
+  Visual Studio, etc.
+  
+### 2.1 Building gigatron-lcc with Make
+
+Because the primary GLCC development platform is Linux. 
+building `gigatron-lcc` with make on a Unix platform 
+should be very easy provided that a C compiler, bison, 
+gnu-make >= 4.0, and python >= 3.8 are installed.
 Simply type:
 ```
-$ make PREFIX=/usr/local
+$ git clone https://github.com/lb3361/gigatron-lcc.git
+$ cd gigatron-lcc
+$ make
 ```
-where variable `PREFIX` indicates where the compiler should be installed.
 Then you can either invoke the compiler from its build location `./build/glcc` or
 install it into your system with command
 ```
 $ make PREFIX=/usr/local install
 ```
+where variable `PREFIX` indicates where the compiler should be installed.
 This command copies the compiler files into `${PREFIX}/lib/gigatron-lcc/` 
-and symlinks the compiler driver `glcc` and linker driver `glink` 
-into `${PREFIX}/bin`. Include files are copied 
-into `${PREFIX}/lib/gigatron-lcc/include`.
+and symlinks the compiler driver `glcc`, the linker driver `glink`,
+and the simulator `gtsim` into `${PREFIX}/bin`. All the other files are located under 
+`${PREFIX}/lib/gigatron-lcc`. Note that this directory can be relocated
+elsewhere in the system as long as its contents is preserved.
+You just need to either invoke `glcc` using the full path of
+the `gigatron-lcc` directory. Alternatively you can place symbolic links
+to these files somewhere in the executable search path.
 
 There is also 
 ```
 $ make test
 ```
-to run the current test suite. The LCC test files are in `tst`
-but some need pieces of the runtime or library that are still missing.
-The runtime and library test files are in `gigatron/{runtime,libc,libm}/tst`.
+to run the current test suite. 
 
-### 2.2 Building gigatron-lcc under MacOS
+### 2.2 Building gigatron-lcc with CMake
 
-The same steps should also work on MacOS provided that the c compiler
-has been installed, for instance with `xcode-select –install`, and 
-that command `python3` runs a version of python >= 3.8.
+The prerequisites are python >= 3.8 and cmake >= 3.16.
 
-### 2.3 Building gigatron-lcc under Windows using Cygwin
+In order to compile with cmake, you must first create a build directory
+and invoke CMake from that build directory. 
+For instance, on a Unix machine, 
+```
+$ git clone https://github.com/lb3361/gigatron-lcc.git
+$ cd gigatron-lcc
+$ mkdir build
+$ cd build
+$ cmake .. 
+```
 
-Thanks to the feedback of axelb, the same steps can also be used
+This operation creates a Makefile in the build directory.
+You can then compile with `make`
+```
+$ make
+```
+Then you can either invoke the compiler from its build location `./glcc` or
+install it into your system with command
+```
+$ cmake --install .  -DCMAKE_INSTALL_PREFIX=/usr/local
+```
+where variable `CMAKE_INSTALL_PREFIX` is the directory where glcc
+should be installed.  Note that this directory can be relocated
+elsewhere as long as the relative position of the glcc files
+is preserved.
+
+
+### 2.3 Windows notes
+
+#### 2.3.1 Cygwin GLCC
+
+Thanks to the feedback of axelb, you can use the `make` method
 to compile gigatron-lcc under cygwin. For this, you must first
 install cygwin >= 3.2 from http://cygwin.org, make sure to 
 select the packages `gcc-core`, `make`, `bison`, and `python3`, then issue
 the `make`, `make install`, or `make test` command from the cygwin shell.
-
 The main drawback of building `gigatron-lcc` under cygwin is
 that you have to execute it from the cygwin shell as well since
 it depends on the cygwin infrastructure.
 
-### 2.4 Building gigatron-lcc under Windows using Git-for-Windows-SDK
+#### 2.3.2 Native Windows GLCC 
 
-It is also possible to build `gigatron-lcc` using Mingw64.
-The mingw64 compiler comes in various guises, e.g. as a package
-in [MSYS2](https://www.msys2.org).  After a bit of experimentation,
-the recommended approach is to download the 32 bits version of 
-[Git for Windows SDK](https://github.com/git-for-windows/build-extra/releases/latest).
-This is certainly an overkill, but a very reliable one.
-You can then start the Git for Windows SDK shell, clone the Gigatron LCC repository,
-and simply type the commands
-```
-$ make
-$ make install PREFIX=/c/glcc
-```
-A precompiled version with installation and usage instructions can be found 
-in the forum post https://forum.gigatron.io/viewtopic.php?p=2484#p2484.
+For this, you need a native version of Python (https://python.org).
+It is also highly recommended to install Git-for-Windows (https://gitforwindows.org/)
+and a version of GNU make for windows, for instance using 
+Chocolatey (https://community.chocolatey.org/packages/make).
+
+* A first option is to use the mingw64 compiler (https://mingw-w64.org).
+  This compiler comes in various guises. After a bit of experimentation,
+  the recommended approach is to download the 32 bits version of 
+  [Git for Windows SDK](https://github.com/git-for-windows/build-extra/releases/latest).
+  This is certainly an overkill, but a very reliable one.
+  You can then start the Git for Windows SDK shell, clone the Gigatron LCC repository,
+  and use the `make` method discussed above. A precompiled version with installation 
+  and usage instructions can be found in the forum 
+  post https://forum.gigatron.io/viewtopic.php?p=2484#p2484.
+  
+* A second option is to use the CMake approach with any supported toolchain.
+  For this you need to create a build directory and run the CMake program
+  to generate project files. Please follow the instructions that come
+  with CMake to select the proper toolchain, compile the project, and
+  optionally set CMAKE_INSTALL_PREFIX and trigger the installation target.
+
+Both options create Window batch files, e.g `glcc.cmd`, etc.,
+that can be used to invoke GLCC from the DOS command line or from PowerShell. 
+These batch files rely on the `py` launcher that is installed
+by default with recent versions of Python for windows.
+The install target also creates a `bin` directory with shell scripts
+that can be invoked from the Git bash for instance. Simply run the Git bash
+and add this directory to the `PATH` variable, e.g., `PATH=/c/glcc/bin:$PATH`.
 
 ## 3 Compiler invocation
 
 Besides the options listed in the [lcc manual page](doc/lcc.1),
-the compiler driver recognizes a few Gigatron-specific options.
+the compiler driver `glcc` recognizes a few Gigatron-specific options.
 Additional options recognized by the assembler/linker `glink`
 are documented by typing `glink -h`
  	
@@ -182,22 +239,7 @@ are documented by typing `glink -h`
 	library that redirects `printf` and all standard i/o functions to
 	the emulator itself. This is my main debugging tool.
 	
-Basic types:
 
-  * Types `short` and `int` are 16 bits long.  Type `long` is 32 bits
-	long. Types `float` and `double` are 40 bits long, using the
-	Microsoft Basic floating point format. Both long arithmetic or
-	floating point arithmetic incur a significant speed penalty.
-	
-  * Type `char` is unsigned by default. This is more efficient because
-	the C language always promotes `char` values into `int` values to
-	perform arithmetic. Promoting a signed byte involves a clumsy sign
-	extension. Promoting an unsigned byte comes for free with most
-	VCPU opcodes. If you really want signed chars, use `signed char`
-	or maybe use the compiler option `-Wf-unsigned_char=0`. This
-	is not recommended. The preprocessor macros `__CHAR_UNSIGNED` 
-	or `CHAR_IS_SIGNED` are defined accordingly.
-	
 ## 3. Examples
 
 ### 3.1. Running the LCC 8 queens program:

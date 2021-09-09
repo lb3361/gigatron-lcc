@@ -456,24 +456,24 @@ Saving `vLR` allows us to use `CALLI` as a long jump
 without fearing to erase the function return address.
 This is especially useful when one needs to hop over page boundaries.
 
-The VCPU accumulator `AC` is not treated by the compiler as a normal 
+The VCPU accumulator `vAC` is not treated by the compiler as a normal 
 register because there is essentially nothing the VCPU can do once the 
 accumulator is allocated to represent a particular variable or a temporary.
 This would force the compiler to spill its content to a stack location
 in ways that not only produce less efficient code, but often result
-in an infinite loop because the spilling code must itself use `AC`.
+in an infinite loop because the spilling code must itself use `vAC`.
 Instead, the GLCC code generator produces VCPU instructions in bursts 
 that are packed on a single line of the generated assembly code. 
 Each burst is in fact what LCC calls one instruction. Bursts are
 produced by subverting the mechanisms defined by LCC to construct 
 various parts of a typical CPU instruction such as the mnemonic, 
-the address mode, etc. The VCPU accumulator `AC` is treated as a scratch 
+the address mode, etc. The VCPU accumulator `vAC` is treated as a scratch 
 register inside a burst. Meanwhile LCC allocates zero page registers 
 to pass data across bursts. This approach avoid the spilling problems
 but sometimes needs improving because we do not keep track
 of what data is left on the accumulator after each burst.
-This could be improved by adding a peephole optimization pass
-at some point.
+This has been improved by adding code that opportunistically
+allows using `vAC` to pass data between bursts.
 
 The compiler produces a python file that first define a function for each
 code or data fragment. The file then constructs a module that

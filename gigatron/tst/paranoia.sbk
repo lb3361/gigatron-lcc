@@ -3529,16 +3529,16 @@ def code19():
 # ======== ('CODE', 'Sign', code20)
 def code20():
 	label('Sign');
-	_PROLOGUE(8,2,0x0); # save=None
+	PUSH();
 	_FMOV(F8,FAC);_LDI('.7');_FCMP();_BLT('.823');
-	_FMOV('.8',[SP,-5+8]);
+	_FMOV('.8',F17);
 	_BRA('.824');
 	label('.823');
-	_FMOV('.825',[SP,-5+8]);
+	_FMOV('.825',F17);
 	label('.824');
-	_FMOV([SP,-5+8],FAC);
+	_FMOV(F17,FAC);
 	label('.821');
-	_EPILOGUE(8,2,0x0);
+	tryhop(2);POP();RET()
 # ======== ('CODE', 'Pause', code21)
 def code21():
 	label('Pause');
@@ -3611,36 +3611,32 @@ def code24():
 # ======== ('CODE', 'Random', code25)
 def code25():
 	label('Random');
-	_PROLOGUE(24,8,0x0); # save=None
-	_FMOV('Random1',FAC);_LDI('Random9');_FADD();_FMOV(FAC,[SP,-5+24]);
-	_FMOV([SP,-5+24],F20);
-	_FMOV(F20,FAC);LDI(F20);_FMUL();_FMOV(FAC,[SP,-10+24]);
-	_FMOV([SP,-10+24],F17);
-	_FMOV(F17,FAC);LDI(F17);_FMUL();_FMOV(FAC,[SP,-10+24]);
-	_FMOV(F20,FAC);_SP(-10+24);_FMUL();_FMOV(FAC,[SP,-5+24]);
-	_FMOV([SP,-5+24],F20);
-	STW(T1);_FMOV(F20,[SP,-15+24]);LDW(T1) #genspill
-	_FMOV(F20,F8);
+	_PROLOGUE(20,8,0xfc); # save=R2-7
+	_FMOV('Random1',FAC);_LDI('Random9');_FADD();_FMOV(FAC,F5);
+	LDI(F5);_FMUL();_FMOV(FAC,F2);
+	LDI(F2);_FMUL();_FMOV(FAC,F2);
+	_FMOV(F5,FAC);LDI(F2);_FMUL();_FMOV(FAC,F5);
+	_FMOV(FAC,F8);
 	_FMOV(F8,[SP,2]);
-	CALLI('floor');_FMOV(FAC,F17);
-	_FMOV([SP,-15+24],FAC);LDI(F17);_FSUB();_FMOV(FAC,[SP,-10+24]);
-	_FMOV('.840',FAC);_SP(-5+24);_FMUL();_SP(-10+24);_FADD();_FMOV(FAC,'Random1');
+	CALLI('floor');_FMOV(FAC,F20);
+	_FMOV(F5,FAC);LDI(F20);_FSUB();_FMOV(FAC,F2);
+	_FMOV(F5,FAC);_LDI('.840');_FMUL();LDI(F2);_FADD();_FMOV(FAC,'Random1');
 	_FMOV('Random1',FAC);
 	label('.839');
-	_EPILOGUE(24,8,0x0);
+	_EPILOGUE(20,8,0xfc);
 # ======== ('CODE', 'SqXMinX', code26)
 def code26():
 	label('SqXMinX');
-	_PROLOGUE(30,20,0x0); # save=None
-	_SP(2+30);STW(R22);
+	_PROLOGUE(32,20,0xe0); # save=R5-7
+	_SP(2+32);STW(R22);
 	LDW(R8);DOKE(R22);
 	_FMOV('X',F20);
-	_FMOV(F20,FAC);_LDI('BInvrse');_FMUL();_FMOV(FAC,[SP,-5+30]);
-	_FMOV(F20,FAC);_SP(-5+30);_FSUB();_FMOV(FAC,[SP,-10+30]);
+	_FMOV(F20,FAC);_LDI('BInvrse');_FMUL();_FMOV(FAC,F5);
+	_FMOV(F20,FAC);LDI(F5);_FSUB();_FMOV(FAC,[SP,-5+32]);
 	_FMOV(F20,FAC);LDI(F20);_FMUL();_FMOV(FAC,F8);
 	_FMOV(F8,[SP,2]);
 	CALLI('sqrt');
-	_SP(-5+30);_FSUB();_SP(-10+30);_FSUB();_LDI('OneUlp');_FDIV();_FMOV(FAC,'SqEr');
+	LDI(F5);_FSUB();_SP(-5+32);_FSUB();_LDI('OneUlp');_FDIV();_FMOV(FAC,'SqEr');
 	_FMOV('SqEr',FAC);_LDI('Zero');_FCMP();_BEQ('.842');
 	_FMOV('SqEr',FAC);_LDI('MinSqEr');_FCMP();_BGE('.844');
 	_FMOV('SqEr','MinSqEr');
@@ -3650,7 +3646,7 @@ def code26():
 	label('.846');
 	_LDI('J');STW(R22);
 	_FMOV('.8',FAC);LDW(R22);_FADD();_FMOV(FAC,'J');
-	_SP(2+30);DEEK();STW(R8);
+	_SP(2+32);DEEK();STW(R8);
 	_LDI('.44');STW(R9);
 	CALLI('BadCond');
 	_LDI('.848');STW(R8);
@@ -3667,7 +3663,7 @@ def code26():
 	label('.842');
 	LDI(0);
 	label('.841');
-	_EPILOGUE(30,20,0x0,saveAC=True);
+	_EPILOGUE(32,20,0xe0,saveAC=True);
 # ======== ('CODE', 'NewD', code27)
 def code27():
 	label('NewD');

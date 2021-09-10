@@ -994,6 +994,14 @@ static void xprint_finish(void)
   in_function = 0;
 }
 
+static int bitcount(unsigned mask) {
+  unsigned i, n = 0;
+  for (i = 1; i; i <<= 1)
+    if (mask&i)
+      n++;
+  return n;
+}
+
 static int if_arg_reg_only(Node p)
 {
   return p->syms[2] ? LBURG_MAX : 1;
@@ -1613,30 +1621,15 @@ static void doarg(Node p)
 
 static void local(Symbol p)
 {
-  /* The size check prevents allocating registers for longs and floats
-     local variables (but not temporaries). The register benefit for
-     longs and floats is minimal Best to keep them for ints and
-     pointers. */
+  /* The size check restricts allocating registers for longs and
+     floats local variables (but not temporaries). The register
+     benefit for longs and floats is minimal. Best to heuristically
+     keep enough of them for ints and pointers. */
   if (p->type->size > 2 && ! p->temporary)
-    p->sclass = AUTO;
+    if (bitcount(vmask[IREG] & freemask[IREG]) < p->type->size)
+      p->sclass = AUTO;
   if (askregvar(p, rmap(ttob(p->type))) == 0)
     mkauto(p);
-}
-
-static int topbit(unsigned mask) {
-  unsigned i, n = 0, r = -1;
-  for (i = 1; i; i<<=1, n++)
-    if (mask & i)
-      r = n;
-  return r;
-}
-
-static int bitcount(unsigned mask) {
-  unsigned i, n = 0;
-  for (i = 1; i; i <<= 1)
-    if (mask&i)
-      n++;
-  return n;
 }
 
 static void printregmask(unsigned mask) {

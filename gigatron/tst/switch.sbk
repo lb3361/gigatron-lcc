@@ -407,22 +407,20 @@ def code8():
 # ======== ('CODE', 'big', code9)
 def code9():
 	label('big');
-	_PROLOGUE(10,6,0x0); # save=None
+	_PROLOGUE(10,6,0xc0); # save=R6-7
 	_SP(2+10);STW(R22);
 	LDW(R8);DOKE(R22);
-	_SP(2+10);DEEK();STW(LAC);LDI(0);STW(LAC+2);_LDI('.112');_LAND();_LMOV(LAC,[SP,-4+10]);
-	_LMOV([SP,-4+10],L21);
-	_LMOV('.120',L19);
-	_LMOV(L21,LAC);LDI(L19);_LCMPX();_BEQ('.115');
-	_LMOV(L21,LAC);LDI(L19);_LCMPS();_BGT('.119');
+	_SP(2+10);DEEK();STW(LAC);LDI(0);STW(LAC+2);_LDI('.112');_LAND();_LMOV(LAC,L6);
+	_LMOV('.120',L21);
+	_LMOV(L6,LAC);LDI(L21);_LCMPX();_BEQ('.115');
+	_LMOV(L6,LAC);LDI(L21);_LCMPS();_BGT('.119');
 	label('.118');
-	_LMOV([SP,-4+10],L21);
-	_LMOV(L21,LAC);_LDI('.121');_LCMPX();_BEQ('.113');
-	_LMOV(L21,LAC);_LDI('.122');_LCMPX();_BEQ('.113');
-	_LMOV(L21,LAC);_LDI('.14');_LCMPX();_BEQ('.113');
+	_LMOV(L6,LAC);_LDI('.121');_LCMPX();_BEQ('.113');
+	_LMOV(L6,LAC);_LDI('.122');_LCMPX();_BEQ('.113');
+	_LMOV(L6,LAC);_LDI('.14');_LCMPX();_BEQ('.113');
 	_BRA('.109');
 	label('.119');
-	_LMOV('.123',LAC);_SP(-4+10);_LCMPX();_BEQ('.116');
+	_LMOV(L6,LAC);_LDI('.123');_LCMPX();_BEQ('.116');
 	_BRA('.109');
 	label('.113');
 	_LDI('.114');STW(R8);
@@ -454,7 +452,7 @@ def code9():
 	label('.110');
 	LDI(0);
 	label('.108');
-	_EPILOGUE(10,6,0x0,saveAC=True);
+	_EPILOGUE(10,6,0xc0,saveAC=True);
 # ======== ('CODE', 'limit', code10)
 def code10():
 	label('limit');

@@ -42,11 +42,10 @@ def scope():
     # ==== common things
 
     def code_fexception():
-        '''All float exceptions call _@_raisefpe which must be defined
-           elsewhere. This function is called with vAC set to 0x304
-           for a general exception and 0x204 for an overflow. If this
-           function returns, what it leaves in FAC is returned by the
-           API function (or more precisely by whoever called __@savevsp).'''
+        '''All exceptions call _@_raise_ferr or _@_raise_fovf which are defined
+           in the C library proper. If these functions return, what they leave in FAC 
+           is returned by the API function (or more precisely by whathever 
+           function called __@savevsp).'''
         nohop()
         label('__@fexception')   ### SIGFPE/exception
         _CALLJ('__@frestorevsp')

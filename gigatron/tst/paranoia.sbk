@@ -3561,17 +3561,16 @@ def code21():
 # ======== ('CODE', 'TstCond', code22)
 def code22():
 	label('TstCond');
-	_PROLOGUE(6,6,0x0); # save=None
-	_SP(2+6);STW(R22);
+	_PROLOGUE(8,6,0x80); # save=R7
+	_SP(2+8);STW(R22);
 	LDW(R8);DOKE(R22);
-	_SP(4+6);STW(R22);
-	LDW(R9);DOKE(R22);
-	_SP(6+6);STW(R22);
+	LDW(R9);STW(R7);
+	_SP(6+8);STW(R22);
 	LDW(R10);DOKE(R22);
-	_SP(4+6);DEEK();_BNE('.830');
-	_SP(2+6);DEEK();STW(R8);
+	LDW(R7);_BNE('.830');
+	_SP(2+8);DEEK();STW(R8);
 	_MOV(R8,[SP,2]);
-	_SP(6+6);DEEK();STW(R9);
+	_SP(6+8);DEEK();STW(R9);
 	_MOV(R9,[SP,4]);
 	CALLI('BadCond');
 	_LDI('.813');STW(R8);
@@ -3579,7 +3578,7 @@ def code22():
 	label('.830');
 	LDI(0);
 	label('.829');
-	_EPILOGUE(6,6,0x0,saveAC=True);
+	_EPILOGUE(8,6,0x80,saveAC=True);
 # ======== ('DATA', '.833', code23, 0, 2)
 def code23():
 	align(2);
@@ -3591,10 +3590,9 @@ def code23():
 # ======== ('CODE', 'BadCond', code24)
 def code24():
 	label('BadCond');
-	_PROLOGUE(10,8,0x80); # save=R7
+	_PROLOGUE(12,8,0xc0); # save=R6-7
 	LDW(R8);STW(R7);
-	_SP(4+10);STW(R22);
-	LDW(R9);DOKE(R22);
+	LDW(R9);STW(R6);
 	_LDI('ErrCnt');STW(R22);
 	LDW(R7);LSLW();ADDW(R22);STW(R22);
 	DEEK();ADDI(1);DOKE(R22);
@@ -3602,12 +3600,12 @@ def code24():
 	_LDI('.833');STW(R22);
 	LDW(R7);LSLW();ADDW(R22);DEEK();STW(R9);
 	_MOV(R9,[SP,4]);
-	_SP(4+10);DEEK();STW(R10);
+	LDW(R6);STW(R10);
 	_MOV(R10,[SP,6]);
 	CALLI('printf');
 	LDI(0);
 	label('.832');
-	_EPILOGUE(10,8,0x80,saveAC=True);
+	_EPILOGUE(12,8,0xc0,saveAC=True);
 # ======== ('CODE', 'Random', code25)
 def code25():
 	label('Random');
@@ -3945,18 +3943,17 @@ def code32():
 # ======== ('CODE', 'notify', code33)
 def code33():
 	label('notify');
-	_PROLOGUE(6,6,0x0); # save=None
-	_SP(2+6);STW(R22);
-	LDW(R8);DOKE(R22);
+	_PROLOGUE(8,6,0x80); # save=R7
+	LDW(R8);STW(R7);
 	_LDI('.928');STW(R8);
-	_SP(2+6);DEEK();STW(R9);
+	LDW(R7);STW(R9);
 	_MOV(R9,[SP,4]);
 	CALLI('printf');
 	_LDI('.929');STW(R8);
 	CALLI('printf');
 	LDI(0);
 	label('.927');
-	_EPILOGUE(6,6,0x0,saveAC=True);
+	_EPILOGUE(8,6,0x80,saveAC=True);
 # ======== ('CODE', 'msglist', code34)
 def code34():
 	label('msglist');

@@ -1696,10 +1696,10 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
         q->x = p->x;
         q->type = p->type;
       } else {
-        /* Be more aggressive allocating registers for arguments */
-        if (!p->addressed && p->ref >= 1.5)
+        /* Aggressively ask new registers for args passed in registers */
+        if (!p->addressed && p->ref >= 1)
           p->sclass = REGISTER;
-        /* Let gencode know about args passed in register */
+        /* Let gencode know args were passed in register */
         q->sclass = REGISTER;
         q->x = r->x;
       }

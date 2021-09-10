@@ -64,27 +64,23 @@ def code2():
 # ======== ('CODE', 'sort', code3)
 def code3():
 	label('sort');
-	_PROLOGUE(8,8,0x0); # save=None
-	_SP(2+8);STW(R22);
-	LDW(R8);DOKE(R22);
-	_SP(4+8);STW(R22);
-	LDW(R9);DOKE(R22);
-	_SP(2+8);DEEK();STW(R22);
-	_LDI('xx');STW(R21);
-	LDW(R22);DOKE(R21);
-	LDW(R22);STW(R8);
+	_PROLOGUE(12,8,0xc0); # save=R6-7
+	LDW(R8);STW(R7);
+	LDW(R9);STW(R6);
+	_LDI('xx');STW(R22);
+	LDW(R7);DOKE(R22);
+	LDW(R7);STW(R8);
 	_MOV(R8,[SP,2]);
 	LDI(0);STW(R9);
 	_MOV(R9,[SP,4]);
-	_SP(4+8);DEEK();SUBI(1);STW(R22);
-	_SP(4+8);STW(R21);
-	LDW(R22);DOKE(R21);
-	LDW(R22);STW(R10);
+	LDW(R6);SUBI(1);
+	STW(R6);
+	STW(R10);
 	_MOV(R10,[SP,6]);
 	CALLI('quick');
 	LDI(0);
 	label('.11');
-	_EPILOGUE(8,8,0x0,saveAC=True);
+	_EPILOGUE(12,8,0xc0,saveAC=True);
 # ======== ('CODE', 'quick', code4)
 def code4():
 	label('quick');

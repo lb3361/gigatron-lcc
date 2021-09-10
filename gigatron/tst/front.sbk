@@ -66,23 +66,23 @@ def code7():
 # ======== ('CODE', 'f2', code8)
 def code8():
 	label('f2');
-	_PROLOGUE(2,2,0x0); # save=None
-	_EPILOGUE(2,2,0x0,saveAC=True);
+	_PROLOGUE(6,2,0xc0); # save=R6-7
+	_EPILOGUE(6,2,0xc0,saveAC=True);
 # ======== ('CODE', 'g', code9)
 def code9():
 	label('g');
-	_PROLOGUE(2,2,0x0); # save=None
-	_EPILOGUE(2,2,0x0,saveAC=True);
+	_PROLOGUE(4,2,0x80); # save=R7
+	_EPILOGUE(4,2,0x80,saveAC=True);
 # ======== ('CODE', 'h', code10)
 def code10():
 	label('h');
-	_PROLOGUE(2,2,0x0); # save=None
-	_EPILOGUE(2,2,0x0,saveAC=True);
+	_PROLOGUE(4,2,0x80); # save=R7
+	_EPILOGUE(4,2,0x80,saveAC=True);
 # ======== ('CODE', 'h1', code11)
 def code11():
 	label('h1');
-	_PROLOGUE(2,2,0x0); # save=None
-	_EPILOGUE(2,2,0x0,saveAC=True);
+	_PROLOGUE(6,2,0xc0); # save=R6-7
+	_EPILOGUE(6,2,0xc0,saveAC=True);
 # ======== ('CODE', 'h2', code12)
 def code12():
 	label('h2');
@@ -155,8 +155,8 @@ def code25():
 # ======== ('CODE', 'cmp', code26)
 def code26():
 	label('cmp');
-	_PROLOGUE(2,2,0x0); # save=None
-	_EPILOGUE(2,2,0x0,saveAC=True);
+	_PROLOGUE(6,2,0xc0); # save=R6-7
+	_EPILOGUE(6,2,0xc0,saveAC=True);
 # ======== ('CODE', 'sort', code27)
 def code27():
 	label('sort');

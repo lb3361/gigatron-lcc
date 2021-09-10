@@ -3561,16 +3561,14 @@ def code21():
 # ======== ('CODE', 'TstCond', code22)
 def code22():
 	label('TstCond');
-	_PROLOGUE(8,6,0x80); # save=R7
-	_SP(2+8);STW(R22);
-	LDW(R8);DOKE(R22);
-	LDW(R9);STW(R7);
-	_SP(6+8);STW(R22);
-	LDW(R10);DOKE(R22);
-	LDW(R7);_BNE('.830');
-	_SP(2+8);DEEK();STW(R8);
+	_PROLOGUE(12,6,0xe0); # save=R5-7
+	LDW(R8);STW(R7);
+	LDW(R9);STW(R6);
+	LDW(R10);STW(R5);
+	LDW(R6);_BNE('.830');
+	LDW(R7);STW(R8);
 	_MOV(R8,[SP,2]);
-	_SP(6+8);DEEK();STW(R9);
+	LDW(R5);STW(R9);
 	_MOV(R9,[SP,4]);
 	CALLI('BadCond');
 	_LDI('.813');STW(R8);
@@ -3578,7 +3576,7 @@ def code22():
 	label('.830');
 	LDI(0);
 	label('.829');
-	_EPILOGUE(8,6,0x80,saveAC=True);
+	_EPILOGUE(12,6,0xe0,saveAC=True);
 # ======== ('DATA', '.833', code23, 0, 2)
 def code23():
 	align(2);
@@ -3625,16 +3623,15 @@ def code25():
 # ======== ('CODE', 'SqXMinX', code26)
 def code26():
 	label('SqXMinX');
-	_PROLOGUE(32,20,0xe0); # save=R5-7
-	_SP(2+32);STW(R22);
-	LDW(R8);DOKE(R22);
+	_PROLOGUE(34,20,0xf0); # save=R4-7
+	LDW(R8);STW(R7);
 	_FMOV('X',F20);
-	_FMOV(F20,FAC);_LDI('BInvrse');_FMUL();_FMOV(FAC,F5);
-	_FMOV(F20,FAC);LDI(F5);_FSUB();_FMOV(FAC,[SP,-5+32]);
+	_FMOV(F20,FAC);_LDI('BInvrse');_FMUL();_FMOV(FAC,F4);
+	_FMOV(F20,FAC);LDI(F4);_FSUB();_FMOV(FAC,[SP,-5+34]);
 	_FMOV(F20,FAC);LDI(F20);_FMUL();_FMOV(FAC,F8);
 	_FMOV(F8,[SP,2]);
 	CALLI('sqrt');
-	LDI(F5);_FSUB();_SP(-5+32);_FSUB();_LDI('OneUlp');_FDIV();_FMOV(FAC,'SqEr');
+	LDI(F4);_FSUB();_SP(-5+34);_FSUB();_LDI('OneUlp');_FDIV();_FMOV(FAC,'SqEr');
 	_FMOV('SqEr',FAC);_LDI('Zero');_FCMP();_BEQ('.842');
 	_FMOV('SqEr',FAC);_LDI('MinSqEr');_FCMP();_BGE('.844');
 	_FMOV('SqEr','MinSqEr');
@@ -3644,7 +3641,7 @@ def code26():
 	label('.846');
 	_LDI('J');STW(R22);
 	_FMOV('.8',FAC);LDW(R22);_FADD();_FMOV(FAC,'J');
-	_SP(2+32);DEEK();STW(R8);
+	LDW(R7);STW(R8);
 	_LDI('.44');STW(R9);
 	CALLI('BadCond');
 	_LDI('.848');STW(R8);
@@ -3661,7 +3658,7 @@ def code26():
 	label('.842');
 	LDI(0);
 	label('.841');
-	_EPILOGUE(32,20,0xe0,saveAC=True);
+	_EPILOGUE(34,20,0xf0,saveAC=True);
 # ======== ('CODE', 'NewD', code27)
 def code27():
 	label('NewD');

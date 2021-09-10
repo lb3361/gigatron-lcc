@@ -1697,7 +1697,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
         q->type = p->type;
       } else {
         /* Aggressively ask new registers for args passed in registers */
-        if (!p->addressed && p->ref >= 1)
+        if (!p->addressed && p->ref > 0)
           p->sclass = REGISTER;
         /* Let gencode know args were passed in register */
         q->sclass = REGISTER;

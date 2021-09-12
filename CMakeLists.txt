@@ -57,6 +57,7 @@ foreach(md ${srcs_md})
   add_custom_command(OUTPUT "${output}"
     COMMAND lburg "${srcrel}/src/${md}" "${output}"
     WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+    MAIN_DEPENDENCY "${CMAKE_CURRENT_SOURCE_DIR}/src/${md}"
     DEPENDS lburg VERBATIM)
 endforeach()
 
@@ -112,6 +113,7 @@ foreach(fn ${gigatron_targets})
   set(output "${CMAKE_CURRENT_BINARY_DIR}/${fn}")
   add_custom_command(OUTPUT "${output}"
     COMMAND "${CMAKE_COMMAND}" "-E" "copy" "${srcrel}/gigatron/${fn}" "${output}"
+    MAIN_DEPENDENCY "${CMAKE_CURRENT_SOURCE_DIR}/gigatron/${fn}"
     WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
     VERBATIM)
 endforeach()
@@ -156,6 +158,7 @@ function(add_glcc_map mapname)
     add_custom_command(OUTPUT ${fn}
       COMMAND "${CMAKE_COMMAND}" "-E" "copy" "${srcrel}/gigatron/${fn}" "${fn}"
       WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+      MAIN_DEPENDENCY "${CMAKE_CURRENT_SOURCE_DIR}/gigatron/${fn}"
       VERBATIM )
   endforeach()
   add_custom_target("${mapname}" ALL
@@ -195,6 +198,7 @@ function(add_glcc_library libname libfile)
 	  add_custom_command(OUTPUT "${obj}"
 	    COMMAND "./glcc" "-c" "-cpu=${cpu}" "-o" "${obj}" "${srcrel}/${fn}"
 	    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+	    MAIN_DEPENDENCY "${CMAKE_CURRENT_SOURCE_DIR}/${fn}"
 	    DEPENDS glcc-ready)
 	  list(APPEND objlist "${obj}")
 	endforeach()

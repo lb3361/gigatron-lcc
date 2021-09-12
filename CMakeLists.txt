@@ -4,7 +4,6 @@ cmake_minimum_required(VERSION 3.16)
 project(glcc)
 enable_language(C)
 
-set(WIN32 1) ### REMOVE THIS
 
 # --- Default to RelWithDebInfo
 
@@ -62,15 +61,6 @@ foreach(md ${srcs_md})
 endforeach()
 
 
-# --- Bypass Debug/Release dirs for MSVC
-
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_CURRENT_BINARY_DIR}")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_BINARY_DIR}")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_CURRENT_BINARY_DIR}")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL "${CMAKE_CURRENT_BINARY_DIR}")
-
-
 # --- Compile cpp
 
 add_executable(cpp
@@ -125,6 +115,18 @@ foreach(fn ${gigatron_targets})
     WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
     VERBATIM)
 endforeach()
+
+function(copy_target_to_bindir target)
+  add_custom_command(TARGET ${target} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${target}>" "$<TARGET_FILE_NAME:${target}>"
+    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+    VERBATIM)
+endfunction()
+
+copy_target_to_bindir(cpp)
+copy_target_to_bindir(rcc)
+copy_target_to_bindir(lcc)
+copy_target_to_bindir(gtsim)
 
 if (WIN32)
   set(win32_target glcc-cmd)

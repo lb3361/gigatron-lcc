@@ -92,7 +92,7 @@ gigatron-clean: FORCE
 	-rm -rf ${B}tst[0-9]
 
 gigatron-install: FORCE
-	-${INSTALL} -d "${libdir}"
+	${INSTALL} -d "${libdir}"
 	${INSTALL} -m 755 "${B}cpp${E}" "${libdir}/cpp${E}"
 	${INSTALL} -m 755 "${B}rcc${E}" "${libdir}/rcc${E}"
 	${INSTALL} -m 755 "${B}lcc${E}" "${libdir}/lcc${E}"

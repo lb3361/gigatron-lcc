@@ -119,6 +119,22 @@ foreach(fn ${gigatron_targets})
     VERBATIM)
 endforeach()
 
+if (WIN32)
+  foreach(fn glcc.cmd glink.cmd)
+    list(APPEND gigatron_targets "${fn}")
+    add_custom_command(OUTPUT "${fn}"
+      COMMAND "${CMAKE_COMMAND}" "-E" "echo" "@\"${PYTHON3}\" \"%~dp0\\%~n0\" %*" ">" "${fn}"
+      WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+      VERBATIM)
+  endforeach()
+endif()
+
+add_custom_target(glcc-ready ALL
+  COMMAND "${CMAKE_COMMAND}" "-E" "copy_directory" "${srcrel}/include/gigatron/" "include"
+  WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+  DEPENDS "cpp" "rcc" "lcc" ${gigatron_targets}
+  VERBATIM)
+
 function(copy_target_to_bindir target)
   add_custom_command(TARGET ${target} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${target}>" "$<TARGET_FILE_NAME:${target}>"
@@ -130,21 +146,6 @@ copy_target_to_bindir(cpp)
 copy_target_to_bindir(rcc)
 copy_target_to_bindir(lcc)
 copy_target_to_bindir(gtsim)
-
-if (WIN32)
-  set(win32_target glcc-cmd)
-  add_custom_target(glcc-cmd
-    COMMAND "${CMAKE_COMMAND}" "-E" "echo" "@\"${PYTHON3}\" \"%~dp0\\%~n0\" %*" ">" "glcc.cmd"
-    COMMAND "${CMAKE_COMMAND}" "-E" "echo" "@\"${PYTHON3}\" \"%~dp0\\%~n0\" %*" ">" "glink.cmd"
-    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-    VERBATIM)
-endif()
-
-add_custom_target(glcc-ready ALL
-  COMMAND "${CMAKE_COMMAND}" "-E" "copy_directory" "${srcrel}/include/gigatron/" "include"
-  WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-  DEPENDS "cpp" "rcc" "lcc" ${gigatron_targets} ${win32_target}
-  VERBATIM)
 
 
 # --- Stage map directories

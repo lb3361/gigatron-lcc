@@ -18,14 +18,16 @@ GLCC=${B}glcc
 GTSIM=${B}gtsim
 
 SUBDIRS=${G}runtime ${G}libc ${G}map32k ${G}map64k ${G}mapsim ${G}mapconx
-GFILES=${B}glcc ${B}glink ${B}glink.py ${B}interface.json ${B}roms.json
+GFILES=${B}glcc ${B}glink ${B}glink.py ${B}interface.json ${B}roms.json ${GFILES_W}
 ROMFILES=${wildcard ${G}roms/*.rom}
 ROMS=${patsubst ${G}roms/%.rom,%,${ROMFILES}}
 
 ifdef COMSPEC
 E=.exe
+GFILES_W=${B}glink.cmd ${B}glcc.cmd
 else
 E=
+GFILES_W=
 endif
 
 default: all
@@ -126,6 +128,9 @@ ${B}glink.py: ${G}glink.py
 ${B}glcc: ${G}glcc
 	cp ${G}glcc ${B}glcc
 	chmod a+x ${B}glcc
+
+${B}glcc.cmd ${B}glink.cmd: FORCE
+	echo '@py -3 "%~dp0\%~n0" %*' > $@
 
 ${B}%: ${G}%
 	cp $< $@

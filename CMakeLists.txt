@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 3.16)
 project(glcc)
 enable_language(C)
 
+set(WIN32 1) ### REMOVE THIS
 
 # --- Default to RelWithDebInfo
 
@@ -21,11 +22,21 @@ Please create a 'build' directory and run 'cmake SRCDIR' from there.")
 endif()
 
 
+# --- Compute relative path from bindir to srcdir
+
+file(RELATIVE_PATH srcrel "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/foo")
+string(REGEX REPLACE "/*foo$" "" srcrel "${srcrel}")
+
+
 # --- Find Python
 
-set(Python3_EXECUTABLE "" CACHE STRING "Python 3 executable path")
 find_package(Python3 3.8 REQUIRED QUIET COMPONENTS Interpreter)
-message(STATUS "Found python executable ${Python3_EXECUTABLE}")
+
+file(TO_NATIVE_PATH "${Python3_EXECUTABLE}" python3path)
+
+set(PYTHON3 "${python3path}" CACHE STRING "Python 3 executable path")
+
+message(STATUS "Using python executable: ${PYTHON3}")
 
 
 # --- Compile lburg
@@ -45,16 +56,19 @@ foreach(md ${srcs_md})
   set(output "${CMAKE_CURRENT_BINARY_DIR}/${md}.c")
   list(APPEND srcs_lburg "${output}")
   add_custom_command(OUTPUT "${output}"
-    COMMAND lburg "${CMAKE_CURRENT_SOURCE_DIR}/src/${md}" "${output}"
+    COMMAND lburg "${srcrel}/src/${md}" "${output}"
+    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
     DEPENDS lburg VERBATIM)
 endforeach()
 
 
 # --- Bypass Debug/Release dirs for MSVC
 
-string(TOUPPER "${CMAKE_BUILD_TYPE}" cmake_config)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
-set("CMAKE_RUNTIME_OUTPUT_DIRECTORY_${cmake_config}" "${CMAKE_CURRENT_BINARY_DIR}")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_CURRENT_BINARY_DIR}")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_BINARY_DIR}")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_CURRENT_BINARY_DIR}")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL "${CMAKE_CURRENT_BINARY_DIR}")
 
 
 # --- Compile cpp
@@ -107,26 +121,23 @@ set(gigatron_targets
 foreach(fn ${gigatron_targets})
   set(output "${CMAKE_CURRENT_BINARY_DIR}/${fn}")
   add_custom_command(OUTPUT "${output}"
-    COMMAND "${CMAKE_COMMAND}" "-E" "copy"
-    "${CMAKE_CURRENT_SOURCE_DIR}/gigatron/${fn}"
-    "${output}"
+    COMMAND "${CMAKE_COMMAND}" "-E" "copy" "${srcrel}/gigatron/${fn}" "${output}"
+    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
     VERBATIM)
 endforeach()
 
 if (WIN32)
   set(win32_target glcc-cmd)
   add_custom_target(glcc-cmd
-    COMMAND "${CMAKE_COMMAND}" "-E" "echo"
-    "@\"${Python3_EXECUTABLE}\" \"%~dp0\\%~n0\" %*" ">" "glcc.cmd"
-    COMMAND "${CMAKE_COMMAND}" "-E" "echo"
-    "@\"${Python3_EXECUTABLE}\" \"%~dp0\\%~n0\" %*" ">" "glink.cmd"
+    COMMAND "${CMAKE_COMMAND}" "-E" "echo" "@\"${PYTHON3}\" \"%~dp0\\%~n0\" %*" ">" "glcc.cmd"
+    COMMAND "${CMAKE_COMMAND}" "-E" "echo" "@\"${PYTHON3}\" \"%~dp0\\%~n0\" %*" ">" "glink.cmd"
+    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
     VERBATIM)
 endif()
 
 add_custom_target(glcc-ready ALL
-  COMMAND "${CMAKE_COMMAND}" "-E" "copy_directory"
-  "${CMAKE_CURRENT_SOURCE_DIR}/include/gigatron/"
-  "${CMAKE_CURRENT_BINARY_DIR}/include"
+  COMMAND "${CMAKE_COMMAND}" "-E" "copy_directory" "${srcrel}/include/gigatron/" "include"
+  WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
   DEPENDS "cpp" "rcc" "lcc" ${gigatron_targets} ${win32_target}
   VERBATIM)
 
@@ -141,9 +152,8 @@ function(add_glcc_map mapname)
   foreach(fn ${mapfiles})
     list(APPEND map_targets "${fn}")
     add_custom_command(OUTPUT ${fn}
-      COMMAND "${CMAKE_COMMAND}" "-E"
-      "copy" "${CMAKE_CURRENT_SOURCE_DIR}/gigatron/${fn}"
-      "${CMAKE_CURRENT_BINARY_DIR}/${fn}"
+      COMMAND "${CMAKE_COMMAND}" "-E" "copy" "${srcrel}/gigatron/${fn}" "${fn}"
+      WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
       VERBATIM )
   endforeach()
   add_custom_target("${mapname}" ALL
@@ -162,7 +172,6 @@ endforeach()
 function(add_glcc_library libname libfile)
   set(cpu "")
   set(cpulist 4 5 6)
-  file(RELATIVE_PATH btos "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
   list(GET ARGN 0 car)
   if ("${car}" STREQUAL "CPU")
     list(POP_FRONT ARGN car cpulist)
@@ -170,7 +179,7 @@ function(add_glcc_library libname libfile)
   set(objlist "")
   set(asmlist "")
   set(objdir "CMakeFiles/${libname}.glccdir")
-  file(MAKE_DIRECTORY "${objdir}")
+  file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${objdir}")
   foreach(fnp ${ARGN})
     file(GLOB fn_list CONFIGURE_DEPENDS
       RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
@@ -182,14 +191,13 @@ function(add_glcc_library libname libfile)
 	foreach(cpu ${cpulist})
 	  set(obj "${objdir}/${fname}_${cpu}.o")
 	  add_custom_command(OUTPUT "${obj}"
-	    COMMAND "${CMAKE_CURRENT_BINARY_DIR}/glcc" "-c" "-cpu=${cpu}"
-	    "-o" "${CMAKE_CURRENT_BINARY_DIR}/${obj}"
-	    "${CMAKE_CURRENT_SOURCE_DIR}/${fn}"
+	    COMMAND "./glcc" "-c" "-cpu=${cpu}" "-o" "${obj}" "${srcrel}/${fn}"
+	    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
 	    DEPENDS glcc-ready)
 	  list(APPEND objlist "${obj}")
 	endforeach()
       elseif ("${fnext}" STREQUAL ".s")
-	list(APPEND asmlist "${btos}/${fn}")
+	list(APPEND asmlist "${srcrel}/${fn}")
       else()
 	message(FATAL_ERROR "Library file ${fname}${fext} has an unrecognized suffix")
       endif()
@@ -198,21 +206,22 @@ function(add_glcc_library libname libfile)
   set(script "
 set(objs \"${objlist}\" \"${asmlist}\")
 foreach(obj \${objs})
-  file(READ \"\${CMAKE_CURRENT_BINARY_DIR}/\${obj}\" contents)
-  file(APPEND \"${CMAKE_CURRENT_BINARY_DIR}/${libfile}\" \"\${contents}\")
+  file(READ \"\${obj}\" contents)
+  file(APPEND \"${libfile}\" \"\${contents}\")
 endforeach()
 ")
   file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${objdir}/link.cmake" "${script}")
   add_custom_target(${libname} ALL
     COMMAND ${CMAKE_COMMAND} "-P" "${objdir}/link.cmake"
+    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
     DEPENDS ${objlist} VERBATIM)
 endfunction()
 
 add_glcc_library("libconx" "mapconx/libconx.a" "gigatron/mapconx/libconx/*.c")
 add_glcc_library("libsim" "mapsim/libsim.a" "gigatron/mapsim/libsim/*.c"  "gigatron/mapsim/libsim/*.s")
-add_glcc_library("libc4" "cpu4/libc.a" CPU 4 "gigatron/libc/*.c" "gigatron/libc/*.s" "gigatron/runtime/*.s")
-add_glcc_library("libc5" "cpu5/libc.a" CPU 5 "gigatron/libc/*.c" "gigatron/libc/*.s" "gigatron/runtime/*.s")
-add_glcc_library("libc6" "cpu6/libc.a" CPU 6 "gigatron/libc/*.c" "gigatron/libc/*.s" "gigatron/runtime/*.s") 
+add_glcc_library("libc-cpu4" "cpu4/libc.a" CPU 4 "gigatron/libc/*.c" "gigatron/libc/*.s" "gigatron/runtime/*.s")
+add_glcc_library("libc-cpu5" "cpu5/libc.a" CPU 5 "gigatron/libc/*.c" "gigatron/libc/*.s" "gigatron/runtime/*.s")
+add_glcc_library("libc-cpu6" "cpu6/libc.a" CPU 6 "gigatron/libc/*.c" "gigatron/libc/*.s" "gigatron/runtime/*.s") 
 
 
 # ---- Installation
@@ -249,19 +258,20 @@ if (WIN32)
   install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory
              \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${glcc_install_bindir}\")")
   foreach(pgm glcc glink gtsim)
-    if ("${pgm}" STREQUAL gtsim)
-      set(py "")
-    else()
-      set(py "\\\"${Python3_EXECUTABLE}\\\" ")
+    set(pysh "")
+    set(pycmd "")
+    if (NOT "${pgm}" STREQUAL gtsim)
+      set(pysh "\\\"${Python3_EXECUTABLE}\\\" ")
+      set(pycmd "\\\"${PYTHON3}\\\" ")
     endif()
     set(output "\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${glcc_install_cmddir}/${pgm}.cmd")
     install(CODE "message(STATUS \"Installing: ${output}\")
                   execute_process(COMMAND ${CMAKE_COMMAND} -E echo
-                                     \"@${py}\\\"%~dp0\\\\${cmd_to_lib}\\\\%~n0\\\" %*\"
+                                     \"@${pycmd}\\\"%~dp0\\\\${cmd_to_lib}\\\\%~n0\\\" %*\"
                                   OUTPUT_FILE \"${output}\") ")
     set(output "\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${glcc_install_bindir}/${pgm}")
     install(CODE "message(STATUS \"Installing: ${output}\")
-                  set(EXECCMD \"${py}\\\"\\\$progdir/${bin_to_lib}/${pgm}\\\"\")
+                  set(EXECCMD \"${pysh}\\\"\\\$progdir/${bin_to_lib}/${pgm}\\\"\")
                   configure_file(\"${CMAKE_CURRENT_SOURCE_DIR}/gigatron/exec-sh.in\"
                     \"${output}\" @ONLY)" )
   endforeach()

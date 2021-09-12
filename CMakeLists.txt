@@ -52,7 +52,8 @@ file(GLOB srcs_md CONFIGURE_DEPENDS
   "${CMAKE_CURRENT_SOURCE_DIR}/src/*.md" )
 
 foreach(md ${srcs_md})
-  set(output "${CMAKE_CURRENT_BINARY_DIR}/${md}.c")
+  get_filename_component(mdn "${md}" NAME_WLE)
+  set(output "${mdn}.c")
   list(APPEND srcs_lburg "${output}")
   add_custom_command(OUTPUT "${output}"
     COMMAND lburg "${srcrel}/src/${md}" "${output}"

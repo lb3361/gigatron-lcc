@@ -17,6 +17,7 @@
 # define read _read
 # define write _write
 # define lseek _lseek
+# define off_t long
 # define close _close
 # define fileno _fileno
 # define dup2 _dup2
@@ -46,6 +47,9 @@ void debug(const char *fmt, ...)
   }
 }
 
+#ifdef _MSC_VER
+__declspec(noreturn)
+#endif
 void fatal(const char *fmt, ...)
 {
   va_list ap;
@@ -110,7 +114,7 @@ CpuState cpuCycle(const CpuState S)
 
   if (W) RAM[addr] = B; // Random Access Memory
 
-  uint8_t ALU; // Arithmetic and Logic Unit
+  uint8_t ALU = 0; // Arithmetic and Logic Unit
   switch (ins) {
     case 0: ALU =        B; break; // LD
     case 1: ALU = S.AC & B; break; // ANDA
@@ -142,6 +146,8 @@ void sim(void)
   int vgaX = 0;
   int vgaY = 0;
   CpuState S;
+
+  memset(&S, 0, sizeof(S));
 
   for(t = -2; ; t++)
     {
@@ -276,7 +282,7 @@ void debugSysFn(void)
 word loadGt1(const char *gt1)
 {
   int c;
-  word addr;
+  word addr = 0;
   int len;
   FILE *fp = fopen(gt1, "rb");
   if (! fp)
@@ -543,7 +549,7 @@ void sys_io_openf(void)
   
   if (okopen)
     {
-      int fd;
+      int fd = 0;
       int oflags = 0;
       if ((flg & 1) && (flg & 2))
         oflags = O_RDWR;

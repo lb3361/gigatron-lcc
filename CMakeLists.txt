@@ -30,11 +30,7 @@ string(REGEX REPLACE "/*foo$" "" srcrel "${srcrel}")
 # --- Find Python
 
 find_package(Python3 3.8 REQUIRED QUIET COMPONENTS Interpreter)
-
-file(TO_NATIVE_PATH "${Python3_EXECUTABLE}" python3path)
-
-set(PYTHON3 "${python3path}" CACHE STRING "Python 3 executable path")
-
+set(PYTHON3 "${Python3_EXECUTABLE}" CACHE STRING "Python 3 executable path")
 message(STATUS "Using python executable: ${PYTHON3}")
 
 
@@ -176,17 +172,94 @@ endforeach()
 
 # ---- Compile gigatron libraries
 
+
+# This version uses add_custom_{command/target} to cross-compile the
+# libraries. It works very well with the Makefile generators, but
+# fails with the Visual Studio generator because only one of the
+# command is executed. Whether this is a cmake bug or a msbuild bug is
+# unclear.
+#
+#    function(add_glcc_library libname libfile)
+#      set(cpu "")
+#      set(cpulist 4 5 6)
+#      list(GET ARGN 0 car)
+#      if ("${car}" STREQUAL "CPU")
+#        list(POP_FRONT ARGN car cpulist)
+#      endif()
+#      set(objlist "")
+#      set(asmlist "")
+#      set(objdir "CMakeFiles/${libname}.glccdir")
+#      file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${objdir}")
+#      foreach(fnp ${ARGN})
+#        file(GLOB fn_list CONFIGURE_DEPENDS
+#  	RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
+#  	"${CMAKE_CURRENT_SOURCE_DIR}/${fnp}")
+#        foreach(fn ${fn_list})
+#  	get_filename_component(fname "${fn}" NAME_WLE)
+#  	get_filename_component(fnext "${fn}" LAST_EXT)
+#  	if ("${fnext}" STREQUAL ".c")
+#  	  foreach(cpu ${cpulist})
+#  	    set(obj "${objdir}/${fname}_${cpu}.o")
+#  	    add_custom_command(OUTPUT "${obj}"
+#  	      COMMAND "./glcc" "-c" "-cpu=${cpu}" "-o" "${obj}" "${srcrel}/${fn}"
+#  	      WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+#  	      DEPENDS glcc-ready "${CMAKE_CURRENT_SOURCE_DIR}/${fn}"
+#  	      COMMENT "Cross-compiling ${obj}"
+#  	      VERBATIM)
+#  	    list(APPEND objlist "${obj}")
+#  	  endforeach()
+#  	elseif ("${fnext}" STREQUAL ".s")
+#  	  list(APPEND asmlist "${srcrel}/${fn}")
+#  	else()
+#  	  message(FATAL_ERROR "Library file ${fname}${fext} has an unrecognized suffix")
+#  	endif()
+#        endforeach()
+#      endforeach()
+#      set(script "
+#  set(objs \"${objlist}\" \"${asmlist}\")
+#  file(REMOVE \"${libfile}\")
+#  foreach(obj \${objs})
+#    file(READ \"\${obj}\" contents)
+#    file(APPEND \"${libfile}\" \"\${contents}\")
+#  endforeach()
+#  ")
+#      file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${objdir}/link.cmake" "${script}")
+#      add_custom_target(${libname} ALL
+#        COMMAND ${CMAKE_COMMAND} "-P" "${objdir}/link.cmake"
+#        WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+#        DEPENDS ${objlist} VERBATIM)
+#    endfunction()
+
+
+# This version constructs cmake script to cross-compile the
+# libraries. This is less efficient but maybe good enough.
+
 function(add_glcc_library libname libfile)
-  set(cpu "")
+  # Parse the CPU x optional argument
   set(cpulist 4 5 6)
   list(GET ARGN 0 car)
   if ("${car}" STREQUAL "CPU")
     list(POP_FRONT ARGN car cpulist)
   endif()
+  # Prepare the script
+  set(srclist "")
   set(objlist "")
-  set(asmlist "")
   set(objdir "CMakeFiles/${libname}.glccdir")
+  set(script "${objdir}/${libname}.cmake")
   file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${objdir}")
+  file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${script}" "
+file(REMOVE \"${libfile}\")
+set(glcccmd \".\\\\glcc.cmd\")
+if (NOT EXISTS \"\${glcccmd}\")
+  set(glcccmd \"./glcc\")
+endif()" )
+  if ("${CMAKE_GENERATOR}" MATCHES "Makefile")
+    file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/${script}" "
+string(ASCII 27 esc)
+set(COLORcyan \"\${esc}[36m\")
+set(COLORreset \"\${esc}[m\")")
+  endif()
+  # Iterate over sources
   foreach(fnp ${ARGN})
     file(GLOB fn_list CONFIGURE_DEPENDS
       RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
@@ -194,38 +267,43 @@ function(add_glcc_library libname libfile)
     foreach(fn ${fn_list})
       get_filename_component(fname "${fn}" NAME_WLE)
       get_filename_component(fnext "${fn}" LAST_EXT)
+      list(APPEND srclist "${fn}")
       if ("${fnext}" STREQUAL ".c")
-	foreach(cpu ${cpulist})
-	  set(obj "${objdir}/${fname}_${cpu}.o")
-	  add_custom_command(OUTPUT "${obj}"
-	    COMMAND "./glcc" "-c" "-cpu=${cpu}" "-o" "${obj}" "${srcrel}/${fn}"
-	    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-	    DEPENDS glcc-ready "${CMAKE_CURRENT_SOURCE_DIR}/${fn}"
-	    COMMENT "Cross-compiling ${obj}"
-	    VERBATIM)
-	  list(APPEND objlist "${obj}")
-	endforeach()
+  	  foreach(cpu ${cpulist})
+  	    set(obj "${objdir}/${fname}_${cpu}.o")
+	    list(APPEND objlist "${obj}")
+	    file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/${script}" "
+if (\"${srcrel}/${fn}\" IS_NEWER_THAN \"${obj}\")
+  message(\"\${COLORcyan}Cross-compiling ${obj}\${COLORreset}\")
+  execute_process(COMMAND \"\${glcccmd}\" \"-c\" \"-cpu=${cpu}\" \"-o\" \"${obj}\" \"${srcrel}/${fn}\"
+                  WORKING_DIRECTORY \"${CMAKE_CURRENT_BINARY_DIR}\"
+                  RESULT_VARIABLE status)
+  if (NOT \"\${status}\" EQUAL 0)
+     message(FATAL_ERROR \"Cross-compilation failed: \${status}\")
+  endif()
+endif()
+file(READ \"${obj}\" contents)
+file(APPEND \"${libfile}\" \"\${contents}\")" )
+	  endforeach()
       elseif ("${fnext}" STREQUAL ".s")
-	list(APPEND asmlist "${srcrel}/${fn}")
+	    file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/${script}" "
+file(READ \"${srcrel}/${fn}\" contents)
+file(APPEND \"${libfile}\" \"\${contents}\")" )
       else()
-	message(FATAL_ERROR "Library file ${fname}${fext} has an unrecognized suffix")
+  	message(FATAL_ERROR "Library file ${fname}${fext} has an unrecognized suffix")
       endif()
     endforeach()
   endforeach()
-  set(script "
-set(objs \"${objlist}\" \"${asmlist}\")
-foreach(obj \${objs})
-  file(READ \"\${obj}\" contents)
-  file(APPEND \"${libfile}\" \"\${contents}\")
-endforeach()
-")
-  file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${objdir}/link.cmake" "${script}")
+  # Create target
   add_custom_target(${libname} ALL
-    COMMAND ${CMAKE_COMMAND} "-P" "${objdir}/link.cmake"
+    COMMAND "${CMAKE_COMMAND}" } "-P" "${script}"
     WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-    DEPENDS ${objlist} VERBATIM)
+    BYPRODUCTS ${objlist}
+    SOURCES ${srclist}
+    DEPENDS glcc-ready
+    VERBATIM)
 endfunction()
-
+  
 add_glcc_library("libconx" "mapconx/libconx.a" "gigatron/mapconx/libconx/*.c")
 add_glcc_library("libsim" "mapsim/libsim.a" "gigatron/mapsim/libsim/*.c"  "gigatron/mapsim/libsim/*.s")
 add_glcc_library("libc-cpu4" "cpu4/libc.a" CPU 4 "gigatron/libc/*.c" "gigatron/libc/*.s" "gigatron/runtime/*.s")
@@ -267,10 +345,8 @@ if (WIN32)
   install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory
              \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${glcc_install_bindir}\")")
   foreach(pgm glcc glink gtsim)
-    set(pysh "")
     set(pycmd "")
     if (NOT "${pgm}" STREQUAL gtsim)
-      set(pysh "\\\"${Python3_EXECUTABLE}\\\" ")
       set(pycmd "\\\"${PYTHON3}\\\" ")
     endif()
     set(output "\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${glcc_install_cmddir}/${pgm}.cmd")
@@ -280,7 +356,7 @@ if (WIN32)
                                   OUTPUT_FILE \"${output}\") ")
     set(output "\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${glcc_install_bindir}/${pgm}")
     install(CODE "message(STATUS \"Installing: ${output}\")
-                  set(EXECCMD \"${pysh}\\\"\\\$progdir/${bin_to_lib}/${pgm}\\\"\")
+                  set(EXECCMD \"${pycmd}\\\"\\\$progdir/${bin_to_lib}/${pgm}\\\"\")
                   configure_file(\"${CMAKE_CURRENT_SOURCE_DIR}/gigatron/exec-sh.in\"
                     \"${output}\" @ONLY)" )
   endforeach()

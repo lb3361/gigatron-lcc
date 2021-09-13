@@ -173,66 +173,15 @@ endforeach()
 # ---- Compile gigatron libraries
 
 
-# This version uses add_custom_{command/target} to cross-compile the
-# libraries. It works very well with the Makefile generators, but
-# fails with the Visual Studio generator because only one of the
-# command is executed. Whether this is a cmake bug or a msbuild bug is
-# unclear.
+# The previous version of add_glcc_library used to rely on
+# add_custom_{command/target} to cross-compile the libraries. This
+# works very well with the Makefile generators, but fails with the
+# Visual Studio generator because only one of the command is
+# executed. Whether this is a cmake bug or a msbuild bug is unclear.
 #
-#    function(add_glcc_library libname libfile)
-#      set(cpu "")
-#      set(cpulist 4 5 6)
-#      list(GET ARGN 0 car)
-#      if ("${car}" STREQUAL "CPU")
-#        list(POP_FRONT ARGN car cpulist)
-#      endif()
-#      set(objlist "")
-#      set(asmlist "")
-#      set(objdir "CMakeFiles/${libname}.glccdir")
-#      file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${objdir}")
-#      foreach(fnp ${ARGN})
-#        file(GLOB fn_list CONFIGURE_DEPENDS
-#  	RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
-#  	"${CMAKE_CURRENT_SOURCE_DIR}/${fnp}")
-#        foreach(fn ${fn_list})
-#  	get_filename_component(fname "${fn}" NAME_WLE)
-#  	get_filename_component(fnext "${fn}" LAST_EXT)
-#  	if ("${fnext}" STREQUAL ".c")
-#  	  foreach(cpu ${cpulist})
-#  	    set(obj "${objdir}/${fname}_${cpu}.o")
-#  	    add_custom_command(OUTPUT "${obj}"
-#  	      COMMAND "./glcc" "-c" "-cpu=${cpu}" "-o" "${obj}" "${srcrel}/${fn}"
-#  	      WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-#  	      DEPENDS glcc-ready "${CMAKE_CURRENT_SOURCE_DIR}/${fn}"
-#  	      COMMENT "Cross-compiling ${obj}"
-#  	      VERBATIM)
-#  	    list(APPEND objlist "${obj}")
-#  	  endforeach()
-#  	elseif ("${fnext}" STREQUAL ".s")
-#  	  list(APPEND asmlist "${srcrel}/${fn}")
-#  	else()
-#  	  message(FATAL_ERROR "Library file ${fname}${fext} has an unrecognized suffix")
-#  	endif()
-#        endforeach()
-#      endforeach()
-#      set(script "
-#  set(objs \"${objlist}\" \"${asmlist}\")
-#  file(REMOVE \"${libfile}\")
-#  foreach(obj \${objs})
-#    file(READ \"\${obj}\" contents)
-#    file(APPEND \"${libfile}\" \"\${contents}\")
-#  endforeach()
-#  ")
-#      file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${objdir}/link.cmake" "${script}")
-#      add_custom_target(${libname} ALL
-#        COMMAND ${CMAKE_COMMAND} "-P" "${objdir}/link.cmake"
-#        WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-#        DEPENDS ${objlist} VERBATIM)
-#    endfunction()
-
-
-# This version constructs cmake script to cross-compile the
-# libraries. This is less efficient but maybe good enough.
+# The following version takes a completely different approach.
+# It builds a cmake script to cross-compile the library.
+# This is less efficient but maybe more reliable.
 
 function(add_glcc_library libname libfile)
   # Parse the CPU x optional argument

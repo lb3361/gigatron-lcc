@@ -200,8 +200,9 @@ function(add_glcc_library libname libfile)
 	  add_custom_command(OUTPUT "${obj}"
 	    COMMAND "./glcc" "-c" "-cpu=${cpu}" "-o" "${obj}" "${srcrel}/${fn}"
 	    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-	    MAIN_DEPENDENCY "${CMAKE_CURRENT_SOURCE_DIR}/${fn}"
-	    DEPENDS glcc-ready)
+	    DEPENDS glcc-ready "${CMAKE_CURRENT_SOURCE_DIR}/${fn}"
+	    COMMENT "Cross-compiling ${obj}"
+	    VERBATIM)
 	  list(APPEND objlist "${obj}")
 	endforeach()
       elseif ("${fnext}" STREQUAL ".s")

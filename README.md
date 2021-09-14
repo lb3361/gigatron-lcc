@@ -54,7 +54,9 @@ Some useful things to know:
   But one just has to redefine a few functions to change that.
   This is one happens when one compiles with `-map=sim` which
   [forwards](gigatron/mapsim/libsim) all the stdio calls to 
-  the emulator.
+  the emulator. Note that such binaries only run in `gtsim`
+  because they attempt to communicate with `gtsim` to forward
+  the stdio calls.
   
 * Over time the linker `glink` has accumulated 
   a lot of capabilites. It supports common symbols,
@@ -197,13 +199,13 @@ Chocolatey (https://community.chocolatey.org/packages/make).
   with CMake to select the proper toolchain, compile the project, and
   optionally set CMAKE_INSTALL_PREFIX and trigger the installation target.
 
-Both options create Window batch files, e.g `glcc.cmd`, etc.,
-that can be used to invoke GLCC from the DOS command line or from PowerShell. 
-These batch files rely on the `py` launcher that is installed
-by default with recent versions of Python for windows.
-The install target also creates a `bin` directory with shell scripts
-that can be invoked from the Git bash for instance. Simply run the Git bash
-and add this directory to the `PATH` variable, e.g., `PATH=/c/glcc/bin:$PATH`.
+Both options create a `bin` directory with Window batch files, e.g
+`glcc.cmd`, etc., that can be used to invoke GLCC from the DOS command
+line, from PowerShell, or from the Git Bash. These batch files rely on
+the `py` launcher that is installed by default with recent versions of
+Python for windows. Just add this directory to the executable search
+path, e.g.  `PATH=/c/glcc/bin;%PATH%` at the DOS command line or
+`PATH=/c/glcc/bin:$PATH` at the Git Bash command line. T
 
 ## 3 Compiler invocation
 
@@ -235,7 +237,7 @@ are documented by typing `glink -h`
     Maps can also manipulate the linker arguments, insert libraries,
 	and define the initialization function that checks the rom type
 	and the ram configuration. For instance, map `sim` produces gt1
-	files that run in the emulator [`gtsim`](gigatron/mapsim) with a
+	files that only run in the emulator [`gtsim`](gigatron/mapsim) with a
 	library that redirects `printf` and all standard i/o functions to
 	the emulator itself. This is my main debugging tool.
 	

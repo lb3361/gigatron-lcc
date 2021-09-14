@@ -264,7 +264,6 @@ add_glcc_library("libc-cpu6" "cpu6/libc.a" CPU 6 "gigatron/libc/*.c" "gigatron/l
 
 set(glcc_install_libdir "lib/gigatron-lcc")
 set(glcc_install_bindir "bin")
-set(glcc_install_cmddir "cmd")
 
 install(TARGETS cpp rcc lcc gtsim
   RUNTIME DESTINATION "${glcc_install_libdir}")
@@ -287,10 +286,7 @@ endforeach()
 
 if (WIN32)
   file(RELATIVE_PATH bin_to_lib "/${glcc_install_bindir}" "/${glcc_install_libdir}")
-  file(RELATIVE_PATH cmd_to_lib "/${glcc_install_cmddir}" "/${glcc_install_libdir}")
-  string(REPLACE "/" "\\\\" cmd_to_lib "${cmd_to_lib}")
-  install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory
-             \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${glcc_install_cmddir}\")")
+  string(REPLACE "/" "\\\\" bin_to_lib "${cmd_to_lib}")
   install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory
              \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${glcc_install_bindir}\")")
   foreach(pgm glcc glink gtsim)
@@ -298,16 +294,11 @@ if (WIN32)
     if (NOT "${pgm}" STREQUAL gtsim)
       set(pycmd "\\\"${PYTHON3}\\\" ")
     endif()
-    set(output "\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${glcc_install_cmddir}/${pgm}.cmd")
+    set(output "\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${glcc_install_bindir}/${pgm}.cmd")
     install(CODE "message(STATUS \"Installing: ${output}\")
                   execute_process(COMMAND ${CMAKE_COMMAND} -E echo
                                      \"@${pycmd}\\\"%~dp0\\\\${cmd_to_lib}\\\\%~n0\\\" %*\"
                                   OUTPUT_FILE \"${output}\") ")
-    set(output "\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${glcc_install_bindir}/${pgm}")
-    install(CODE "message(STATUS \"Installing: ${output}\")
-                  set(EXECCMD \"${pycmd}\\\"\\\$progdir/${bin_to_lib}/${pgm}\\\"\")
-                  configure_file(\"${CMAKE_CURRENT_SOURCE_DIR}/gigatron/exec-sh.in\"
-                    \"${output}\" @ONLY)" )
   endforeach()
 else()
   file(RELATIVE_PATH bin_to_lib "/${glcc_install_bindir}" "/${glcc_install_libdir}")

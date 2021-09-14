@@ -9,8 +9,6 @@
 ### bindir
 ### libdir
 
-cmddir="${PREFIX}/cmd"
-
 # determine relative path from bindir/cmddir to libdir
 
 relpath() {
@@ -24,22 +22,14 @@ relpath() {
 }
 
 bin_to_lib=`relpath "${bindir}" "${libdir}"`
-cmd_to_lib=`relpath "${cmddir}" "${libdir}" | sed -e 's:/:\\\\:g'`
+cmd_to_lib=`relpath "${bindir}" "${libdir}" | sed -e 's:/:\\\\:g'`
 
-# create and populate cmd directory
-
-${INSTALL} -d "${cmddir}" || true
-echo '@py -3 "%~dp0\\'"$cmd_to_lib"'\\%~n0" %*' > "${cmddir}/glcc.cmd"
-echo '@py -3 "%~dp0\\'"$cmd_to_lib"'\\%~n0" %*' > "${cmddir}/glink.cmd"
-echo '@"%~dp0\\'"$cmd_to_lib"'\\gtsim.exe" %*'  > "${cmddir}/gtsim.cmd"
-
-# create and populate bin directory
+# create and populate bin/cmd directory
 
 ${INSTALL} -d "${bindir}" || true
-for pgm in glcc glink gtsim ; do
-    test $pgm == gtsim && py='' || py='py -3 '
-    sed -e "s:@EXECCMD@:${py}\"\$progdir/${bin_to_lib}/${pgm}\":g" gigatron/exec-sh.in > "${bindir}/${pgm}"
-done
+echo '@py -3 "%~dp0\\'"$cmd_to_lib"'\\%~n0" %*' > "${bindir}/glcc.cmd"
+echo '@py -3 "%~dp0\\'"$cmd_to_lib"'\\%~n0" %*' > "${bindir}/glink.cmd"
+echo '@"%~dp0\\'"$cmd_to_lib"'\\gtsim.exe" %*'  > "${bindir}/gtsim.cmd"
 
 # add useful programs to the bin directory
 

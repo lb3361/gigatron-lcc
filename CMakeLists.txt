@@ -286,7 +286,7 @@ endforeach()
 
 if (WIN32)
   file(RELATIVE_PATH bin_to_lib "/${glcc_install_bindir}" "/${glcc_install_libdir}")
-  string(REPLACE "/" "\\\\" bin_to_lib "${cmd_to_lib}")
+  string(REPLACE "/" "\\\\" cmd_to_lib "${bin_to_lib}")
   install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory
              \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${glcc_install_bindir}\")")
   foreach(pgm glcc glink gtsim)

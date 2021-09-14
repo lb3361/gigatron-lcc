@@ -59,7 +59,7 @@ clean: FORCE
 
 install: FORCE
 	-${INSTALL} -d "${libdir}/${MAPDIR}"
-	${INSTALL} -m 0644 ${B}${MAPDIR}/${LIBNAME}.a "${libdir}/${MAPDIR}/"
+	${INSTALL} -m 0644 "${B}${MAPDIR}/${LIBNAME}.a" "${libdir}/${MAPDIR}/"
 	${INSTALL} -m 0644 ${PYTARGETS} "${libdir}/${MAPDIR}/"
 	${INSTALL} -m 0755 "${B}gtsim${E}" "${libdir}/gtsim${E}"
 ifndef MSYSTEM

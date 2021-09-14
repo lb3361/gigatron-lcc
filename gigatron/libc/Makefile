@@ -64,8 +64,8 @@ clean: FORCE
 
 install: FORCE
 	for cpu in 4 5 6; do if test -d ${B}cpu$$cpu; then \
-	  ${INSTALL} -d ${libdir}/cpu$$cpu/ ; \
-	  ${INSTALL} -m 644 ${B}cpu$$cpu/libc.a ${libdir}/cpu$$cpu/libc.a ; \
+	  ${INSTALL} -d "${libdir}/cpu$$cpu/" ; \
+	  ${INSTALL} -m 644 "${B}cpu$$cpu/libc.a" "${libdir}/cpu$$cpu/libc.a" ; \
 	fi; done
 
 

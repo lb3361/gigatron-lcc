@@ -40,8 +40,8 @@ clean: lcc-clean gigatron-clean subdirs-clean build-dir-clean
 install: all gigatron-install subdirs-install
 ifdef MSYSTEM
 	echo "Calling Mingw post-installation script"
-	PREFIX=${PREFIX} INSTALL=${INSTALL} \
-	  bindir=${bindir} libdir=${libdir} ${G}mingw-install-sh   
+	PREFIX="${PREFIX}" INSTALL="${INSTALL}" \
+	  bindir="${bindir}" libdir="${libdir}" "${G}mingw-install-sh"
 endif
 
 test: all

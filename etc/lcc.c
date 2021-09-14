@@ -221,13 +221,61 @@ char *basepath(char *name) {
 
 #ifdef WIN32
 #include <process.h>
+#include <malloc.h>
+
+static int safe_spawnvp(int mode, const char *cmdname, const char *const argv[]) {
+#ifdef __CYGWIN__
+	/* Cygwin spawnvp already quote arguments */
+	return _spawnvp(mode, cmdname, argv);
 #else
+	int i;
+	int argc = 0;
+	const char **nargv;
+	const char *s;
+	char *d;
+
+	while(argv[argc])
+		argc++;
+	nargv = _alloca(sizeof(char*)*(argc+1));
+	for (i=0; i<argc; i++)
+		if (argv[i][0] && !strpbrk(argv[i]," \t\n\r\"")) {
+			nargv[i] = argv[i];
+		} else {
+			/* compute quoted length */
+			int len = 3;
+			int nbs = 0;
+			for(s=argv[i]; *s; s++)
+			switch(*s) {
+			case '\\': len += 1; nbs += 1; break;
+			case '\"': len += nbs + 2; nbs = 0; break;
+			default:   len += 1; nbs = 0; break;
+			}
+			/* allocate and quote */
+			nbs = 0;
+			nargv[i] = d = _alloca(len);
+			*d++ = '\"';
+			for(s=argv[i]; *s; s++)
+			switch(*s) {
+			case '\\': nbs += 1; *d++ = *s; break;
+			case '\"': while(nbs-- >= 0) *d++ = '\\'; *d++ = *s; nbs = 0; break;
+			default: *d++ = *s; nbs = 0; break;
+			}
+			*d++ = '\"';
+			*d++ = 0;
+		}
+	nargv[i] = 0;
+	return _spawnvp(mode, cmdname, nargv);
+#endif
+}
+
+#else
+
 #define _P_WAIT 0
 extern int fork(void);
 extern int wait(int *);
 extern int execv(const char *, const char* const*);
 
-static int _spawnvp(int mode, const char *cmdname, const char *const argv[]) {
+static int safe_spawnvp(int mode, const char *cmdname, const char *const argv[]) {
 	int pid, n, status;
 
 	switch (pid = fork()) {
@@ -291,7 +339,7 @@ static int callsys(char **av) {
 			fprintf(stderr, "\n");
 		}
 		if (verbose < 2)
-			status = _spawnvp(_P_WAIT, argv[0], (const char * const *)argv);
+			status = safe_spawnvp(_P_WAIT, argv[0], (const char * const *)argv);
 		if (status == -1) {
 			fprintf(stderr, "%s: ", progname);
 			perror(argv[0]);

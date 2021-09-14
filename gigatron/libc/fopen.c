@@ -28,17 +28,18 @@ static int _sflags(int f, const char *s)
 
 FILE *freopen(register const char *fname, register const char *mode, register FILE *fp)
 {
-	register int oflag = fp->_flag;
-	register int nflag = _sflags(oflag, mode);
+	register int oflag, nflag;
+	if (! (oflag = nflag = fp->_flag))
+		nflag = _IOFBF;
+	nflag = _sflags(oflag, mode);
 	if (! (nflag && fname)) {
 		errno = EINVAL;
 		return 0;
 	}
 	if (oflag) {
 		_fclose(fp);
-	} else  {
+	} else {
 		fp->_file = -1;
-		nflag |= _IOFBF;
 	}
 	fp->_flag = nflag;
 	if (_openf(fp, fname) >= 0) {

@@ -45,6 +45,7 @@ ifdef MSYSTEM
 endif
 
 test: all
+	@test -d ${B}tst || mkdir ${B}tst
 	@for rom in ${ROMS}; do \
 	    printf "+----------------------------------+\n"; \
 	    printf "|  Compiling for rom: %-8s     |\n" $$rom; \

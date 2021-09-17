@@ -1,4 +1,7 @@
+Since GLCC_RELEASE_1.3
 
+- Fixed fopen with "r+" argument
+- Added option -V to report glcc version from git tags
 
 From GLCC_RELEASE_1.3 TO GLCC_RELEASE_1.2
 

@@ -115,7 +115,10 @@ foreach(fn ${gigatron_targets})
     VERBATIM)
 endforeach()
 
-if (TRUE)
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/gigatron/glccver.py")
+  file(READ "${CMAKE_CURRENT_SOURCE_DIR}/gigatron/glccver.py" ver)
+  file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/glccver.py" "${ver}")
+else()
   set(ver "GLCC-unknown-version")
   execute_process(COMMAND "git" "describe" "--tags"
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"

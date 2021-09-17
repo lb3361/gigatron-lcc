@@ -134,8 +134,9 @@ ${B}glcc.cmd ${B}glink.cmd: FORCE
 	echo '@py -3 "%~dp0\%~n0" %*' > $@
 
 ${B}glccver.py: FORCE
-	id=`( test -d .git && which git > /dev/null && git describe --tags )\
-            || echo 'GLCC-unknown-version'`; echo 'ver="'"$${id}"'"' > $@
+	if [ -r "${G}glccver.py" ] ; then cp "${G}glccver.py" "$@" ; else\
+	  id=`( test -d .git && which git > /dev/null && git describe --tags )\
+	      || echo 'GLCC-unknown-version'`; echo 'ver="'"$${id}"'"' > "$@" ; fi
 
 ${B}%: ${G}%
 	cp $< $@

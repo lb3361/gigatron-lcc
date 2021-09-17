@@ -34,6 +34,7 @@
 import argparse, json, string
 import os, sys, traceback, functools, copy
 import builtins
+import glccver
 
 args = None
 rominfo = None
@@ -2225,6 +2226,8 @@ def glink(argv):
                             help='select a linker map')
         parser.add_argument('-info', "--info", action='store_true', 
                             help='describe the selected map, cpu, rom')
+        parser.add_argument('-V', "--version", action='store_true', 
+                            help='report glcc/glink version')
         parser.add_argument('-l', type=str, action='append', metavar='LIB',
                             help='library files. -lxxx searches for libxxx.a')
         parser.add_argument('-L', type=str, action='append', metavar='LIBDIR',
@@ -2280,7 +2283,10 @@ def glink(argv):
         args.L.append(lccdir)
 
         # info request only
-        if args.info:
+        if args.version:
+            print(glccver.ver)
+            return 0
+        elif args.info:
             print('================= ROM INFO')
             if rominfo and romtype and romcpu:
                 print(f"  Rom '{args.rom}' (romType={hex(romtype)}) implements cpu {romcpu}")

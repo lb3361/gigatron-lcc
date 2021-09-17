@@ -18,7 +18,7 @@ GLCC=${B}glcc
 GTSIM=${B}gtsim
 
 SUBDIRS=${G}runtime ${G}libc ${G}map32k ${G}map64k ${G}mapsim ${G}mapconx
-GFILES=${B}glcc ${B}glink ${B}glink.py ${B}interface.json ${B}roms.json ${GFILES_W}
+GFILES=${B}glcc ${B}glink ${B}glink.py ${B}glccver.py ${B}interface.json ${B}roms.json ${GFILES_W}
 ROMFILES=${wildcard ${G}roms/*.rom}
 ROMS=${patsubst ${G}roms/%.rom,%,${ROMFILES}}
 
@@ -132,6 +132,10 @@ ${B}glcc: ${G}glcc
 
 ${B}glcc.cmd ${B}glink.cmd: FORCE
 	echo '@py -3 "%~dp0\%~n0" %*' > $@
+
+${B}glccver.py: FORCE
+	id=`( test -d .git && which git > /dev/null && git describe --tags )\
+            || echo 'GLCC-unknown-version'`; echo 'ver="'"$${id}"'"' > $@
 
 ${B}%: ${G}%
 	cp $< $@

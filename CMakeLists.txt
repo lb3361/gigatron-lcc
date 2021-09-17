@@ -115,6 +115,19 @@ foreach(fn ${gigatron_targets})
     VERBATIM)
 endforeach()
 
+if (TRUE)
+  set(ver "GLCC-unknown-version")
+  execute_process(COMMAND "git" "describe" "--tags"
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/glccver.py"
+    RESULT_VARIABLE status)
+  if ("${status}" STREQUAL "0")
+    file(READ "${CMAKE_CURRENT_BINARY_DIR}/glccver.py" ver)
+    string(STRIP "${ver}" ver)
+  endif()
+  file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/glccver.py" "ver=\"${ver}\"\n")
+endif()
+
 if (WIN32)
   foreach(fn glcc.cmd glink.cmd)
     list(APPEND gigatron_targets "${fn}")
@@ -170,8 +183,8 @@ foreach(map ${gigatron_maps})
   add_glcc_map("${map}")
 endforeach()
 
-# ---- Compile gigatron libraries
 
+# ---- Compile gigatron libraries
 
 # The previous version of add_glcc_library used to rely on
 # add_custom_{command/target} to cross-compile the libraries. This
@@ -278,6 +291,9 @@ foreach(fn ${gigatron_targets})
       DESTINATION "${glcc_install_libdir}")
   endif()
 endforeach()
+
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/glccver.py"
+  DESTINATION "${glcc_install_libdir}")
 
 foreach(dn include cpu4 cpu5 cpu6 ${gigatron_maps})
   install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${dn}"

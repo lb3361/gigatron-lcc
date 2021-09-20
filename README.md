@@ -1,9 +1,9 @@
 
 
-# Gigatron LCC
+# GLCC
 
 
-This version of LCC targets the [Gigatron](http://gigatron.io) VCPU.
+This LCC--derived compiler and C library targets the [Gigatron](http://gigatron.io) VCPU.
 It keeps many of the ideas of the previous attempt to port LCC to the
 Gigatron (pgavlin's).  For instance it outputs assembly code that can be parsed by
 Python and it features a linker writen in Python that can directly

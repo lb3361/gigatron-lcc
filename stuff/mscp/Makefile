@@ -1,5 +1,5 @@
 
-CC=glcc
+CC=../../build/glcc
 CFLAGS=-map=sim,allout -rom=v5a
 GTSIM=gtsim
 ROM=../../gigatron/roms/dev.rom

@@ -8,7 +8,7 @@
 #define CONSOLE_DEFAULT_FGBG 0x3f20
 
 /* Print up to len characters of the zero terminated string s.
-   Understands control characters "\a\t\b\n\r\f". 
+   Understands control characters "\t\b\n\r\f". 
    Return the number of printed characters. */
 extern int console_print(const char *s, int len);
 
@@ -29,10 +29,7 @@ extern int console_getkey(void);
 /* Wait for a key press with a flashing cursor. */
 extern int console_waitkey(void);
 
-/* Input a line with rudimentary editing features: 
-   BS,DEL,LEFT to erase the last character, 
-   CTRL+C to erase the line. 
-   Returns line length. */
+/* Input a line with rudimentaty editing and return the line length. */
 extern int console_readline(char *buffer, int bufsiz);
 
 /* -------- implementation ----------- */

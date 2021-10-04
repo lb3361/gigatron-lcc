@@ -1,5 +1,5 @@
 
-CC=glcc
+CC=../../build/glcc
 ROM=v5a
 MAP=conx
 CFLAGS=-rom=$(ROM) -map=$(MAP)

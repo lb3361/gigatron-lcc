@@ -22,7 +22,7 @@ int console_readline(char *buffer, int bufsiz)
 		ch = console_waitkey();
 		if (ch == '\b' || ch == 0xfd || ch == 0x7f) {
 			if (s > buffer) {
-				console_print("\b \b", 3);
+				console_print("\b", 1);
 				*--s = 0;
 				continue;
 			}
@@ -32,7 +32,6 @@ int console_readline(char *buffer, int bufsiz)
 			*s = 0;
 			continue;
 		}
-		console_print("\a", 1);
 	}
 	return s - buffer;
 }

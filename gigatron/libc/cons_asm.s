@@ -53,7 +53,33 @@ def scope():
            code=[ ('EXPORT', '_console_printchars'),
                   ('CODE', '_console_printchars', code_printchars),
                   ('CODE', '_printonechar', code_printonechar) ] )
-        
+
+
+    # -- void _console_clear(char *addr, char clr, int nl)
+    # Clears from addr to the end of line with color clr.
+    # Repeats for nl successive lines.
+
+    def code_clear():
+        label('_console_clear')
+        PUSH()
+        LDWI('SYS_SetMemory_v2_54');STW('sysFn')
+        LDI(160);SUBW(R8);ST(R11)
+        LD(R9);ST('sysArgs1')
+        label('.loop')
+        LD(R11);ST('sysArgs0')
+        LDW(R8);STW('sysArgs2')
+        SYS(54)
+        INC(R8+1)
+        LDW(R10)
+        SUBI(1);
+        STW(R10);
+        _BNE('.loop')
+        tryhop(2);POP();RET()
+
+    module(name='cons_clear.s',
+           code=[ ('EXPORT', '_console_clear'),
+                  ('CODE', '_console_clear', code_clear) ] )
+    
 scope()
 
 # Local Variables:

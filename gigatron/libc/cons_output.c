@@ -4,89 +4,78 @@
 #include <gigatron/libc.h>
 #include <gigatron/sys.h>
 
-struct console_state_s console_state = { CONSOLE_DEFAULT_FGBG };
+struct console_state_s console_state = { CONSOLE_DEFAULT_FGBG, 0, 0, 1, 1 };
 
 static char *cons_addr(void)
 {
-	for(;;) {
-		register int cx, cy, nl;
+	register int x, y;
+	if (((x = console_state.cx) >= 0) &&
+	    (console_info.ncolumns - x > 0) &&
+	    ((y = console_state.cy) >= 0) &&
+	    (console_info.nlines - y > 0) )
+		return (char*)((videoTable[console_info.offset[y]] << 8) + x * 6);
+	return 0;
+}
+
+void console_clear_screen(void)
+{
+	_console_reset(console_state.fgbg);
+	console_state.cx = console_state.cy = 0;
+}
+
+void console_clear_to_eol(void)
+{
+	register char *addr;
+	if (addr = cons_addr())
+		_console_clear(addr, console_state.fgbg, 8);
+}
+
+static void scroll(int nl, char pg0)
+{
+	register int i, j;
+	register char pg, *vt;
+	i = 0;
+	while (i != nl) {
+		vt = &videoTable[console_info.offset[i]];
+		if (++i == nl)
+			pg = pg0;
+		else
+			pg = videoTable[console_info.offset[i]];
+		for (j = 0; j != 8; j++, vt += 2, pg += 1)
+			*vt = pg;
+	}
+}
+
+int console_print(register const char *s, register int len)
+{
+	register int nc = 0;
+	register int *pcx = &console_state.cx;
+	register int *pcy = &console_state.cy;
+	while (nc < len && s[nc]) {
+		register int n;
 		register char *addr;
-		if ((addr = _console_addr(cx = console_state.cx, cy = console_state.cy)))
-			return addr;
-		if (cx < 0)
-			cx = 0;
-		if (console_info.ncolumns - cx <= 0) {
-			cx = 0;
-			cy += 1;
+		n = console_info.ncolumns;
+		if (console_state.wrapx && *pcx - n >= 0) {
+			*pcx = 0;
+			*pcy += 1;
 		}
-		console_state.cx = cx;
-		if (cy < 0)
-			cy = 0;
-		if ((nl = console_info.nlines) - nl <= 0) {
-			console_scroll(0, nl, 1);
-			console_clear_line(cy = nl - 1);
+		n = console_info.nlines;
+		if (console_state.wrapy && *pcy - n >= 0) {
+			int pg0 = videoTable[console_info.offset[0]];
+			_console_clear((char*)(pg0 << 8), console_state.fgbg, 8);
+			scroll(n, pg0);
+			*pcy = n - 1;
 		}
-		console_state.cy = cy;
+		if ((! _console_ctrl(s[nc])) && (addr = cons_addr()) &&
+		    (n = _console_printchars(console_state.fgbg, addr, s + nc, len - nc)) ) {
+			*pcx += n;
+			nc += n;
+		} else {
+			nc += 1;
+		}
 	}
-}
-
-static void cons_bell(void)
-{
-	static struct channel_s bell = {0,1,77,21};
-	int i;
-	for (i = channelMask_v4 & 3; i >= 0; i--)
-		channel(i+1) = bell;
-	soundTimer = 4;
-}
-
-
-static void cons_control(register int c)
-{
-	switch(c) {
-	case '\a':
-		cons_bell();
-		break;
-	case '\b': /* backspace */
-		if (console_state.cx > 0)
-			console_state.cx -= 1;
-		else if (console_state.cy > 0) {
-			console_state.cx = console_info.ncolumns-1;
-			console_state.cy -= 1;
-		}
-		break;
-	case '\t':  /* tab */
-		console_state.cx = (console_state.cx | 3) + 1;
-		break;
-	case '\n': /* lf */
-		console_state.cy += 1;
-	case '\r': /* cr */
-		console_state.cx = 0;
-		break;
-	case '\f':
-		console_clear_screen();
-		break;
-	default:
-		if (console_state.controlf)
-			console_state.controlf(c);
-		break;
-	}
-}
-
-int console_print(const char *ss, register int len)
-{
-	register int n;
-	register const char *s = ss;
-	while (len > 0 && *s) {
-		if (n = _console_printchars(console_state.fgbg, cons_addr(), s, len))
-			console_state.cx += n;
-		else {
-			cons_control(*s);
-			n = 1;
-		}
-		s += n;
-		len -= n;
-	}
-	return s - ss;
+	return nc;
 }
 
 DECLARE_INIT_FUNCTION(_console_setup);
+

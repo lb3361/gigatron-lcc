@@ -30,6 +30,8 @@
 
 from __future__ import print_function
 import sys
+import re
+import glccver
 
 if sys.version_info < (3, 6):
     print('glcc: fatal error: python 3.6.0 or higher is required.')
@@ -37,6 +39,15 @@ if sys.version_info < (3, 6):
 
 import os, sys, json, tempfile
 import os.path as path
+
+# compute vernum
+vernum = None
+if re.match('^GLCC_RELEASE_[0-9]*', glccver.ver):
+    vlist = re.findall('([0-9]+)', glccver.ver)
+    if len(vlist) >= 2:
+        vernum = 100000 * int(vlist[0]) + 1000 * int(vlist[1])
+    if len(vlist) >= 3:
+        vernum += int(vlist[2])
 
 # locate progdir
 progname = path.realpath(__file__)
@@ -86,6 +97,8 @@ if hasrom and hasrom in roms:
     if not hascpu:
         hascpu = rominfo['cpu']
         argv.insert(1, "-cpu=%s" % hascpu)
+if vernum:
+    argv.append("-D_GLCC_VER=%d" % vernum)
 
 if usage:
     print("Usage: glcc {...options_or_files...}", file=sys.stderr)

@@ -24,76 +24,60 @@ void _doprint_puts(register doprint_t *dp, register const char *s, register size
 }
 
 
-static int pushspec(int c, doprintspec_t *spec, va_list *ap)
+static const char *parsespec(const char *s, doprintspec_t *spec, va_list *ap)
 {
 	static char fl[] = " + #0 - ";
 	static char fv[] = { DPR_SPC, DPR_SGN, 0, DPR_ALT, DPR_ZEROJ, 0, DPR_LEFTJ, 0 };
 	register int f = spec->flags;
-	register int state = spec->conv;
+	register int c;
 	register int *np;
 	register int nf;
 
-	if (state == 0) {
-	 	nf = (c ^ (c >> 2)) & 0x7; /* perfect hash */
-		if (c == fl[nf]) {
-			f |= fv[nf];
-			goto ok;
-		}
-		state += 1;
+	c = *++s;
+	/* Flags */
+	for(;;) {
+		nf = (c ^ (c >> 2)) & 0x7; /* perfect hash */
+		if (fl[nf] != c)
+			break;
+		f |= fv[nf];
+		c = *++s;
 	}
-	if (state == 1) {
-		np = &spec->width;
-		nf = DPR_WIDTH;
-	num:	if (_isdigit(c)) {
+	/* Width and precision */
+	nf = DPR_WIDTH;
+	np = &spec->width;
+ num:	if (c == '*') {
+		f |= nf;
+		*np = va_arg(*ap, int);
+		c = *++s;
+	} else {
+		while (_isdigit(c)) {
 			f |= nf;
 			*np = *np * 10 + c - '0';
-			goto ok;
-		} else if (c == '*') {
-			*np = va_arg(*ap, int);
-			if (state == 1) {
-				f |= nf;
-				if (*np < 0) {
-					f |= DPR_LEFTJ; /* so ugly but ansi */
-					*np = -*np;
-				}
-			} else {
-				if (*np >= 0)
-					f |= nf;
-			}
-			state += 1;
-			goto ok;
+			c = *++s;
 		}
-		state += 1;
 	}
-	if (state == 2) {
+	if (nf == DPR_WIDTH) {
+		if (*np < 0) {
+			f |= DPR_LEFTJ;
+			*np = - *np;
+		}
 		if (c == '.') {
-			state = 3;
-			goto ok;
+			c = *++s;
+			nf = DPR_PREC;
+			np = &spec->prec;
+			goto num;
 		}
-		state = 4;
 	}
-	if (state == 3) {
-		np = &spec->prec;
-		nf = DPR_PREC;
-		goto num;
-	}
-	if (state == 4) {
-		if ((c | 0x20) == 'l') {
+	/* Size modifier */
+	for(;;) {
+		if (c == 'l')
 			f |= DPR_LONG;
-			goto ok;
-		} else if (c == 'h')
-			goto ok;
-		state += 1;
+		if (c != 'h')
+			break;
+		c = *++s;
 	}
-	if (state == 5) {
-	done:	spec->flags = f;
-		spec->conv = c;
-		return 0;
-	} else {
-	ok:     spec->flags = f;
-		spec->conv = state;
-		return 1;
-	}
+	spec->flags = f;
+	return s;
 }
 
 static void do_str(doprint_t *dd, doprintspec_t *spec, const char *s, size_t l)
@@ -226,7 +210,7 @@ int vfprintf(register FILE *fp, register const char *fmt, __va_list ap)
 	register int c;
 	register unsigned int i;
 	register const char *s;
-	int tmp;
+	char tmp;
 	/* prep */
 	dd->fp = fp;
 	dd->cnt = 0;
@@ -241,17 +225,14 @@ int vfprintf(register FILE *fp, register const char *fmt, __va_list ap)
 		pfmt:   _doprint_puts(dd, fmt, s-fmt);
 			continue;
 		}
-		c = *++s;
-		if (c == '%') {
+		if (s[1] == '%') {
 			s += 1;
 			fmt += 1;
 			goto pfmt;
 		}
 		memset(spec, 0, sizeof(*spec));
-		while (pushspec(c, spec, &ap))
-			c = *++s;
-		s += 1;
-		if (! (c = _doprint_conv_info(c)))
+		s = parsespec(s, spec, &ap);
+		if (! (c = _doprint_conv_info(*s++)))
 			goto pfmt;
 		if ((spec->flags & DPR_LONG) && (c & 0x1e)) {
 			_doprint_long(dd, spec, c, &ap);

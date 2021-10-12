@@ -1,15 +1,15 @@
-#include "_stdio.h"
 #include <stdarg.h>
 #include <ctype.h>
 #include <string.h>
 #include <errno.h>
 
+#include "_doprint.h"
 
-void _doprint_putc(doprint_t *dp, int c, size_t cnt)
+void _doprint_putc(register doprint_t *dp, int c, register size_t cnt)
 {
 	dp->cnt += cnt;
 	while (cnt) {
-		fputc(c, dp->fp);
+		dp->f(dp->closure, (char*)&c, 1);
 		cnt -= 1;
 	}
 }
@@ -20,7 +20,7 @@ void _doprint_puts(register doprint_t *dp, register const char *s, register size
 	if (e = memchr(s, 0, cnt))
 		cnt = e - s;
 	dp->cnt += cnt;
-	_fwrite(dp->fp, s, cnt);
+	dp->f(dp->closure, s, cnt);
 }
 
 
@@ -163,7 +163,8 @@ void _doprint_num(register doprint_t *dd,  register doprintspec_t *spec,
 		_doprint_putc(dd, ' ', b);
 }
 
-static void do_int(register doprint_t *dd,  register doprintspec_t *spec, register int b, register unsigned int x)
+static void do_int(register doprint_t *dd,  register doprintspec_t *spec,
+		   register int b, register unsigned int x)
 {
 	char buffer[8];
 	register char *s;
@@ -201,21 +202,14 @@ static int _doprint_conv_info(int c)
 }
 
 
-int vfprintf(register FILE *fp, register const char *fmt, __va_list ap)
+int _doprint(register doprint_t *dd, register const char *fmt, __va_list ap)
 {
-	doprint_t ddobj;
 	doprintspec_t spobj;
-	register doprint_t *dd = &ddobj;
 	register doprintspec_t *spec = &spobj;
 	register int c;
 	register unsigned int i;
 	register const char *s;
 	char tmp;
-	/* prep */
-	dd->fp = fp;
-	dd->cnt = 0;
-	if ((c = _schkwrite(fp)))
-		return _serror(fp, c);
 	/* loop */
 	for(; *fmt; fmt = s) {
 		s = fmt;
@@ -252,8 +246,6 @@ int vfprintf(register FILE *fp, register const char *fmt, __va_list ap)
 			}
 		}
 	}
-	if (ferror(dd->fp))
-		return EOF;
 	return dd->cnt;
 }
 

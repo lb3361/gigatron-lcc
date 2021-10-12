@@ -2,36 +2,35 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include "_stdio.h"
 
-static int str_flsbuf(register int c, register FILE *fp)
+#include "_doprint.h"
+
+typedef struct doprint2_s {
+	doprint_t dp;
+	char *buffer;
+} doprint2_t;
+
+static void dpf(char **bb, const char *buf, size_t sz)
 {
-	fp->_cnt = 0;
-	return c;
+	register char *b = *bb;
+	if (b) {
+		memcpy(b, buf, sz);
+		b += sz;
+		*b = 0;
+		*bb = b;
+	}
 }
-
-static int str_write(FILE *fp, const void *buf, size_t sz)
-{
-	return sz;
-}
-
-static struct _svec v = { str_flsbuf, str_write, 0, 0, 0, 0 };
 
 int vsprintf(register char *s, register const char *fmt, register va_list ap)
 {
-	int r;
-	struct _iobuf f;
-	FILE *fp = &f;
-
-	memset(fp, 0, sizeof(f));
-	if (fp->_ptr = s)
-		fp->_cnt = 0x7fff;
-	fp->_flag = _IOFBF|_IOSTR|_IOWRIT;
-	fp->_v = &v;
-	r = vfprintf(fp, fmt, ap);
-	if (fp->_cnt >= 0)
-		*fp->_ptr++ = 0;
-	return r;
+	doprint2_t dp2obj;
+	register doprint_t *dp = &dp2obj.dp;
+	register char **bb = &dp2obj.buffer;
+	dp->cnt = 0;
+	dp->closure = bb;
+	dp->f = (void(*)(void*,const char*,size_t))dpf;
+	*bb = s;
+	return _doprint(dp, fmt, ap);
 }
 
 int sprintf(register char *s, const char *fmt, ...)

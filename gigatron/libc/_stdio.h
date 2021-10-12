@@ -78,31 +78,5 @@ extern int _doscan(FILE*, const char*, __va_list);
 extern int _doscan_next(doscan_t *);
 extern int _doscan_double(doscan_t *, double *);
 
-#define DPR_LEFTJ   1
-#define DPR_ZEROJ   2
-#define DPR_SGN     4
-#define DPR_SPC     8
-#define DPR_ALT    16
-#define DPR_LONG   32
-#define DPR_WIDTH  64
-#define DPR_PREC  128
-
-typedef struct {
-	char flags;
-	char conv;
-	int width;
-	int prec;
-} doprintspec_t;
-
-typedef struct {
-	FILE *fp;
-	int cnt;
-} doprint_t;
-
-extern void _doprint_putc(doprint_t*, int, size_t);
-extern void _doprint_puts(doprint_t*, const char*, size_t);
-extern void _doprint_num(doprint_t*, doprintspec_t*, int, char*);
-extern void _doprint_double(doprint_t*, doprintspec_t*, __va_list*);
-extern void _doprint_long(doprint_t*, doprintspec_t*, int, __va_list*);
 
 #endif

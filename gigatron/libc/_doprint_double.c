@@ -1,8 +1,9 @@
-#include "_stdio.h"
 #include <stdarg.h>
 #include <ctype.h>
 #include <string.h>
 #include <errno.h>
+
+#include "_doprint.h"
 
 void _doprint_double_imp(doprint_t *dd, doprintspec_t *spec, __va_list *ap)
 {

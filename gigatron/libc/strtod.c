@@ -4,7 +4,9 @@
 #include <errno.h>
 #include <math.h>
 #include <string.h>
-#include "_stdio.h"
+#include <gigatron/libc.h>
+
+#include "_stdlib.h"
 
 /* This code is much simpler than a numerically correct strtod 
    but gets the exact numbers right. */

@@ -2,7 +2,8 @@
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
-#include "_stdio.h"
+
+#include "_stdlib.h"
 
 
 #define FLG_MINUS 1

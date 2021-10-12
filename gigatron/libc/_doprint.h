@@ -2,6 +2,8 @@
 
 #include <gigatron/libc.h>
 
+#include "_stdlib.h"
+
 #if !defined(_VA_LIST) && !defined(_VA_LIST_DEFINED)
 #define _VA_LIST
 #define _VA_LIST_DEFINED

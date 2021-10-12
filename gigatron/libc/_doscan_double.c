@@ -1,8 +1,9 @@
-#include "_stdio.h"
 #include <stdarg.h>
 #include <ctype.h>
 #include <string.h>
 #include <errno.h>
+
+#include "_doscan.h"
 
 int _doscan_double_imp(doscan_t *dd, double *p)
 {

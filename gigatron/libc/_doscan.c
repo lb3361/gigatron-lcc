@@ -1,13 +1,11 @@
-#include "_stdio.h"
 #include <stdarg.h>
 #include <ctype.h>
 #include <string.h>
 #include <errno.h>
 
-#define FLG_STAR    1
-#define FLG_LONG    2
-#define FLG_LEN     8
-
+#include "_doscan.h"
+#include "_stdlib.h"
+#include "_stdio.h"
 
 static void _doscan_init(register doscan_t *dd, FILE *fp)
 {

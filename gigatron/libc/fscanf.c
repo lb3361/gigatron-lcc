@@ -1,6 +1,8 @@
 #include <stdarg.h>
 #include <stdlib.h>
-#include "_stdio.h"
+#include <stdio.h>
+
+#include "_doscan.h"
 
 int fscanf(register FILE *fp, const char *fmt, ...)
 {

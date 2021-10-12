@@ -2,7 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include "_stdio.h"
+
+#include "_doscan.h"
 
 int sscanf(register const char *str, const char *fmt, ...)
 {

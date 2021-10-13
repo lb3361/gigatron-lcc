@@ -1,4 +1,5 @@
 #ifndef _DOPRINT_INTERNAL
+#define _DOPRINT_INTERNAL
 
 #include <gigatron/libc.h>
 

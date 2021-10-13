@@ -9,12 +9,15 @@ typedef char *__va_list;
 
 /* -------- state ----------- */
 
+/* Console geometry. */
 extern const struct console_info_s {
 	int nlines;		     /* number of lines   */
 	int ncolumns;                /* number of columns */
 	unsigned char offset[15];    /* offset of each line in the video table */
 } console_info;
 
+/* Console state: colors, cursor, wrapping and scrolling modes.
+   These fields can be changed as needed between calls to console functions. */
 extern struct console_state_s {
 	int fgbg;                    /* foreground and background colors */
 	int cx, cy;                  /* cursor coordinates */
@@ -36,6 +39,21 @@ extern void console_clear_screen(void);
 
 /* Clear to end of line */
 extern void console_clear_to_eol(void);
+
+
+/* -------- formatted output ----------- */
+
+/* These functions are similar to the stdio printf functions but they
+   bypass stdio and hit directly the console. Using them imports the
+   relatively heavy printf machinery but not the stdio machinery. */
+
+/* Print formatted text at the cursor position */
+extern int cprintf(const char *fmt, ...);
+
+/* Print formatted text like cprintf except that it is called
+   with a va_list instead of a variable number of arguments. */
+extern int vcprintf(const char *fmt, __va_list ap);
+
 
 
 /* -------- input ----------- */

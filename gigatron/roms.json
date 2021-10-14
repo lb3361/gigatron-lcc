@@ -20,7 +20,7 @@
 	      "romType" : "0xf8",
 	      "inherits" : "v5a",
 	      "has_SYS_CopyMemory" : { "addr" : "0xe9", "cycs" : 80 },
-	      "has_SYS_CopyMemoryExt" : { "addr" : "0xec", "cycs" : 94 },
+	      "has_SYS_CopyMemoryExt" : { "addr" : "0xec", "cycs" : 100 },
 	      "has_SYS_ScanMemory" : { "addr" : "0xe6", "cycs" : 50 }
 	    },
 

@@ -64,7 +64,7 @@ def scope():
         PUSH()
         LDWI('SYS_SetMemory_v2_54');STW('sysFn')
         LDI(160);SUBW(R8);ST(R11)
-        LD(R9);ST('sysArgs1')
+        LD(R9);ANDI(0x3f);ST('sysArgs1')
         label('.loop')
         LD(R11);ST('sysArgs0')
         LDW(R8);STW('sysArgs2')

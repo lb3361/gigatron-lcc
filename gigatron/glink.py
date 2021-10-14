@@ -1794,7 +1794,7 @@ def compute_closure():
                     if e and not e.library:        # by multiple non-library files.
                         error(f"symbol '{sym}' is exported by both '{e.fname}' and '{m.fname}'", dedup=True)
                     e = m
-            if e:
+            if e and not e.used:
                 debug(f"including module '{e.fname}' for symbol '{sym}'")
                 e.used = True
                 for sym in e.exports:              # register all symbols exported by the selected module

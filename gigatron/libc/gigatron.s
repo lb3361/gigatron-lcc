@@ -39,7 +39,38 @@ def scope():
     module(name='sys_vdrawbits.s',
            code=[('EXPORT', 'SYS_VDrawBits'),
                  ('CODE', 'SYS_VDrawBits', code0) ])
-    
+
+    # ----------------------------------------
+    # void SYS_Exec(void *romptr, void *vlr)
+    def code0():
+        nohop()
+        label('SYS_Exec')
+        _LDI('SYS_Exec_88');STW('sysFn')
+        LDW(R8);STW('sysArgs0')
+        LDW(R9);BEQ('.se1');STW(vLR)
+        label('.se1')
+        SYS(88);RET()
+
+    module(name='sys_exec.s',
+           code=[('EXPORT', 'SYS_Exec'),
+                 ('CODE', 'SYS_Exec', code0) ])
+
+    # ----------------------------------------
+    # void* SYS_ReadRomDir(void *romptr)
+    def code0():
+        nohop()
+        label('SYS_ReadRomDir')
+        PUSH()
+        _LDI('SYS_ReadRomDir_v5_80');STW('sysFn')
+        LDW(R8);SYS(80);STW(R8)
+        LDW(R9);STW(T2);LDI('sysArgs0');STW(T3);ADDI(8);STW(T1);_CALLJ('_@_bcopy')
+        POP();LDW(R8);RET()
+
+    module(name='sys_readromdir.s',
+           code=[('EXPORT', 'SYS_ReadRomDir'),
+                 ('IMPORT', '_@_bcopy'),
+                 ('CODE', 'SYS_ReadRomDir', code0) ])
+
     # ----------------------------------------
     # void SYS_ExpanderControl(unsigned int ctrl);
     def code0():

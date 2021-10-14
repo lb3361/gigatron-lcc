@@ -123,6 +123,16 @@ unsigned int SYS_Random(void);
 void SYS_VDrawBits(int fgbg, char bits, char *address);
 #define has_SYS_VDrawBits() 1
 
+/* -- SYS_Exec */
+void SYS_Exec(void *romptr, void *vlr);
+#define has_SYS_Exec() 1
+
+/* -- SYS_ReadRomDir
+   Notes: the name is copied into buf8 */
+void* SYS_ReadRomDir(void *romptr, char *buf8);
+#define has_SYS_ReadRomDir() \
+	((romType & 0xfc) >= romTypeValue_ROMv5)
+
 /* -- SYS_ExpanderControl --
    Notes: Calling this from C is risky.
    Notes: This exists in v4 but overwrites 0x81 with ctrlBits. 
@@ -138,6 +148,7 @@ void SYS_ExpanderControl(unsigned int ctrl);
 void SYS_SpiExchangeBytes(void *dst, void *src, void *srcend);
 #define has_SYS_SpiExchangeBytes() \
 	(((romType & 0xfc) >= romTypeValue_ROMv5) && (ctrlBits_v5 != 0))
+
 
 
 #endif

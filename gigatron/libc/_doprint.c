@@ -72,7 +72,7 @@ static const char *parsespec(const char *s, doprintspec_t *spec, va_list *ap)
 	for(;;) {
 		if (c == 'l')
 			f |= DPR_LONG;
-		if (c != 'h')
+		else if (c != 'h')
 			break;
 		c = *++s;
 	}

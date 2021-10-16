@@ -23,10 +23,23 @@ def code0():
     LDW(R0); STW(R8)
     ### _exit()
     label('_exit')
+    LDW(R8);STW(R0)
     LDI(0); STW(R9)
-    label('.exitm')
-    LDWI('_exitm'); STW(T3); LDW(R8); CALL(T3)
-    HALT()
+    label('_exitm');
+    label('_exitvsp', pc()+1)
+    LDI(0);ST(vSP)         # .exitvsp is LDI's argument!
+    label('_exitm_msgfunc', pc()+1)
+    LDWI(0);BEQ('.halt')   # _exitm_msgfunc is LDWI's argument here
+    CALL(vAC)              # arguments in R8 and R9 are already correct
+    # If _exitm_msgfunc is zero or returns
+    # we just Flash a pixel with a position indicative of the return code
+    label('.halt')
+    LDWI(0x101);PEEK();ADDW(R0);ST(R7);
+    LDWI(0x100);PEEK();ST(R7+1)
+    label('.loop')
+    POKE(R7)
+    ADDI(1)
+    BRA('.loop')
 
 def code1():
     # subroutine to call a chain of init/fini functions
@@ -57,17 +70,17 @@ def code3():
 # ======== (epilog)
 code=[
     ('EXPORT', '_start'),
-    ('EXPORT', '_exit'),
     ('EXPORT', 'exit'),
+    ('EXPORT', '_exit'),
+    ('EXPORT', '_exitm'),
+    ('EXPORT', '_exitm_msgfunc'),
     ('EXPORT', '__glink_magic_init'),
     ('EXPORT', '__glink_magic_fini'),
     ('CODE', '_start', code0),
     ('CODE', '.callchain', code1),
     ('DATA', '__glink_magic_init', code2, 2, 2),
     ('DATA', '__glink_magic_fini', code3, 2, 2),
-    ('IMPORT', 'main'),
-    ('IMPORT', '_exitm'),
-    ('IMPORT', '_exitvsp') ]
+    ('IMPORT', 'main') ]
 
 if args.gt1exec != args.e:
     code.append(('IMPORT', args.gt1exec))        # causes map start stub to be included

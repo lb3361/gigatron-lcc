@@ -20,13 +20,13 @@ void _console_reset(int fgbg)
 	int i, j;
 	int *table = (int*)videoTable;
 	unsigned int page = CHARSMEM;
+	if (fgbg >= 0)
+		_console_clear((char*)(BLANKMEM << 8), fgbg, 81);
 	for (i = 0; i != NLINES; i++)
 		for (j = 0; j != 12; j++, table++)
 			if (j - 2 < 0 || j - 10 >= 0)
 				*table = BLANKMEM;
 			else
 				*table = page++;
-	if (fgbg >= 0)
-		_console_clear((char*)(BLANKMEM << 8), fgbg, 81);
 }
 

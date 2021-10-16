@@ -16,9 +16,9 @@ void _console_reset(int fgbg)
 {
 	int i;
 	int *table = (int*)videoTable;
-	for (i=8; i!=128; i++)
-		*table++ = i;
 	if (fgbg >= 0)
 		_console_clear(screenMemory[0], fgbg, 120);
+	for (i=8; i!=128; i++)
+		*table++ = i;
 }
 

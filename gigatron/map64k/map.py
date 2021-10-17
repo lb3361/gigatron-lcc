@@ -22,7 +22,7 @@ def map_describe():
 # memory is sufficient. It avoids loading anything in 0x8200-0x8240 to
 # avoid overwriting the stub on a 32KB machine.
 
-# ------------size----addr----step----end---- flags (1=nocode, 2=nodata)
+# ------------size----addr----step----end---- flags (1=nocode, 2=nodata, 4=noheap)
 segments = [ (0x0060, 0x08a0, 0x0100, 0x80a0, 0),
              (0x00fa, 0x0200, 0x0100, 0x0500, 0),
              (0x0200, 0x0500, None,   None,   0),

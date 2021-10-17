@@ -2094,6 +2094,8 @@ def process_magic_bss(s, head_module, head_addr):
 def process_magic_heap(s, head_module, head_addr):
     '''Construct a linked list of heap segments.'''
     for s in segment_list:
+        if s.flags & 0x4:
+            continue
         a0 = (s.pc + 1) & ~0x1
         a1 = s.eaddr &  ~0x1
         if a1 - a0 >= max(24, args.mhss or 24):

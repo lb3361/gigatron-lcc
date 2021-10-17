@@ -6,6 +6,6 @@
 
 segments = [ (0x79c0, 0x8240, None,   None,   0),   # main hi memory
 	     (0x0100, 0x8100, None,   None,   0),   # extra page
-             (0x0040, 0x0200, None,   None,   0) ]  # ram check stub at location 0x200
+             (0x0040, 0x0200, None,   None,   7) ]  # ram check stub at location 0x200
 
 

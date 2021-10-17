@@ -55,6 +55,19 @@ def scope():
            code=[('EXPORT', 'SYS_Exec'),
                  ('CODE', 'SYS_Exec', code0) ])
 
+
+    # ----------------------------------------
+    # void SYS_SetMode(int)
+    def code0():
+        nohop();
+        label('SYS_SetMode')
+        _LDI('SYS_SetMode_v2_80');STW('sysFn')
+        LDW(R8);SYS(80);RET()
+
+    module(name='sys_setmode.s',
+           code=[('EXPORT', 'SYS_SetMode'),
+                 ('CODE', 'SYS_SetMode', code0) ])
+
     # ----------------------------------------
     # void* SYS_ReadRomDir(void *romptr)
     def code0():

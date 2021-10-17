@@ -127,6 +127,10 @@ void SYS_VDrawBits(int fgbg, char bits, char *address);
 void SYS_Exec(void *romptr, void *vlr);
 #define has_SYS_Exec() 1
 
+/* -- SYS_SetMode */
+void SYS_SetMode(int);
+#define has_SYS_SetMode 1
+
 /* -- SYS_ReadRomDir
    Notes: the name is copied into buf8 */
 void* SYS_ReadRomDir(void *romptr, char *buf8);

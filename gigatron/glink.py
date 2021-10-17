@@ -275,6 +275,23 @@ def is_placed(frag4):
             return frag4[1]
     return False
 
+
+fraginfo = {}
+addrinfo = {}
+
+def record_fragment_address(addr):
+    # record fragment addresses for option --frags
+    global fraginfo, addrinfo
+    if args.fragments and final_pass:
+        fid = id(the_fragment)
+        finfo = fraginfo.get(fid, (0,) )
+        if len(finfo) < 2:
+            fraginfo[fid] = (finfo[0] + 1, addr)
+        else:
+            addrinfo[(finfo[1],addr)] = (finfo[0], the_fragment, the_module)
+            fraginfo[fid] = (finfo[0],)
+            
+
 # ------------- jumps and hops
 
 def bytes_left():
@@ -314,6 +331,9 @@ def hop(sz, jump):
                 emit_long_jump(ns.pc)
             hops_enabled = True            
             the_segment.pc = the_pc
+            if args.fragments and final_pass:
+                record_fragment_address(the_pc)
+                record_fragment_address(ns.pc)
             the_segment = ns
             the_pc = ns.pc
             if args.d >= 2 or final_pass:
@@ -1961,11 +1981,15 @@ def assemble_code_fragments(m, placed=False):
                 if the_segment and (args.d >= 2 or final_pass):
                     debug(f"assembling code fragment '{frag[1]}' at {hex(the_segment.pc)} in {the_segment}")
             the_pc = the_segment.pc
+            if args.fragments and final_pass:
+                record_fragment_address(the_pc)
             try:
                 frag[2]()
             except Exception as err:
                 fatal(str(err), exc=True)
             the_segment.pc = the_pc
+            if args.fragments and final_pass:
+                record_fragment_address(the_pc)
 
 def assemble_data_fragments(m, cseg):
     global the_module, the_fragment, the_segment, hops_enabled, the_pc
@@ -1980,11 +2004,15 @@ def assemble_data_fragments(m, cseg):
             elif args.d >= 2 or final_pass:
                 debug(f"assembling {cseg} fragment '{frag[1]}' at {hex(the_segment.pc)} in {the_segment}")
             the_pc = the_segment.pc
+            if args.fragments and final_pass:
+                record_fragment_address(the_pc)
             try:
                 frag[2]()
             except Exception as err:
                 fatal(str(err), exc=True)
             the_segment.pc = the_pc
+            if args.fragments and final_pass:
+                record_fragment_address(the_pc)
             
 def run_pass():
     global the_pass, the_module, the_fragment
@@ -2163,10 +2191,26 @@ def print_symbols(allsymbols=False):
                 exported = (s in exporters) and (exporters[s] == m)
                 syms.append((m.symdefs[s], s, exported, m.fname))
     syms.sort(key = lambda x : x[0] )
-    print("Symbol table (sorted by address)")
+    syms.sort(key = lambda x : x[1] )
+    print("\nSymbol table")
     for s in syms:
         pp="public" if s[2] else "private"
-        print(f"\t{s[0]:04x} {pp:<8s}  {s[1]:<22s}  {s[3]:<24s}")
+        print(f"\t{s[0]:04x} {pp:<8s}  {s[1]:<24s}  {s[3]:<24s}")
+
+def print_fragments():
+    addrs = list(addrinfo.keys())
+    addrs.sort(key = lambda x : x[0])
+    print("\nFragment map")
+    for rng in addrs:
+        (part, frag, m) = addrinfo[rng]
+        name = frag[1]
+        if frag[0] == 'CODE':
+            nparts = fraginfo[id(frag)][0]
+            if nparts > 1:
+                name = name + f" ({part}/{nparts})"
+        plen = rng[1] - rng[0]
+        blen = f"({plen} byte{'s' if plen > 1 else ''})"
+        print(f"\t{rng[0]:04x}-{rng[1]-1:04x} {blen:<14s} {frag[0]:<5s} {name:<28s} {m.fname:<22s}")
 
     
 # ------------- main function
@@ -2236,6 +2280,8 @@ def glink(argv):
                             help='outputs a sorted list of symbols')
         parser.add_argument('--all-symbols', '--all-syms', action='store_const', dest='symbols', const=2,
                             help='outputs a sorted list of all symbols, including generated ones')
+        parser.add_argument('--fragments', '--frags', action='store_const', dest='fragments', const=2,
+                            help='outputs a memory map with all the allocated fragments')
         parser.add_argument('--entry', '-e', dest='e', metavar='START',
                             type=str, action='store', default='_start',
                             help='select the entry point symbol (default _start)')
@@ -2359,8 +2405,10 @@ def glink(argv):
         
         # output
         save_gt1(args.o, args.gt1exec)
-        if (args.symbols):
+        if args.symbols:
             print_symbols(allsymbols=args.symbols>1)
+        if args.fragments:
+            print_fragments()
         return 0
     
     except FileNotFoundError as err:

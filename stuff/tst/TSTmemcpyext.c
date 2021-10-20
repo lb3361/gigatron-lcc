@@ -221,5 +221,14 @@ int main()
 			test(128,256,257,i,j);
 			test(256,63,757,i,j);
 	}
+
+	for(;;) {
+		myprintf("======== stress test\n");
+		_memcpyext((0xc0 | (0x00 >> 2)), (char*)0x8300u, (char*)0x8300u, 0x7d00u); // bank0->bank3
+		_memcpyext((0x40 | (0xc0 >> 2)), (char*)0x8300u, (char*)0x8300u, 0x7d00u); // bank3->bank1
+		_memcpyext((0x80 | (0x40 >> 2)), (char*)0x8300u, (char*)0x8300u, 0x7d00u); // bank1->bank2
+		_memcpyext((0x00 | (0x80 >> 2)), (char*)0x8300u, (char*)0x8300u, 0x7d00u); // bank2->bank0
+	}
+
 	return 0;
 }

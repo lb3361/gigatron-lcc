@@ -5,9 +5,10 @@
 def code0():
     label('setjmp')
     tryhop(4);LDW(vLR);STW(R22)
-    # save SP, R22, R0-R7
+    # save SP, vLR, vSP, R0-R7
     LDW(SP);DOKE(R8);LDI(2);ADDW(R8);STW(R8)
     LDW(R22);DOKE(R8);LDI(2);ADDW(R8);STW(R8)
+    LD(vSP);DOKE(R8);LDI(2);ADDW(R8);STW(R8)
     LDI(R0);STW(T3);LDW(R8);STW(T2);LDI(R8);STW(T1);_CALLJ('_@_wcopy')
     # return 0
     LDW(R22);tryhop(5);STW(vLR);LDI(0);RET()
@@ -19,7 +20,8 @@ def code1():
     # restore SP, R22, R0-R7
     LDW(R8);DEEK();STW(SP)
     LDI(2);ADDW(R8);DEEK();STW(R22);
-    LDI(4);ADDW(R8);STW(T3);ADDI(8+8);STW(T1);LDI(R0);STW(T2);_CALLJ('_@_wcopy')
+    LDI(4);ADDW(R8);DEEK();ST(vSP);
+    LDI(6);ADDW(R8);STW(T3);ADDI(8+8);STW(T1);LDI(R0);STW(T2);_CALLJ('_@_wcopy')
     # return R9
     LDW(R22);tryhop(5);STW(vLR);LDW(R9);RET()
     

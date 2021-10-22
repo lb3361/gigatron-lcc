@@ -24,11 +24,11 @@ extern int toupper(int);
 /* Macro alternatives that might evaluate c multiple times. 
    Using a-b?0 instead of a?b to use SUBI over _CMPWI */
 
-#define	_isalpha(c)	(((c)|0x20)-'a'>=0 && ((c)|0x20)-'z'<=0)
-#define	_isdigit(c)	((c)-'0'>=0 && (c)-'9'<=0)
-#define	_islower(c)	((c)-'a'>=0 && (c)-'z'<=0)
-#define	_isspace(c)	((c)==32 || (c)-9>=0 && (c)-13<=0)
-#define	_isupper(c)	((c)-'A'>=0 && (c)-'Z'<=0)
-#define	_isxdigit(c)	(_isdigit(c) || ((c)|0x20)>='a' && ((c)|0x20)<='z')
+#define	_isalpha(c)	((int)(((c)|0x20)-'a')>=0 && (int)(((c)|0x20)-'z')<=0)
+#define	_isdigit(c)	((int)((c)-'0')>=0 && (int)((c)-'9')<=0)
+#define	_islower(c)	((int)((c)-'a')>=0 && (int)((c)-'z')<=0)
+#define	_isspace(c)	((c)==32 || (int)((c)-9)>=0 && (int)((c)-13)<=0)
+#define	_isupper(c)	((int)((c)-'A')>=0 && (int)((c)-'Z')<=0)
+#define	_isxdigit(c)	(_isdigit(c) || (int)(((c)|0x20)-'a')>=0 && (int)(((c)|0x20)-'z')<=0)
 
 #endif /* __CTYPE */

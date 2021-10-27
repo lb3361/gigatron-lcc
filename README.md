@@ -434,7 +434,7 @@ The code generator uses two consecutive blocks of zero page locations:
   *  The second block, located at addresses `0x90-0xbf`, contains 24 general 
      purpose sixteen bits registers named `R0` to `R23`. 
      Register pairs named `L0` to `L22` can hold longs. 
-     Register triplets named `F0` to `F21 can hold floats. 
+     Register triplets named `F0` to `F21` can hold floats. 
      Registers `R0` to `R7` are callee-saved and are often used for local variables.
      Registers `R8` to `R15` are used to pass arguments to functions. Registers `R15` to `R22` are used
      for temporaries. Register `R23` or `SP` is the stack pointer.

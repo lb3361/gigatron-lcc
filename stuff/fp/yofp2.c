@@ -5,7 +5,7 @@
 #include <gigatron/libc.h>
 
 
-char buffer[128];
+char buffer[80];
 char buf2[64];
 
 void pr(const char *s1, const char *s2, const char *s3, double d)

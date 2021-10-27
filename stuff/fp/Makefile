@@ -4,9 +4,12 @@ ROM=v5a
 MAP=conx
 CFLAGS=-rom=$(ROM) -map=$(MAP)
 
-PGMS=yofp1.gt1 yofp2.gt1 yofp3.gt1
+PGMS=yofp0.gt1 yofp1.gt1 yofp2.gt1 yofp3.gt1
 
 all: $(PGMS)
+
+yofp0.gt1: yofp0.c
+	${CC} ${CFLAGS} yofp0.c -o $@
 
 yofp1.gt1: yofp1.c
 	${CC} ${CFLAGS} yofp1.c -o $@

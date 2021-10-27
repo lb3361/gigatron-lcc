@@ -1,9 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include <gigatron/console.h>
-
-char buffer[80];
 
 int main()
 {
@@ -19,8 +16,7 @@ int main()
 		printf("- log(%s)=%.8g\n", s, log(x));
 		printf("- log(y)=%.8g\n", log(y));
 		s = "x";
-		console_print("\nYour number? ", 999);
-		console_readline(buffer,128);
-		x = atof(buffer);
+		printf("\nYour number? ");
+		scanf("%f%*[^\r\n]", &x);
 	}
 }

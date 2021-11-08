@@ -11,6 +11,7 @@
 #ifndef WIN32
 # include <unistd.h>
 # include <fcntl.h>
+# include <signal.h>
 #else
 # include <io.h>
 # include <fcntl.h>
@@ -36,6 +37,8 @@ const char *trace = 0;
 int verbose = 0;
 int okopen = 0;
 int vmode = 1975;
+const char *prof = 0;
+long long *pc2cycs = 0;
 
 void debug(const char *fmt, ...)
 {
@@ -71,7 +74,7 @@ struct cpustate_s { // TTL state that the CPU controls
 };
 
 uint8_t ROM[1<<16][2], RAM[1<<16], IN=0xff;
-
+uint16_t opc;
 long long ot;
 long long t;
 
@@ -173,12 +176,18 @@ void sim(void)
       }
 
       // callbacks
-      if (S.PC == 0x3b4 && T.AC != 0x80) {
-        sys_0x3b4(&T);
+      if (S.PC == 0x3b4) {
+        if (T.AC != 0x80)
+          sys_0x3b4(&T);
+        else {
+          printf("HALT\n");
+          exit(10);
+        }
       } else if (S.PC == 0x301) {
         next_0x301(&T);
-      } else if (S.PC == 0x303) {
-        ot = t - 2;
+      } else if (S.PC == 0x307) {
+        opc = *(uint16_t*)(RAM+0x16);
+        ot = t - 6;
       }
       // commit
       S = T;
@@ -262,6 +271,45 @@ double feek(word a) {
 
 #define addlo(a,i)  (((a)&0xff00)|(((a)+i)&0xff))
 
+
+/* ----------------------------------------------- */
+/* PROFILE                                         */
+/* ----------------------------------------------- */
+
+void save_profile(void)
+{
+  FILE *f;
+  int i;
+  const char *comma = "";
+  long long sum = 0;
+  if (! (prof && pc2cycs))
+    return;
+  if (! ((f = fopen(prof,"w")))) {
+    fprintf(stderr, "Cannot open profile file '%s'\n", prof);
+    return;
+  }
+  fprintf(f, "prof={\n");
+  fprintf(f, (" # pc: cycs  Number of cycles spent on vCPU\n"
+              " #           instructions at address less than pc"));
+  for (i = 0; i < 0x10000; i++)
+    if (pc2cycs[i]) {
+      fprintf(f, "%s\n 0x%04x: %lld", comma, i, sum += pc2cycs[i]);
+      comma = ",";
+    }
+  fprintf(f, "\n}\n");
+  fclose(f);
+}
+
+void setup_profile(const char *f)
+{
+  prof = f;
+  pc2cycs = calloc(0x10000, sizeof(long long));
+  atexit(save_profile);
+#ifndef WIN32
+  signal(SIGINT, (void*)exit);
+#endif  
+
+}
 
 /* ----------------------------------------------- */
 /* CAPTURING SYS CALLS                             */
@@ -912,8 +960,12 @@ void print_trace(CpuState *S)
 
 void next_0x301(CpuState *S)
 {
-  if (trace && nogt1)
-    print_trace(S);
+  if (nogt1) {
+    if (trace)
+      print_trace(S);
+    if (pc2cycs)
+      pc2cycs[opc] += t - ot;
+  }
 }
 
 
@@ -939,10 +991,12 @@ void usage(int exitcode)
             "\n"
             "Options:\n"
             "  -v: print debug messages\n"
-            "  -t: trace VCPU execution\n"
+            "  -rom romfile: load rom from <romfile>\n"
             "  -f: enable file system access\n"
             "  -nogt1: do not override main menu and run forever\n"
-            "  -vmode vv: set video mode 0,1,2,3,1975\n");
+            "  -vmode v: set video mode 0,1,2,3,1975\n"
+            "  -t<letters>: trace VCPU execution\n"
+            "  -prof fn: writes profiling information into file <fn>\n");
     
   }
   exit(exitcode);
@@ -961,23 +1015,31 @@ int main(int argc, char *argv[])
         {
           usage(EXIT_SUCCESS);
         }
-      else if (! strcmp(argv[i],"-nogt1"))
+      else if (! strcmp(argv[i], "-nogt1"))
         {
           nogt1 = 1;
         }
-      else if (! strcmp(argv[i],"-v"))
+      else if (! strcmp(argv[i], "-v"))
         {
           verbose = 1;
         }
-      else if (! strncmp(argv[i],"-t", 2))
+      else if (! strncmp(argv[i], "-t", 2))
         {
           trace = argv[i]+2;
         }
-      else if (! strcmp(argv[i],"-f"))
+      else if (! strcmp(argv[i], "-f"))
         {
           okopen = 1;
         }
-      else if (! strcmp(argv[i],"-rom"))
+      else if (! strcmp(argv[i], "-prof"))
+        {
+          if (i+1 >= argc)
+            fatal("Missing argument for option -prof\n");
+          if (prof)
+            fatal("Duplicate option -prof\n");
+          setup_profile(argv[++i]);
+        }
+      else if (! strcmp(argv[i], "-rom"))
         {
           if (i+1 >= argc)
             fatal("Missing argument for option -rom\n");

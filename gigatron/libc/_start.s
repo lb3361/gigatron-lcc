@@ -23,9 +23,9 @@ def code0():
     LDW(R0); STW(R8)
     ### _exit()
     label('_exit')
-    LDW(R8);STW(R0)
     LDI(0); STW(R9)
     label('_exitm');
+    LDW(R8);STW(R0)
     label('_exitvsp', pc()+1)
     LDI(0);ST(vSP)         # .exitvsp is LDI's argument!
     label('_exitm_msgfunc', pc()+1)

@@ -245,7 +245,7 @@ class Segment:
         self.saddr = saddr
         self.eaddr = eaddr
         self.pc = saddr
-        self.flags = flags or False # 0x1: no code, 0x2 : no data
+        self.flags = flags or False # 0x1: no code, 0x2 : no data, 0x4 : no heap
         self.buffer = None
         self.nbss = None
     def __repr__(self):
@@ -1917,7 +1917,7 @@ def find_code_segment(size, addr=None):
             if addr >= s.saddr and addr < s.eaddr:
                 return segment_for_placed_fragment(size, addr, s, i)
             continue
-        if s.flags & 0x1:  # not a code segment
+        if s.flags & 0x1:                              # not a code segment
             continue
         if s.pc > s.saddr and s.pc + size <= s.eaddr:  # segment has enough free size and does not cross
             return s                                   # a page boundary because it already contains code

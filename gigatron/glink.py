@@ -2363,7 +2363,7 @@ def glink(argv):
         for f in args.files:
             read_file(f)
         for m in module_list:
-            if m.cpu > args.cpu:
+            if m.cpu > args.cpu and not m.library:
                 warning(f"module '{m.name}' was compiled for cpu {m.cpu} > {args.cpu}")
 
         # load modules synthetized by the map

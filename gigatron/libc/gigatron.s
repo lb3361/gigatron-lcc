@@ -89,8 +89,11 @@ def scope():
     def code0():
         nohop()
         label('SYS_ExpanderControl')
+        # _LDI(0x1f8);PEEK();BEQ('.ret')
         _LDI('SYS_ExpanderControl_v4_40');STW('sysFn')
-        LDW(R8);SYS(40);RET()
+        LDW(R8);SYS(40)
+        label('.ret')
+        RET()
 
     module(name='sys_expandercontrol.s',
            code=[('EXPORT', 'SYS_ExpanderControl'),
@@ -120,6 +123,24 @@ def scope():
                  ('CODE', 'SYS_SpiExchangeBytes', code0) ])
 
 
+    # int SYS_OsCall(unsigned char n);
+    #    Notes: This only exists in the exp ROM. */
+    if 'has_SYS_OsCall' in rominfo:
+        info = rominfo['has_SYS_OsCall']
+        addr = int(str(info['addr']),0)
+        cycs = int(str(info['cycs']),0)
+        def code0():
+            nohop()
+            label('SYS_OsCall')
+            PUSH()
+            _LDI(addr);STW('sysFn')
+            LD(R8);SYS(cycs)
+            tryhop(2);POP();RET()
+
+        module(name='sys_oscall.s',
+               code=[('EXPORT', 'SYS_OsCall'),
+                     ('CODE', 'SYS_OsCall', code0) ])
+    
 # execute    
 scope()
 

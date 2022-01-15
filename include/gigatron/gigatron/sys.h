@@ -141,8 +141,8 @@ void* SYS_ReadRomDir(void *romptr, char *buf8);
    Notes: Calling this from C is risky.
    Notes: This exists in v4 but overwrites 0x81 with ctrlBits. 
    Notes: We depend on ctrlBits being nonzero when an expansion card is present. */
-void SYS_ExpanderControl(unsigned int ctrl);
-#define has_SYS_ExpanderControl()					\
+int SYS_ExpanderControl(unsigned int ctrl);
+#define has_SYS_ExpanderControl() \
 	(((romType & 0xfc) >= romTypeValue_ROMv5) && (ctrlBits_v5 != 0))
 
 /* -- SYS_SpiExchangeBytes --
@@ -152,6 +152,13 @@ void SYS_ExpanderControl(unsigned int ctrl);
 void SYS_SpiExchangeBytes(void *dst, void *src, void *srcend);
 #define has_SYS_SpiExchangeBytes() \
 	(((romType & 0xfc) >= romTypeValue_ROMv5) && (ctrlBits_v5 != 0))
+
+
+/* -- SYS_OsCall --
+   Notes: This only exists in the exp ROM. */
+int SYS_OsCall(unsigned char n);
+#define has_SYS_OsCall() \
+	(((romType & 0xfc) > romTypeValue_ROMv5) && (ctrlBits_v5 != 0))
 
 
 

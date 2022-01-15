@@ -26,7 +26,8 @@
 
     "exp" : { "cpu" : 5,
 	      "romType" : "0xf8",
-	      "inherits" : "dev"
+	      "inherits" : "dev",
+	      "has_SYS_OsCall" : { "addr" : "0xe3", "cycs" : 80 }
 	    },
 
     "at67x" : { "cpu" : 6,

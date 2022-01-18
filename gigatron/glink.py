@@ -1990,9 +1990,12 @@ def assemble_code_fragments(m, placed=False):
             the_segment.pc = the_pc
             if args.fragments and final_pass:
                 record_fragment_address(the_pc)
+            if args.rpth and labelchange_counter > args.rpth and not final_pass:
+                raise Stop(f"{labelchange_counter} changed labels already: restarting a new pass.")
 
 def assemble_data_fragments(m, cseg):
     global the_module, the_fragment, the_segment, hops_enabled, the_pc
+    global labelchange_counter
     the_module = m
     for frag in m.code:
         the_fragment = frag
@@ -2043,6 +2046,8 @@ def run_pass():
     except Stop as stop:
         if final_pass:
             fatal(stop.msg)
+        elif args.d >= 2:
+            print("(glink debug) " + stop.msg, file=sys.stderr)
     # cleanup
     the_module = None
     the_fragment = None
@@ -2307,6 +2312,10 @@ def glink(argv):
                             help='minimal heap segment size for __glink_magic_heap.')
         parser.add_argument('--debug-messages', '-d', dest='d', action='count', default=0,
                             help='enable debugging output. repeat for more.')
+        parser.add_argument('--labelchange-threshold', dest='rpth',
+                            metavar='LBLCHG', type=int, action='store', default=200,
+                            help='restart a pass whenever the label change counter reach this threshold')
+
         args = parser.parse_args(argv)
 
         # set defaults

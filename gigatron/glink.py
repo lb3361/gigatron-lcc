@@ -198,17 +198,18 @@ def resolve(s, ignore=None):
 
 class Fragment:
     "Claaa for representing the code/data fragments in a module"
-    __slots__ = ('segment', 'name','func', 'size', 'align', 'short', 'place')
+    __slots__ = ('segment', 'name','func', 'size', 'align', 'nohop', 'amin', 'amax')
     def __init__(self, segment, name, func, size = None, align = None):
         self.segment = segment     # CODE, DATA, BSS, COMMON
         self.name = name           # fragment name
         self.func = func           # fragment code
         self.size = size           # fragment size (data)
         self.align = align         # fragment alignment (data)
-        self.short = False         # short function
-        self.place = None          # placement constraints
+        self.nohop = False         # short function
+        self.amin = None           # min address range
+        self.amax = None           # max address range
     def __repr__(self):
-        return f"Fragment({self.segment},{self.name},...)"
+        return f"Fragment({self.segment},'{self.name}',...)"
         
 class Module:
     '''Class for assembly modules read from .s/.o/.a files.'''
@@ -241,11 +242,12 @@ class Module:
             elif tp[0] == 'ORG' or tp[0] == 'PLACE':
                 matches = [f for f in self.code if f.name == tp[1]]
                 if len(matches) != 1:
-                    error(f"Cannotlocate fragment for {tp}")
-                elif marches[0].loc:
+                    error(f"Cannot locate fragment for {tp}")
+                elif matches[0].amin:
                     error(f"Conflicting placement constraints {tp}")
-                else:                                 # ('ORG', name, address)
-                    matches[0].loc = (tp[0], *tp[2:]) # ('PLACE', name, addresslo, addresshi [flags])
+                else:                                   # ('ORG', addr)
+                    matches[0].amin = tp[2]             # ('PLACE', minaddr, maxaddr)
+                    matches[0].amax = tp[3] if len(tp) > 3 else None
             else:
                 error(f"Unrecognized fragment specification {tp}")
     def __repr__(self):
@@ -296,13 +298,6 @@ def extern(sym):
        inserts the appropriate runtime routines.'''
     if the_pass == 0 and sym not in the_module.imports:
         the_module.imports.append(sym)
-
-def is_placed(frag4):
-    '''Tells if a code fragment is a placed function'''
-    if isinstance(frag4, tuple) and frag4[0] == 'ORG':
-            return frag4[1]
-    return False
-
 
 fraginfo = {}
 addrinfo = {}
@@ -541,7 +536,7 @@ def hi(x):
     return (v(x) >> 8) & 0xff
 
 @vasm
-def org(addr):
+def org(addr1, addr2=None):
     '''Force a code fragment to be placed at a specific location.
        The fragment must fit in the page and the required space
        must be available. This currently piggybacks on nohop()
@@ -550,9 +545,9 @@ def org(addr):
     global short_function
     # this information is collected in measure_code_fragment()
     if the_pass == 0:
-        short_function = True
-        the_fragment.short = True
-        the_fragment.place = ('ORG', int(addr))
+        the_fragment.nohop = True
+        the_fragment.amin = int(addr1)
+        the_fragment.amax = int(addr2) if addr2 else None
 @vasm
 def nohop():
     '''Force a code fragment to be fit in a single page.
@@ -560,8 +555,7 @@ def nohop():
     global short_function
     # this information is collected in measure_code_fragment()
     if the_pass == 0:
-        short_function = True
-        the_fragment.short = True
+        the_fragment.nohop = True
 @vasm
 def tryhop(sz=None, jump=True):
     '''Hops to a new page if the current page cannot hold a long jump
@@ -1691,7 +1685,10 @@ def read_lib(l):
 def read_map(mn, overlays = None):
     '''Read a linker map file.'''
     dn = os.path.dirname(__file__)
-    fn = os.path.join(dn, "map" + mn, "map.py")
+    if '/' in mn:
+        fn = os.path.join(mn, "map.py")
+    else:
+        fn = os.path.join(dn, "map" + mn, "map.py")
     if not os.access(fn, os.R_OK):
         fatal(f"cannot find linker map '{mn}'")
     with open(fn, 'r') as fd:
@@ -1701,8 +1698,9 @@ def read_map(mn, overlays = None):
     if not map_modules:
         fatal(f"map '{mn}' does not define 'map_modules'")
     for ov in overlays or []:
-        fn = ov
-        if not ov.startswith('./'):
+        if '/' in ov:
+            fn = ov
+        else:
             fn = os.path.join(dn, "map" + mn, "x-" + ov + ".py")
         if not os.access(fn, os.R_OK):
             fatal(f"cannot load map overlay '{ov}'")
@@ -1790,7 +1788,7 @@ def measure_code_fragment(m, frag):
     except Exception as err:
         fatal(str(err), exc=True)
     function_size = the_pc - lbranch_counter
-    if frag.short:
+    if frag.nohop:
         debug(f"- code fragment '{frag.name}' is {function_size} bytes long")
         if function_size >= 256:
             error("code fragment '{frag.name}' is declared short but is too long")
@@ -1922,58 +1920,80 @@ def round_used_segments():
                 debug(f"rounding {segment_list[i:i+2]}")
         if s.pc > s.saddr:
             s.nbss = True
- 
-def find_data_segment(size, align=None):
-    for s in segment_list:
-        if s.flags & 0x2:  # not a data segment
-            continue
-        pc = s.pc
-        if align and align > 1:
-            pc = align * ((pc + align - 1) // align)
-        if s.eaddr - pc > size:
-            return s
 
-def find_code_segment(size, addr=None):
-    # Since code segments cannot cross page boundaries
-    # it is sometimes necessary to carve a code segment from a larger one
-    # Argument addr is a requested address.
-    size = min(256, size)
+def aligned(addr, align):
+    if align and align > 1:
+        addr = align * ((addr + align - 1) // align)
+    return addr
+    
+def find_data_segment(size, align=None):
+    amin = the_fragment.amin
+    amax = the_fragment.amax
     for (i,s) in enumerate(segment_list):
-        if addr:
-            if addr >= s.saddr and addr < s.eaddr:
-                return segment_for_placed_fragment(size, addr, s, i)
+        if amin == None and (s.flags & 0x2):  # not a data segment
             continue
-        if s.flags & 0x1:                              # not a code segment
+        addr = aligned(s.pc, align)
+        if amin != None and amin > addr:
+            addr = aligned(amin, align)
+        if addr + size > s.eaddr:
             continue
-        if s.pc > s.saddr and s.pc + size <= s.eaddr:  # segment has enough free size and does not cross
-            return s                                   # a page boundary because it already contains code
-        if (s.saddr ^ (s.eaddr-1)) & 0xff00:
-            epage = (s.saddr | 0xff) + 1               # segment crosses a page boundary:
-            ns = Segment(s.saddr, epage, s.flags)      # carve a non-crossing one and insert it in the list
+        if amax != None and addr + size > amax + 1:
+            continue
+        if amin != None and amax == None and addr != amin:
+            error(f"Requested location for fragment {the_fragment.name}@{hex(amin)} is busy")
+        while addr > s.pc and s.pc > s.saddr and addr < s.pc + 4:
+            s.pc += 1                           # not worth splitting
+            if s.buffer:
+                s.buffer.append(0)
+        if addr > s.pc:                         # split the segment
+            ns = Segment(s.saddr, addr, s.flags)
+            ns.pc = s.pc
+            segment_list.insert(i, ns)
+            s.pc = s.saddr = addr
+        return s
+
+def find_code_segment(size):
+    size = min(256, size)
+    amin = the_fragment.amin
+    amax = the_fragment.amax
+    for (i,s) in enumerate(segment_list):
+        if amin == None and s.flags & 0x1:  # not a code segment
+            continue
+        addr = s.pc
+        if amin != None and amin > s.pc:
+            addr = amin
+        # if the code does not fit in the page, go to next page
+        epage = (addr | 0xff) + 1
+        if addr + size > epage:
+            addr = epage
+            epage = (addr | 0xff) + 1
+            if amin and not amax:  # not good for placed fragments
+                error(f"Fragment {the_fragment.name}@{hex(amin)} does not fit at the requested address")
+        if addr + size > s.eaddr:
+            continue
+        if amax != None and addr + size > amax + 1:
+            continue
+        if amin != None and amax == None and addr != amin:
+            if amin >= s.eaddr and amin < s.pc:
+                error(f"Requested location for fragment {the_fragment.name}@{hex(amin)} is busy")
+            continue
+        # possibly carve segment before address addr
+        if addr > s.pc:
+            ns = Segment(s.saddr, addr, s.flags)
+            ns.pc = s.pc
+            segment_list.insert(i, ns)
+            i += 1
+            s.pc = s.saddr = addr
+        # since code segments cannot cross page boundaries
+        # it is sometimes necessary to carve a code segment from a larger one
+        if s.eaddr > epage:
+            ns = Segment(addr, epage, s.flags)
             s.saddr = s.pc = epage
             segment_list.insert(i, ns)
             s = ns
-        if s.pc + size <= s.eaddr:                     # is it large enough?
-            return s
+        return s
+    # not found
     return None
-
-def segment_for_placed_fragment(size, addr, s, i):
-    epage = min(s.eaddr, (addr | 0xff) + 1)
-    if addr + size > epage:
-        error(f"Page overflow for placed fragment {the_fragment.name}@{hex(addr)}")
-    elif s.pc > addr or addr + size > s.eaddr:
-        error(f"Requested space for placed fragment {the_fragment.name}@{hex(addr)} is busy")
-    if epage < s.eaddr:                  # - make a single page segment
-        ns = Segment(s.saddr, epage, s.flags)
-        s.saddr = s.pc = epage
-        segment_list.insert(i, ns)
-        s = ns
-    if addr > s.saddr:                   # - make a segment for [s.saddr,addr)
-        ns = Segment(s.saddr, addr, s.flags)
-        ns.pc = s.pc
-        segment_list.insert(i, ns)
-        s.pc = s.saddr = addr
-    return s
 
 def assemble_code_fragments(m, placed=False):
     global the_module, the_fragment, the_segment, the_pc
@@ -1982,17 +2002,16 @@ def assemble_code_fragments(m, placed=False):
     for frag in m.code:
         the_fragment = frag
         if frag.segment == 'CODE':
-            addr = is_placed(frag.place)
-            if bool(placed) != bool(addr):
+            if bool(frag.amin and not frag.amax) != bool(placed):
                 continue
             funcsize = frag.size
             the_segment = None
             sfst = min(256, args.sfst or 96)
-            if frag.short or funcsize <= sfst:
+            if frag.nohop or funcsize <= sfst:
                 short_function = True
                 hops_enabled = False
-                the_segment = find_code_segment(funcsize, addr)
-                if frag.short and not the_segment:
+                the_segment = find_code_segment(funcsize)
+                if frag.nohop and not the_segment:
                     error(f"cannot find a segment for short code fragment '{frag.name}' of length {funcsize}")
                 if the_segment and (args.d >= 2 or final_pass):
                     debug(f"assembling code fragment '{frag.name}' at {hex(the_segment.pc)} in {the_segment}")
@@ -2002,7 +2021,7 @@ def assemble_code_fragments(m, placed=False):
                 lfss = args.lfss or 32
                 the_segment = find_code_segment(min(lfss, 256))
                 if not the_segment:
-                    raise Stop(f"map memory exhausted while fitting code fragment '{frag.name}'")
+                    raise Stop(f"cannot fit code fragment '{frag.name}'")
                 if the_segment and (args.d >= 2 or final_pass):
                     debug(f"assembling code fragment '{frag.name}' at {hex(the_segment.pc)} in {the_segment}")
             the_pc = the_segment.pc
@@ -2028,7 +2047,7 @@ def assemble_data_fragments(m, cseg):
             hops_enabled = False
             the_segment = find_data_segment(frag.size, align=frag.align)
             if not the_segment:
-                raise Stop(f"map memory exhausted while fitting {cseg} fragment '{frag.name}'")
+                raise Stop(f"cannot fit {cseg} fragment '{frag.name}'")
             elif args.d >= 2 or final_pass:
                 debug(f"assembling {cseg} fragment '{frag.name}' at {hex(the_segment.pc)} in {the_segment}")
             the_pc = the_segment.pc
@@ -2069,7 +2088,7 @@ def run_pass():
         for m in module_list:
             assemble_data_fragments(m, 'BSS')
     except Stop as stop:
-        if final_pass:
+        if final_pass or not labelchange_counter:
             fatal(stop.msg)
         elif args.d >= 2:
             print("(glink debug) " + stop.msg, file=sys.stderr)

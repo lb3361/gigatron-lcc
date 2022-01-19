@@ -7,21 +7,25 @@
 typedef char *__va_list;
 #endif
 
+#ifndef CONSOLE_MAX_LINES
+# define CONSOLE_MAX_LINES 15
+#endif
+
 /* -------- state ----------- */
 
 /* Console geometry. */
 extern const struct console_info_s {
-	int nlines;		     /* number of lines   */
-	int ncolumns;                /* number of columns */
-	unsigned char offset[15];    /* offset of each line in the video table */
+	int nlines;		                  /* number of lines   */
+	int ncolumns;                             /* number of columns */
+	unsigned char offset[CONSOLE_MAX_LINES];  /* line offsets      */
 } console_info;
 
 /* Console state: colors, cursor, wrapping and scrolling modes.
    These fields can be changed as needed between calls to console functions. */
 extern struct console_state_s {
-	int fgbg;                    /* foreground and background colors */
-	int cx, cy;                  /* cursor coordinates */
-	char wrapx, wrapy;           /* whether to line wrap or scroll */
+	int fgbg;                                /* fg and bg colors   */
+	int cx, cy;                              /* cursor coordinates */
+	char wrapx, wrapy;                       /* wrap/scroll enable */
 } console_state;
 
 /* -------- output ----------- */

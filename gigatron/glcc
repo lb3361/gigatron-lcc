@@ -34,7 +34,7 @@ import re
 import glccver
 
 if sys.version_info < (3, 6):
-    print('glcc: fatal error: python 3.6.0 or higher is required.')
+    print('glcc: fatal error: python 3.6 or higher is required.')
     sys.exit(1)
 
 import os, sys, json, tempfile

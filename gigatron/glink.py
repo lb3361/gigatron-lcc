@@ -31,8 +31,8 @@
 
 # -------------- glink proper
 
-import argparse, json, string
-import os, sys, traceback, functools, copy
+import argparse, json, string, functools
+import os, sys, traceback, copy, builtins
 import builtins
 import glccver
 
@@ -195,13 +195,27 @@ def resolve(s, ignore=None):
     if s.startswith('__glink_weak_'):
         return resolve(s[13:]) or 0
     return None
+
+class Fragment:
+    "Claaa for representing the code/data fragments in a module"
+    __slots__ = ('segment', 'name','func', 'size', 'align', 'short', 'place')
+    def __init__(self, segment, name, func, size = None, align = None):
+        self.segment = segment     # CODE, DATA, BSS, COMMON
+        self.name = name           # fragment name
+        self.func = func           # fragment code
+        self.size = size           # fragment size (data)
+        self.align = align         # fragment alignment (data)
+        self.short = False         # short function
+        self.place = None          # placement constraints
+    def __repr__(self):
+        return f"Fragment({self.segment},{self.name},...)"
         
 class Module:
     '''Class for assembly modules read from .s/.o/.a files.'''
     def __init__(self, name=None, cpu=None, code=None):
         global args, current_module
         self.cpu = cpu if cpu != None else args.cpu
-        self.code = code
+        self.code = []
         self.name = name
         self.fname = name
         self.library = False
@@ -212,14 +226,28 @@ class Module:
         self.symrefs = {}
         self.symdefs = {}
         self.sympass = {}
-        for tp in self.code:
+        # process code list
+        for tp in code:
             if tp[0] == 'EXPORT':
-                self.exports.append(tp[1])
+                self.exports.append(tp[1])              # ('EXPORT', "symbolname") 
             elif tp[0] == 'IMPORT' and len(tp) == 2:
-                self.imports.append(tp[1])
+                self.imports.append(tp[1])              # ('IMPORT', "symbolname")
             elif tp[0] == 'IMPORT' and len(tp) > 3 and tp[2] == 'IF':
-                self.cimports.append(tp)
-
+                self.cimports.append(tp)                # ('IMPORT', "symbolname", 'IF', ...)
+            elif tp[0] == 'CODE':
+                self.code.append(Fragment(*tp))         # ('CODE', "name", func)
+            elif tp[0] == 'DATA' or tp[0] == 'BSS' or tp[0] == 'COMMON':
+                self.code.append(Fragment(*tp))         # ('DATA|BSS|COMMON', "name", func, size, align)
+            elif tp[0] == 'ORG' or tp[0] == 'PLACE':
+                matches = [f for f in self.code if f.name == tp[1]]
+                if len(matches) != 1:
+                    error(f"Cannotlocate fragment for {tp}")
+                elif marches[0].loc:
+                    error(f"Conflicting placement constraints {tp}")
+                else:                                 # ('ORG', name, address)
+                    matches[0].loc = (tp[0], *tp[2:]) # ('PLACE', name, addresslo, addresshi [flags])
+            else:
+                error(f"Unrecognized fragment specification {tp}")
     def __repr__(self):
         return f"Module('{self.fname or self.name}',...)"
     def label(self, sym, val):
@@ -271,7 +299,7 @@ def extern(sym):
 
 def is_placed(frag4):
     '''Tells if a code fragment is a placed function'''
-    if isinstance(frag4, tuple) and frag4[0] == 'org':
+    if isinstance(frag4, tuple) and frag4[0] == 'ORG':
             return frag4[1]
     return False
 
@@ -326,7 +354,7 @@ def hop(sz, jump):
             lfss = args.lfss or 32
             ns = find_code_segment(max(lfss, sz))
             if not ns:
-                fatal(f"map memory exhausted while fitting function `{the_fragment[1]}'")
+                fatal(f"map memory exhausted while fitting function `{the_fragment.name}'")
             if jump:
                 emit_long_jump(ns.pc)
             hops_enabled = True            
@@ -337,7 +365,7 @@ def hop(sz, jump):
             the_segment = ns
             the_pc = ns.pc
             if args.d >= 2 or final_pass:
-                debug(f"- continuing code fragment '{the_fragment[1]}' at {hex(the_pc)} in {ns}")
+                debug(f"- continuing code fragment '{the_fragment.name}' at {hex(the_pc)} in {ns}")
 
 def emitjump(d):
     global hops_enabled, lbranch_counter
@@ -522,7 +550,9 @@ def org(addr):
     global short_function
     # this information is collected in measure_code_fragment()
     if the_pass == 0:
-        short_function = True if org == None else ('org', int(addr))
+        short_function = True
+        the_fragment.short = True
+        the_fragment.place = ('ORG', int(addr))
 @vasm
 def nohop():
     '''Force a code fragment to be fit in a single page.
@@ -531,6 +561,7 @@ def nohop():
     # this information is collected in measure_code_fragment()
     if the_pass == 0:
         short_function = True
+        the_fragment.short = True
 @vasm
 def tryhop(sz=None, jump=True):
     '''Hops to a new page if the current page cannot hold a long jump
@@ -1731,7 +1762,7 @@ def find_exporters(sym):
         for m in module_list:
             if not m.library:
                 for f in m.code:
-                    if f[0] == 'COMMON' and f[1] == sym:
+                    if f.segment == 'COMMON' and f.name == sym:
                         return [ m ]
     return elist
 
@@ -1741,10 +1772,10 @@ def measure_data_fragment(m, frag):
     the_fragment = frag
     the_pc = 0
     try:
-        frag[2]()
+        frag.func()
     except Exception as err:
         fatal(str(err), exc=True)
-    return frag[0:3] + (the_pc,) + frag[4:]
+    frag.size = the_pc
 
 def measure_code_fragment(m, frag):
     global the_module, the_fragment, the_pc
@@ -1755,29 +1786,24 @@ def measure_code_fragment(m, frag):
     lbranch_counter = 0
     short_function = False
     try:
-        frag[2]()
+        frag.func()
     except Exception as err:
         fatal(str(err), exc=True)
     function_size = the_pc - lbranch_counter
-    if short_function:
-        fname = frag[1]
-        ftype = is_placed(short_function)
-        ftype = f"org:{hex(ftype)}" if ftype else "nohop"
-        debug(f"- code fragment '{fname}' is {function_size} bytes long ({ftype})")
+    if frag.short:
+        debug(f"- code fragment '{frag.name}' is {function_size} bytes long")
         if function_size >= 256:
-            error("code fragment '{fname}' declared '{ftype}' but is too long")
+            error("code fragment '{frag.name}' is declared short but is too long")
     else:
-        debug(f"- code fragment '{frag[1]}' is {function_size}+{lbranch_counter} bytes long")
-    frag = frag[0:3] + (the_pc - lbranch_counter, short_function)
-    return frag
+        debug(f"- code fragment '{frag.name}' is {function_size}+{lbranch_counter} bytes long")
+    frag.size = function_size
 
 def measure_fragments(m):
-    for (i,frag) in enumerate(m.code):
-        fragtype = frag[0]
-        if fragtype in ('DATA', 'BSS') and frag[3] == 0:
-            m.code[i] = measure_data_fragment(m, frag)
-        elif fragtype in ('CODE'):
-            m.code[i] = measure_code_fragment(m, frag)
+    for frag in m.code:
+        if frag.segment in ('DATA', 'BSS') and not frag.size:
+            measure_data_fragment(m, frag)
+        elif frag.segment in ('CODE'):
+            measure_code_fragment(m, frag)
     the_module = None
     the_fragment = None
 
@@ -1847,14 +1873,14 @@ def convert_common_symbols():
     '''Common symbols are instanciated in one of the module
        and referenced by the other modules.'''
     for m in module_list:
-        for (i,decl) in enumerate(m.code):
-            if decl[0] == 'COMMON':
-                sym = decl[1]
+        for decl in m.code:
+            if decl.segment == 'COMMON':
+                sym = decl.name
                 if sym in exporters:
                     pass
                 else:
                     debug(f"instantiating common '{sym}' in '{m.fname}'")
-                    m.code[i] = ('BSS', sym) + decl[2:]
+                    decl.segment = 'BSS'
                     exporters[sym] = m
 
 def check_undefined_symbols():
@@ -1934,9 +1960,9 @@ def find_code_segment(size, addr=None):
 def segment_for_placed_fragment(size, addr, s, i):
     epage = min(s.eaddr, (addr | 0xff) + 1)
     if addr + size > epage:
-        error(f"Page overflow for placed fragment {the_fragment[1]}@{hex(addr)}")
+        error(f"Page overflow for placed fragment {the_fragment.name}@{hex(addr)}")
     elif s.pc > addr or addr + size > s.eaddr:
-        error(f"Requested space for placed fragment {the_fragment[1]}@{hex(addr)} is busy")
+        error(f"Requested space for placed fragment {the_fragment.name}@{hex(addr)} is busy")
     if epage < s.eaddr:                  # - make a single page segment
         ns = Segment(s.saddr, epage, s.flags)
         s.saddr = s.pc = epage
@@ -1955,36 +1981,35 @@ def assemble_code_fragments(m, placed=False):
     the_module = m
     for frag in m.code:
         the_fragment = frag
-        if frag[0] == 'CODE':
-            shortonly = frag[4]
-            addr = is_placed(shortonly)
+        if frag.segment == 'CODE':
+            addr = is_placed(frag.place)
             if bool(placed) != bool(addr):
                 continue
-            funcsize = frag[3]
+            funcsize = frag.size
             the_segment = None
             sfst = min(256, args.sfst or 96)
-            if shortonly or funcsize <= sfst:
+            if frag.short or funcsize <= sfst:
                 short_function = True
                 hops_enabled = False
                 the_segment = find_code_segment(funcsize, addr)
-                if shortonly and not the_segment:
-                    error(f"cannot find a segment for short code fragment '{frag[1]}' of length {funcsize}")
+                if frag.short and not the_segment:
+                    error(f"cannot find a segment for short code fragment '{frag.name}' of length {funcsize}")
                 if the_segment and (args.d >= 2 or final_pass):
-                    debug(f"assembling code fragment '{frag[1]}' at {hex(the_segment.pc)} in {the_segment}")
+                    debug(f"assembling code fragment '{frag.name}' at {hex(the_segment.pc)} in {the_segment}")
             if not the_segment:
                 short_function = False
                 hops_enabled = True
                 lfss = args.lfss or 32
                 the_segment = find_code_segment(min(lfss, 256))
                 if not the_segment:
-                    raise Stop(f"map memory exhausted while fitting code fragment '{frag[1]}'")
+                    raise Stop(f"map memory exhausted while fitting code fragment '{frag.name}'")
                 if the_segment and (args.d >= 2 or final_pass):
-                    debug(f"assembling code fragment '{frag[1]}' at {hex(the_segment.pc)} in {the_segment}")
+                    debug(f"assembling code fragment '{frag.name}' at {hex(the_segment.pc)} in {the_segment}")
             the_pc = the_segment.pc
             if args.fragments and final_pass:
                 record_fragment_address(the_pc)
             try:
-                frag[2]()
+                frag.func()
             except Exception as err:
                 fatal(str(err), exc=True)
             the_segment.pc = the_pc
@@ -1999,18 +2024,18 @@ def assemble_data_fragments(m, cseg):
     the_module = m
     for frag in m.code:
         the_fragment = frag
-        if frag[0] == cseg:
+        if frag.segment == cseg:
             hops_enabled = False
-            the_segment = find_data_segment(frag[3], align=frag[4])
+            the_segment = find_data_segment(frag.size, align=frag.align)
             if not the_segment:
-                raise Stop(f"map memory exhausted while fitting {cseg} fragment '{frag[1]}'")
+                raise Stop(f"map memory exhausted while fitting {cseg} fragment '{frag.name}'")
             elif args.d >= 2 or final_pass:
-                debug(f"assembling {cseg} fragment '{frag[1]}' at {hex(the_segment.pc)} in {the_segment}")
+                debug(f"assembling {cseg} fragment '{frag.name}' at {hex(the_segment.pc)} in {the_segment}")
             the_pc = the_segment.pc
             if args.fragments and final_pass:
                 record_fragment_address(the_pc)
             try:
-                frag[2]()
+                frag.func()
             except Exception as err:
                 fatal(str(err), exc=True)
             the_segment.pc = the_pc
@@ -2120,9 +2145,9 @@ def process_magic_list(s, head_module, head_addr):
             if s in m.symdefs:
                 cons_addr = m.symdefs[s]
                 for frag in m.code:
-                    if frag[1] == s:
+                    if frag.name == s and frag.segment == 'DATA':
                         break
-                if not frag or frag[3] < 4 or frag[4] < 2:
+                if not frag or frag.size < 4 or frag.align < 2:
                     return warning(f"ignoring magic symbol '{s}' in {m.fname} (wrong type)")
                 doke_gt1(cons_addr + 2, deek_gt1(head_addr))
                 doke_gt1(head_addr, cons_addr)
@@ -2161,8 +2186,9 @@ def process_magic_symbols():
             head_module = exporters[s]
             head_addr = head_module.symdefs[s]
             for frag in head_module.code:
-                if frag[0] == 'DATA' and frag[1] == s and frag[3:] != (2,2):
-                    return warning(f"ignoring magic symbol '{s}' (list head not a pointer)")
+                if frag.name == s and frag.segment == 'DATA':
+                    if frag.size != 2 or frag.align != 2:
+                        return warning(f"ignoring magic symbol '{s}' (list head not a pointer)")
                 if deek_gt1(head_addr) != 0xBEEF:
                     return warning(f"ignoring magic symbol '{s}' (list head not 0xBEEF)")
             doke_gt1(head_addr, 0)
@@ -2210,14 +2236,15 @@ def print_fragments():
     print("\nFragment map")
     for rng in addrs:
         (part, frag, m) = addrinfo[rng]
-        name = frag[1]
-        if frag[0] == 'CODE':
+        cseg = frag.segment
+        name = frag.name
+        if cseg == 'CODE':
             nparts = fraginfo[id(frag)][0]
             if nparts > 1:
                 name = name + f" ({part}/{nparts})"
         plen = rng[1] - rng[0]
         blen = f"({plen} byte{'s' if plen > 1 else ''})"
-        print(f"\t{rng[0]:04x}-{rng[1]-1:04x} {blen:<14s} {frag[0]:<5s} {name:<28s} {m.fname:<22s}")
+        print(f"\t{rng[0]:04x}-{rng[1]-1:04x} {blen:<14s} {cseg:<5s} {name:<28s} {m.fname:<22s}")
 
     
 # ------------- main function
@@ -2424,8 +2451,8 @@ def glink(argv):
     
     except FileNotFoundError as err:
         fatal(str(err), exc=True)
-    except Exception as err:
-        fatal(repr(err), exc=True)
+#    except Exception as err:
+#        fatal(repr(err), exc=True)
 
 
 if __name__ == '__main__':

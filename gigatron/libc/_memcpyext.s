@@ -10,7 +10,9 @@ def scope():
         addr = int(str(info['addr']),0)
         cycs = int(str(info['cycs']),0)
         def m_prepCopyMemoryExt():
-            LDWI(addr);STW('sysFn')
+            LDWI(addr);STW('sysFn');
+            _LDI(0x1f8);PEEK();BNE('.ok')
+            LDI(0);tryhop(2);POP();RET();label('.ok')
         def m_reduceCopyMemoryExt():
             pass
         def m_CopyMemoryExt():
@@ -24,8 +26,8 @@ def scope():
     else:
 
         def m_prepCopyMemoryExt():
-            _LDI(0x1f8);PEEK();STW(R16);_BNE('.ok')        # R16: copy of 3f8
-            _LDI(0);STW(R21);_BRA('.done');label('.ok')
+            _LDI(0x1f8);PEEK();STW(R16);_BNE('.ok')        # R16: copy of 1f8
+            LDI(0);tryhop(2);POP();RET();label('.ok')
             XORW(R8);ANDI(0xc0);XORW(R16);STW(R17)         # R17: destination ctrl word
             LDW(R8);LSLW();LSLW()
             XORW(R16);ANDI(0xc0);XORW(R16);STW(R18)        # R18: source ctrl word
@@ -96,7 +98,8 @@ def scope():
         label('.memcpy5')
         LDW(R11);ORW(R8);m_CopyMemoryExt()
         label('.done')
-        LDW(R21);POP();RET();
+        LDW(R21)
+        tryhop(2);POP();RET();
         
     code.append(('CODE', '_memcpyext', code1))
 

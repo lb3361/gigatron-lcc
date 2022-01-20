@@ -230,5 +230,4 @@ int main()
 		_memcpyext((0x00 | (0x80 >> 2)), (char*)0x8300u, (char*)0x8300u, 0x7d00u); // bank2->bank0
 	}
 
-	return 0;
 }

@@ -197,7 +197,7 @@ def resolve(s, ignore=None):
     return None
 
 class Fragment:
-    "Claaa for representing the code/data fragments in a module"
+    "Class for representing the code/data fragments in a module"
     __slots__ = ('segment', 'name','func', 'size', 'align', 'nohop', 'amin', 'amax')
     def __init__(self, segment, name, func, size = None, align = None):
         self.segment = segment     # CODE, DATA, BSS, COMMON
@@ -1935,12 +1935,17 @@ def find_data_segment(size, align=None):
         addr = aligned(s.pc, align)
         if amin != None and amin > addr:
             addr = aligned(amin, align)
+        if amin != None and amax == None and amin >= s.saddr and amin < s.eaddr:
+            if amin < s.pc:
+                raise Stop(f"Requested address for fragment {the_fragment.name}@{hex(amin)} is busy")
+            if addr > amin:
+                raise Stop(f"Requested address for fragment {the_fragment.name}@{hex(amin)} is misaligned")
+            if addr + size > s.eaddr:
+                raise Stop(f"Fragment {the_fragment.name}@{hex(amin)} does not fit at the requested address")
         if addr + size > s.eaddr:
             continue
         if amax != None and addr + size > amax + 1:
             continue
-        if amin != None and amax == None and addr != amin:
-            error(f"Requested location for fragment {the_fragment.name}@{hex(amin)} is busy")
         while addr > s.pc and s.pc > s.saddr and addr < s.pc + 4:
             s.pc += 1                           # not worth splitting
             if s.buffer:
@@ -1962,20 +1967,18 @@ def find_code_segment(size):
         addr = s.pc
         if amin != None and amin > s.pc:
             addr = amin
-        # if the code does not fit in the page, go to next page
         epage = (addr | 0xff) + 1
+        if amin != None and amax == None and amin >= s.saddr and amin < s.eaddr:
+            if amin >= s.saddr and amin < s.pc:
+                raise Stop(f"Requested address for fragment {the_fragment.name}@{hex(amin)} is busy")
+            if amin < s.eaddr and amin + size > min(epage, s.eaddr):
+                raise Stop(f"Fragment {the_fragment.name}@{hex(amin)} does not fit at the requested address")
         if addr + size > epage:
             addr = epage
             epage = (addr | 0xff) + 1
-            if amin and not amax:  # not good for placed fragments
-                error(f"Fragment {the_fragment.name}@{hex(amin)} does not fit at the requested address")
-        if addr + size > s.eaddr:
+        if addr + size > min(epage, s.eaddr):
             continue
         if amax != None and addr + size > amax + 1:
-            continue
-        if amin != None and amax == None and addr != amin:
-            if amin >= s.eaddr and amin < s.pc:
-                error(f"Requested location for fragment {the_fragment.name}@{hex(amin)} is busy")
             continue
         # possibly carve segment before address addr
         if addr > s.pc:
@@ -2470,8 +2473,8 @@ def glink(argv):
     
     except FileNotFoundError as err:
         fatal(str(err), exc=True)
-#    except Exception as err:
-#        fatal(repr(err), exc=True)
+    except Exception as err:
+        fatal(repr(err), exc=True)
 
 
 if __name__ == '__main__':

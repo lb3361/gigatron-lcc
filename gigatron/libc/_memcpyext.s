@@ -28,9 +28,8 @@ def scope():
         def m_prepCopyMemoryExt():
             _LDI(0x1f8);PEEK();STW(R16);_BNE('.ok')        # R16: copy of 1f8
             LDI(0);tryhop(2);POP();RET();label('.ok')
-            XORW(R8);ANDI(0xc0);XORW(R16);STW(R17)         # R17: destination ctrl word
-            LDW(R8);LSLW();LSLW()
-            XORW(R16);ANDI(0xc0);XORW(R16);STW(R18)        # R18: source ctrl word
+            LDW(R8);ORI(0x3c);ANDI(0xfc);STW(R17)          # R17: destination ctrl word
+            LDW(R8);LSLW();LSLW();ORI(0x3c);STW(R18)       # R18: source ctrl word
             LDI(0);STW(R8)                                 # R8 = zero
             _LDI('SYS_ExpanderControl_v4_40');STW('sysFn') # prep sys call
         def m_reduceCopyMemoryExt():
@@ -39,7 +38,7 @@ def scope():
         def m_CopyMemoryExt():
             STW('sysArgs4');STW('sysArgs5');_CALLJ('_memcpyext0')
         def code0():
-            org(0x7fa0)
+            nohop()
             label('.memcpyextb')
             space(32)
             label('_memcpyext0')
@@ -67,6 +66,7 @@ def scope():
             RET()
 
         code.append(('CODE', '_memcpyext0', code0))
+        code.append(('PLACE', '_memcpyext0', 0x0000, 0x8000))
 
 
     # void *_memcpyext(int banks, void *dest, const void *src, size_t n);

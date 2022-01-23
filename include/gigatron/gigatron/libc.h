@@ -162,6 +162,11 @@ extern void _srand(void);
    This is fast when there is a SYS call. */
 extern void *_memchr2(const void *s, char c0, char c1, size_t n);
 
+/* Scans memory region [s,s+n) in bank given by bits 6 and 7 of bank.
+   Return a pointer to the first byte equal to either c0 or c1.
+   Return zero if not found. This is fast when there is a SYS call. */
+extern void *_memchr2ext(char bank, const void *s, char c0, char c1, size_t n);
+
 /* Copy a block of memory [src,src+n) to [dst,dst+n) across memory banks.
    The destination bank is given by bits 6 and 7 of argument banks,
    and the source bank is given by bits 5 and 4.

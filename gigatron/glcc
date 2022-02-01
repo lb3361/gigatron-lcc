@@ -79,13 +79,16 @@ hasv = False
 usage = False
 argv = []
 for arg in sys.argv:
-    if arg.startswith('-cpu='):
-        hascpu = arg[5:]
-    elif arg.startswith('-rom='):
-        hasrom = arg[5:]
-    elif arg.startswith('-map='):
-        hasmap = arg[5:]
-    elif arg == '-v':
+    opt = arg
+    if opt.startswith('--'):
+        opt = opt[1:]
+    if opt.startswith('-cpu='):
+        hascpu = arg.split('=')[1]
+    elif opt.startswith('-rom='):
+        hasrom = arg.split('=')[1]
+    elif opt.startswith('-map='):
+        hasmap = arg.split('=')[1]
+    elif opt == '-v':
         hasv = True
     argv.append(arg)
 if len(argv) < 2:

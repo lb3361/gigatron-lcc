@@ -1935,7 +1935,9 @@ def find_data_segment(size, align=None):
         addr = aligned(s.pc, align)
         if amin != None and amin > addr:
             addr = aligned(amin, align)
-        if amin != None and amax == None and amin >= s.saddr and amin < s.eaddr:
+        if amin != None and amax == None:
+            if not (amin >= s.saddr and amin < s.eaddr):
+                continue
             if amin < s.pc:
                 raise Stop(f"Requested address for fragment {the_fragment.name}@{hex(amin)} is busy")
             if addr > amin:
@@ -1968,7 +1970,9 @@ def find_code_segment(size):
         if amin != None and amin > s.pc:
             addr = amin
         epage = (addr | 0xff) + 1
-        if amin != None and amax == None and amin >= s.saddr and amin < s.eaddr:
+        if amin != None and amax == None:
+            if not (amin >= s.saddr and amin < s.eaddr):
+                continue
             if amin >= s.saddr and amin < s.pc:
                 raise Stop(f"Requested address for fragment {the_fragment.name}@{hex(amin)} is busy")
             if amin < s.eaddr and amin + size > min(epage, s.eaddr):

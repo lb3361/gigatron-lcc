@@ -1684,12 +1684,8 @@ def read_lib(l):
 
 def read_map(mn, overlays = None):
     '''Read a linker map file.'''
-    dn = os.path.dirname(__file__)
-    if '/' in mn:
-        fn = os.path.join(mn, "map.py")
-    else:
-        fn = os.path.join(dn, "map" + mn, "map.py")
-    if not os.access(fn, os.R_OK):
+    fn = search_file(f"map{mn}/map.py", args.mapdir)
+    if not fn:
         fatal(f"cannot find linker map '{mn}'")
     with open(fn, 'r') as fd:
         exec(compile(fd.read(), fn, 'exec'), globals())
@@ -1697,11 +1693,10 @@ def read_map(mn, overlays = None):
         fatal(f"map '{mn}' does not define 'map_segments'")
     if not map_modules:
         fatal(f"map '{mn}' does not define 'map_modules'")
+    md = os.path.dirname(fn)
+    args.L.append(md)
     for ov in overlays or []:
-        if '/' in ov:
-            fn = ov
-        else:
-            fn = os.path.join(dn, "map" + mn, "x-" + ov + ".py")
+        fn = ov if '/' in ov else os.path.join(md, f"x-{ov}.py")
         if not os.access(fn, os.R_OK):
             fatal(f"cannot load map overlay '{ov}'")
         with open(fn, 'r') as fd:
@@ -2368,6 +2363,8 @@ def glink(argv):
         parser.add_argument('--labelchange-threshold', dest='rpth',
                             metavar='LBLCHG', type=int, action='store', default=200,
                             help='restart a pass whenever the label change counter reach this threshold')
+        parser.add_argument("--mapdir", type=str, action='append', metavar='MAPDIR',
+                            help='add directories to search linker maps')
 
         args = parser.parse_args(argv)
 
@@ -2387,8 +2384,9 @@ def glink(argv):
         read_interface()
         sm = args.map.split(',')
         args.map = sm[0]
+        args.mapdir = args.mapdir or []
+        args.mapdir.append(lccdir)
         read_map(args.map, sm[1:])
-        args.L.append(os.path.join(lccdir,f"map{args.map}"))
         args.L.append(os.path.join(lccdir,f"cpu{args.cpu}"))
         args.L.append(lccdir)
 

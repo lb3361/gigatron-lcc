@@ -3,7 +3,7 @@ ROM=v5a
 MAP=32k
 CFLAGS=-rom=${ROM} -map=${MAP}
 
-PGMS=TSTconsole.gt1 TSTio.gt1 TSTmemcpyext.gt1
+PGMS=TSTconsole.gt1 TSTio.gt1 TSTcontroller.gt1 TSTmemcpyext.gt1
 
 all: $(PGMS)
 
@@ -15,6 +15,9 @@ TSTconsole.gt1: TSTconsole.c
 
 TSTio.gt1: TSTio.c
 	${CC} ${CFLAGS} TSTio.c -o $@
+
+TSTcontroller.gt1: TSTcontroller.c
+	${CC} ${CFLAGS} TSTcontroller.c -o $@
 
 TSTmemcpyext.gt1: TSTmemcpyext.c
 	@if [ "$(MAP)" != 32k ] || [ "$(ROM)" != dev ] ; then \

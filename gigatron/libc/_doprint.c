@@ -122,8 +122,11 @@ void _doprint_num(register doprint_t *dd,  register doprintspec_t *spec,
 	if (*s == '-') {
 		p = "-";
 		s += 1;
-	} else if ((b & 1) && (f & DPR_SGN)) {
-		p = "+";
+	} else if (b & 1) {
+		if (f & DPR_SGN)
+			p = "+";
+		else if (f & DPR_SPC)
+			p = " ";
 	}
 	if (*s == '0') {
 		if (f & DPR_PREC)

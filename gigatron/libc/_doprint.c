@@ -142,7 +142,7 @@ void _doprint_num(register doprint_t *dd,  register doprintspec_t *spec,
 	l = strlen(s) + b;
 	z = 0;
 	if (f & DPR_PREC) {
-		if ((z = spec->prec - l - b) < 0)
+		if ((z = spec->prec - l + b) < 0)
 			z = 0;
 	} else if (f & DPR_ZEROJ) {
 		if ((z = spec->width - l) < 0)

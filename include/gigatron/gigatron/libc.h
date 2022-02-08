@@ -134,10 +134,12 @@ extern int  _bitset_test(char *set, unsigned int i);
 
 /* Using these functions help avoiding the bulky printf */
 
-/* Functions to convert integers to strings. The buffer should be eight
-   bytes long for ints and sixteen bytes for longs. Radix should be in
-   range 2 to 36.  Note that the return value is not usually equal to
-   buffer because the digits are generated backwards. */
+/* Functions to convert integers to strings. The buffer should be
+   eight bytes long for ints and sixteen bytes for longs. Radix should
+   be in range 8 to 36. Smaller radix might overflow the buffer.  Note
+   that the return value is not usually equal to buffer because the
+   digits are generated backwards and stored from the end of the
+   buffer marching towards the beginning. */
 
 extern char *itoa(int value, char *buf8, int radix);
 extern char *utoa(unsigned int value, char *buf8, int radix);

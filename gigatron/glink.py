@@ -71,6 +71,8 @@ map_libraries = None
 map_segments = None
 map_describe = None
 
+zpsize = 0
+
 # --------------- utils
 
 def debug(s, level=1):
@@ -430,21 +432,23 @@ for s in module_builtins_okay.split():
     elif hasattr(__builtins__,s):
         module_builtins[s] = getattr(__builtins__, s)
 
-def register_names():
+def register_names(base):
+    if base < 0 or base + 0x40 > 0x100:
+        fatal(f"Illegal register base {str(hex)} (outside page zero)")
+    if base < 0x80 and base + 0x40 > 0x80:
+        fatal(f"Illegal register base {str(hex)} (straddles 0x80)")
     d = { "vPC":  0x0016, "vAC":  0x0018, "vLR":  0x001a, "vSP":  0x001c,
-          "vACL": 0x0018, "vACH": 0x0019,
-          "B0":   0x0081, "B1":   0x0082, "B2":   0x0083, "LAC":  0x0084,
-          # the real FAC overlaps B[0-3] and LAC with a private format
-          "FAC":  0xFAC00FAC }
-    for i in range(0,4):  d[f'T{i}'] = 0x88+i+i
-    for i in range(0,24): d[f'R{i}'] = 0x90+i+i
+          "vACL": 0x0018, "vACH": 0x0019, "FAC":  0xFAC00FAC }
+    d["LAC"] = base + 4
+    for i in range(0,3):  d[f'B{i}'] = base + 1 + i
+    for i in range(0,4):  d[f'T{i}'] = base + 8 + i + i
+    for i in range(0,24): d[f'R{i}'] = base + 16 + i + i
     for i in range(0,22): d[f'L{i}'] = d[f'R{i}']
     for i in range(0,21): d[f'F{i}'] = d[f'R{i}']
     d['SP'] = d['R23']
-    return d
-for (k,v) in register_names().items():
-    module_dict[k] = v
-    globals()[k] = v
+    for (k,v) in d.items():
+        module_dict[k] = v
+        globals()[k] = v
 
 def new_globals():
     '''Return a pristine global symbol table to read .s/.o/.a files.'''
@@ -511,6 +515,29 @@ def genlabel():
     global genlabel_counter
     genlabel_counter += 1
     return f".LL{genlabel_counter}"
+
+@vasm
+def zpbyte(size=1, virq=False):
+    '''Allocate size bytes in page zero skipping system variables
+       register bank, and, if virq is True, context save registers'''
+    uservars = symdefs['userVars']
+    regbase = symdefs['_regbase']
+    global zpsize, the_module
+    if the_module:
+        fatal("zpbyte should be called outside a module")
+    if zpsize < uservars:
+        zpsize = uservars
+    if virq and zpsize < 0x34:
+        zpsize = 0x34
+    if zpsize < regbase + 0x40 and zpsize + size > regbase:
+        zpsize = regbase + 0x40
+    if zpsize < 0x81 and zpsize + size > 0x80:
+        zpsize = 0x81
+    res = zpsize
+    zpsize = zpsize + size
+    if zpsize > 0x100:
+        error("Out of zero page space")
+    return res
 
 @vasm
 def pc():
@@ -2358,22 +2385,23 @@ def glink(argv):
         parser.add_argument('--minimal-heap-segment-size', dest='mhss',
                             metavar='SIZE', type=int, action='store',
                             help='minimal heap segment size for __glink_magic_heap.')
-        parser.add_argument('--debug-messages', '-d', dest='d', action='count', default=0,
-                            help='enable debugging output. repeat for more.')
         parser.add_argument('--labelchange-threshold', dest='rpth',
                             metavar='LBLCHG', type=int, action='store', default=200,
                             help='restart a pass whenever the label change counter reach this threshold')
+        parser.add_argument('--register-base', dest='regbase', metavar='ADDR',
+                            type=lambda x: int(x,0), action='store', default=0x40,
+                            help='set base address of register block')
         parser.add_argument("--mapdir", type=str, action='append', metavar='MAPDIR',
                             help='add directories to search linker maps')
+        parser.add_argument('--debug-messages', '-d', dest='d', action='count', default=0,
+                            help='enable debugging output. repeat for more.')
 
         args = parser.parse_args(argv)
-
-        # set defaults
-        if args.map == None:
-            args.map = '32k'
-            print(f"glink: defaulting to map '{args.map}'", file=sys.stderr)
+        register_names(args.regbase)
+        symdefs['_regbase'] = args.regbase
 
         # process rom and map
+        args.map = args.map or '32k'
         read_rominfo(args.rom)
         args.cpu = args.cpu or romcpu or 5
         args.files = args.files or []

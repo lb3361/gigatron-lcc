@@ -252,6 +252,12 @@ double feek(word a) {
   return 0;
 }
 
+/* Register base. Default is now 0x40.  
+   Code that does not advertise regbase with
+   SYS_regbase is assumed to use the old value 0x80.
+*/
+
+unsigned int regbase = 0x80;
 
 #define vPC       (0x16)
 #define vAC       (0x18)
@@ -259,15 +265,15 @@ double feek(word a) {
 #define vSP       (0x1c)
 #define sysFn     (0x22)
 #define sysArgs0  (0x24+0)
-#define LAC       (0x84)
-#define T0        (0x88+0)
-#define R0        (0x90+0)
-#define R8        (0x90+16)
-#define R9        (0x90+18)
-#define R10       (0x90+20)
-#define R11       (0x90+22)
-#define R12       (0x90+24)
-#define SP        (0x90+46)
+#define LAC       (regbase+0x4)
+#define T0        (regbase+0x8+0)
+#define R0        (regbase+0x10+0)
+#define R8        (regbase+0x10+16)
+#define R9        (regbase+0x10+18)
+#define R10       (regbase+0x10+20)
+#define R11       (regbase+0x10+22)
+#define R12       (regbase+0x10+24)
+#define SP        (regbase+0x10+46)
 
 #define addlo(a,i)  (((a)&0xff00)|(((a)+i)&0xff))
 
@@ -385,6 +391,11 @@ word loadGt1(const char *gt1)
 
 
 /* LIBSIM calls */
+
+void sys_regbase(void)
+{
+  regbase = deek(vAC);
+}
 
 void sys_exit(void)
 {
@@ -655,6 +666,7 @@ void sys_0x3b4(CpuState *S)
       /* Pseudo SYS calls are captured here */
       switch(deek(sysFn))
         {
+        case 0xffff: sys_regbase(); break;
         case 0xff00: sys_exit(); break;
         case 0xff01: sys_printf(); break;
         case 0xff02: sys_io_write(); break;

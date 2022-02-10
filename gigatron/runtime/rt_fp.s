@@ -27,9 +27,9 @@ def scope():
     T3L = T3
     T3H = T3+1
 
-    AS = 0x81     # FACsign (bit7) FARGsign^FACsign (bit0).
-    AE = 0x82     # FAC exponent
-    AM = 0x83     # 40 bits FAC mantissa (one extra low byte)
+    AS = B0       # FACsign (bit7) FARGsign^FACsign (bit0).
+    AE = B1       # FAC exponent
+    AM = B2       # 40 bits FAC mantissa (one extra low byte)
     BM = T0       # 40 bits FARG mantissa (high byte overlaps T2L and CM)
     BE = T2H      # FARG exponent (overlaps T2H and CM)
     CM = T2       # extra 32 bits register

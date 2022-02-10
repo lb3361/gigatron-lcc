@@ -54,7 +54,8 @@ def map_modules(romtype):
     def code0():
         nohop() # instead of org(0x200)
         label(args.gt1exec)
-        LDWI(initsp);STW(SP);
+        LDWI(0xffff);STW('sysFn');LDWI('_regbase');SYS(40) # tell regbase to gtsim
+        LDWI(initsp);STW(SP);                              # init stack pointer
         if romtype and romtype >= 0x80:
             LD('romType');ANDI(0xfc);XORI(romtype);BNE('.err')
         elif romtype:

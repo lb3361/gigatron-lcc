@@ -130,7 +130,7 @@ def scope():
            code=[ ('EXPORT', '_@_lcvi'),
                   ('CODE', '_@_lcvi', code6) ])
 
-    # The following are merely markers indicating that _LMOV or _FMOV
+    # The following are merely markers indicating that _MOVL or _MOVF
     # is used somewhere. These are useful to decide whether to import
     # printf support for longs or floats.
     

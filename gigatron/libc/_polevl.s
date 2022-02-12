@@ -9,11 +9,11 @@ def scope():
         nohop()
         label('_p1evl')
         PUSH()
-        _FMOV(F8,FAC);LDW(R11);_FADD()
+        _MOVF(F8,FAC);LDW(R11);_FADD()
         BRA('.polevl2')
         label('_polevl')
         PUSH()              # x is F8, *coeff is R11, n is R12
-        LDW(R11);_FMOV([vAC],FAC)
+        LDW(R11);_MOVF([vAC],FAC)
         INC(R12);BRA('.polevl2')
         label('.polevl1')
         LDI(F8);_FMUL();LDW(R11);_FADD()

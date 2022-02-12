@@ -6,7 +6,7 @@ def code0():
     label('copysign')
     PUSH()
     LD(F8+1);XORW(F11+1);ANDI(0x80);XORW(F8+1);ST(F8+1)
-    _FMOV(F8,FAC)
+    _MOVF(F8,FAC)
     POP();RET()
     
 code=[

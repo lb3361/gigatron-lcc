@@ -4,7 +4,7 @@
 def code0():
     label('ldiv')
     PUSH();
-    _LMOV(L9,LAC);LDI(L11);_LMODS()
+    _MOVL(L9,LAC);LDI(L11);_LMODS()
     # save quotient
     LDW(T0);DOKE(R8);
     LDI(2);ADDW(R8);STW(T3);LDW(T1);DOKE(T3);

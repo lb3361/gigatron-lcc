@@ -5,7 +5,7 @@ def scope():
         nohop()
         label('fmod')
         PUSH()
-        _FMOV(F8, FAC)
+        _MOVF(F8, FAC)
         LDI(F11);_CALLI('_@_fmod')
         POP();RET()
 
@@ -17,7 +17,7 @@ def scope():
     def code1():
         label('_fmodquo')
         PUSH()
-        _FMOV(F8, FAC)
+        _MOVF(F8, FAC)
         LDI(F11);_CALLI('_@_fmod')
         DOKE(R14) # low bits of quotient
         POP();RET()

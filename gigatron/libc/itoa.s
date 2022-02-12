@@ -54,7 +54,7 @@ def scope():
         PUSH()
         LDI(15);ADDW(R10);STW(R10)
         LDI(0);POKE(R10);STW(R12)
-        _LMOV(L8,LAC);
+        _MOVL(L8,LAC);
         label('.loop')
         LDI(R11);_LMODU()
         LDW(LAC);STW(R13)
@@ -81,7 +81,7 @@ def scope():
         _CALLJ('ultoa')
         tryhop(2);POP();RET()
         label('.neg')
-        _LMOV(L8,LAC);_LNEG();_LMOV(LAC,L8)
+        _MOVL(L8,LAC);_LNEG();_MOVL(LAC,L8)
         _CALLJ('ultoa')
         SUBI(1);STW(R9);LDI(45);POKE(R9);
         LDW(R9)
@@ -114,7 +114,7 @@ def scope():
            details of utoa. Beware.'''
         label('_uftoa')
         PUSH()
-        _FMOV(F8,FAC)
+        _MOVF(F8,FAC)
         LDI(10);STW(R10)
         LDW(R11);ADDI(11);STW(R22);ADDI(4);STW(R9)
         LDI(0);POKE(R9)

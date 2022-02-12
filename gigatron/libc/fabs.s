@@ -6,7 +6,7 @@ def code0():
     label('fabs')
     PUSH()
     LD(F8+1);ANDI(127);ST(F8+1)
-    _FMOV(F8, FAC)
+    _MOVF(F8, FAC)
     POP();RET()
     
 code=[

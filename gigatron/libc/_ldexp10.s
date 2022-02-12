@@ -17,8 +17,8 @@ def scope():
         label('.neg2')
         LDI(0);SUBW(R11)
         STW(R11);_BEQ('.ret')
-        _FMOV(FAC,F8)
-        _FMOV('_fone', FAC)
+        _MOVF(FAC,F8)
+        _MOVF('_fone', FAC)
         _CALLJ('.posf')
         LDI(F8);_FDIVR()
         label('.ret')
@@ -27,7 +27,7 @@ def scope():
     def code_ldexp10():
         label('_ldexp10')
         PUSH()
-        _FMOV(F8,FAC)
+        _MOVF(F8,FAC)
         LDW(R11);_BGE('.pos0')
         _CALLJ('.neg0') # no return
         label('.pos0')
@@ -62,7 +62,7 @@ def scope():
         SUBI(158);STW(R17);LSLW();ADDW(R17);_DIVIS(10);STW(R17)
         LDI(0);SUBW(R17);STW(R11);_CALLJ('_ldexp10')
         label('.loop1')
-        _FMOV(FAC,F8)
+        _MOVF(FAC,F8)
         LD(F8);SUBI(160);_BGT('.fix1')
         ADDI(3);_BGT('.ret');_BLT('.fix0')
         LD(F8+1);ORI(0x80);SUBI(0xcc);_BGE('.ret')

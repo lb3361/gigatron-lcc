@@ -29,7 +29,7 @@ def scope():
     def code1():
         nohop()
         label('_fexception')
-        PUSH();_FMOV(F8,FAC);
+        PUSH();_MOVF(F8,FAC);
         label('_@_raise_ferr')
         LDWI('.msg');STW(T3)
         LDWI(0x304)
@@ -53,7 +53,7 @@ def scope():
     def code2():
         nohop()
         label('_foverflow')
-        PUSH();_FMOV(F8,FAC);
+        PUSH();_MOVF(F8,FAC);
         label('_@_raise_fovf')
         _LDI('errno');STW(T2);LDI(2);POKE(T2);  # set errno=ERANGE on overflow.
         LDWI('.msg');STW(T3)

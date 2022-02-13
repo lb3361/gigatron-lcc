@@ -113,7 +113,7 @@ def scope():
         label('_@_divs')
         PUSH()
         if args.cpu >= 6:
-            MOVQ(0,B2)
+            MOVQB(0,B2)
             _BGT('.divs1');_BNE('.divs0')
             _CALLJ('_@_raise_zdiv')
             label('.divs0')

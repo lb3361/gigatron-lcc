@@ -862,8 +862,8 @@ stmt: ASGNU1(ac,conB)  "\t%0%[1b]POKEI(%1);\n" mincpu6(28)
 stmt: ASGNP2(addr,ac)  "\t%1STW2(%0);\n" mincpu6(26+28)
 stmt: ASGNI2(addr,ac)  "\t%1STW2(%0);\n" mincpu6(26+28)
 stmt: ASGNU2(addr,ac)  "\t%1STW2(%0);\n" mincpu6(26+28)
-stmt: ASGNI1(addr,ac)  "\t%1ST2(%0);\n" mincpu6(26+26)
-stmt: ASGNU1(addr,ac)  "\t%1ST2(%0);\n" mincpu6(26+26)
+stmt: ASGNI1(addr,ac)  "\t%1STB2(%0);\n" mincpu6(26+26)
+stmt: ASGNU1(addr,ac)  "\t%1STB2(%0);\n" mincpu6(26+26)
 reg: INDIRI2(ac) "\t%{#canVAC}%0%{dst!=vAC:DEEKA(%c)}%{dst==vAC:DEEK()};\n" mincpu6(30)
 reg: INDIRU2(ac) "\t%{#canVAC}%0%{dst!=vAC:DEEKA(%c)}%{dst==vAC:DEEK()};\n" mincpu6(30)
 reg: INDIRP2(ac) "\t%{#canVAC}%0%{dst!=vAC:DEEKA(%c)}%{dst==vAC:DEEK()};\n" mincpu6(30)
@@ -925,8 +925,8 @@ stmt: ASGNU2(rmw, LSHU2(INDIRU2(rmw),con1)) "\tLSLV(%0);\n" mincpu6(if_rmw(a, 28
 stmt: ASGNI2(rmw, conB) "\tMOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
 stmt: ASGNU2(rmw, conB) "\tMOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
 stmt: ASGNP2(rmw, conB) "\tMOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
-stmt: ASGNI1(rmw, conB) "\tMOVQ(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,27))
-stmt: ASGNU1(rmw, conB) "\tMOVQ(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,27))
+stmt: ASGNI1(rmw, conB) "\tMOVQB(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,27))
+stmt: ASGNU1(rmw, conB) "\tMOVQB(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,27))
 
 
 

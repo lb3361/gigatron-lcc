@@ -792,9 +792,9 @@ int disassemble(word addr, char **pm, char *operand)
     }
     /* CPU6 instructions below */
     case 0x14: *pm="DEC"; goto oper8;
-    case 0x16: *pm="MOVQ"; goto oper88;
+    case 0x16: *pm="MOVQB"; goto oper88;
     case 0x18: *pm="LSRB"; goto oper8;
-    case 0x1c: *pm="LSRV"; goto oper8;
+    case 0x1c: *pm="LOKEQI"; goto oper16;
     case 0x23: *pm="PEEK+"; goto oper8;
     case 0x25: *pm="POKEI"; goto oper8;
     case 0x27: *pm="LSLV"; goto oper8;
@@ -804,12 +804,12 @@ int disassemble(word addr, char **pm, char *operand)
     case 0x37: *pm="DOKEI"; goto oper16r;
     case 0x39: *pm="PEEKV"; goto oper8;
     case 0x3b: *pm="DEEKV"; goto oper8;
-    case 0x3d: *pm="XORBI"; goto oper88;
-    case 0x42: *pm="ANDBA"; goto oper8;
-    case 0x44: *pm="ORBA"; goto oper8;
-    case 0x46: *pm="XORBA"; goto oper8;
+    case 0x3d: *pm="LOKEI"; goto oper16;
+    case 0x42: *pm="ADDVI"; goto oper88;
+    case 0x44: *pm="SUBVI"; goto oper88;
+    case 0x46: *pm="DOKE+"; goto oper8;
     case 0x48: *pm="NOTB"; goto oper8;
-    case 0x4a: *pm="DOKE+"; goto oper8;
+    case 0x4a: *pm="DJGE"; goto oper8x16p2;
     case 0x5b: *pm="MOVQW"; goto oper88;
     case 0x60: *pm="DEEK+"; goto oper8;
     case 0x65: *pm="MOV"; goto oper88r;
@@ -822,15 +822,16 @@ int disassemble(word addr, char **pm, char *operand)
     case 0x79: *pm="INCW"; goto oper8;
     case 0x7b: *pm="DECW"; goto oper8;
     case 0x7d: *pm="DOKEA"; goto oper8;
-    case 0x8a: *pm="NOTW"; goto oper8;
+    case 0x8a: *pm="PEEKA+"; goto oper8;
     case 0x8e: *pm="DBGE"; goto oper8br;
-    case 0x95: *pm="ORBI"; goto oper88;
     case 0x9c: *pm="LDNI"; goto oper8n;
     case 0x9e: *pm="ANDBK"; goto oper88r;
     case 0xa0: *pm="ORBK"; goto oper88r;
     case 0xa2: *pm="XORBK"; goto oper88r;
-    case 0xa4: *pm="PEEKA+"; goto oper8;
+    case 0xa4: *pm="DJNE"; goto oper8x16p2;
     case 0xa7: *pm="CMPI"; goto oper88;
+    case 0xa9: *pm="ADDVW"; goto oper88;
+    case 0xab: *pm="SUBVW"; goto oper88;
     case 0xbb: *pm="JEQ"; goto oper16p2;
     case 0xbd: *pm="JNE"; goto oper16p2;
     case 0xbf: *pm="JLT"; goto oper16p2;
@@ -838,18 +839,31 @@ int disassemble(word addr, char **pm, char *operand)
     case 0xc3: *pm="JLE"; goto oper16p2;
     case 0xc5: *pm="JGE"; goto oper16p2;
     case 0xd1: *pm="POKE+"; goto oper8;
-    case 0xd3: *pm="NEGW"; goto oper8;
+    case 0xd3: *pm="LSRV"; goto oper8;
     case 0xd5: *pm="TGE"; goto oper8;
     case 0xd7: *pm="TLT"; goto oper8;
     case 0xd9: *pm="TGT"; goto oper8;
     case 0xdb: *pm="TLE"; goto oper8;
-    case 0xdd: *pm="ANDBI"; goto oper88;
     case 0xe1: *pm="SUBBI"; goto oper88;
     case 0x2f: {
       switch(peek(addlo(addr,1)))
         {
         case 0x11: *pm = "LSLN"; goto oper8p2;
-        case 0x14: *pm = "SEXT"; goto oper8p2;
+        case 0x13: *pm = "SEXT"; goto oper8p2;
+        case 0x15: *pm = "NOTW"; goto oper8p2;
+        case 0x17: *pm = "NEGQ"; goto oper8p2;
+        case 0x19: *pm = "ANDBA"; goto oper8p2;
+        case 0x1c: *pm = "ORBA"; goto oper8p2;
+        case 0x1f: *pm = "XORBA"; goto oper8p2;
+        case 0x22: *pm = "FREQM"; goto oper8p2;
+        case 0x24: *pm = "FREQA"; goto oper8p2;
+        case 0x27: *pm = "FREQZ"; goto oper8p2;
+        case 0x2a: *pm = "VOLM"; goto oper8p2;
+        case 0x2c: *pm = "VOLA"; goto oper8p2;
+        case 0x2f: *pm = "MODA"; goto oper8p2;
+        case 0x32: *pm = "MODZ"; goto oper8p2;
+        case 0x34: *pm = "SMCPY"; goto oper8p2;
+          // more
         oper8p2:
           sprintf(operand, "$%02x", peek(addlo(addr,2)));
         default:
@@ -859,9 +873,9 @@ int disassemble(word addr, char **pm, char *operand)
     case 0xc7: {
       switch(peek(addlo(addr,2)))
         {
-        case 0x11:  *pm = "ST2"; goto oper16p3;
+        case 0x11:  *pm = "STB2"; goto oper16p3;
         case 0x14:  *pm = "STW2"; goto oper16p3;
-        case 0x17:  *pm = "XCHG"; goto oper88p3;
+        case 0x17:  *pm = "XCHGB"; goto oper88p3;
         case 0x19:  *pm = "MOVW"; goto oper88p3;
         case 0x1b:  *pm = "ADDWI"; goto oper16p3;
         case 0x1d:  *pm = "SUBWI"; goto oper16p3;
@@ -874,8 +888,21 @@ int disassemble(word addr, char **pm, char *operand)
         case 0x2d:  *pm = "CONDB"; goto oper88p3;
         case 0x30:  *pm = "CONDIB"; goto oper88p3;
         case 0x33:  *pm = "CONDBI"; goto oper88p3;
+        case 0x35:  *pm = "XCHGW"; goto oper88p3;
+        case 0x38:  *pm = "OSCPX"; goto oper88p3;
+        case 0x3a:  *pm = "SWAPB"; goto oper88p3;
+        case 0x3d:  *pm = "SWAPW"; goto oper88p3;
+        case 0x40:  *pm = "NEEKA"; goto oper88p3;
+        case 0x43:  *pm = "NOKEA"; goto oper88p3;
+          // more
+        case 0x67:  *pm = "ANDBI"; goto oper88p3r;
+        case 0x6a:  *pm = "ORBI"; goto oper88p3r;
+        case 0x6d:  *pm = "XORBI"; goto oper88p3r;
         oper16p3:
           sprintf(operand, "$%02x%02x", peek(addlo(addr,1)),peek(addlo(addr,3)));
+          return 4;
+        oper88p3r:
+          sprintf(operand, "$%02x, $%02x", peek(addlo(addr,1)),peek(addlo(addr,3)));
           return 4;
         oper88p3:
           sprintf(operand, "$%02x, $%02x", peek(addlo(addr,3)),peek(addlo(addr,1)));
@@ -907,6 +934,9 @@ int disassemble(word addr, char **pm, char *operand)
     oper16p2:
       sprintf(operand, "$%04x", addlo(deek(addlo(addr,1)),2));
       return 3;
+    oper8x16p2:
+      sprintf(operand, "$%02x, $%04x", peek(addlo(addr,1)), addlo(deek(addlo(addr,2)),2));
+      return 4;
     operbr:
       sprintf(operand, "$%04x", (addr&0xff00)|((peek(addlo(addr,1))+2)&0xff));
       return 2;

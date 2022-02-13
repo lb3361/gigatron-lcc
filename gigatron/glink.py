@@ -787,7 +787,7 @@ def DEC(d):
     '''DEC: Decrement byte var ([D]--), 22 cycles'''
     check_cpu(6); tryhop(2); emit(0x14, check_zp(d))
 @vasm
-def MOVQB(imm,d):
+def MOVQB(imm,d): # was MOVQ
     '''MOVQB: Load a byte var with a small constant 0..255, 28 cycles'''
     check_cpu(6); tryhop(3); emit(0x16, check_zp(imm), check_zp(d))
 @vasm
@@ -867,7 +867,7 @@ def DEEKp(d):
     '''DEEK+: Deek word at address contained in var, var += 2, 30 cycles'''
     check_cpu(6); tryhop(2); emit(0x60, check_zp(d))
 @vasm
-def MOV(s,d): # renanme MOVB?
+def MOVB(s,d): # was MOV
     '''MOVB: Moves a byte from src var to dst var, 28 cycles'''
     check_cpu(6); tryhop(3); emit(0x65, check_zp(d), check_zp(s))
 @vasm
@@ -1408,7 +1408,7 @@ def _MODIU(d):
     extern('_@_modu')
     _CALLI('_@_modu')           # T3 % vAC --> vAC
 @vasm
-def _MOVW(s,d):
+def _MOVW(s,d): # was _MOV
     '''Move word from reg/addr s to d. 
        One of s or d can be [vAC] or [SP, offset].
        When this is the case, s cannot be vAC.
@@ -1544,7 +1544,7 @@ def _CMPWU(d):
         LDLW(-2); SUBW(d)
         label(lbl2, hop=0)
 @vasm
-def _MOVM(s,d,n,align=1):
+def _MOVM(s,d,n,align=1): # was _BMOV
     '''Move memory block of size n from addr s to d.
        One of s or d can be either [vAC] or [SP,offset].
        Argument d can also be [T2].'''
@@ -1572,7 +1572,7 @@ def _MOVM(s,d,n,align=1):
             extern('_@_bcopy')
             _CALLI('_@_bcopy')         # [T3..T1) --> [T2..]
 @vasm
-def _MOVL(s,d):
+def _MOVL(s,d): # was _LMOV
     '''Move long from reg/addr s to d.
        One of s or d can be either [vAC] or [SP,offset].
        Argument d can be [T2].
@@ -1699,7 +1699,7 @@ def _LEXTS():
     extern('_@_lexts')              # (vAC<0) ? -1 : 0 --> vAC
     _CALLI('_@_lexts')
 @vasm
-def _MOVF(s,d):
+def _MOVF(s,d): # was _FMOV
     '''Move float from reg s to d with special cases when s or d is FAC.
        One of s or d can be [vAC] or [SP, offset].
        Argument d can also be [T2].
@@ -1851,8 +1851,18 @@ def _EPILOGUE(framesize,maxargoffset,mask,saveAC=False):
         STW(T3)
         _CALLJ('_@_rtrn_%02x' % mask)
         
+# compat
+module_dict['_MOV'] = _MOVW
+module_dict['_LMOV'] = _MOVL
+module_dict['_FMOV'] = _MOVF
+module_dict['_BMOV'] = _MOVM
+module_dict['ST2'] = STB2
+module_dict['XCHG'] = XCHGB
+module_dict['MOVQ'] = MOVQB
+module_dict['MOV'] = MOVB
+
+
 # ------------- reading .s/.o/.a files
-        
               
 def read_file(f):
     '''Reads a .s/.o/.a file in a pristine environment'''

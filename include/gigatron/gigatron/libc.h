@@ -62,6 +62,9 @@ extern int _raise_code;
 
 /* ---- Numerics ---- */
 
+/* Elementary long constants */
+extern double _lzero, _lone, _ltwo, _lminus;
+
 /* Elementary floating point constants */
 extern double _fzero, _fone, _fhalf, _ftwo, _fminus;
 

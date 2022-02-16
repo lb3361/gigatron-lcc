@@ -51,6 +51,7 @@ test: all
 	    printf "|  Compiling for rom: %-8s     |\n" $$rom; \
 	    printf "+----------------------------------+\n"; \
 	    ${MAKE} ROM=$$rom glcc-test subdirs-test || exit; \
+	    wc -c ${B}tst/*.gt1 > ${B}tst/sizes-$$rom.txt; \
 	 done
 	@echo "+----------------------------------+"
 	@echo "|  Test sequence ran successfully! |"
@@ -167,6 +168,8 @@ ${B}tst/%.gt1: tst/%.c FORCE
 ${B}tst/%.xx1: ${B}tst/%.gt1 FORCE
 	${GTSIMR} $< > "$@" < "tst/$(*F).0"
 	cmp $@ ${G}tst/$(*F).1bk
+
+.PRECIOUS: ${B}tst/%.gt1
 
 FORCE: .PHONY
 

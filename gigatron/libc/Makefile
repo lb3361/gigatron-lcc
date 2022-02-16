@@ -83,6 +83,8 @@ ${B}tst/%.gt1: tst/%.c FORCE
 	@test -d ${B}tst || mkdir ${B}tst
 	${GLCC} -map=sim -rom=${ROM}  -DROM=${ROM} -o $@ $<
 
+.PRECIOUS: ${B}tst/%.gt1
+
 FORCE: .PHONY
 
 .PHONY: 

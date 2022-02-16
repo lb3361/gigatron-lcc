@@ -1240,6 +1240,16 @@ def XORBI(imm,d):
     '''XORBI: Xor immediate byte with byte var, result in byte var, 22 + 20 cycles'''
     emit_prefx3(0x6d, check_zp(d), check_zp(imm))
 
+# Experimental cpu6 instructions
+#@vasm
+#def XLA():
+#    check_cpu(6); emit(0x95)
+#@vasm
+#def JMPI(d):
+#    check_cpu(6); tryhop(3); d=int(v(d)); emit(0xdd, lo(d), hi(d))
+
+
+    
 
 # pseudo instructions used by the compiler
 @vasm
@@ -1424,12 +1434,12 @@ def _MOVW(s,d): # was _MOV
             DEEKA(d)
         elif args.cpu >= 6 and is_zeropage(s) and d == [vAC]:
             DOKEA(s)
+        elif d == [vAC] and s == vAC:
+            error("Cannot _MOVW from vAC to [vAC] or [SP, offset]")
+#        elif d == [vAC] and args.cpu >= 6:
+#            XLA(); _LDW(s); DOKE(vLR)
         elif d == [vAC]:
-            STW(T3)
-            if s == vAC:
-                error("Cannot _MOVW from vAC to [vAC] or [SP, offset]")
-            _LDW(s)
-            DOKE(T3)
+            STW(T3); _LDW(s); DOKE(T3)
         elif is_zeropage(d):
             if s == [vAC]:
                 DEEK()

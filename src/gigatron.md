@@ -422,6 +422,9 @@ spill: ADDRLP2 "%a+%F" if_spill(50)
 iarg: INDIRU2(spill) "T3|STW(T1);_MOVW([SP,%0],T3);LDW(T1);" 21
 iarg: INDIRI2(spill) "T3|STW(T1);_MOVW([SP,%0],T3);LDW(T1);" 21
 iarg: INDIRP2(spill) "T3|STW(T1);_MOVW([SP,%0],T3);LDW(T1);" 21
+#iarg: INDIRU2(spill) "T3|XLA();_MOVW([SP,%0],T3);XLA();" mincpu6(20)
+#iarg: INDIRI2(spill) "T3|XLA();_MOVW([SP,%0],T3);XLA();" mincpu6(20)
+#iarg: INDIRP2(spill) "T3|XLA();_MOVW([SP,%0],T3);XLA();" mincpu6(20)
 
 # Integer operations. This is verbose because there are variants for
 # types I2, U2, P2, variants for argument ordering, and variants for
@@ -880,6 +883,8 @@ ac: ADDP2(ac,con) "%0ADDWI(%1);" mincpu6(26+27)
 ac: SUBI2(ac,con) "%0SUBWI(%1);" mincpu6(26+27)
 ac: SUBU2(ac,con) "%0SUBWI(%1);" mincpu6(26+27)
 ac: SUBP2(ac,con) "%0SUBWI(%1);" mincpu6(26+27)
+ac: BCOMI2(ac)    "%0NOTW(vAC);" mincpu6(48)
+ac: BCOMU2(ac)    "%0NOTW(vAC);" mincpu6(48)
 ac: BANDI2(ac,con) "%0ANDWI(%1);" mincpu6(26+25)
 ac: BANDU2(ac,con) "%0ANDWI(%1);" mincpu6(26+25)
 ac: BORI2(ac,con)  "%0ORWI(%1);" mincpu6(26+21)
@@ -892,8 +897,7 @@ ac: BORI2(CVUI2(reg),conB) "ORBK(%0,%1);" mincpu6(29)
 ac: BORU2(CVUI2(reg),conB) "ORBK(%0,%1);" mincpu6(29)
 ac: BXORI2(CVUI2(reg),conB) "XORBK(%0,%1);" mincpu6(29)
 ac: BXORU2(CVUI2(reg),conB) "XORBK(%0,%1);" mincpu6(29)
-ac: NEGI2(ac)  "%0NEGW(vAC);" mincpu6(26)
-ac: NEGI2(reg) "LDW(%0);NEGW(vAC);" mincpu6(46)
+ac: NEGI2(ac)  "%0NEGW(vAC);" mincpu6(48)
 ac: ADDI2(ac,CVUI2(iarg)) "%0ADDBA(%1);" mincpu6(28)
 ac: ADDU2(ac,CVUI2(iarg)) "%0ADDBA(%1);" mincpu6(28)
 ac: SUBU2(ac,CVUI2(iarg)) "%0SUBBA(%1);" mincpu6(28)

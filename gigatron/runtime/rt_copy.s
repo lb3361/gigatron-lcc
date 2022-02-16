@@ -9,8 +9,7 @@ def scope():
         label('_@_lcopy')
         if args.cpu >= 6:
             DEEKV(T3);DOKE(T2)
-            INCW(T3);INCW(T2)
-            INCW(T3);INCW(T2)
+            ADDVI(2,T3);ADDVI(2,T2)
             DEEKV(T3);DOKE(T2)
         else:
             LDW(T3);DEEK();DOKE(T2)
@@ -36,7 +35,7 @@ def scope():
             BRA('.cont')
             label('_@_lcopyz')
             ST(T3);LD(vACH);STW(T2)
-            LD(T3);STW(T3)
+            MOVQB(0, T3+1)
             label('.cont')
             DEEKp(T3);DOKEp(T2)
             DEEKp(T3);DOKEp(T2)
@@ -95,8 +94,11 @@ def scope():
         nohop()
         label('_@_wcopy')
         _DEEKV(T3);DOKE(T2)
-        LDI(2);ADDW(T2);STW(T2)
-        LDI(2);ADDW(T3);STW(T3)
+        if args.cpu >= 6:
+            ADDVI(2,T2);ADDVI(2,T3)
+        else:
+            LDI(2);ADDW(T2);STW(T2)
+            LDI(2);ADDW(T3);STW(T3)
         XORW(T1);BNE('_@_wcopy')
         RET()
 

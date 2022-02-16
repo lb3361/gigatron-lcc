@@ -902,25 +902,25 @@ ac: SUBI2(ac,CVUI2(iarg)) "%0SUBBA(%1);" mincpu6(28)
 # Read-modify-write
 rmw: VREGP "%a"
 rmw: zddr "%0"
-stmt: ASGNU1(rmw, LOADU1(ADDI2(CVUI2(INDIRU1(rmw)), con1))) "\tINC(%0);\n" if_rmw(a,16) 
-stmt: ASGNI1(rmw, LOADI1(ADDI2(CVII2(INDIRI1(rmw)), con1))) "\tINC(%0);\n" if_rmw(a,16) 
-stmt: ASGNU1(rmw, LOADU1(SUBI2(CVUI2(INDIRU1(rmw)), con1))) "\tDEC(%0);\n" mincpu6(if_rmw(a,16))
-stmt: ASGNI1(rmw, LOADI1(SUBI2(CVII2(INDIRI1(rmw)), con1))) "\tDEC(%0);\n" mincpu6(if_rmw(a,16))
-stmt: ASGNP2(rmw, ADDP2(INDIRP2(rmw), con1)) "\tINCW(%0);\n" mincpu6(if_rmw(a, 26))
-stmt: ASGNP2(rmw, ADDP2(INDIRP2(rmw), con1)) "\tINCW(%0);\n" mincpu6(if_rmw(a, 26))
-stmt: ASGNU2(rmw, ADDU2(INDIRU2(rmw), con1)) "\tINCW(%0);\n" mincpu6(if_rmw(a, 26))
-stmt: ASGNI2(rmw, ADDI2(INDIRI2(rmw), con1)) "\tINCW(%0);\n" mincpu6(if_rmw(a, 26))
-stmt: ASGNP2(rmw, SUBP2(INDIRP2(rmw), con1)) "\tDECW(%0);\n" mincpu6(if_rmw(a, 26))
-stmt: ASGNU2(rmw, SUBU2(INDIRU2(rmw), con1)) "\tDECW(%0);\n" mincpu6(if_rmw(a, 26))
-stmt: ASGNI2(rmw, SUBI2(INDIRI2(rmw), con1)) "\tDECW(%0);\n" mincpu6(if_rmw(a, 26))
-stmt: ASGNP2(rmw, ADDP2(INDIRP2(rmw), con1n)) "\tDECW(%0);\n" mincpu6(if_rmw(a, 26))
-stmt: ASGNU2(rmw, ADDU2(INDIRU2(rmw), con1n)) "\tDECW(%0);\n" mincpu6(if_rmw(a, 26))
-stmt: ASGNI2(rmw, ADDI2(INDIRI2(rmw), con1n)) "\tDECW(%0);\n" mincpu6(if_rmw(a, 26))
-stmt: ASGNI2(rmw, NEGI2(INDIRI2(rmw))) "\tNEGW(%0);\n" mincpu6(if_rmw(a, 26))
-stmt: ASGNI2(rmw, BCOMI2(INDIRI2(rmw))) "\tNOTW(%0);\n" mincpu6(if_rmw(a, 26))
-stmt: ASGNU2(rmw, BCOMU2(INDIRU2(rmw))) "\tNOTW(%0);\n" mincpu6(if_rmw(a, 26))
-stmt: ASGNI2(rmw, LSHI2(INDIRI2(rmw),con1)) "\tLSLV(%0);\n" mincpu6(if_rmw(a, 28))
-stmt: ASGNU2(rmw, LSHU2(INDIRU2(rmw),con1)) "\tLSLV(%0);\n" mincpu6(if_rmw(a, 28))
+stmt: ASGNU1(rmw, LOADU1(ADDI2(CVUI2(INDIRU1(rmw)), con1))) "\t%{#keepVAC}INC(%0);\n" if_rmw(a,16)
+stmt: ASGNI1(rmw, LOADI1(ADDI2(CVII2(INDIRI1(rmw)), con1))) "\t%{#keepVAC}INC(%0);\n" if_rmw(a,16)
+stmt: ASGNU1(rmw, LOADU1(SUBI2(CVUI2(INDIRU1(rmw)), con1))) "\t%{#keepVAC}DEC(%0);\n" mincpu6(if_rmw(a,16))
+stmt: ASGNI1(rmw, LOADI1(SUBI2(CVII2(INDIRI1(rmw)), con1))) "\t%{#keepVAC}DEC(%0);\n" mincpu6(if_rmw(a,16))
+stmt: ASGNP2(rmw, ADDP2(INDIRP2(rmw), con1)) "\t%{#keepVAC}INCW(%0);\n" mincpu6(if_rmw(a, 26))
+stmt: ASGNU2(rmw, ADDU2(INDIRU2(rmw), con1)) "\t%{#keepVAC}INCW(%0);\n" mincpu6(if_rmw(a, 26))
+stmt: ASGNI2(rmw, ADDI2(INDIRI2(rmw), con1)) "\t%{#keepVAC}INCW(%0);\n" mincpu6(if_rmw(a, 26))
+stmt: ASGNP2(rmw, SUBP2(INDIRP2(rmw), con1)) "\t%{#keepVAC}DECW(%0);\n" mincpu6(if_rmw(a, 26))
+stmt: ASGNU2(rmw, SUBU2(INDIRU2(rmw), con1)) "\t%{#keepVAC}DECW(%0);\n" mincpu6(if_rmw(a, 26))
+stmt: ASGNI2(rmw, SUBI2(INDIRI2(rmw), con1)) "\t%{#keepVAC}DECW(%0);\n" mincpu6(if_rmw(a, 26))
+stmt: ASGNP2(rmw, ADDP2(INDIRP2(rmw), con1n)) "\t%{#keepVAC}DECW(%0);\n" mincpu6(if_rmw(a, 26))
+stmt: ASGNU2(rmw, ADDU2(INDIRU2(rmw), con1n)) "\t%{#keepVAC}DECW(%0);\n" mincpu6(if_rmw(a, 26))
+stmt: ASGNI2(rmw, ADDI2(INDIRI2(rmw), con1n)) "\t%{#keepVAC}DECW(%0);\n" mincpu6(if_rmw(a, 26))
+stmt: ASGNI2(rmw, NEGI2(INDIRI2(rmw))) "\t%{#keepVAC}NEGW(%0);\n" mincpu6(if_rmw(a, 48))
+stmt: ASGNI2(rmw, BCOMI2(INDIRI2(rmw))) "\%{#keepVAC}tNOTW(%0);\n" mincpu6(if_rmw(a, 48))
+stmt: ASGNU2(rmw, BCOMU2(INDIRU2(rmw))) "\t%{#keepVAC}NOTW(%0);\n" mincpu6(if_rmw(a, 48))
+stmt: ASGNI2(rmw, LSHI2(INDIRI2(rmw),con1)) "\t%{#keepVAC}LSLV(%0);\n" mincpu6(if_rmw(a, 56))
+stmt: ASGNU2(rmw, LSHU2(INDIRU2(rmw),con1)) "\t%{#keepVAC}LSLV(%0);\n" mincpu6(if_rmw(a, 56))
+stmt: ASGNU2(rmw, RSHU2(INDIRU2(rmw),con1)) "\t%{#keepVAC}LSRV(%0);\n" mincpu6(if_rmw(a, 56))
 
 stmt: ASGNI2(rmw, conB) "\tMOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
 stmt: ASGNU2(rmw, conB) "\tMOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
@@ -1245,7 +1245,8 @@ static const char *skip_comment_in_template(const char *tpl)
 
 /* Helper for preralloc */
 static int find_reguse(Node p, int nt, Symbol sym,
-                       const char **lefttpl, int *leftkid, Node *leftkn)
+                       const char **lefttpl, int *leftkid, Node *leftkn,
+                       const char **tpl)
 {
   Node n = p;
   int rulenum = (*IR->x._rule)(n->x.state, nt);
@@ -1256,6 +1257,8 @@ static int find_reguse(Node p, int nt, Symbol sym,
   int count = 0;
   int i;
 
+  if (tpl)
+    *tpl = template;
   template = skip_comment_in_template(template);
   if (template[0] == '%' && isdigit(template[1]))
     leftidx = template[1] - '0';
@@ -1274,9 +1277,9 @@ static int find_reguse(Node p, int nt, Symbol sym,
           }
         }
       } else if (i == leftidx) {
-        count += find_reguse(k, knt, sym, lefttpl, leftkid, leftkn);
+        count += find_reguse(k, knt, sym, lefttpl, leftkid, leftkn, 0);
       } else {
-        count += find_reguse(k, knt, sym, 0, 0, 0);
+        count += find_reguse(k, knt, sym, 0, 0, 0, 0);
       }
     }
   return count;
@@ -1304,7 +1307,7 @@ static void change_sym_to_ac(Node p, Symbol sym, Symbol ac)
 static int scan_ac_preserving_instructions(Symbol sym, Symbol r, Node q, Symbol pr)
 {
   int count, usecount;
-  const char *lefttpl;
+  const char *lefttpl, *tpl;
   int leftkid;
   Node p;
   /* count temporary variable uses */
@@ -1326,18 +1329,18 @@ static int scan_ac_preserving_instructions(Symbol sym, Symbol r, Node q, Symbol 
         /* matches INDIR(VREGP) rule which does not generate code */
         continue;
       if (generic(q->op)==ASGN && specific(q->kids[0]->op) == VREG+P
-          && q->kids[1]->x.inst == _reg_NT)
+          && q->kids[1]->x.nt == _reg_NT)
         /* matches ASGN(VREGP,reg) which does not generate code */
         continue;
       /* For instructions that generate code, we start
          by counting how many times the instruction uses sym. */
-      lefttpl = 0;
-      count = find_reguse(q, q->x.inst, sym, &lefttpl, &leftkid, &p);
+      lefttpl = tpl = 0;
+      count = find_reguse(q, q->x.inst, sym, &lefttpl, &leftkid, &p, &tpl);
       usecount -= count;
       if (generic(q->op)==ASGN && specific(q->kids[0]->op) == VREG+P
           && q->kids[0]->syms[0] != sym && q->kids[0]->syms[0] != ireg[31]
-          && count == 0)
-        /* matches a RMW rule whose code preserves vAC/LAC/FAC */
+          && count == 0 && !strncmp(tpl, "\t%{#keepVAC}", 12) )
+        /* matches a RMW rule which preserves vAC/LAC/FAC */
         continue;
       if (generic(q->op)==LOAD && q->kids[0]->x.inst == _reg_NT
           && generic(q->kids[0]->op) == INDIR

@@ -451,9 +451,14 @@ static void prelabel(Node p) {
 			rtarget(p, 1, p->kids[0]->syms[0]);
 		break;
 	case CVI: case CVU: case CVP:
-		if (optype(p->op) != F
-		&&  opsize(p->op) <= p->syms[0]->u.c.v.i)
-			p->op = LOAD + opkind(p->op);
+		if (optype(p->op) != F) {
+			int ts = opsize(p->op);
+			int fs = p->syms[0]->u.c.v.i;
+			if (ts == fs && !p->link && !p->kids[0]->link)
+				*p = *(p->kids[0]);
+			else if (ts <= fs)
+				p->op = LOAD + opkind(p->op);
+		}
 		break;
 	}
 	(IR->x.target)(p);

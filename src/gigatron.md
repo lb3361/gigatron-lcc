@@ -375,6 +375,7 @@ stmt: reg  ""
 stmt: ac   "\t%0\n"
 reg:  ac   "\t%{#alsoVAC}%0%{dst!=vAC:STW(%c);}\n" 20
 ac:  reg   "%{src!=vAC:LDW(%0);}" 20
+ac:  reg   "%{src!=vAC:LDW(%0);}" 20
 ac:  ac0   "%0"
 ac:  eac   "%0" 
 ac0: eac0  "%0"
@@ -422,9 +423,6 @@ spill: ADDRLP2 "%a+%F" if_spill(50)
 iarg: INDIRU2(spill) "T3|STW(T1);_MOVW([SP,%0],T3);LDW(T1);" 21
 iarg: INDIRI2(spill) "T3|STW(T1);_MOVW([SP,%0],T3);LDW(T1);" 21
 iarg: INDIRP2(spill) "T3|STW(T1);_MOVW([SP,%0],T3);LDW(T1);" 21
-#iarg: INDIRU2(spill) "T3|XLA();_MOVW([SP,%0],T3);XLA();" mincpu6(20)
-#iarg: INDIRI2(spill) "T3|XLA();_MOVW([SP,%0],T3);XLA();" mincpu6(20)
-#iarg: INDIRP2(spill) "T3|XLA();_MOVW([SP,%0],T3);XLA();" mincpu6(20)
 
 # Integer operations. This is verbose because there are variants for
 # types I2, U2, P2, variants for argument ordering, and variants for
@@ -851,6 +849,8 @@ stmt: ASGNU4(spill,reg) "\tSTW(T1);_MOVL(%1,[SP,%0]);LDW(T1) #genspill\n" 0
 stmt: ASGNF5(spill,reg) "\tSTW(T1);_MOVF(%1,[SP,%0]);LDW(T1) #genspill\n" 0
 
 # More opcodes for cpu=6
+reg: LOADI1(reg)  "\t%{#keepsAC}MOVB(%0,%c)\n" mincpu6(28)
+reg: LOADU1(reg)  "\t%{#keepsAC}MOVB(%0,%c)\n" mincpu6(28)
 stmt: ASGNP2(ac,iarg)  "\t%0%[1b]DOKEA(%1);\n" mincpu6(30)
 stmt: ASGNI2(ac,iarg)  "\t%0%[1b]DOKEA(%1);\n" mincpu6(30)
 stmt: ASGNU2(ac,iarg)  "\t%0%[1b]DOKEA(%1);\n" mincpu6(30)
@@ -906,25 +906,25 @@ ac: SUBI2(ac,CVUI2(iarg)) "%0SUBBA(%1);" mincpu6(28)
 # Read-modify-write
 rmw: VREGP "%a"
 rmw: zddr "%0"
-stmt: ASGNU1(rmw, LOADU1(ADDI2(CVUI2(INDIRU1(rmw)), con1))) "\t%{#keepVAC}INC(%0);\n" if_rmw(a,16)
-stmt: ASGNI1(rmw, LOADI1(ADDI2(CVII2(INDIRI1(rmw)), con1))) "\t%{#keepVAC}INC(%0);\n" if_rmw(a,16)
-stmt: ASGNU1(rmw, LOADU1(SUBI2(CVUI2(INDIRU1(rmw)), con1))) "\t%{#keepVAC}DEC(%0);\n" mincpu6(if_rmw(a,16))
-stmt: ASGNI1(rmw, LOADI1(SUBI2(CVII2(INDIRI1(rmw)), con1))) "\t%{#keepVAC}DEC(%0);\n" mincpu6(if_rmw(a,16))
-stmt: ASGNP2(rmw, ADDP2(INDIRP2(rmw), con1)) "\t%{#keepVAC}INCW(%0);\n" mincpu6(if_rmw(a, 26))
-stmt: ASGNU2(rmw, ADDU2(INDIRU2(rmw), con1)) "\t%{#keepVAC}INCW(%0);\n" mincpu6(if_rmw(a, 26))
-stmt: ASGNI2(rmw, ADDI2(INDIRI2(rmw), con1)) "\t%{#keepVAC}INCW(%0);\n" mincpu6(if_rmw(a, 26))
-stmt: ASGNP2(rmw, SUBP2(INDIRP2(rmw), con1)) "\t%{#keepVAC}DECW(%0);\n" mincpu6(if_rmw(a, 26))
-stmt: ASGNU2(rmw, SUBU2(INDIRU2(rmw), con1)) "\t%{#keepVAC}DECW(%0);\n" mincpu6(if_rmw(a, 26))
-stmt: ASGNI2(rmw, SUBI2(INDIRI2(rmw), con1)) "\t%{#keepVAC}DECW(%0);\n" mincpu6(if_rmw(a, 26))
-stmt: ASGNP2(rmw, ADDP2(INDIRP2(rmw), con1n)) "\t%{#keepVAC}DECW(%0);\n" mincpu6(if_rmw(a, 26))
-stmt: ASGNU2(rmw, ADDU2(INDIRU2(rmw), con1n)) "\t%{#keepVAC}DECW(%0);\n" mincpu6(if_rmw(a, 26))
-stmt: ASGNI2(rmw, ADDI2(INDIRI2(rmw), con1n)) "\t%{#keepVAC}DECW(%0);\n" mincpu6(if_rmw(a, 26))
-stmt: ASGNI2(rmw, NEGI2(INDIRI2(rmw))) "\t%{#keepVAC}NEGW(%0);\n" mincpu6(if_rmw(a, 48))
-stmt: ASGNI2(rmw, BCOMI2(INDIRI2(rmw))) "\%{#keepVAC}tNOTW(%0);\n" mincpu6(if_rmw(a, 48))
-stmt: ASGNU2(rmw, BCOMU2(INDIRU2(rmw))) "\t%{#keepVAC}NOTW(%0);\n" mincpu6(if_rmw(a, 48))
-stmt: ASGNI2(rmw, LSHI2(INDIRI2(rmw),con1)) "\t%{#keepVAC}LSLV(%0);\n" mincpu6(if_rmw(a, 56))
-stmt: ASGNU2(rmw, LSHU2(INDIRU2(rmw),con1)) "\t%{#keepVAC}LSLV(%0);\n" mincpu6(if_rmw(a, 56))
-stmt: ASGNU2(rmw, RSHU2(INDIRU2(rmw),con1)) "\t%{#keepVAC}LSRV(%0);\n" mincpu6(if_rmw(a, 56))
+stmt: ASGNU1(rmw, LOADU1(ADDI2(CVUI2(INDIRU1(rmw)), con1))) "\t%{#keepsAC}INC(%0);\n" if_rmw(a,16)
+stmt: ASGNI1(rmw, LOADI1(ADDI2(CVII2(INDIRI1(rmw)), con1))) "\t%{#keepsAC}INC(%0);\n" if_rmw(a,16)
+stmt: ASGNU1(rmw, LOADU1(SUBI2(CVUI2(INDIRU1(rmw)), con1))) "\t%{#keepsAC}DEC(%0);\n" mincpu6(if_rmw(a,16))
+stmt: ASGNI1(rmw, LOADI1(SUBI2(CVII2(INDIRI1(rmw)), con1))) "\t%{#keepsAC}DEC(%0);\n" mincpu6(if_rmw(a,16))
+stmt: ASGNP2(rmw, ADDP2(INDIRP2(rmw), con1)) "\t%{#keepsAC}INCW(%0);\n" mincpu6(if_rmw(a, 26))
+stmt: ASGNU2(rmw, ADDU2(INDIRU2(rmw), con1)) "\t%{#keepsAC}INCW(%0);\n" mincpu6(if_rmw(a, 26))
+stmt: ASGNI2(rmw, ADDI2(INDIRI2(rmw), con1)) "\t%{#keepsAC}INCW(%0);\n" mincpu6(if_rmw(a, 26))
+stmt: ASGNP2(rmw, SUBP2(INDIRP2(rmw), con1)) "\t%{#keepsAC}DECW(%0);\n" mincpu6(if_rmw(a, 26))
+stmt: ASGNU2(rmw, SUBU2(INDIRU2(rmw), con1)) "\t%{#keepsAC}DECW(%0);\n" mincpu6(if_rmw(a, 26))
+stmt: ASGNI2(rmw, SUBI2(INDIRI2(rmw), con1)) "\t%{#keepsAC}DECW(%0);\n" mincpu6(if_rmw(a, 26))
+stmt: ASGNP2(rmw, ADDP2(INDIRP2(rmw), con1n)) "\t%{#keepsAC}DECW(%0);\n" mincpu6(if_rmw(a, 26))
+stmt: ASGNU2(rmw, ADDU2(INDIRU2(rmw), con1n)) "\t%{#keepsAC}DECW(%0);\n" mincpu6(if_rmw(a, 26))
+stmt: ASGNI2(rmw, ADDI2(INDIRI2(rmw), con1n)) "\t%{#keepsAC}DECW(%0);\n" mincpu6(if_rmw(a, 26))
+stmt: ASGNI2(rmw, NEGI2(INDIRI2(rmw))) "\t%{#keepsAC}NEGW(%0);\n" mincpu6(if_rmw(a, 48))
+stmt: ASGNI2(rmw, BCOMI2(INDIRI2(rmw))) "\%{#keepsAC}tNOTW(%0);\n" mincpu6(if_rmw(a, 48))
+stmt: ASGNU2(rmw, BCOMU2(INDIRU2(rmw))) "\t%{#keepsAC}NOTW(%0);\n" mincpu6(if_rmw(a, 48))
+stmt: ASGNI2(rmw, LSHI2(INDIRI2(rmw),con1)) "\t%{#keepsAC}LSLV(%0);\n" mincpu6(if_rmw(a, 56))
+stmt: ASGNU2(rmw, LSHU2(INDIRU2(rmw),con1)) "\t%{#keepsAC}LSLV(%0);\n" mincpu6(if_rmw(a, 56))
+stmt: ASGNU2(rmw, RSHU2(INDIRU2(rmw),con1)) "\t%{#keepsAC}LSRV(%0);\n" mincpu6(if_rmw(a, 56))
 stmt: ASGNP2(rmw, ADDP2(INDIRP2(rmw), conB)) "\t%{#alsoVAC}ADDVI(%2,%0);\n" mincpu6(if_rmw(a, 50))
 stmt: ASGNU2(rmw, ADDU2(INDIRU2(rmw), conB)) "\t%{#alsoVAC}ADDVI(%2,%0);\n" mincpu6(if_rmw(a, 50))
 stmt: ASGNI2(rmw, ADDI2(INDIRI2(rmw), conB)) "\t%{#alsoVAC}ADDVI(%2,%0);\n" mincpu6(if_rmw(a, 50))
@@ -1346,14 +1346,13 @@ static int scan_ac_preserving_instructions(Symbol sym, Symbol r, Node q, Symbol 
         /* matches ASGN(VREGP,reg) which does not generate code */
         continue;
       /* For instructions that generate code, we start
-         by counting how many times the instruction uses sym. */
+         by counting how many times the instruction uses sym
+         and obtaining its template */
       lefttpl = tpl = 0;
       count = find_reguse(q, q->x.inst, sym, &lefttpl, &leftkid, &p, &tpl);
       usecount -= count;
-      if (generic(q->op)==ASGN && specific(q->kids[0]->op) == VREG+P
-          && q->kids[0]->syms[0] != sym && q->kids[0]->syms[0] != ireg[31]
-          && count == 0 && !strncmp(tpl, "\t%{#keepVAC}", 12) )
-        /* matches a RMW rule which preserves vAC/LAC/FAC */
+      if (tpl && count == 0 && !strncmp(tpl, "\t%{#keepsAC}", 12) )
+        /* instruction is known to preseve vAC/LAC/FAC and does not use sym */
         continue;
       if (generic(q->op)==LOAD && q->kids[0]->x.inst == _reg_NT
           && generic(q->kids[0]->op) == INDIR
@@ -1510,6 +1509,7 @@ static void emit3(const char *fmt, Node p, Node *kids, short *nts)
   if (fmt[0]=='#')
     {
       /* This is mostly used to help preralloc.
+         %{#keepsAC} : instruction preserves vAC/LAC/FAC.
          %{#alsoVAC} : contents of destination reg is also left in vAC.
          %{#alsoLAC} : contents of destination reg is also left in LAC.
          %{#alsoFAC} : contents of destination reg is also left in FAC.

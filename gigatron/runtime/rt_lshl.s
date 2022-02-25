@@ -39,26 +39,6 @@ def scope():
            code=[ ('EXPORT', '__@lshl1_t0t1'),
                   ('CODE', '__@lshl1_t0t1', code1) ] )
 
-
-    # LSHL1_T2T3 : T2T3 <<= 1
-    def code0():
-        nohop()
-        label('__@lshl1_t2t3')
-        if args.cpu >= 6:
-            LSLV(T2+2);LDW(T2);LSLV(T2);BGE('.l1');ORBI(1, T2+2);
-            label('.l1')
-            RET()
-        else:
-            LDW(T2);BLT('.lsl1')
-            LSLW();STW(T2);LDW(T3);LSLW();STW(T3);RET()
-            label('.lsl1')
-            LSLW();STW(T2);LDW(T3);LSLW();ORI(1);STW(T3)
-            RET()
-
-    module(name='rt_lshl1t2t3.s',
-           code=[ ('EXPORT', '__@lshl1_t2t3'),
-                  ('CODE', '__@lshl1_t2t3', code0) ])
-
     # LSHL : LAC <-- LAC << AC  (clobbers B0,T2,T3)
     def code2():
         label('_@_lshl')

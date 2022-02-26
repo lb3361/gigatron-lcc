@@ -1125,7 +1125,7 @@ def XCHGB(s,d): # was XCHG
 @vasm
 def MOVW(s,d):
     '''MOVW: Move 16bits from src zero page var to dst zero page var, (22 + 28 cycles)'''
-    emit_prefx3(0xc7, 0x19, check_zp(d), check_zp(s))
+    emit_prefx3(0x19, check_zp(s), check_zp(d))
 @vasm
 def ADDWI(d):
     '''ADDWI: vAC += immediate 16bit value, (22 + 28 cycles)'''
@@ -1241,13 +1241,29 @@ def XORBI(imm,d):
     emit_prefx3(0x6d, check_zp(d), check_zp(imm))
 
 # Experimental cpu6 instructions
-#@vasm
-#def XLA():
-#    check_cpu(6); emit(0x95)
-#@vasm
-#def JMPI(d):
-#    check_cpu(6); tryhop(3); d=int(v(d)); emit(0xdd, lo(d), hi(d))
-
+@vasm
+def XLA():
+    emit_prefx1(0x17)
+@vasm
+def JMPI(d):
+    emit_prefx3(0x70, lo(d), hi(d))
+@vasm
+def MOVL(s,d):
+    emit_prefx3(0xcd, check_zp(s), check_zp(d))
+@vasm
+def MOVF(s,d):
+    emit_prefx3(0xd0, check_zp(s), check_zp(d))
+@vasm
+def NCOPY(n):
+    emit_prefx2(0xcd, check_zp(n))
+@vasm
+def NPEEKAp(n,v):
+    v = check_zp(v)
+    emit_prefx3(0xd3, (v+n) & 0xff, v)
+@vasm
+def NPOKEAp(n,v):
+    v = check_zp(v)
+    emit_prefx3(0xd6, (v+n) & 0xff, v)
 
     
 

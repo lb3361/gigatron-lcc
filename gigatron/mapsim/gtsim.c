@@ -845,10 +845,18 @@ int disassemble(word addr, char **pm, char *operand)
     case 0xd9: *pm="TGT"; goto oper8;
     case 0xdb: *pm="TLE"; goto oper8;
     case 0xe1: *pm="SUBBI"; goto oper88;
-      // case 0x95: *pm="XLA"; return 1;     // experimental
-      // case 0xdd: *pm="JMPI"; goto oper16; // experimental
-    case 0x2f: {
+    case 0xb1: {
       switch(peek(addlo(addr,1)))
+        {
+        case 0x11: *pm = "NOTE"; return 2;
+        case 0x14: *pm = "MIDI"; return 2;
+        case 0x17: *pm = "XLA"; return 2;
+        default:
+          return 2;
+        }
+    }
+    case 0x2f: {
+      switch(peek(addlo(addr,2)))
         {
         case 0x11: *pm = "LSLN"; goto oper8p2;
         case 0x13: *pm = "SEXT"; goto oper8p2;
@@ -865,9 +873,12 @@ int disassemble(word addr, char **pm, char *operand)
         case 0x2f: *pm = "MODA"; goto oper8p2;
         case 0x32: *pm = "MODZ"; goto oper8p2;
         case 0x34: *pm = "SMCPY"; goto oper8p2;
-          // more
+        case 0x37: *pm = "CMPWS"; goto oper8p2;
+        case 0x39: *pm = "CMPWU"; goto oper8p2;
+          // exp
+        case 0xcd: *pm = "NCOPY"; goto oper8p2;
         oper8p2:
-          sprintf(operand, "$%02x", peek(addlo(addr,2)));
+          sprintf(operand, "$%02x", peek(addlo(addr,1)));
         default:
           return 3;
         }
@@ -900,11 +911,20 @@ int disassemble(word addr, char **pm, char *operand)
         case 0x67:  *pm = "ANDBI"; goto oper88p3r;
         case 0x6a:  *pm = "ORBI"; goto oper88p3r;
         case 0x6d:  *pm = "XORBI"; goto oper88p3r;
+        case 0x70:  *pm = "JMPI"; goto oper16p3;
+          // exp
+        case 0xcd:  *pm = "MOVL"; goto oper88p3;
+        case 0xd0:  *pm = "MOVF"; goto oper88p3;
+        case 0xd3:  *pm = "NDEEKA+"; goto oper88p3n;
+        case 0xd6:  *pm = "NDOKEA+"; goto oper88p3n;
         oper16p3:
           sprintf(operand, "$%02x%02x", peek(addlo(addr,1)),peek(addlo(addr,3)));
           return 4;
         oper88p3r:
           sprintf(operand, "$%02x, $%02x", peek(addlo(addr,1)),peek(addlo(addr,3)));
+          return 4;
+        oper88p3n:
+          sprintf(operand, "$%02x, $%02x", (peek(addlo(addr,3))-peek(addlo(addr,1)))&0xff,peek(addlo(addr,3)));
           return 4;
         oper88p3:
           sprintf(operand, "$%02x, $%02x", peek(addlo(addr,3)),peek(addlo(addr,1)));

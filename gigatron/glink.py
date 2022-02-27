@@ -1455,7 +1455,7 @@ def _MOVW(s,d): # was _MOV
 #        elif d == [vAC] and args.cpu >= 6:
 #            XLA(); _LDW(s); DOKE(vLR)
         elif d == [vAC]:
-            STW(T3); _LDW(s); DOKE(T3)
+            STW(T2); _LDW(s); DOKE(T2)
         elif is_zeropage(d):
             if s == [vAC]:
                 DEEK()
@@ -1613,10 +1613,13 @@ def _MOVL(s,d): # was _LMOV
             _SP(d[1]); d = [vAC]
         if is_zeropage(d, 3):
             if is_zeropage(s, 3):
-                LDWI(((d & 0xff) << 8) | (s & 0xff))
-                extern('_@_lcopyz')
-                _CALLI('_@_lcopyz')                  # z->z :  6 bytes
-            elif args.cpu > 5:
+                if args.cpu >= 6:
+                    MOVL(s,d)                        # z->z :  4 bytes (cpu6)
+                else:
+                    LDWI(((d & 0xff) << 8) | (s & 0xff))
+                    extern('_@_lcopyz')
+                    _CALLI('_@_lcopyz')              # z->z :  6 bytes
+            elif args.cpu >= 6:
                 if s != [vAC]:
                     _LDI(s)
                 DEEKA(d); ADDI(2); DEEKA(d+2)        # a|l->z: 6|9 bytes (cpu6)
@@ -1627,7 +1630,7 @@ def _MOVL(s,d): # was _LMOV
                 STW(T3); LDI(d); STW(T2);
                 extern('_@_lcopy')
                 _CALLI('_@_lcopy')                   # a->l:   9 bytes
-        elif is_zeropage(s, 3) and args.cpu > 5:
+        elif is_zeropage(s, 3) and args.cpu >= 6:
             if d == [T2]:
                 LDW(T2)
             elif d != [vAC]:
@@ -1749,9 +1752,12 @@ def _MOVF(s,d): # was _FMOV
             extern('_@_fstfac')
             _CALLI('_@_fstfac')   # FAC --> [vAC..vAC+5)
         elif is_zeropage(d, 4) and is_zeropage(s, 4):
-            LDWI(((d & 0xff) << 8) | (s & 0xff))
-            extern('_@_fcopyz')
-            _CALLI('_@_fcopyz')
+            if args.cpu >= 6:
+                MOVF(s,d)
+            else:
+                LDWI(((d & 0xff) << 8) | (s & 0xff))
+                extern('_@_fcopyz')
+                _CALLI('_@_fcopyz')
         else:
             maycross=False
             if d == [vAC]:

@@ -422,29 +422,28 @@ But it plays!
 
 ## 4. Internals
 
-The code generator uses a block of 63 bytes in page zero located
-between addresses `regbase+0x1` and `regbase+0x3f`. The default value
-of `regbase` is now 0x40 but can be changed with 
-option `--register-base=0x80` for instance.
+The code generator uses two block of respectively 16 and 48 bytes in page zero.
 
-  *  Addresses `regbase+0x1` to `regbase+0xf` is dedicated to the
-     routines that implement long and float arithmetic. The long
-     accumulator `LAC` uses four bytes at address `regbase+0x4`. The
-     floating point accumulator `FAC` uses seven bytes at address
-     `regbase+0x1`. The remaining eight bytes at address `regbase+0x8`
-     are working space for these routines.  They are also known as
-     registers `T0` to `T3` which are occasionally used as scratch
+  *  The first block is dedicated to runtime routines that implement
+	 long and float arithmetic. It is located at fixed addres `0xc0-0xcf`
+	 because it is expected that runtime support will be progressively
+	 supported by ROM features. The long accumulator `LAC` occupies
+	 addresses `0xc4-0xc7`. The float accumulator `FAC` overlaps `LAC` and
+	 uses locations `0xc0-0xc7`. The remaining eight bytes at `0xc8-0xcf`
+     are working space for these runtime routines. They are also known as
+     registers `T0` to `T3` and are occasionally used as scratch
      registers by the code generator.
      
-  *  Addresses `regbase+0x10` to `regbase+0x3f` contains 24 general
-     purpose sixteen bits registers named `R0` to `R23`.  Register
-     pairs named `L0` to `L22` can hold longs.  Register triplets
-     named `F0` to `F21` can hold floats.  Registers `R0` to `R7` are
-     callee-saved and are often used for local variables.  Registers
-     `R8` to `R15` are used to pass arguments to functions. Registers
-     `R15` to `R22` are used for temporaries. Register `R23` or `SP`
-     is the stack pointer.
-     
+  *  The second block contains 24 general purpose word registers named
+     `R0` to `R23`. This block is by default located at addresses
+     `0x50-0x7f` but can be displaced using the command line option
+     `--register-base=0x90` for instance. Register pairs named `L0` to
+     `L22` can hold longs.  Register triplets named `F0` to `F21` can
+     hold floats. Registers `R0` to `R7` are callee-saved and are
+     often used for local variables. Registers `R8` to `R15` are used
+     to pass arguments to functions. Registers `R15` to `R22` are used
+     for temporaries. Register `R23` or `SP` is the stack pointer.
+
 The function prologue first saves `vLR` and constructs a stack frame
 by adjusting `SP`. It then saves the callee-saved registers onto the
 stack.  Nonleaf functions save 'vLR' in the stack frame and copy the

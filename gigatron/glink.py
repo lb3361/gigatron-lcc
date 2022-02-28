@@ -421,6 +421,36 @@ def emit_prefx3(opcode, arg1, arg2):
     # emit(0xc7, opcode, arg1, arg2) # old style
 
 
+# ------------- map of page zero
+
+zpage_map = [ None for i in range(0,256) ]
+
+def zpage_reserve(rng, lbl):
+    for i in rng:
+        if i < 0 or i >= 256:
+            fatal(f"Cannot reserve address {hex(i)} in page zero")
+        elif zpage_map[i] and zpage_map[i] != lbl:
+            fatal(f"Zero page address {hex(i)} is both {zpage_map[i]} and {lbl}")
+        zpage_map[i] = lbl
+
+def create_zpage_map():
+    zpage_reserve(range(0,0x30), "ROMVAR")
+    if 'has_vIRQ' in rominfo: zpage_reserve(range(0x30,0x35), "VIRQ")
+    zpage_reserve(range(0x80,0x81), "ROMVAR")
+    zpage_reserve(range(0xc0,0xd0), "RUNTIME")
+    zpage_reserve(range(0xd0,0x100), "STACK")
+
+def create_zpage_segments():
+    segs = []
+    last = None
+    for i in range(256):
+        if last and zpage_map[i]:
+            segs.append(Segment(last, i-1, 7))
+            last = None
+        elif not last and not zpage_map[i]:
+            last = i
+    return segs
+
 # ------------- usable vocabulary for .s/.o/.a files
 
 # Each .s/.o/.a files is exec with a fresh global dictionary and a
@@ -441,17 +471,22 @@ for s in module_builtins_okay.split():
     elif hasattr(__builtins__,s):
         module_builtins[s] = getattr(__builtins__, s)
 
-def register_names(base):
-    if base < 0 or base + 0x40 > 0x100:
-        fatal(f"Illegal register base {str(hex)} (outside page zero)")
-    if base < 0x80 and base + 0x40 > 0x80:
-        fatal(f"Illegal register base {str(hex)} (straddles 0x80)")
-    d = { "vPC":  0x0016, "vAC":  0x0018, "vLR":  0x001a, "vSP":  0x001c,
-          "vACL": 0x0018, "vACH": 0x0019, "FAC":  0xFAC00FAC }
-    d["LAC"] = base + 4
-    for i in range(0,3):  d[f'B{i}'] = base + 1 + i
-    for i in range(0,4):  d[f'T{i}'] = base + 8 + i + i
-    for i in range(0,24): d[f'R{i}'] = base + 16 + i + i
+def create_register_names(base):
+    if base < 0 or base + 0x30 > 0x100:
+        fatal(f"Illegal register location {hex(base)}-{hex(base+0x2f)}.")
+    d = { # Traditional
+          "vPC":  0x0016, "vAC":  0x0018,
+          "vACL": 0x0018, "vACH": 0x0019,
+          "vLR":  0x001a, "vSP":  0x001c,
+          # ROMvX0 names
+          "vLAC": 0xc4, "vDST": 0xcc,
+          # GLCC names
+          "B0": 0xc1, "B1": 0xc2, "B2": 0xc3, "LAC": 0xc4,
+          "T0": 0xc8, "T1": 0xca, "T2": 0xcc, "T3": 0xce,
+          "FAC":  0xFACFACFAC }
+    # GLCC registers
+    zpage_reserve(range(base,base+0x30), "REGISTERS")
+    for i in range(0,24): d[f'R{i}'] = base + i + i
     for i in range(0,22): d[f'L{i}'] = d[f'R{i}']
     for i in range(0,21): d[f'F{i}'] = d[f'R{i}']
     d['SP'] = d['R23']
@@ -526,28 +561,8 @@ def genlabel():
     return f".LL{genlabel_counter}"
 
 @vasm
-def zpbyte(size=1, virq=False):
-    '''Allocate size bytes in page zero skipping system variables
-       register bank, and, if virq is True, context save registers'''
-    uservars = symdefs['userVars']
-    regbase = symdefs['_regbase']
-    global zpsize, the_module
-    if the_module:
-        fatal("zpbyte should be called outside a module")
-    if zpsize < uservars:
-        zpsize = uservars
-    if virq and zpsize < 0x34:
-        zpsize = 0x34
-    if zpsize < regbase + 0x40 and zpsize + size > regbase:
-        zpsize = regbase + 0x40
-    if zpsize < 0x81 and zpsize + size > 0x80:
-        zpsize = 0x81
-    res = zpsize
-    zpsize = zpsize + size
-    if zpsize > 0x100:
-        error("Out of zero page space")
-    return res
-
+def zpReserve(addr0,addr1,lbl):
+    zpage_reserve(range(addr0,addr1+1),lbl)
 @vasm
 def pc():
     return the_pc
@@ -2325,7 +2340,7 @@ def run_pass():
     the_pass += 1
     labelchange_counter = 0
     genlabel_counter = 0
-    segment_list = []
+    segment_list = create_zpage_segments()
     for (s,e,d) in map_segments():
         segment_list.append(Segment(s,e,d))
     debug(f"pass {the_pass}")
@@ -2616,7 +2631,7 @@ def glink(argv):
                             metavar='LBLCHG', type=int, action='store', default=200,
                             help='restart a pass whenever the label change counter reach this threshold')
         parser.add_argument('--register-base', dest='regbase', metavar='ADDR',
-                            type=lambda x: int(x,0), action='store', default=0x40,
+                            type=lambda x: int(x,0), action='store', default=0x50,
                             help='set base address of register block')
         parser.add_argument("--mapdir", type=str, action='append', metavar='MAPDIR',
                             help='add directories to search linker maps')
@@ -2624,23 +2639,24 @@ def glink(argv):
                             help='enable debugging output. repeat for more.')
 
         args = parser.parse_args(argv)
-        register_names(args.regbase)
-        symdefs['_regbase'] = args.regbase
 
-        # process rom and map
-        args.map = args.map or '32k'
+        # process args
         read_rominfo(args.rom)
         args.cpu = args.cpu or romcpu or 5
         args.files = args.files or []
-        args.e = args.e or "_start"
-        args.l = args.l or []
-        args.L = args.L or []
-        args.r = args.r or []
         read_interface()
+        create_zpage_map()
+        create_register_names(args.regbase)
+        symdefs['_regbase'] = args.regbase
+        args.map = args.map or '32k'
         sm = args.map.split(',')
         args.map = sm[0]
         args.mapdir = args.mapdir or []
         args.mapdir.append(lccdir)
+        args.e = args.e or "_start"
+        args.l = args.l or []
+        args.L = args.L or []
+        args.r = args.r or []
         read_map(args.map, sm[1:])
         args.L.append(os.path.join(lccdir,f"cpu{args.cpu}"))
         args.L.append(lccdir)

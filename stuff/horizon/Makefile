@@ -9,7 +9,7 @@ CFLAGS=-map=32k,./horizon.ovl
 LDFLAGS=--no-runtime-bss-init
 
 
-PGMS=horizon-v4.gt1 horizon-v5a.gt1 horizon-at67x.gt1
+PGMS=horizon-v4.gt1 horizon-v5a.gt1 horizon-vx0.gt1
 
 all: $(PGMS) 
 
@@ -22,5 +22,5 @@ horizon-v4.gt1: horizon.c horizon.ovl
 horizon-v5a.gt1: horizon.c horizon.ovl
 	${CC} ${CFLAGS} ${LDFLAGS} -rom=v5a horizon.c -o $@
 
-horizon-at67x.gt1: horizon.c horizon.ovl
-	${CC} ${CFLAGS} ${LDFLAGS} -rom=at67x horizon.c -o $@
+horizon-vx0.gt1: horizon.c horizon.ovl
+	${CC} ${CFLAGS} ${LDFLAGS} -rom=vx0 horizon.c -o $@

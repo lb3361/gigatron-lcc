@@ -1,7 +1,6 @@
 
 # This variant uses only the NCOPY opcode. Requires cpu6.
 def scope_ncopy():
-    vDST = 0xcc                                     # NCOPY destination register
     def code0():
         nohop()
         label('memcpy');                            # R8=d, R9=s, R10=l

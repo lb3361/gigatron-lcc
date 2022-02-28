@@ -260,7 +260,7 @@ def code7():
 # ======== ('CODE', 'h', code8)
 def code8():
 	label('h');
-	_PROLOGUE(10,6,0xc0); # save=R6-7
+	_PROLOGUE(12,6,0xc0); # save=R6-7
 	LDI(0);STW(R6);
 	_LDI('.76');STW(R8);
 	_MOVW(R8,[SP,2]);
@@ -403,7 +403,7 @@ def code8():
 	CALLI('printf');
 	LDI(0);
 	label('.75');
-	_EPILOGUE(10,6,0xc0,saveAC=True);
+	_EPILOGUE(12,6,0xc0,saveAC=True);
 # ======== ('CODE', 'big', code9)
 def code9():
 	label('big');
@@ -455,7 +455,7 @@ def code9():
 # ======== ('CODE', 'limit', code10)
 def code10():
 	label('limit');
-	_PROLOGUE(6,4,0x80); # save=R7
+	_PROLOGUE(8,4,0x80); # save=R7
 	_LDI(-32768);STW(R7);
 	label('.125');
 	_LDI(-32768);STW(R22);
@@ -540,7 +540,7 @@ def code10():
 	_LDI(32762);_CMPWS(R7);_BLE('.143');
 	LDI(0);
 	label('.124');
-	_EPILOGUE(6,4,0x80,saveAC=True);
+	_EPILOGUE(8,4,0x80,saveAC=True);
 # ======== ('DATA', '.142', code11, 0, 2)
 def code11():
 	align(2);
@@ -583,24 +583,24 @@ def code17():
 def code18():
 	label('.132');
 	bytes(48,10,0);
-# ======== ('DATA', '.123', code19, 0, 2)
+# ======== ('DATA', '.123', code19, 0, 4)
 def code19():
-	align(2);
+	align(4);
 	label('.123');
 	words(0,1024); # 67108864
-# ======== ('DATA', '.122', code20, 0, 2)
+# ======== ('DATA', '.122', code20, 0, 4)
 def code20():
-	align(2);
+	align(4);
 	label('.122');
 	words(65535,65535); # -1
-# ======== ('DATA', '.121', code21, 0, 2)
+# ======== ('DATA', '.121', code21, 0, 4)
 def code21():
-	align(2);
+	align(4);
 	label('.121');
 	words(65534,65535); # -2
-# ======== ('DATA', '.120', code22, 0, 2)
+# ======== ('DATA', '.120', code22, 0, 4)
 def code22():
-	align(2);
+	align(4);
 	label('.120');
 	words(0,512); # 33554432
 # ======== ('DATA', '.117', code23, 0, 1)
@@ -614,9 +614,9 @@ def code24():
 	label('.114');
 	bytes(120,32,61,32,48,120,37,120);
 	bytes(10,0);
-# ======== ('DATA', '.112', code25, 0, 2)
+# ======== ('DATA', '.112', code25, 0, 4)
 def code25():
-	align(2);
+	align(4);
 	label('.112');
 	words(0,1536); # 100663296
 # ======== ('DATA', '.107', code26, 0, 1)
@@ -668,19 +668,19 @@ def code36():
 def code37():
 	label('.28');
 	bytes(102,58,10,0);
-# ======== ('DATA', '.14', code38, 0, 2)
+# ======== ('DATA', '.14', code38, 0, 4)
 def code38():
-	align(2);
+	align(4);
 	label('.14');
 	words(0,0); # 0
-# ======== ('DATA', '.13', code39, 0, 2)
+# ======== ('DATA', '.13', code39, 0, 4)
 def code39():
-	align(2);
+	align(4);
 	label('.13');
 	words(0,1792); # 117440512
-# ======== ('DATA', '.12', code40, 0, 2)
+# ======== ('DATA', '.12', code40, 0, 4)
 def code40():
-	align(2);
+	align(4);
 	label('.12');
 	words(0,256); # 16777216
 # ======== ('DATA', '.7', code41, 0, 1)
@@ -721,13 +721,13 @@ code=[
 	('DATA', '.136', code16, 0, 1),
 	('DATA', '.134', code17, 0, 1),
 	('DATA', '.132', code18, 0, 1),
-	('DATA', '.123', code19, 0, 2),
-	('DATA', '.122', code20, 0, 2),
-	('DATA', '.121', code21, 0, 2),
-	('DATA', '.120', code22, 0, 2),
+	('DATA', '.123', code19, 0, 4),
+	('DATA', '.122', code20, 0, 4),
+	('DATA', '.121', code21, 0, 4),
+	('DATA', '.120', code22, 0, 4),
 	('DATA', '.117', code23, 0, 1),
 	('DATA', '.114', code24, 0, 1),
-	('DATA', '.112', code25, 0, 2),
+	('DATA', '.112', code25, 0, 4),
 	('DATA', '.107', code26, 0, 1),
 	('DATA', '.84', code27, 0, 1),
 	('DATA', '.76', code28, 0, 1),
@@ -740,9 +740,9 @@ code=[
 	('DATA', '.49', code35, 0, 1),
 	('DATA', '.47', code36, 0, 1),
 	('DATA', '.28', code37, 0, 1),
-	('DATA', '.14', code38, 0, 2),
-	('DATA', '.13', code39, 0, 2),
-	('DATA', '.12', code40, 0, 2),
+	('DATA', '.14', code38, 0, 4),
+	('DATA', '.13', code39, 0, 4),
+	('DATA', '.12', code40, 0, 4),
 	('DATA', '.7', code41, 0, 1),
 	('DATA', '.6', code42, 0, 1) ]
 module(code=code, name='tst/switch.c', cpu=5);

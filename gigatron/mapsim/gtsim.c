@@ -39,6 +39,7 @@ int okopen = 0;
 int vmode = 1975;
 const char *prof = 0;
 long long *pc2cycs = 0;
+const int alignlong = 4;
 
 void debug(const char *fmt, ...)
 {
@@ -445,9 +446,11 @@ void sys_printf(void)
                   else if (strchr("sS", conv))
                     { ap = (ap+1)&~1; n += printf(spec, &RAM[deek(ap)]); ap += 2; }
                   else if (lng && strchr("ouxX", conv))
-                    { ap = (ap+1)&~1; n += printf(spec, (long)(quad)leek(ap)); ap += 4; }
+                    { ap = (ap+alignlong-1)&~(alignlong-1);
+                      n += printf(spec, (long)(quad)leek(ap)); ap += 4; }
                   else if (lng)
-                    { ap = (ap+1)&~1; n += printf(spec, (long)(squad)leek(ap)); ap += 4; }
+                    { ap =  (ap+alignlong-1)&~(alignlong-1);
+                      n += printf(spec, (long)(squad)leek(ap)); ap += 4; }
                   else if (strchr("ouxX", conv))
                     { ap = (ap+1)&~1; n += printf(spec, (word)deek(ap)); ap += 2; }
                   else

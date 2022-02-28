@@ -33,7 +33,7 @@ Section s84     returned 0.
 char alignment: 1
 short alignment: 2
 int alignment: 2
-long alignment: 2
+long alignment: 4
 unsigned alignment: 2
 float alignment: 1
 double alignment: 1

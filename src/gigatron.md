@@ -1739,6 +1739,8 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   /* can we make a frameless leaf function */
   if (ncalls == 0 && framesize == 2 && (tmask[IREG] & ~usedmask[IREG]))
     framesize = 0;
+  if (IR->longmetric.align == 4)
+    framesize = (framesize + 3) & ~0x3;
   /* prologue */
   xprint_init();
   segment(CODE);
@@ -1887,8 +1889,8 @@ Interface gigatronIR = {
         1, 1, 0,  /* char */
         2, 2, 0,  /* short */
         2, 2, 0,  /* int */
-        4, 2, 1,  /* long */
-        4, 2, 1,  /* long long */
+        4, 4, 1,  /* long */
+        4, 4, 1,  /* long long */
         5, 1, 1,  /* float */
         5, 1, 1,  /* double */
         5, 1, 1,  /* long double */

@@ -54,7 +54,7 @@ def code0():
 # ======== ('CODE', 'f', code1)
 def code1():
 	label('f');
-	_PROLOGUE(10,6,0xc0); # save=R6-7
+	_PROLOGUE(12,6,0xc0); # save=R6-7
 	LDI(0);STW(R6);
 	label('.19');
 	LDI(0);STW(R7);
@@ -97,11 +97,11 @@ def code1():
 	CALLI('printf');
 	LDI(0);
 	label('.18');
-	_EPILOGUE(10,6,0xc0,saveAC=True);
+	_EPILOGUE(12,6,0xc0,saveAC=True);
 # ======== ('CODE', 'g', code2)
 def code2():
 	label('g');
-	_PROLOGUE(14,6,0xf0); # save=R4-7
+	_PROLOGUE(16,6,0xf0); # save=R4-7
 	LDW(R8);STW(R7);
 	LDW(R9);STW(R6);
 	LDI(0);STW(R4);
@@ -144,7 +144,7 @@ def code2():
 	CALLI('printf');
 	LDI(0);
 	label('.37');
-	_EPILOGUE(14,6,0xf0,saveAC=True);
+	_EPILOGUE(16,6,0xf0,saveAC=True);
 # ======== ('COMMON', 'y', code3, 6, 2)
 def code3():
 	align(2);

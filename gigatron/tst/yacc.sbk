@@ -13,7 +13,7 @@ def code1():
 # ======== ('CODE', 'yylex', code2)
 def code2():
 	label('yylex');
-	_PROLOGUE(10,8,0x80); # save=R7
+	_PROLOGUE(12,8,0x80); # save=R7
 	_BRA('.3');
 	label('.2');
 	label('.5');
@@ -48,7 +48,7 @@ def code2():
 	_BGE('.2');
 	LDI(0);
 	label('.1');
-	_EPILOGUE(10,8,0x80,saveAC=True);
+	_EPILOGUE(12,8,0x80,saveAC=True);
 # ======== ('DATA', '.17', code3, 0, 2)
 def code3():
 	align(2);
@@ -880,7 +880,7 @@ def code15():
 # ======== ('CODE', 'yyinput', code16)
 def code16():
 	label('yyinput');
-	_PROLOGUE(10,4,0xe0); # save=R5-7
+	_PROLOGUE(12,4,0xe0); # save=R5-7
 	_LDI('yysbuf');STW(R22);
 	_LDI('yysptr');DEEK();_CMPWU(R22);_BLE('.140');
 	_LDI('yysptr');STW(R22);
@@ -922,7 +922,7 @@ def code16():
 	label('.137');
 	LDW(R7);
 	label('.132');
-	_EPILOGUE(10,4,0xe0,saveAC=True);
+	_EPILOGUE(12,4,0xe0,saveAC=True);
 # ======== ('CODE', 'yyoutput', code17)
 def code17():
 	label('yyoutput');
@@ -965,7 +965,7 @@ def code18():
 # ======== ('CODE', 'main', code19)
 def code19():
 	label('main');
-	_PROLOGUE(2,2,0x0); # save=None
+	_PROLOGUE(4,2,0x0); # save=None
 	_LDI('yyin');STW(R22);
 	_LDI('_iob');DOKE(R22);
 	_LDI('yyout');STW(R22);
@@ -973,7 +973,7 @@ def code19():
 	CALLI('yyparse');
 	LDI(0);
 	label('.151');
-	_EPILOGUE(2,2,0x0,saveAC=True);
+	_EPILOGUE(4,2,0x0,saveAC=True);
 # ======== ('CODE', 'yyerror', code20)
 def code20():
 	label('yyerror');

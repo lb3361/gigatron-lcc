@@ -3,17 +3,17 @@
 # ======== ('CODE', 'main', code0)
 def code0():
 	label('main');
-	_PROLOGUE(26,10,0xf8); # save=R3-7
+	_PROLOGUE(28,10,0xf8); # save=R3-7
 	LDW(R8);STW(R7);
 	LDW(R9);STW(R6);
 	LDW(R7);_CMPIS(1);_BGT('.2');
-	_MOVF('.4',[SP,-5+26]);
+	_MOVF('.4',[SP,-5+28]);
 	_BRA('.3');
 	label('.2');
 	LDI(2);ADDW(R6);DEEK();STW(R8);
 	_MOVW(R8,[SP,2]);
 	CALLI('atof');
-	_LDI('.5');_FDIV();_MOVF(FAC,[SP,-5+26]);
+	_LDI('.5');_FDIV();_MOVF(FAC,[SP,-5+28]);
 	label('.3');
 	LDI(0);STW(R5);
 	label('.6');
@@ -43,7 +43,7 @@ def code0():
 	LDW(R5);LSLW();LSLW();ADDW(R5);ADDW(R22);_MOVF([vAC],F20);
 	_MOVF(F20,FAC);_LDI('.4');_FCMP();_BEQ('.19');
 	LDW(R4);_LCVI();_FCVI();_MOVF(FAC,F17);
-	_MOVF(F20,FAC);LDI(F17);_FDIV();_SP(-5+26);_FCMP();_BLT('.19');
+	_MOVF(F20,FAC);LDI(F17);_FDIV();_SP(-5+28);_FCMP();_BLT('.19');
 	LDW(R5);_CMPIS(32);_BGT('.21');
 	_LDI('.23');STW(R8);
 	_MOVW(R8,[SP,2]);
@@ -71,7 +71,7 @@ def code0():
 	LDW(R5);_CMPIS(127);_BLE('.15');
 	LDI(0);
 	label('.1');
-	_EPILOGUE(26,10,0xf8,saveAC=True);
+	_EPILOGUE(28,10,0xf8,saveAC=True);
 # ======== ('COMMON', 'f', code1, 640, 1)
 def code1():
 	label('f');

@@ -43,7 +43,7 @@ def code1():
 # ======== ('CODE', 'putd', code2)
 def code2():
 	label('putd');
-	_PROLOGUE(6,4,0x80); # save=R7
+	_PROLOGUE(8,4,0x80); # save=R7
 	LDW(R8);STW(R7);
 	LDW(R7);_BGE('.7');
 	LDI(45);STW(R8);
@@ -60,7 +60,7 @@ def code2():
 	CALLI('putchar');
 	LDI(0);
 	label('.6');
-	_EPILOGUE(6,4,0x80,saveAC=True);
+	_EPILOGUE(8,4,0x80,saveAC=True);
 # ======== ('CODE', 'sort', code3)
 def code3():
 	label('sort');
@@ -155,7 +155,7 @@ def code5():
 # ======== ('CODE', 'exchange', code6)
 def code6():
 	label('exchange');
-	_PROLOGUE(14,8,0xc0); # save=R6-7
+	_PROLOGUE(16,8,0xc0); # save=R6-7
 	LDW(R8);STW(R7);
 	LDW(R9);STW(R6);
 	_LDI('.28');STW(R8);
@@ -167,13 +167,13 @@ def code6():
 	LDW(R6);SUBW(R22);_DIVS(R21);STW(R10);
 	_MOVW(R10,[SP,6]);
 	CALLI('printf');
-	_SP(-2+14);STW(R22);
+	_SP(-2+16);STW(R22);
 	LDW(R7);DEEK();DOKE(R22);
 	LDW(R6);DEEK();DOKE(R7);
-	_SP(-2+14);DEEK();DOKE(R6);
+	_SP(-2+16);DEEK();DOKE(R6);
 	LDI(0);
 	label('.27');
-	_EPILOGUE(14,8,0xc0,saveAC=True);
+	_EPILOGUE(16,8,0xc0,saveAC=True);
 # ======== ('COMMON', 'xx', code7, 2, 2)
 def code7():
 	align(2);

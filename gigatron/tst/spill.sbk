@@ -10,15 +10,15 @@ def code0():
 # ======== ('CODE', 'f', code1)
 def code1():
 	label('f');
-	_PROLOGUE(6,2,0x80); # save=R7
+	_PROLOGUE(8,2,0x80); # save=R7
 	LDW(R8);STW(R7);
 	CALLI('f');STW(R22);
-	STW(T1);_MOVW(R22,[SP,-2+6]);LDW(T1) #genspill
+	STW(T1);_MOVW(R22,[SP,-2+8]);LDW(T1) #genspill
 	CALLI('f');STW(R21);
-	_SP(-2+6);DEEK();ADDW(R21);STW(R7);
+	_SP(-2+8);DEEK();ADDW(R21);STW(R7);
 	LDI(0);
 	label('.2');
-	_EPILOGUE(6,2,0x80,saveAC=True);
+	_EPILOGUE(8,2,0x80,saveAC=True);
 # ======== ('CODE', 'f2', code2)
 def code2():
 	label('f2');
@@ -40,7 +40,7 @@ def code2():
 # ======== ('CODE', 'f3', code3)
 def code3():
 	label('f3');
-	_PROLOGUE(30,2,0xff); # save=R0-7
+	_PROLOGUE(32,2,0xff); # save=R0-7
 	LDW(R8);STW(R7);
 	LDW(R9);STW(R6);
 	LDI(0);STW(R5);
@@ -49,30 +49,30 @@ def code3():
 	LDI(0);STW(R2);
 	LDI(0);STW(R1);
 	LDI(0);STW(R0);
-	_SP(-2+30);STW(R22);
+	_SP(-2+32);STW(R22);
 	LDI(0);DOKE(R22);
-	_SP(-4+30);STW(R22);
+	_SP(-4+32);STW(R22);
 	LDI(0);DOKE(R22);
-	_SP(-6+30);STW(R22);
+	_SP(-6+32);STW(R22);
 	LDI(0);DOKE(R22);
-	_SP(-8+30);STW(R22);
+	_SP(-8+32);STW(R22);
 	LDI(0);DOKE(R22);
 	LDW(R6);STW(R22);
-	STW(T1);_MOVW(R22,[SP,-12+30]);LDW(T1) #genspill
+	STW(T1);_MOVW(R22,[SP,-12+32]);LDW(T1) #genspill
 	LDI(2);ADDW(R22);STW(R6);
 	LDW(R7);_BEQ('.9');
 	CALLI('f');STW(R21);
-	_SP(-10+30);STW(R22);
+	_SP(-10+32);STW(R22);
 	LDW(R21);DOKE(R22);
 	_BRA('.10');
 	label('.9');
-	_SP(-10+30);STW(R22);
+	_SP(-10+32);STW(R22);
 	LDI(0);DOKE(R22);
 	label('.10');
-	_SP(-10+30);DEEK();STW(T1);_MOVW([SP,-12+30],T3);LDW(T1);DOKE(T3);
+	_SP(-10+32);DEEK();STW(T1);_MOVW([SP,-12+32],T3);LDW(T1);DOKE(T3);
 	LDI(0);
 	label('.7');
-	_EPILOGUE(30,2,0xff,saveAC=True);
+	_EPILOGUE(32,2,0xff,saveAC=True);
 # ======== ('CODE', 'f4', code4)
 def code4():
 	label('f4');

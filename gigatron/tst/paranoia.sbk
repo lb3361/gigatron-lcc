@@ -64,7 +64,7 @@ def code14():
 # ======== ('CODE', 'sigfpe', code15)
 def code15():
 	label('sigfpe');
-	_PROLOGUE(6,6,0x0); # save=None
+	_PROLOGUE(8,6,0x0); # save=None
 	_LDI('fpecount');STW(R22);
 	DEEK();ADDI(1);DOKE(R22);
 	_LDI('.2');STW(R8);
@@ -83,7 +83,7 @@ def code15():
 	label('.4');
 	CALLI('abort');
 	label('.1');
-	_EPILOGUE(6,6,0x0);
+	_EPILOGUE(8,6,0x0);
 # ======== ('DATA', '.757', code16, 0, 2)
 def code16():
 	align(2);
@@ -95,7 +95,7 @@ def code16():
 # ======== ('CODE', 'main', code17)
 def code17():
 	label('main');
-	_PROLOGUE(142,20,0xff); # save=R0-7
+	_PROLOGUE(144,20,0xff); # save=R0-7
 	_MOVF('.7','Zero');
 	_MOVF('.8','One');
 	_MOVF('One',F20);
@@ -177,7 +177,7 @@ def code17():
 	LDI(0);STW(R8);
 	_MOVW(R8,[SP,2]);
 	_MOVF('Three',F20);
-	STW(T1);_MOVF(F20,[SP,-5+142]);LDW(T1) #genspill
+	STW(T1);_MOVF(F20,[SP,-5+144]);LDW(T1) #genspill
 	_MOVF('Two',F17);
 	_MOVF('One',F14);
 	_MOVF(F17,FAC);LDI(F14);_FADD();LDI(F20);_FCMP();_BNE('.23');
@@ -185,7 +185,7 @@ def code17():
 	_MOVF(F20,FAC);LDI(F14);_FADD();LDI(F11);_FCMP();_BNE('.23');
 	_MOVF('Zero',F20);
 	_MOVF(F17,FAC);_FNEG();LDI(F17);_FMUL();LDI(F11);_FADD();LDI(F20);_FCMP();_BNE('.23');
-	_MOVF(F11,FAC);_SP(-5+142);_FSUB();LDI(F14);_FSUB();LDI(F20);_FCMP();_BNE('.23');
+	_MOVF(F11,FAC);_SP(-5+144);_FSUB();LDI(F14);_FSUB();LDI(F20);_FCMP();_BNE('.23');
 	LDI(1);STW(R6);
 	_BRA('.24');
 	label('.23');
@@ -197,7 +197,7 @@ def code17():
 	_MOVW(R10,[SP,6]);
 	CALLI('TstCond');
 	_MOVF('MinusOne',F20);
-	STW(T1);_MOVF(F20,[SP,-10+142]);LDW(T1) #genspill
+	STW(T1);_MOVF(F20,[SP,-10+144]);LDW(T1) #genspill
 	_MOVF('One',F17);
 	_MOVF('.7',FAC);LDI(F17);_FSUB();LDI(F20);_FCMP();_BNE('.27');
 	_MOVF('Zero',F14);
@@ -207,7 +207,7 @@ def code17():
 	_MOVF(F8,[SP,2]);
 	CALLI('fabs');_MOVF(FAC,F17);
 	_MOVF('Zero',F20);
-	_MOVF([SP,-10+142],FAC);LDI(F17);_FADD();LDI(F20);_FCMP();_BNE('.27');
+	_MOVF([SP,-10+144],FAC);LDI(F17);_FADD();LDI(F20);_FCMP();_BNE('.27');
 	_MOVF('MinusOne',F17);
 	_MOVF(F17,FAC);LDI(F17);_FMUL();LDI(F17);_FADD();LDI(F20);_FCMP();_BNE('.27');
 	LDI(1);STW(R5);
@@ -267,17 +267,17 @@ def code17():
 	_MOVF('Four',F17);
 	_MOVF(F17,FAC);_LDI('One');_FADD();LDI(F20);_FCMP();_BNE('.39');
 	_MOVF('TwoForty',F14);
-	STW(T1);_MOVF(F14,[SP,-15+142]);LDW(T1) #genspill
+	STW(T1);_MOVF(F14,[SP,-15+144]);LDW(T1) #genspill
 	_MOVF('Three',F11);
 	_MOVF(F17,FAC);LDI(F20);_FMUL();LDI(F11);_FMUL();LDI(F17);_FMUL();LDI(F14);_FCMP();_BNE('.39');
 	_MOVF('Zero',F14);
-	STW(T1);_MOVF(F14,[SP,-20+142]);LDW(T1) #genspill
+	STW(T1);_MOVF(F14,[SP,-20+144]);LDW(T1) #genspill
 	_MOVF(F17,FAC);LDI(F17);_FMUL();LDI(F20);_FMUL();_MOVF(FAC,F14);
-	_MOVF([SP,-15+142],FAC);LDI(F11);_FDIV();LDI(F14);_FSUB();_SP(-20+142);_FCMP();_BNE('.39');
+	_MOVF([SP,-15+144],FAC);LDI(F11);_FDIV();LDI(F14);_FSUB();_SP(-20+144);_FCMP();_BNE('.39');
 	_MOVF(F20,FAC);LDI(F11);_FMUL();LDI(F17);_FMUL();_MOVF(FAC,F14);
-	_MOVF([SP,-15+142],FAC);LDI(F17);_FDIV();LDI(F14);_FSUB();_SP(-20+142);_FCMP();_BNE('.39');
+	_MOVF([SP,-15+144],FAC);LDI(F17);_FDIV();LDI(F14);_FSUB();_SP(-20+144);_FCMP();_BNE('.39');
 	_MOVF(F17,FAC);LDI(F11);_FMUL();LDI(F17);_FMUL();_MOVF(FAC,F17);
-	_MOVF([SP,-15+142],FAC);LDI(F20);_FDIV();LDI(F17);_FSUB();_SP(-20+142);_FCMP();_BNE('.39');
+	_MOVF([SP,-15+144],FAC);LDI(F20);_FDIV();LDI(F17);_FSUB();_SP(-20+144);_FCMP();_BNE('.39');
 	LDI(1);STW(R2);
 	_BRA('.40');
 	label('.39');
@@ -475,14 +475,14 @@ def code17():
 	_MOVW(R8,[SP,2]);
 	_MOVF('Half',F20);
 	_MOVF('F9',FAC);LDI(F20);_FSUB();LDI(F20);_FCMP();_BGE('.96');
-	_SP(-22+142);STW(R22);
+	_SP(-22+144);STW(R22);
 	LDI(1);DOKE(R22);
 	_BRA('.97');
 	label('.96');
-	_SP(-22+142);STW(R22);
+	_SP(-22+144);STW(R22);
 	LDI(0);DOKE(R22);
 	label('.97');
-	_SP(-22+142);DEEK();STW(R9);
+	_SP(-22+144);DEEK();STW(R9);
 	_MOVW(R9,[SP,4]);
 	_LDI('.95');STW(R10);
 	_MOVW(R10,[SP,6]);
@@ -498,14 +498,14 @@ def code17():
 	_MOVF('X',FAC);_LDI('One');_FCMP();_BNE('.102');
 	_MOVF('Z',FAC);_LDI('Zero');_FCMP();_BNE('.100');
 	label('.102');
-	_SP(-24+142);STW(R22);
+	_SP(-24+144);STW(R22);
 	LDI(1);DOKE(R22);
 	_BRA('.101');
 	label('.100');
-	_SP(-24+142);STW(R22);
+	_SP(-24+144);STW(R22);
 	LDI(0);DOKE(R22);
 	label('.101');
-	_SP(-24+142);DEEK();STW(R9);
+	_SP(-24+144);DEEK();STW(R9);
 	_MOVW(R9,[SP,4]);
 	_LDI('.99');STW(R10);
 	_MOVW(R10,[SP,6]);
@@ -524,11 +524,11 @@ def code17():
 	_MOVF('U1',F8);
 	_MOVF(F8,[SP,2]);
 	CALLI('log');_MOVF(FAC,F20);
-	STW(T1);_MOVF(F20,[SP,-29+142]);LDW(T1) #genspill
+	STW(T1);_MOVF(F20,[SP,-29+144]);LDW(T1) #genspill
 	_MOVF('Radix',F8);
 	_MOVF(F8,[SP,2]);
 	CALLI('log');_MOVF(FAC,F17);
-	_MOVF('TwoForty',FAC);_FNEG();_SP(-29+142);_FMUL();LDI(F17);_FDIV();_MOVF(FAC,'X');
+	_MOVF('TwoForty',FAC);_FNEG();_SP(-29+144);_FMUL();LDI(F17);_FDIV();_MOVF(FAC,'X');
 	_MOVF('Half',FAC);_LDI('X');_FADD();_MOVF(FAC,F8);
 	_MOVF(F8,[SP,2]);
 	CALLI('floor');_MOVF(FAC,F20);
@@ -553,11 +553,11 @@ def code17():
 	label('.107');
 	label('.103');
 	_MOVF('Precision',F20);
-	STW(T1);_MOVF(F20,[SP,-29+142]);LDW(T1) #genspill
+	STW(T1);_MOVF(F20,[SP,-29+144]);LDW(T1) #genspill
 	_MOVF(F20,F8);
 	_MOVF(F8,[SP,2]);
 	CALLI('floor');_MOVF(FAC,F17);
-	_MOVF([SP,-29+142],FAC);LDI(F17);_FCMP();_BNE('.111');
+	_MOVF([SP,-29+144],FAC);LDI(F17);_FCMP();_BNE('.111');
 	_MOVF('Radix',FAC);_LDI('One');_FCMP();_BNE('.109');
 	label('.111');
 	_LDI('.112');STW(R8);
@@ -579,14 +579,14 @@ def code17():
 	_MOVW(R8,[SP,2]);
 	_MOVF('Nine',F20);
 	_MOVF(F20,FAC);_LDI('U2');_FMUL();LDI(F20);_FMUL();_LDI('TwoForty');_FMUL();_LDI('One');_FCMP();_BGE('.120');
-	_SP(-32+142);STW(R22);
+	_SP(-32+144);STW(R22);
 	LDI(1);DOKE(R22);
 	_BRA('.121');
 	label('.120');
-	_SP(-32+142);STW(R22);
+	_SP(-32+144);STW(R22);
 	LDI(0);DOKE(R22);
 	label('.121');
-	_SP(-32+142);DEEK();STW(R9);
+	_SP(-32+144);DEEK();STW(R9);
 	_MOVW(R9,[SP,4]);
 	_LDI('.119');STW(R10);
 	_MOVW(R10,[SP,6]);
@@ -792,14 +792,14 @@ def code17():
 	LDI(0);STW(R8);
 	_MOVW(R8,[SP,2]);
 	_MOVF(F16,FAC);LDW(R22);_FCMP();_BNE('.180');
-	_SP(-34+142);STW(R22);
+	_SP(-34+144);STW(R22);
 	LDI(1);DOKE(R22);
 	_BRA('.181');
 	label('.180');
-	_SP(-34+142);STW(R22);
+	_SP(-34+144);STW(R22);
 	LDI(0);DOKE(R22);
 	label('.181');
-	_SP(-34+142);DEEK();STW(R9);
+	_SP(-34+144);DEEK();STW(R9);
 	_MOVW(R9,[SP,4]);
 	_LDI('.179');STW(R10);
 	_MOVW(R10,[SP,6]);
@@ -877,14 +877,14 @@ def code17():
 	_MOVF('Zero',F20);
 	_MOVF(F20,FAC);_LDI('Y');_FCMP();_BLT('.191');
 	_MOVF(F20,FAC);_LDI('Z');_FCMP();_BLT('.191');
-	_SP(-34+142);STW(R22);
+	_SP(-34+144);STW(R22);
 	LDI(1);DOKE(R22);
 	_BRA('.192');
 	label('.191');
-	_SP(-34+142);STW(R22);
+	_SP(-34+144);STW(R22);
 	LDI(0);DOKE(R22);
 	label('.192');
-	_SP(-34+142);DEEK();STW(R9);
+	_SP(-34+144);DEEK();STW(R9);
 	_MOVW(R9,[SP,4]);
 	_LDI('.190');STW(R10);
 	_MOVW(R10,[SP,6]);
@@ -912,14 +912,14 @@ def code17():
 	_MOVF(F20,FAC);_LDI('X');_FCMP();_BNE('.195');
 	_MOVF(F20,FAC);_LDI('Y');_FCMP();_BNE('.195');
 	_MOVF(F20,FAC);_LDI('Z');_FCMP();_BNE('.195');
-	_SP(-36+142);STW(R22);
+	_SP(-36+144);STW(R22);
 	LDI(1);DOKE(R22);
 	_BRA('.196');
 	label('.195');
-	_SP(-36+142);STW(R22);
+	_SP(-36+144);STW(R22);
 	LDI(0);DOKE(R22);
 	label('.196');
-	_SP(-36+142);DEEK();STW(R9);
+	_SP(-36+144);DEEK();STW(R9);
 	_MOVW(R9,[SP,4]);
 	_LDI('.194');STW(R10);
 	_MOVW(R10,[SP,6]);
@@ -962,14 +962,14 @@ def code17():
 	LDI(1);STW(R8);
 	_MOVW(R8,[SP,2]);
 	_MOVF('Zero',FAC);LDW(R22);_FCMP();_BLE('.202');
-	_SP(-38+142);STW(R22);
+	_SP(-38+144);STW(R22);
 	LDI(1);DOKE(R22);
 	_BRA('.203');
 	label('.202');
-	_SP(-38+142);STW(R22);
+	_SP(-38+144);STW(R22);
 	LDI(0);DOKE(R22);
 	label('.203');
-	_SP(-38+142);DEEK();STW(R9);
+	_SP(-38+144);DEEK();STW(R9);
 	_MOVW(R9,[SP,4]);
 	_LDI('.201');STW(R10);
 	_MOVW(R10,[SP,6]);
@@ -992,14 +992,14 @@ def code17():
 	_MOVF('Zero',F20);
 	_MOVF(F20,FAC);_LDI('X');_FCMP();_BNE('.206');
 	_MOVF(F20,FAC);_LDI('Y');_FCMP();_BNE('.206');
-	_SP(-40+142);STW(R22);
+	_SP(-40+144);STW(R22);
 	LDI(1);DOKE(R22);
 	_BRA('.207');
 	label('.206');
-	_SP(-40+142);STW(R22);
+	_SP(-40+144);STW(R22);
 	LDI(0);DOKE(R22);
 	label('.207');
-	_SP(-40+142);DEEK();STW(R9);
+	_SP(-40+144);DEEK();STW(R9);
 	_MOVW(R9,[SP,4]);
 	_LDI('.205');STW(R10);
 	_MOVW(R10,[SP,6]);
@@ -1086,15 +1086,15 @@ def code17():
 	_MOVF('X',FAC);_LDI('One');_FCMP();_BEQ('.230');
 	_MOVF('A1',FAC);_LDI('Three');_FCMP();_BLE('.228');
 	label('.230');
-	_SP(-42+142);STW(R22);
+	_SP(-42+144);STW(R22);
 	LDI(1);DOKE(R22);
 	_BRA('.229');
 	label('.228');
-	_SP(-42+142);STW(R22);
+	_SP(-42+144);STW(R22);
 	LDI(0);DOKE(R22);
 	label('.229');
 	_LDI('Done');STW(R22);
-	_SP(-42+142);DEEK();DOKE(R22);
+	_SP(-42+144);DEEK();DOKE(R22);
 	_LDI('Done');DEEK();_BNE('.231');
 	_MOVF('Nine',FAC);_LDI('One');_FADD();_MOVF(FAC,'A1');
 	label('.231');
@@ -1116,28 +1116,28 @@ def code17():
 	LDI(0);STW(R8);
 	_MOVW(R8,[SP,2]);
 	_MOVF(F19,FAC);LDW(R22);_FCMP();_BNE('.240');
-	_SP(-42+142);STW(R22);
+	_SP(-42+144);STW(R22);
 	LDI(1);DOKE(R22);
 	_BRA('.241');
 	label('.240');
-	_SP(-42+142);STW(R22);
+	_SP(-42+144);STW(R22);
 	LDI(0);DOKE(R22);
 	label('.241');
-	_SP(-42+142);DEEK();STW(R9);
+	_SP(-42+144);DEEK();STW(R9);
 	_MOVW(R9,[SP,4]);
 	_LDI('.239');STW(R10);
 	_MOVW(R10,[SP,6]);
 	CALLI('TstCond');
 	_MOVF('X',FAC);_LDI('Radix');_FCMP();_BNE('.243');
-	_SP(-44+142);STW(R22);
+	_SP(-44+144);STW(R22);
 	LDI(1);DOKE(R22);
 	_BRA('.244');
 	label('.243');
-	_SP(-44+142);STW(R22);
+	_SP(-44+144);STW(R22);
 	LDI(0);DOKE(R22);
 	label('.244');
 	_LDI('Done');STW(R22);
-	_SP(-44+142);DEEK();DOKE(R22);
+	_SP(-44+144);DEEK();DOKE(R22);
 	_LDI('X');STW(R22);
 	_MOVF('Radix','X');
 	_MOVF('One',FAC);LDW(R22);_FDIV();_MOVF(FAC,'Y');
@@ -1148,7 +1148,7 @@ def code17():
 	_MOVF(F20,FAC);LDI(F17);_FADD();_MOVF(FAC,'Y2');
 	_MOVF(F20,FAC);LDI(F17);_FSUB();_MOVF(FAC,'Y1');
 	_MOVF('OneAndHalf',F20);
-	STW(T1);_MOVF(F20,[SP,-45+142]);LDW(T1) #genspill
+	STW(T1);_MOVF(F20,[SP,-45+144]);LDW(T1) #genspill
 	_MOVF(F20,FAC);LDI(F17);_FSUB();_MOVF(FAC,'X');
 	_MOVF(F20,FAC);LDI(F17);_FADD();_MOVF(FAC,'Y');
 	_MOVF('X',F14);
@@ -1161,8 +1161,8 @@ def code17():
 	_MOVF('T',FAC);LDI(F14);_FSUB();_MOVF(FAC,'T');
 	_MOVF(F14,FAC);LDI(F11);_FMUL();_MOVF(FAC,'X');
 	_MOVF(F8,FAC);LDI(F17);_FADD();LDI(F20);_FMUL();_MOVF(FAC,'Y');
-	_MOVF('X',FAC);_SP(-45+142);_FSUB();_MOVF(FAC,'X');
-	_MOVF('Y',FAC);_SP(-45+142);_FSUB();_MOVF(FAC,'Y');
+	_MOVF('X',FAC);_SP(-45+144);_FSUB();_MOVF(FAC,'X');
+	_MOVF('Y',FAC);_SP(-45+144);_FSUB();_MOVF(FAC,'Y');
 	_MOVF('Zero',F20);
 	_MOVF(F20,FAC);_LDI('X');_FCMP();_BNE('.245');
 	_MOVF(F20,FAC);_LDI('Y');_FCMP();_BNE('.245');
@@ -1170,7 +1170,7 @@ def code17():
 	_MOVF(F20,FAC);_LDI('T');_FCMP();_BLT('.245');
 	_MOVF('OneAndHalf',F20);
 	_MOVF('U2',F17);
-	STW(T1);_MOVF(F17,[SP,-55+142]);LDW(T1) #genspill
+	STW(T1);_MOVF(F17,[SP,-55+144]);LDW(T1) #genspill
 	_MOVF(F20,FAC);LDI(F17);_FADD();_MOVF(FAC,F14);
 	_MOVF('Y2',F11);
 	_MOVF(F14,FAC);LDI(F11);_FMUL();_MOVF(FAC,'X');
@@ -1181,7 +1181,7 @@ def code17():
 	_MOVF(F20,FAC);LDI(F14);_FMUL();_MOVF(FAC,'T');
 	_MOVF('Z',F20);
 	_MOVF(F20,FAC);LDI(F17);_FADD();_MOVF(FAC,F8);
-	STW(T1);_MOVF(F8,[SP,-50+142]);LDW(T1) #genspill
+	STW(T1);_MOVF(F8,[SP,-50+144]);LDW(T1) #genspill
 	_MOVF('X',FAC);LDI(F8);_FSUB();_MOVF(FAC,'X');
 	_LDI('StickyBit');STW(R10);
 	_MOVF('Y',F17);
@@ -1189,9 +1189,9 @@ def code17():
 	_LDI('S');STW(R9);
 	_MOVF(F20,FAC);LDI(F11);_FMUL();_MOVF(FAC,'S');
 	_MOVF('T',FAC);LDI(F17);_FSUB();_MOVF(FAC,'T');
-	_MOVF([SP,-55+142],FAC);LDI(F17);_FSUB();LDW(R10);_FADD();_MOVF(FAC,'Y');
-	_MOVF([SP,-50+142],FAC);_SP(-55+142);_FADD();_FNEG();LDW(R9);_FADD();_MOVF(FAC,'Z');
-	_MOVF(F11,FAC);_SP(-55+142);_FADD();LDI(F14);_FMUL();_MOVF(FAC,'StickyBit');
+	_MOVF([SP,-55+144],FAC);LDI(F17);_FSUB();LDW(R10);_FADD();_MOVF(FAC,'Y');
+	_MOVF([SP,-50+144],FAC);_SP(-55+144);_FADD();_FNEG();LDW(R9);_FADD();_MOVF(FAC,'Z');
+	_MOVF(F11,FAC);_SP(-55+144);_FADD();LDI(F14);_FMUL();_MOVF(FAC,'StickyBit');
 	_MOVF(F11,FAC);LDI(F14);_FMUL();_MOVF(FAC,'Y1');
 	_MOVF('StickyBit',FAC);LDI(F11);_FSUB();_MOVF(FAC,'StickyBit');
 	_MOVF('Y1',FAC);_LDI('Half');_FSUB();_MOVF(FAC,'Y1');
@@ -1243,25 +1243,25 @@ def code17():
 	_MOVF(F20,FAC);LDI(F17);_FADD();_MOVF(FAC,'Y2');
 	_MOVF(F20,FAC);LDI(F17);_FSUB();_MOVF(FAC,'Y1');
 	_MOVF('OneAndHalf',F20);
-	STW(T1);_MOVF(F20,[SP,-57+142]);LDW(T1) #genspill
+	STW(T1);_MOVF(F20,[SP,-57+144]);LDW(T1) #genspill
 	_MOVF(F20,FAC);LDI(F17);_FADD();_MOVF(FAC,F14);
-	STW(T1);_MOVF(F14,[SP,-50+142]);LDW(T1) #genspill
+	STW(T1);_MOVF(F14,[SP,-50+144]);LDW(T1) #genspill
 	LDI(F17);_FADD();_MOVF(FAC,'Z');
 	_MOVF('Z',F11);
 	_MOVF('Y2',F8);
 	_MOVF(F11,FAC);LDI(F8);_FDIV();_MOVF(FAC,'X');
 	_LDI('T');STW(R16);
-	STW(T1);_MOVW(R16,[SP,-52+142]);LDW(T1) #genspill
+	STW(T1);_MOVW(R16,[SP,-52+144]);LDW(T1) #genspill
 	_MOVF(F20,FAC);LDI(F17);_FSUB();LDI(F17);_FSUB();_MOVF(FAC,'T');
 	_MOVF('T',F14);
 	_MOVF('Y1',F20);
 	_MOVF(F14,FAC);LDI(F17);_FSUB();LDI(F20);_FDIV();_MOVF(FAC,'Y');
 	_MOVF(F11,FAC);LDI(F17);_FADD();LDI(F8);_FDIV();_MOVF(FAC,'Z');
-	_MOVF('X',FAC);_SP(-57+142);_FSUB();_MOVF(FAC,'X');
+	_MOVF('X',FAC);_SP(-57+144);_FSUB();_MOVF(FAC,'X');
 	_MOVF('Y',FAC);LDI(F14);_FSUB();_MOVF(FAC,'Y');
 	_MOVF(F14,FAC);LDI(F20);_FDIV();_MOVF(FAC,'T');
-	_MOVF('Z',FAC);_SP(-50+142);_FSUB();_MOVF(FAC,'Z');
-	_MOVF(F17,FAC);_SP(-57+142);_FSUB();_SP(-52+142);DEEK();_FADD();_MOVF(FAC,'T');
+	_MOVF('Z',FAC);_SP(-50+144);_FSUB();_MOVF(FAC,'Z');
+	_MOVF(F17,FAC);_SP(-57+144);_FSUB();_SP(-52+144);DEEK();_FADD();_MOVF(FAC,'T');
 	_MOVF('Zero',F20);
 	_MOVF(F20,FAC);_LDI('X');_FCMP();_BLT('.257');
 	_MOVF(F20,FAC);_LDI('Y');_FCMP();_BLT('.257');
@@ -1269,7 +1269,7 @@ def code17():
 	_MOVF(F20,FAC);_LDI('T');_FCMP();_BLT('.257');
 	_MOVF('OneAndHalf',F20);
 	_MOVF('Y2',F17);
-	STW(T1);_MOVF(F17,[SP,-62+142]);LDW(T1) #genspill
+	STW(T1);_MOVF(F17,[SP,-62+144]);LDW(T1) #genspill
 	_MOVF(F20,FAC);LDI(F17);_FDIV();_MOVF(FAC,'X');
 	_MOVF('U2',F14);
 	_MOVF(F20,FAC);LDI(F14);_FSUB();_MOVF(FAC,'Y');
@@ -1283,10 +1283,10 @@ def code17():
 	_MOVF('Z',F17);
 	_MOVF(F17,FAC);LDI(F14);_FADD();_FNEG();LDW(R10);_FADD();_MOVF(FAC,'T');
 	_MOVF('Y',FAC);LDI(F17);_FSUB();_MOVF(FAC,'Y');
-	_MOVF(F17,FAC);_SP(-62+142);_FDIV();_MOVF(FAC,'Z');
-	_MOVF([SP,-62+142],FAC);LDI(F14);_FADD();_SP(-62+142);_FDIV();_MOVF(FAC,'Y1');
+	_MOVF(F17,FAC);_SP(-62+144);_FDIV();_MOVF(FAC,'Z');
+	_MOVF([SP,-62+144],FAC);LDI(F14);_FADD();_SP(-62+144);_FDIV();_MOVF(FAC,'Y1');
 	_MOVF('Z',FAC);LDI(F20);_FSUB();_MOVF(FAC,'Z');
-	_MOVF('Y1',FAC);_SP(-62+142);_FSUB();_MOVF(FAC,'Y2');
+	_MOVF('Y1',FAC);_SP(-62+144);_FSUB();_MOVF(FAC,'Y2');
 	_MOVF('F9',F20);
 	_MOVF(F20,FAC);_LDI('U1');_FSUB();LDI(F20);_FDIV();_MOVF(FAC,'Y1');
 	_MOVF('Zero',F20);
@@ -1337,14 +1337,14 @@ def code17():
 	_MOVW(R8,[SP,2]);
 	_MOVF('Half',F16);
 	_MOVF(F19,FAC);LDW(R22);_FMUL();LDI(F16);_FSUB();LDI(F16);_FCMP();_BNE('.273');
-	_SP(-60+142);STW(R22);
+	_SP(-60+144);STW(R22);
 	LDI(1);DOKE(R22);
 	_BRA('.274');
 	label('.273');
-	_SP(-60+142);STW(R22);
+	_SP(-60+144);STW(R22);
 	LDI(0);DOKE(R22);
 	label('.274');
-	_SP(-60+142);DEEK();STW(R9);
+	_SP(-60+144);DEEK();STW(R9);
 	_MOVW(R9,[SP,4]);
 	_LDI('.272');STW(R10);
 	_MOVW(R10,[SP,6]);
@@ -1358,14 +1358,14 @@ def code17():
 	_MOVF('One',F20);
 	_MOVF('Radix',FAC);LDI(F20);_FSUB();_MOVF(FAC,F17);
 	_MOVF('BMinusU2',FAC);_LDI('U2');_FADD();LDI(F20);_FSUB();LDI(F17);_FCMP();_BNE('.277');
-	_SP(-62+142);STW(R22);
+	_SP(-62+144);STW(R22);
 	LDI(1);DOKE(R22);
 	_BRA('.278');
 	label('.277');
-	_SP(-62+142);STW(R22);
+	_SP(-62+144);STW(R22);
 	LDI(0);DOKE(R22);
 	label('.278');
-	_SP(-62+142);DEEK();STW(R9);
+	_SP(-62+144);DEEK();STW(R9);
 	_MOVW(R9,[SP,4]);
 	_LDI('.276');STW(R10);
 	_MOVW(R10,[SP,6]);
@@ -1558,14 +1558,14 @@ def code17():
 	_LDI('RMult');DEEK();_BEQ('.319');
 	_LDI('RDiv');DEEK();_BEQ('.319');
 	_LDI('RAddSub');DEEK();_BEQ('.319');
-	_SP(-64+142);STW(R22);
+	_SP(-64+144);STW(R22);
 	LDI(1);DOKE(R22);
 	_BRA('.320');
 	label('.319');
-	_SP(-64+142);STW(R22);
+	_SP(-64+144);STW(R22);
 	LDI(0);DOKE(R22);
 	label('.320');
-	_SP(-64+142);DEEK();STW(R9);
+	_SP(-64+144);DEEK();STW(R9);
 	_MOVW(R9,[SP,4]);
 	_LDI('.318');STW(R10);
 	_MOVW(R10,[SP,6]);
@@ -1639,33 +1639,33 @@ def code17():
 	_LDI('.334');STW(R8);
 	CALLI('printf');
 	_MOVF('Zero',F20);
-	STW(T1);_MOVF(F20,[SP,-71+142]);LDW(T1) #genspill
+	STW(T1);_MOVF(F20,[SP,-71+144]);LDW(T1) #genspill
 	_MOVF(F20,F8);
 	_MOVF(F8,[SP,2]);
 	CALLI('sqrt');_MOVF(FAC,F17);
-	_MOVF([SP,-71+142],FAC);LDI(F17);_FCMP();_BNE('.337');
+	_MOVF([SP,-71+144],FAC);LDI(F17);_FCMP();_BNE('.337');
 	_MOVF('Zero',FAC);_FNEG();_MOVF(FAC,F20);
-	STW(T1);_MOVF(F20,[SP,-76+142]);LDW(T1) #genspill
+	STW(T1);_MOVF(F20,[SP,-76+144]);LDW(T1) #genspill
 	_MOVF(FAC,F8);
 	_MOVF(F8,[SP,2]);
 	CALLI('sqrt');_MOVF(FAC,F17);
-	_MOVF([SP,-76+142],FAC);LDI(F17);_FCMP();_BNE('.337');
+	_MOVF([SP,-76+144],FAC);LDI(F17);_FCMP();_BNE('.337');
 	_MOVF('One',F20);
-	STW(T1);_MOVF(F20,[SP,-81+142]);LDW(T1) #genspill
+	STW(T1);_MOVF(F20,[SP,-81+144]);LDW(T1) #genspill
 	_MOVF(F20,F8);
 	_MOVF(F8,[SP,2]);
 	CALLI('sqrt');_MOVF(FAC,F17);
-	_MOVF([SP,-81+142],FAC);LDI(F17);_FCMP();_BNE('.337');
-	_SP(-66+142);STW(R22);
+	_MOVF([SP,-81+144],FAC);LDI(F17);_FCMP();_BNE('.337');
+	_SP(-66+144);STW(R22);
 	LDI(1);DOKE(R22);
 	_BRA('.338');
 	label('.337');
-	_SP(-66+142);STW(R22);
+	_SP(-66+144);STW(R22);
 	LDI(0);DOKE(R22);
 	label('.338');
 	LDI(0);STW(R8);
 	_MOVW(R8,[SP,2]);
-	_SP(-66+142);DEEK();STW(R9);
+	_SP(-66+144);DEEK();STW(R9);
 	_MOVW(R9,[SP,4]);
 	_LDI('.336');STW(R10);
 	_MOVW(R10,[SP,6]);
@@ -1897,7 +1897,7 @@ def code17():
 	_MOVF('X',F8);
 	_MOVF(F8,[SP,2]);
 	CALLI('Sign');_MOVF(FAC,F20);
-	STW(T1);_MOVF(F20,[SP,-86+142]);LDW(T1) #genspill
+	STW(T1);_MOVF(F20,[SP,-86+144]);LDW(T1) #genspill
 	_MOVF('OneUlp',F8);
 	_MOVF(F8,[SP,2]);
 	CALLI('sqrt');
@@ -1905,7 +1905,7 @@ def code17():
 	_MOVF('Eight',FAC);LDI(F20);_FDIV();_MOVF(FAC,F8);
 	_MOVF(F8,[SP,2]);
 	CALLI('floor');_MOVF(FAC,F20);
-	_MOVF([SP,-86+142],FAC);_LDI('OneUlp');_FMUL();LDI(F20);_FMUL();_MOVF(FAC,'X');
+	_MOVF([SP,-86+144],FAC);_LDI('OneUlp');_FMUL();LDI(F20);_FMUL();_MOVF(FAC,'X');
 	_BRA('.388');
 	label('.387');
 	_MOVF('U1','OneUlp');
@@ -1927,13 +1927,13 @@ def code17():
 	_LDI('.392');STW(R8);
 	CALLI('printf');
 	_MOVF('Precision',F20);
-	STW(T1);_MOVF(F20,[SP,-86+142]);LDW(T1) #genspill
+	STW(T1);_MOVF(F20,[SP,-86+144]);LDW(T1) #genspill
 	_MOVF(F20,F8);
 	_MOVF(F8,[SP,2]);
 	CALLI('floor');_MOVF(FAC,F17);
 	_MOVF('Radix',F8);
 	_MOVF(F8,[SP,2]);
-	_MOVF([SP,-86+142],FAC);_LDI('One');_FADD();LDI(F17);_FSUB();_MOVF(FAC,F11);
+	_MOVF([SP,-86+144],FAC);_LDI('One');_FADD();LDI(F17);_FSUB();_MOVF(FAC,F11);
 	_MOVF(F11,[SP,7]);
 	CALLI('pow');
 	_LDI('Half');_FADD();_MOVF(FAC,F8);
@@ -1944,17 +1944,17 @@ def code17():
 	_MOVF(F20,FAC);_LDI('Radix');_FDIV();_MOVF(FAC,'X');
 	_MOVF(F20,FAC);_LDI('A1');_FDIV();_MOVF(FAC,'Y');
 	_MOVF('X',F20);
-	STW(T1);_MOVF(F20,[SP,-91+142]);LDW(T1) #genspill
+	STW(T1);_MOVF(F20,[SP,-91+144]);LDW(T1) #genspill
 	_MOVF(F20,F8);
 	_MOVF(F8,[SP,2]);
 	CALLI('floor');_MOVF(FAC,F17);
-	_MOVF([SP,-91+142],FAC);LDI(F17);_FCMP();_BNE('.395');
+	_MOVF([SP,-91+144],FAC);LDI(F17);_FCMP();_BNE('.395');
 	_MOVF('Y',F20);
-	STW(T1);_MOVF(F20,[SP,-96+142]);LDW(T1) #genspill
+	STW(T1);_MOVF(F20,[SP,-96+144]);LDW(T1) #genspill
 	_MOVF(F20,F8);
 	_MOVF(F8,[SP,2]);
 	CALLI('floor');_MOVF(FAC,F17);
-	_MOVF([SP,-96+142],FAC);LDI(F17);_FCMP();_BEQ('.393');
+	_MOVF([SP,-96+144],FAC);LDI(F17);_FCMP();_BEQ('.393');
 	label('.395');
 	_LDI('Anomaly');STW(R22);
 	LDI(1);DOKE(R22);
@@ -1973,11 +1973,11 @@ def code17():
 	_MOVF('Y','Y1');
 	label('.401');
 	_MOVF('Q',F20);
-	STW(T1);_MOVF(F20,[SP,-101+142]);LDW(T1) #genspill
+	STW(T1);_MOVF(F20,[SP,-101+144]);LDW(T1) #genspill
 	_MOVF(F20,FAC);_LDI('Y1');_FDIV();_FNEG();_LDI('Half');_FADD();_MOVF(FAC,F8);
 	_MOVF(F8,[SP,2]);
 	CALLI('floor');
-	_LDI('Y1');_FMUL();_SP(-101+142);_FADD();_MOVF(FAC,F8);
+	_LDI('Y1');_FMUL();_SP(-101+144);_FADD();_MOVF(FAC,F8);
 	_MOVF(F8,[SP,2]);
 	CALLI('fabs');_MOVF(FAC,F20);
 	_MOVF(F20,'X1');
@@ -2008,11 +2008,11 @@ def code17():
 	_MOVF(F14,FAC);LDI(F14);_FMUL();LDI(F17);_FADD();LDI(F20);_FDIV();_MOVF(FAC,'Q');
 	_MOVF(F17,FAC);_LDI('Eight');_FDIV();_MOVF(FAC,'X8');
 	_MOVF('Q',F20);
-	STW(T1);_MOVF(F20,[SP,-101+142]);LDW(T1) #genspill
+	STW(T1);_MOVF(F20,[SP,-101+144]);LDW(T1) #genspill
 	_MOVF(F20,F8);
 	_MOVF(F8,[SP,2]);
 	CALLI('floor');_MOVF(FAC,F17);
-	_MOVF([SP,-101+142],FAC);LDI(F17);_FCMP();_BEQ('.408');
+	_MOVF([SP,-101+144],FAC);LDI(F17);_FCMP();_BEQ('.408');
 	_LDI('Anomaly');STW(R22);
 	LDI(1);DOKE(R22);
 	_BRA('.409');
@@ -2022,11 +2022,11 @@ def code17():
 	label('.410');
 	_MOVF('Z1',FAC);_LDI('Z');_FMUL();_MOVF(FAC,'X');
 	_MOVF('X',F20);
-	STW(T1);_MOVF(F20,[SP,-106+142]);LDW(T1) #genspill
+	STW(T1);_MOVF(F20,[SP,-106+144]);LDW(T1) #genspill
 	_MOVF(F20,FAC);_LDI('Radix');_FDIV();_MOVF(FAC,F8);
 	_MOVF(F8,[SP,2]);
 	CALLI('floor');
-	_LDI('Radix');_FMUL();_FNEG();_SP(-106+142);_FADD();_MOVF(FAC,'X');
+	_LDI('Radix');_FMUL();_FNEG();_SP(-106+144);_FADD();_MOVF(FAC,'X');
 	_MOVF('X',FAC);_LDI('One');_FCMP();_BNE('.413');
 	_LDI('Break');STW(R22);
 	LDI(1);DOKE(R22);
@@ -2162,14 +2162,14 @@ def code17():
 	_MOVF('Radix',F20);
 	_MOVF(F20,FAC);LDI(F20);_FMUL();_MOVF(FAC,F20);
 	_MOVF('MaxSqEr',FAC);_LDI('MinSqEr');_FSUB();LDI(F20);_FCMP();_BGE('.452');
-	_SP(-84+142);STW(R22);
+	_SP(-84+144);STW(R22);
 	LDI(1);DOKE(R22);
 	_BRA('.453');
 	label('.452');
-	_SP(-84+142);STW(R22);
+	_SP(-84+144);STW(R22);
 	LDI(0);DOKE(R22);
 	label('.453');
-	_SP(-84+142);DEEK();STW(R9);
+	_SP(-84+144);DEEK();STW(R9);
 	_MOVW(R9,[SP,4]);
 	_LDI('.451');STW(R10);
 	_MOVW(R10,[SP,6]);
@@ -2220,11 +2220,11 @@ def code17():
 	_MOVF('W',F8);
 	_MOVF(F8,[SP,2]);
 	CALLI('log');_MOVF(FAC,F20);
-	STW(T1);_MOVF(F20,[SP,-86+142]);LDW(T1) #genspill
+	STW(T1);_MOVF(F20,[SP,-86+144]);LDW(T1) #genspill
 	_MOVF('A1',F8);
 	_MOVF(F8,[SP,2]);
 	CALLI('log');_MOVF(FAC,F17);
-	_MOVF([SP,-86+142],FAC);_LDI('Two');_FMUL();LDI(F17);_FDIV();_MOVF(FAC,F8);
+	_MOVF([SP,-86+144],FAC);_LDI('Two');_FMUL();LDI(F17);_FDIV();_MOVF(FAC,F8);
 	_MOVF(F8,[SP,2]);
 	CALLI('floor');_MOVF(FAC,F20);
 	_LDI('M');STW(R19);
@@ -2260,11 +2260,11 @@ def code17():
 	_MOVF('Two',FAC);LDW(R22);_FADD();_MOVF(FAC,'Z');
 	label('.471');
 	_MOVF('Three',F20);
-	STW(T1);_MOVF(F20,[SP,-91+142]);LDW(T1) #genspill
+	STW(T1);_MOVF(F20,[SP,-91+144]);LDW(T1) #genspill
 	_MOVF('Z',FAC);LDI(F20);_FDIV();_MOVF(FAC,F8);
 	_MOVF(F8,[SP,2]);
 	CALLI('floor');_MOVF(FAC,F17);
-	_MOVF([SP,-91+142],FAC);LDI(F17);_FMUL();_LDI('Z');_FCMP();_BEQ('.470');
+	_MOVF([SP,-91+144],FAC);LDI(F17);_FMUL();_LDI('Z');_FCMP();_BEQ('.470');
 	label('.468');
 	_MOVF('Eight',FAC);_LDI('Three');_FMUL();_LDI('Z');_FCMP();_BGT('.467');
 	_LDI('N');DEEK();_BLE('.473');
@@ -2294,11 +2294,11 @@ def code17():
 	CALLI('printf');
 	_MOVF('U1','D');
 	_MOVF('Precision',F20);
-	STW(T1);_MOVF(F20,[SP,-91+142]);LDW(T1) #genspill
+	STW(T1);_MOVF(F20,[SP,-91+144]);LDW(T1) #genspill
 	_MOVF(F20,F8);
 	_MOVF(F8,[SP,2]);
 	CALLI('floor');_MOVF(FAC,F17);
-	_MOVF([SP,-91+142],FAC);LDI(F17);_FCMP();_BEQ('.483');
+	_MOVF([SP,-91+144],FAC);LDI(F17);_FCMP();_BEQ('.483');
 	_MOVF('BInvrse','D');
 	_MOVF('Precision','X');
 	label('.485');
@@ -2590,15 +2590,15 @@ def code17():
 	_MOVF(F13,FAC);_LDI('One');_FADD();LDI(F16);_FMUL();_MOVF(FAC,'X');
 	_MOVF('Y',FAC);LDW(R12);_FDIV();_MOVF(FAC,'Y');
 	_MOVF(F19,FAC);LDW(R22);_FCMP();_BNE('.568');
-	_SP(-94+142);STW(R22);
+	_SP(-94+144);STW(R22);
 	LDI(1);DOKE(R22);
 	_BRA('.569');
 	label('.568');
-	_SP(-94+142);STW(R22);
+	_SP(-94+144);STW(R22);
 	LDI(0);DOKE(R22);
 	label('.569');
 	_LDI('IEEE');STW(R22);
-	_SP(-94+142);DEEK();DOKE(R22);
+	_SP(-94+144);DEEK();DOKE(R22);
 	label('.563');
 	label('.547');
 	label('.548');
@@ -2737,11 +2737,11 @@ def code17():
 	_MOVF('UfThold',F8);
 	_MOVF(F8,[SP,2]);
 	CALLI('log');_MOVF(FAC,F20);
-	STW(T1);_MOVF(F20,[SP,-96+142]);LDW(T1) #genspill
+	STW(T1);_MOVF(F20,[SP,-96+144]);LDW(T1) #genspill
 	_MOVF('HInvrse',F8);
 	_MOVF(F8,[SP,2]);
 	CALLI('log');_MOVF(FAC,F17);
-	_MOVF([SP,-96+142],FAC);_LDI('TwoForty');_FMUL();LDI(F17);_FDIV();_FNEG();_LDI('Half');_FADD();_MOVF(FAC,F8);
+	_MOVF([SP,-96+144],FAC);_LDI('TwoForty');_FMUL();LDI(F17);_FDIV();_FNEG();_LDI('Half');_FADD();_MOVF(FAC,F8);
 	_MOVF(F8,[SP,2]);
 	CALLI('floor');
 	_FNEG();_LDI('TwoForty');_FDIV();_MOVF(FAC,'Y');
@@ -2939,11 +2939,11 @@ def code17():
 	_MOVF('C',F8);
 	_MOVF(F8,[SP,2]);
 	CALLI('log');_MOVF(FAC,F20);
-	STW(T1);_MOVF(F20,[SP,-101+142]);LDW(T1) #genspill
+	STW(T1);_MOVF(F20,[SP,-101+144]);LDW(T1) #genspill
 	_MOVF('A1',F8);
 	_MOVF(F8,[SP,2]);
 	CALLI('log');_MOVF(FAC,F17);
-	_MOVF([SP,-101+142],FAC);LDI(F17);_FDIV();_FNEG();_LDI('Half');_FADD();_MOVF(FAC,F8);
+	_MOVF([SP,-101+144],FAC);LDI(F17);_FDIV();_FNEG();_LDI('Half');_FADD();_MOVF(FAC,F8);
 	_MOVF(F8,[SP,2]);
 	CALLI('floor');_MOVF(FAC,F20);
 	_MOVF(F20,'Q');
@@ -3397,13 +3397,13 @@ def code17():
 	CALLI('Pause');
 	_LDI('.44');STW(R8);
 	CALLI('printf');
-	_SP(-104+142);STW(R22);
+	_SP(-104+144);STW(R22);
 	LDI(0);DOKE(R22);
 	label('.762');
 	_LDI('ErrCnt');STW(R22);
-	_SP(-104+142);DEEK();LSLW();ADDW(R22);DEEK();_BEQ('.766');
+	_SP(-104+144);DEEK();LSLW();ADDW(R22);DEEK();_BEQ('.766');
 	_LDI('.768');STW(R8);
-	_SP(-104+142);DEEK();LSLW();STW(R22);
+	_SP(-104+144);DEEK();LSLW();STW(R22);
 	_LDI('.757');ADDW(R22);DEEK();STW(R9);
 	_MOVW(R9,[SP,4]);
 	_LDI('ErrCnt');ADDW(R22);DEEK();STW(R10);
@@ -3411,9 +3411,9 @@ def code17():
 	CALLI('printf');
 	label('.766');
 	label('.763');
-	_SP(-104+142);STW(R22);
-	_SP(-104+142);DEEK();ADDI(1);DOKE(R22);
-	_SP(-104+142);DEEK();_CMPIS(4);_BLT('.762');
+	_SP(-104+144);STW(R22);
+	_SP(-104+144);DEEK();ADDI(1);DOKE(R22);
+	_SP(-104+144);DEEK();_CMPIS(4);_BLT('.762');
 	_LDI('.44');STW(R8);
 	CALLI('printf');
 	_LDI(v('ErrCnt')+2);DEEK();STW(R22);
@@ -3509,7 +3509,7 @@ def code17():
 	CALLI('printf');
 	LDI(0);
 	label('.6');
-	_EPILOGUE(142,20,0xff,saveAC=True);
+	_EPILOGUE(144,20,0xff,saveAC=True);
 # ======== ('DATA', '.570', code18, 0, 2)
 def code18():
 	align(2);
@@ -3542,7 +3542,7 @@ def code20():
 # ======== ('CODE', 'Pause', code21)
 def code21():
 	label('Pause');
-	_PROLOGUE(6,6,0x0); # save=None
+	_PROLOGUE(8,6,0x0); # save=None
 	_LDI('.827');STW(R8);
 	_LDI('Milestone');DEEK();STW(R9);
 	_MOVW(R9,[SP,4]);
@@ -3557,7 +3557,7 @@ def code21():
 	DEEK();ADDI(1);DOKE(R22);
 	LDI(0);
 	label('.826');
-	_EPILOGUE(6,6,0x0,saveAC=True);
+	_EPILOGUE(8,6,0x0,saveAC=True);
 # ======== ('CODE', 'TstCond', code22)
 def code22():
 	label('TstCond');
@@ -3623,15 +3623,15 @@ def code25():
 # ======== ('CODE', 'SqXMinX', code26)
 def code26():
 	label('SqXMinX');
-	_PROLOGUE(34,20,0xf0); # save=R4-7
+	_PROLOGUE(36,20,0xf0); # save=R4-7
 	LDW(R8);STW(R7);
 	_MOVF('X',F20);
 	_MOVF(F20,FAC);_LDI('BInvrse');_FMUL();_MOVF(FAC,F4);
-	_MOVF(F20,FAC);LDI(F4);_FSUB();_MOVF(FAC,[SP,-5+34]);
+	_MOVF(F20,FAC);LDI(F4);_FSUB();_MOVF(FAC,[SP,-5+36]);
 	_MOVF(F20,FAC);LDI(F20);_FMUL();_MOVF(FAC,F8);
 	_MOVF(F8,[SP,2]);
 	CALLI('sqrt');
-	LDI(F4);_FSUB();_SP(-5+34);_FSUB();_LDI('OneUlp');_FDIV();_MOVF(FAC,'SqEr');
+	LDI(F4);_FSUB();_SP(-5+36);_FSUB();_LDI('OneUlp');_FDIV();_MOVF(FAC,'SqEr');
 	_MOVF('SqEr',FAC);_LDI('Zero');_FCMP();_BEQ('.842');
 	_MOVF('SqEr',FAC);_LDI('MinSqEr');_FCMP();_BGE('.844');
 	_MOVF('SqEr','MinSqEr');
@@ -3658,7 +3658,7 @@ def code26():
 	label('.842');
 	LDI(0);
 	label('.841');
-	_EPILOGUE(34,20,0xf0,saveAC=True);
+	_EPILOGUE(36,20,0xf0,saveAC=True);
 # ======== ('CODE', 'NewD', code27)
 def code27():
 	label('NewD');
@@ -3736,7 +3736,7 @@ def code28():
 # ======== ('CODE', 'IsYeqX', code29)
 def code29():
 	label('IsYeqX');
-	_PROLOGUE(14,14,0x0); # save=None
+	_PROLOGUE(16,14,0x0); # save=None
 	_MOVF('Y',FAC);_LDI('X');_FCMP();_BEQ('.861');
 	_LDI('N');DEEK();_BGT('.863');
 	_MOVF('Zero',F20);
@@ -3774,7 +3774,7 @@ def code29():
 	label('.861');
 	LDI(0);
 	label('.860');
-	_EPILOGUE(14,14,0x0,saveAC=True);
+	_EPILOGUE(16,14,0x0,saveAC=True);
 # ======== ('CODE', 'SR3980', code30)
 def code30():
 	label('SR3980');
@@ -3805,7 +3805,7 @@ def code30():
 # ======== ('CODE', 'PrintIfNPositive', code31)
 def code31():
 	label('PrintIfNPositive');
-	_PROLOGUE(6,6,0x0); # save=None
+	_PROLOGUE(8,6,0x0); # save=None
 	_LDI('N');DEEK();_BLE('.880');
 	_LDI('.882');STW(R8);
 	_LDI('N');DEEK();STW(R9);
@@ -3814,11 +3814,11 @@ def code31():
 	label('.880');
 	LDI(0);
 	label('.879');
-	_EPILOGUE(6,6,0x0,saveAC=True);
+	_EPILOGUE(8,6,0x0,saveAC=True);
 # ======== ('CODE', 'TstPtUf', code32)
 def code32():
 	label('TstPtUf');
-	_PROLOGUE(10,10,0x0); # save=None
+	_PROLOGUE(12,10,0x0); # save=None
 	_LDI('N');STW(R22);
 	LDI(0);DOKE(R22);
 	_MOVF('Z',FAC);_LDI('Zero');_FCMP();_BEQ('.884');
@@ -3936,7 +3936,7 @@ def code32():
 	label('.884');
 	LDI(0);
 	label('.883');
-	_EPILOGUE(10,10,0x0,saveAC=True);
+	_EPILOGUE(12,10,0x0,saveAC=True);
 # ======== ('CODE', 'notify', code33)
 def code33():
 	label('notify');
@@ -4540,14 +4540,14 @@ def code127():
 def code128():
 	label('.1028');
 	bytes(128,0,0,0,0); # 0.5
-# ======== ('DATA', '.1023', code129, 0, 2)
+# ======== ('DATA', '.1023', code129, 0, 4)
 def code129():
-	align(2);
+	align(4);
 	label('.1023');
 	words(1,0); # 1
-# ======== ('DATA', '.1016', code130, 0, 2)
+# ======== ('DATA', '.1016', code130, 0, 4)
 def code130():
-	align(2);
+	align(4);
 	label('.1016');
 	words(0,0); # 0
 # ======== ('DATA', '.1009', code131, 0, 1)
@@ -7335,8 +7335,8 @@ code=[
 	('IMPORT', '_iob'),
 	('DATA', '.1029', code127, 0, 1),
 	('DATA', '.1028', code128, 0, 1),
-	('DATA', '.1023', code129, 0, 2),
-	('DATA', '.1016', code130, 0, 2),
+	('DATA', '.1023', code129, 0, 4),
+	('DATA', '.1016', code130, 0, 4),
 	('DATA', '.1009', code131, 0, 1),
 	('DATA', '.1008', code132, 0, 1),
 	('DATA', '.1001', code133, 0, 1),

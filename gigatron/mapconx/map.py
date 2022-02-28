@@ -25,7 +25,7 @@ segments = [ (0x0060, 0x2fa0, 0x0100, 0x80a0, 0),
              (0x2300, 0x0800, None,   None,   0),
 ]
 
-initsp = 0x2efe
+initsp = 0x2efc
 minram = 0x80
 
 def map_segments():

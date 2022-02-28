@@ -1094,10 +1094,10 @@ def CMPWU(d):
     '''CMPWU: CMPHU + SUBW'''
     emit_prefx2(0x39, check_zp(d))
 @vasm
-def LEEKA(d): # revisit
+def LEEKA(d):
     emit_prefx2(0x3b, check_zp(d))
 @vasm
-def LOKEA(d): # revisit
+def LOKEA(d):
     emit_prefx2(0x3d, check_zp(d))
 @vasm
 def FEEKA(d): # revisit
@@ -1597,21 +1597,38 @@ def _MOVM(s,d,n,align=1): # was _BMOV
             _SP(s[1]); s = [vAC]
         elif type(d) == list and len(d) == 2 and d[0] == SP:
             _SP(d[1]); d = [vAC]
-        if d == [vAC]:
-            STW(T2)
-        if s == [vAC]:
-            STW(T3)
-        if d != [vAC] and d != [T2]:
-            _LDI(d); STW(T2)
-        if s != [vAC]:
-            _LDI(s); STW(T3)
-        _LDI(n);ADDW(T3);STW(T1)
-        if align == 2:
-            extern('_@_wcopy')
-            _CALLI('_@_wcopy')         # [T3..T1) --> [T2..]
+        if args.cpu >= 6:
+            if d == [vAC]:
+                STW(T2)
+            elif d != [T2] and s != [vAC]:
+                _LDI(d);STW(T2)
+            elif d != [T2]:
+                MOVQW(lo(d),T2)
+                if not is_zeropage(d):
+                    MOVQB(hi(d),T2+1)
+            if s != [vAC]:
+                _LDI(s)
+            while n >= 256:
+                n = n -256
+                NCOPY(0)
+            if n > 0:
+                NCOPY(n)
         else:
-            extern('_@_bcopy')
-            _CALLI('_@_bcopy')         # [T3..T1) --> [T2..]
+            if d == [vAC]:
+                STW(T2)
+            if s == [vAC]:
+                STW(T3)
+            if d != [vAC] and d != [T2]:
+                _LDI(d); STW(T2)
+            if s != [vAC]:
+                _LDI(s); STW(T3)
+            _LDI(n);ADDW(T3);STW(T1)
+            if align == 2:
+                extern('_@_wcopy')
+                _CALLI('_@_wcopy')         # [T3..T1) --> [T2..]
+            else:
+                extern('_@_bcopy')
+                _CALLI('_@_bcopy')         # [T3..T1) --> [T2..]
 @vasm
 def _MOVL(s,d): # was _LMOV
     '''Move long from reg/addr s to d.
@@ -1637,7 +1654,7 @@ def _MOVL(s,d): # was _LMOV
             elif args.cpu >= 6:
                 if s != [vAC]:
                     _LDI(s)
-                DEEKA(d); ADDI(2); DEEKA(d+2)        # a|l->z: 6|9 bytes (cpu6)
+                LEEKA(d)                             # a|l->z: 4,6,7 bytes (cpu6)
             elif s != [vAC]:
                 _LDW(s); STW(d);
                 _LDW(s+2); STW(d+2)                  # l->z:   12 bytes
@@ -1650,7 +1667,19 @@ def _MOVL(s,d): # was _LMOV
                 LDW(T2)
             elif d != [vAC]:
                 _LDI(d)
-            DOKEA(s); ADDI(2); DOKEA(s+2)            # z->a|l: 6-9 bytes (cpu 6)
+            LOKEA(s)                                 # z->a|l: 4,6,7 bytes (cpu6)
+        elif args.cpu >= 6:
+            if d == [vAC]:
+                STW(T2)
+            elif d != [T2] and s != [vAC]:
+                _LDI(d);STW(T2)
+            elif d != [T2]:
+                MOVQW(lo(d),T2)
+                if not is_zeropage(d):
+                    MOVQB(hi(d),T2+1)
+            if s != [vAC]:
+                _LDI(s)                              # generic NCOPY
+            NCOPY(4)                                 # is 3-11 bytes long (cpu6)
         else:
             if d == [vAC]:
                 STW(T2)
@@ -1773,6 +1802,18 @@ def _MOVF(s,d): # was _FMOV
                 LDWI(((d & 0xff) << 8) | (s & 0xff))
                 extern('_@_fcopyz')
                 _CALLI('_@_fcopyz')
+        elif args.cpu >= 6:
+            if d == [vAC]:
+                STW(T2)
+            elif d != [T2] and s != [vAC]:
+                _LDI(d);STW(T2)
+            elif d != [T2]:
+                MOVQW(lo(d),T2)
+                if not is_zeropage(d):
+                    MOVQB(hi(d),T2+1)
+            if s != [vAC]:
+                _LDI(s)
+            NCOPY(5)
         else:
             maycross=False
             if d == [vAC]:

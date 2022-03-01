@@ -840,13 +840,13 @@ stmt: JUMPV(ac)    "\t%0CALL(vAC);\n" 14
 
 # More about spills: we want to save/restore vAC when genspill() inserts
 # instructions because preralloc might have decided to use vAC at this
-# precise point. We use T1 because _[LF]MOV can use T2 and T3.
-stmt: ASGNI2(spill,reg) "\tSTW(T1);_MOVW(%1,[SP,%0]);LDW(T1) #genspill\n" 0
-stmt: ASGNU2(spill,reg) "\tSTW(T1);_MOVW(%1,[SP,%0]);LDW(T1) #genspill\n" 0
-stmt: ASGNP2(spill,reg) "\tSTW(T1);_MOVW(%1,[SP,%0]);LDW(T1) #genspill\n" 0
-stmt: ASGNI4(spill,reg) "\tSTW(T1);_MOVL(%1,[SP,%0]);LDW(T1) #genspill\n" 0
-stmt: ASGNU4(spill,reg) "\tSTW(T1);_MOVL(%1,[SP,%0]);LDW(T1) #genspill\n" 0
-stmt: ASGNF5(spill,reg) "\tSTW(T1);_MOVF(%1,[SP,%0]);LDW(T1) #genspill\n" 0
+# precise point.
+stmt: ASGNI2(spill,reg) "\tSTW(T3);_MOVW(%1,[SP,%0]);LDW(T3) #genspill\n" 0
+stmt: ASGNU2(spill,reg) "\tSTW(T3);_MOVW(%1,[SP,%0]);LDW(T3) #genspill\n" 0
+stmt: ASGNP2(spill,reg) "\tSTW(T3);_MOVW(%1,[SP,%0]);LDW(T3) #genspill\n" 0
+stmt: ASGNI4(spill,reg) "\tSTW(T3);_MOVL(%1,[SP,%0]);LDW(T3) #genspill\n" 0
+stmt: ASGNU4(spill,reg) "\tSTW(T3);_MOVL(%1,[SP,%0]);LDW(T3) #genspill\n" 0
+stmt: ASGNF5(spill,reg) "\tSTW(T3);_MOVF(%1,[SP,%0]);LDW(T3) #genspill\n" 0
 
 # More opcodes for cpu=6
 reg: LOADI1(reg)  "\t%{#keepsAC}MOVB(%0,%c)\n" mincpu6(28)

@@ -69,20 +69,25 @@ def scope():
                  ('CODE', 'SYS_SetMode', code0) ])
 
     # ----------------------------------------
-    # void* SYS_ReadRomDir(void *romptr)
+    # void* SYS_ReadRomDir(void *romptr, char *buf8);
     def code0():
         nohop()
         label('SYS_ReadRomDir')
         PUSH()
         _LDI('SYS_ReadRomDir_v5_80');STW('sysFn')
         LDW(R8);SYS(80);STW(R8)
-        LDW(R9);STW(T2);LDI('sysArgs0');STW(T3);ADDI(8);STW(T1);_CALLJ('_@_bcopy')
+        LDW(R9);STW(T2)
+        if args.cpu >= 6:
+            LDI('sysArgs0');NCOPY(8)
+        else:
+            LDI('sysArgs0');STW(T0);ADDI(8);STW(T1);_CALLJ('_@_bcopy_')
         POP();LDW(R8);RET()
 
     module(name='sys_readromdir.s',
            code=[('EXPORT', 'SYS_ReadRomDir'),
-                 ('IMPORT', '_@_bcopy'),
-                 ('CODE', 'SYS_ReadRomDir', code0) ])
+                 ('CODE', 'SYS_ReadRomDir', code0),
+                 ('IMPORT', '_@_bcopy') if args.cpu < 6 else ('NOP',) ])
+
 
     # ----------------------------------------
     # void SYS_ExpanderControl(unsigned int ctrl);

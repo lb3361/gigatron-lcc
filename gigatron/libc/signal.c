@@ -24,7 +24,7 @@ sig_handler_t signal(int signo, sig_handler_t h)
 	return old;
 }
 
-int _sigcall(register int signo, register int fpeinfo, register const char *msg)
+int _sigcall(register char signo, register char fpeinfo, register const char *msg)
 {
 	typedef int (*handler)(int,int);
 	register handler *vec = (handler*)sigvec;

@@ -250,7 +250,7 @@ class Module:
                 else:                                   # ('ORG', addr)
                     matches[0].amin = tp[2]             # ('PLACE', minaddr, maxaddr)
                     matches[0].amax = tp[3] if len(tp) > 3 else None
-            else:
+            elif tp[0] != 'NOP':
                 error(f"Unrecognized fragment specification {tp}")
     def __repr__(self):
         return f"Module('{self.fname or self.name}',...)"
@@ -1100,16 +1100,16 @@ def LEEKA(d):
 def LOKEA(d):
     emit_prefx2(0x3d, check_zp(d))
 @vasm
-def FEEKA(d): # revisit
+def FEEKA(d): # not using
     emit_prefx2(0x3f, check_zp(d))
 @vasm
-def FOKEA(d): # revisit
+def FOKEA(d): # not using
     emit_prefx2(0x42, check_zp(d))
 @vasm
-def MEEKA(d): # revisit
+def MEEKA(d): # not using
     emit_prefx2(0x44, check_zp(d))
 @vasm
-def MOKEA(d): # revisit
+def MOKEA(d): # not using
     emit_prefx2(0x46, check_zp(d))
 @vasm
 def LSRVL(d): # revisit
@@ -1202,11 +1202,11 @@ def SWAPW(s, d): # doc?
     '''SWAPW: swap words pointed to by vars s and d, 22 + 46 cycles'''
     emit_prefx3(0x3d, check_zp(d), check_zp(s))
 @vasm
-def NEEKA(n, d):
+def NEEKA(n, d): # not using
     '''NEEKA: Peek <n> bytes from [vAC] into [var], 22 + 34*n + 24 cycles'''
     emit_prefx3(0x40, check_zp(d), check_zp(n))
 @vasm
-def NOKEA(n, d):
+def NOKEA(n, d): # not using
     '''Poke <n> bytes from [var] into [vAC], 22 + 34*n + 24 cycles'''
     emit_prefx3(0x43, check_zp(d), check_zp(n))
 @vasm
@@ -1467,8 +1467,6 @@ def _MOVW(s,d): # was _MOV
             DOKEA(s)
         elif d == [vAC] and s == vAC:
             error("Cannot _MOVW from vAC to [vAC] or [SP, offset]")
-#        elif d == [vAC] and args.cpu >= 6:
-#            XLA(); _LDW(s); DOKE(vLR)
         elif d == [vAC]:
             STW(T2); _LDW(s); DOKE(T2)
         elif is_zeropage(d):
@@ -1588,7 +1586,8 @@ def _CMPWU(d):
 def _MOVM(s,d,n,align=1): # was _BMOV
     '''Move memory block of size n from addr s to d.
        One of s or d can be either [vAC] or [SP,offset].
-       Argument d can also be [T2].'''
+       Argument d can also be [T2].
+       Trashes vAC, T0-T2.'''
     d = v(d)
     s = v(s)
     n = v(n)
@@ -1617,24 +1616,24 @@ def _MOVM(s,d,n,align=1): # was _BMOV
             if d == [vAC]:
                 STW(T2)
             if s == [vAC]:
-                STW(T3)
+                STW(T0)
             if d != [vAC] and d != [T2]:
                 _LDI(d); STW(T2)
             if s != [vAC]:
-                _LDI(s); STW(T3)
-            _LDI(n);ADDW(T3);STW(T1)
+                _LDI(s); STW(T0)
+            _LDI(n);ADDW(T0);STW(T1)
             if align == 2:
-                extern('_@_wcopy')
-                _CALLI('_@_wcopy')         # [T3..T1) --> [T2..]
+                extern('_@_wcopy_')
+                _CALLI('_@_wcopy_')         # [T0..T1) --> [T2..]
             else:
-                extern('_@_bcopy')
-                _CALLI('_@_bcopy')         # [T3..T1) --> [T2..]
+                extern('_@_bcopy_')
+                _CALLI('_@_bcopy_')         # [T0..T1) --> [T2..]
 @vasm
 def _MOVL(s,d): # was _LMOV
     '''Move long from reg/addr s to d.
        One of s or d can be either [vAC] or [SP,offset].
        Argument d can be [T2].
-       Can trash T2 and T3'''
+       Can trash vAC, T0-T3'''
     s = v(s)
     d = v(d)
     if s != d:
@@ -1647,10 +1646,12 @@ def _MOVL(s,d): # was _LMOV
             if is_zeropage(s, 3):
                 if args.cpu >= 6:
                     MOVL(s,d)                        # z->z :  4 bytes (cpu6)
-                else:
+                elif args.cpu >= 5:
                     LDWI(((d & 0xff) << 8) | (s & 0xff))
-                    extern('_@_lcopyz')
-                    _CALLI('_@_lcopyz')              # z->z :  6 bytes
+                    extern('_@_lcopyz_')
+                    _CALLI('_@_lcopyz_')              # z->z :  6 bytes
+                else:
+                    LDW(s);STW(d);LDW(s+2);STW(d+2)
             elif args.cpu >= 6:
                 if s != [vAC]:
                     _LDI(s)
@@ -1659,9 +1660,9 @@ def _MOVL(s,d): # was _LMOV
                 _LDW(s); STW(d);
                 _LDW(s+2); STW(d+2)                  # l->z:   12 bytes
             else:
-                STW(T3); LDI(d); STW(T2);
-                extern('_@_lcopy')
-                _CALLI('_@_lcopy')                   # a->l:   9 bytes
+                STW(T0); LDI(d); STW(T2);
+                extern('_@_lcopy_')
+                _CALLI('_@_lcopy_')                   # a->l:   9 bytes
         elif is_zeropage(s, 3) and args.cpu >= 6:
             if d == [T2]:
                 LDW(T2)
@@ -1684,13 +1685,13 @@ def _MOVL(s,d): # was _LMOV
             if d == [vAC]:
                 STW(T2)
             if s == [vAC]:
-                STW(T3)
+                STW(T0)
             if d != [vAC] and d != [T2]:
                 _LDI(d); STW(T2)
             if s != [vAC]:                            # generic call sequence
-                _LDI(s); STW(T3)                      # is 5-13 bytes long
-            extern('_@_lcopy')
-            _CALLJ('_@_lcopy')  # [T3..T3+4) --> [T2..T2+4)
+                _LDI(s); STW(T0)                      # is 5-13 bytes long
+            extern('_@_lcopy_')
+            _CALLJ('_@_lcopy_')  # [T0..T0+4) --> [T2..T2+4)
 @vasm
 def _LADD():
     extern('_@_ladd')              
@@ -1776,7 +1777,7 @@ def _MOVF(s,d): # was _FMOV
     '''Move float from reg s to d with special cases when s or d is FAC.
        One of s or d can be [vAC] or [SP, offset].
        Argument d can also be [T2].
-       Can trash T2 and T3'''
+       Can trash vAC, T0-T2, and T3 if s or d is FAC.'''
     s = v(s)
     d = v(d)
     if s != d:
@@ -1798,10 +1799,13 @@ def _MOVF(s,d): # was _FMOV
         elif is_zeropage(d, 4) and is_zeropage(s, 4):
             if args.cpu >= 6:
                 MOVF(s,d)
-            else:
+            elif args.cpu >= 5:
                 LDWI(((d & 0xff) << 8) | (s & 0xff))
-                extern('_@_fcopyz')
-                _CALLI('_@_fcopyz')
+                extern('_@_fcopyz_')
+                _CALLI('_@_fcopyz_')
+            else:
+                LDW(s);STW(d);LDW(s+2);STW(d+2)
+                LD(s+4);ST(d+4)
         elif args.cpu >= 6:
             if d == [vAC]:
                 STW(T2)
@@ -1820,20 +1824,20 @@ def _MOVF(s,d): # was _FMOV
                 STW(T2)
                 maycross = True
             if s == [vAC]:
-                STW(T3)
+                STW(T0)
                 maycross = True
             if d != [vAC] and d != [T2]:
                 _LDI(d); STW(T2)
                 maycross = maycross or (int(d) & 0xfc == 0xfc)
             if s != [vAC]:
-                _LDI(s); STW(T3)
+                _LDI(s); STW(T0)
                 maycross = maycross or (int(s) & 0xfc == 0xfc)
             if maycross:
-                extern('_@_fcopy')       # [T3..T3+5) --> [T2..]
-                _CALLJ('_@_fcopy')
+                extern('_@_fcopy_')       # [T0..T0+5) --> [T2..]
+                _CALLJ('_@_fcopy_')
             else:
-                extern('_@_fcopync')     # [T3..T3+5) --> [T2..]
-                _CALLJ('_@_fcopync')     # without page crossing!
+                extern('_@_fcopync_')     # [T0..T0+5) --> [T2..]
+                _CALLJ('_@_fcopync_')     # without page crossing!
 @vasm
 def _FADD():
     extern('_@_fadd')
@@ -2688,6 +2692,7 @@ def glink(argv):
         read_interface()
         create_zpage_map()
         create_register_names(args.regbase)
+        symdefs['_runbase'] = 0xc0
         symdefs['_regbase'] = args.regbase
         args.map = args.map or '32k'
         sm = args.map.split(',')

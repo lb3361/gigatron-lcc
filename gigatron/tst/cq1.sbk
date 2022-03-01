@@ -268,7 +268,7 @@ def code10():
 	label('.69');
 	_LDI('.45');STW(R22);
 	LDW(R6);_SHLI(2);ADDW(R22);STW(R22);
-	STW(T1);_MOVW(R22,[SP,-472+492]);LDW(T1) #genspill
+	STW(T3);_MOVW(R22,[SP,-472+492]);LDW(T3) #genspill
 	_MOVL([vAC],L8);
 	_MOVL(L8,[SP,4]);
 	CALLI('pow2');_MOVL(LAC,L20);
@@ -1076,7 +1076,7 @@ def code29():
 	LDW(R6);STW(R8);
 	_MOVW(R8,[SP,2]);
 	CALLI('svtest');STW(R22);
-	STW(T1);_MOVW(R22,[SP,-10+32]);LDW(T1) #genspill
+	STW(T3);_MOVW(R22,[SP,-10+32]);LDW(T3) #genspill
 	CALLI('zero');STW(R21);
 	_SP(-10+32);DEEK();XORW(R21);_BEQ('.478');
 	LDI(1);STW(R1);
@@ -3964,7 +3964,7 @@ def code73():
 	_SP(-90+112);STW(R22);
 	LDI(38);DOKE(R22);
 	_SP(-46+112);STW(R22);
-	STW(T1);_MOVW(R22,[SP,-96+112]);LDW(T1) #genspill
+	STW(T3);_MOVW(R22,[SP,-96+112]);LDW(T3) #genspill
 	LDI(2);STW(R21);
 	_SP(-44+112);STW(R20);
 	_SP(-88+112);STW(R22);
@@ -4148,7 +4148,7 @@ def code74():
 	_SP(-90+112);STW(R22);
 	_SP(-90+112);DOKE(R22);
 	_SP(-78+112);STW(R22);
-	STW(T1);_MOVW(R22,[SP,-96+112]);LDW(T1) #genspill
+	STW(T3);_MOVW(R22,[SP,-96+112]);LDW(T3) #genspill
 	LDI(2);STW(R21);
 	_SP(-44+112);STW(R20);
 	_SP(-88+112);STW(R22);
@@ -4386,7 +4386,7 @@ def code78():
 	LDI(0);STW(R10);
 	_MOVW(R10,[SP,6]);
 	CALLI('array');STW(R22);
-	STW(T1);_MOVW(R22,[SP,-132+156]);LDW(T1) #genspill
+	STW(T3);_MOVW(R22,[SP,-132+156]);LDW(T3) #genspill
 	_LDI('.1553');STW(R21);
 	LDW(R4);LSLW();LSLW();LSLW();LSLW();ADDW(R4);LSLW();ADDW(R4);LSLW();ADDW(R21);STW(R8);
 	_MOVW(R8,[SP,2]);
@@ -4395,7 +4395,7 @@ def code78():
 	LDI(35);STW(R10);
 	_MOVW(R10,[SP,6]);
 	CALLI('array');STW(R21);
-	STW(T1);_MOVW(R21,[SP,-134+156]);LDW(T1) #genspill
+	STW(T3);_MOVW(R21,[SP,-134+156]);LDW(T3) #genspill
 	_LDI('.1553');STW(R22);
 	LDW(R4);LSLW();LSLW();LSLW();LSLW();ADDW(R4);LSLW();ADDW(R4);LSLW();ADDW(R22);STW(R22);
 	LDW(R5);LSLW();ADDW(R5);LSLW();ADDW(R5);LSLW();ADDW(R22);STW(R8);

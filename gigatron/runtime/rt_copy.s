@@ -1,25 +1,25 @@
 def scope():
 
-    # LCOPY [T3..T3+3] --> [T2..]
+    # LCOPY [T0..T0+3] --> [T2..]
     # Since longs are even aligned,
     # we cannot cross a page boundary inside the DEEK/DOKE
 
     def code1():
         nohop()
-        label('_@_lcopy')
+        label('_@_lcopy_')
         if args.cpu >= 6:
-            DEEKV(T3);DOKE(T2)
-            ADDVI(2,T3);ADDVI(2,T2)
-            DEEKV(T3);DOKE(T2)
+            DEEKV(T0);DOKE(T2)
+            ADDVI(2,T0);ADDVI(2,T2)
+            DEEKV(T0);DOKE(T2)
         else:
-            LDW(T3);DEEK();DOKE(T2)
+            LDW(T0);DEEK();DOKE(T2)
             LDI(2);ADDW(T2);STW(T2)
-            LDI(2);ADDW(T3);DEEK();DOKE(T2)
+            LDI(2);ADDW(T0);DEEK();DOKE(T2)
         RET()
 
     module(name='rt_lcopy.s',
-           code=[ ('EXPORT', '_@_lcopy'),
-                  ('CODE', '_@_lcopy', code1) ] )
+           code=[ ('EXPORT', '_@_lcopy_'),
+                  ('CODE', '_@_lcopy_', code1) ] )
 
     # FCOPYZ LCOPYZ: Zero page copy for floats and longs
     #   with short call sequence:  LDWI(<dst><src>);CALLI
@@ -27,84 +27,84 @@ def scope():
     def code2():
         nohop()
         if args.cpu >= 6:
-            label('_@_fcopyz')
-            ST(T3);LD(vACH);STW(T2)
-            LD(T3);STW(T3)
-            label('_@_fcopync')
-            PEEKp(T3);POKEp(T2)
+            label('_@_fcopyz_')
+            ST(T0);LD(vACH);STW(T2)
+            LD(T0);STW(T0)
+            label('_@_fcopync_')
+            PEEKp(T0);POKEp(T2)
             BRA('.cont')
-            label('_@_lcopyz')
-            ST(T3);LD(vACH);STW(T2)
-            MOVQB(0, T3+1)
+            label('_@_lcopyz_')
+            ST(T0);LD(vACH);STW(T2)
+            MOVQB(0, T0+1)
             label('.cont')
-            DEEKp(T3);DOKEp(T2)
-            DEEKp(T3);DOKEp(T2)
+            DEEKp(T0);DOKEp(T2)
+            DEEKp(T0);DOKEp(T2)
             RET()
         else:
-            label('_@_fcopyz')
-            ST(T3);LD(vACH);STW(T2)
-            LD(T3);STW(T3);
-            label('_@_fcopync')
-            LDW(T3);PEEK();POKE(T2)
-            INC(T2);INC(T3);LDW(T3)
+            label('_@_fcopyz_')
+            ST(T0);LD(vACH);STW(T2)
+            LD(T0);STW(T0);
+            label('_@_fcopync_')
+            LDW(T0);PEEK();POKE(T2)
+            INC(T2);INC(T0);LDW(T0)
             BRA('.cont')
-            label('_@_lcopyz')
-            ST(T3);LD(vACH);STW(T2)
-            LD(T3);STW(T3)
+            label('_@_lcopyz_')
+            ST(T0);LD(vACH);STW(T2)
+            LD(T0);STW(T0)
             label('.cont')
             DEEK();DOKE(T2)
-            INC(T2);INC(T3)
-            INC(T2);INC(T3)
-            LDW(T3);DEEK();DOKE(T2)
+            INC(T2);INC(T0)
+            INC(T2);INC(T0)
+            LDW(T0);DEEK();DOKE(T2)
             RET()
 
     module(name='rt_copyz.s',
-           code=[ ('EXPORT', '_@_lcopyz'),
-                  ('EXPORT', '_@_fcopyz'),
-                  ('EXPORT', '_@_fcopync'),
-                  ('CODE', '_@_fcopyz', code2) ])
+           code=[ ('EXPORT', '_@_lcopyz_'),
+                  ('EXPORT', '_@_fcopyz_'),
+                  ('EXPORT', '_@_fcopync_'),
+                  ('CODE', '_@_fcopyz_', code2) ])
 
 
-    # FCOPY [T3..T3+5) --> [T2..T2+5)
-    # BCOPY [T3..T1) --> [T2..]
+    # FCOPY [T0..T0+5) --> [T2..T2+5)
+    # BCOPY [T0..T1) --> [T2..]
     # When we can rely on nothing.
     def code3():
         nohop()
-        label('_@_fcopy')
-        LDI(5);ADDW(T3);STW(T1)
-        label('_@_bcopy')
-        _PEEKV(T3);POKE(T2)
+        label('_@_fcopy_')
+        LDI(5);ADDW(T0);STW(T1)
+        label('_@_bcopy_')
+        _PEEKV(T0);POKE(T2)
         if args.cpu >= 6:
-            INCW(T2);INCW(T3);LDW(T3)
+            INCW(T2);INCW(T0);LDW(T0)
         else:
             LDI(1);ADDW(T2);STW(T2)
-            LDI(1);ADDW(T3);STW(T3)
-        XORW(T1);BNE('_@_bcopy')
+            LDI(1);ADDW(T0);STW(T0)
+        XORW(T1);BNE('_@_bcopy_')
         RET()
 
     module(name='rt_bcopy.s',
-           code=[ ('EXPORT', '_@_bcopy'),
-                  ('EXPORT', '_@_fcopy'),
-                  ('CODE', '_@_bcopy', code3) ])
+           code=[ ('EXPORT', '_@_bcopy_'),
+                  ('EXPORT', '_@_fcopy_'),
+                  ('CODE', '_@_bcopy_', code3) ])
 
-    # WCOPY [T3..T1) --> [T2..]
+    # WCOPY [T0..T1) --> [T2..]
     # Same as BCOPY but word aligned
 
     def code4():
         nohop()
-        label('_@_wcopy')
-        _DEEKV(T3);DOKE(T2)
+        label('_@_wcopy_')
+        _DEEKV(T0);DOKE(T2)
         if args.cpu >= 6:
-            ADDVI(2,T2);ADDVI(2,T3)
+            ADDVI(2,T2);ADDVI(2,T0)
         else:
             LDI(2);ADDW(T2);STW(T2)
-            LDI(2);ADDW(T3);STW(T3)
-        XORW(T1);BNE('_@_wcopy')
+            LDI(2);ADDW(T0);STW(T0)
+        XORW(T1);BNE('_@_wcopy_')
         RET()
 
     module(name='rt_wcopy.s',
-           code=[ ('EXPORT', '_@_wcopy'),
-                  ('CODE', '_@_wcopy', code4) ])
+           code=[ ('EXPORT', '_@_wcopy_'),
+                  ('CODE', '_@_wcopy_', code4) ])
 
     # LEXTS: (vAC<0) ? -1 : 0 --> vAC
     def code5():

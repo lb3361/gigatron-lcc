@@ -851,6 +851,12 @@ stmt: ASGNF5(spill,reg) "\tSTW(T3);_MOVF(%1,[SP,%0]);LDW(T3) #genspill\n" 0
 # More opcodes for cpu=6
 reg: LOADI1(reg)  "\t%{#keepsAC}MOVB(%0,%c)\n" mincpu6(28)
 reg: LOADU1(reg)  "\t%{#keepsAC}MOVB(%0,%c)\n" mincpu6(28)
+reg: LOADI2(reg)  "\t%{#keepsAC}MOVW(%0,%c)\n" mincpu6(22+30)
+reg: LOADU2(reg)  "\t%{#keepsAC}MOVW(%0,%c)\n" mincpu6(22+30)
+reg: LOADP2(reg)  "\t%{#keepsAC}MOVW(%0,%c)\n" mincpu6(22+30)
+reg: LOADP2(reg)  "\t%{#keepsAC}MOVW(%0,%c)\n" mincpu6(22+30)
+reg: LOADI4(reg)  "\t%{#keepsAC}MOVL(%0,%c)\n" mincpu6(22+40)
+reg: LOADU4(reg)  "\t%{#keepsAC}MOVL(%0,%c)\n" mincpu6(22+40)
 stmt: ASGNP2(ac,iarg)  "\t%0%[1b]DOKEA(%1);\n" mincpu6(30)
 stmt: ASGNI2(ac,iarg)  "\t%0%[1b]DOKEA(%1);\n" mincpu6(30)
 stmt: ASGNU2(ac,iarg)  "\t%0%[1b]DOKEA(%1);\n" mincpu6(30)
@@ -935,11 +941,11 @@ stmt: ASGNP2(rmw, SUBP2(INDIRP2(rmw), conB)) "\t%{#alsoVAC}SUBVI(%2,%0);\n" minc
 stmt: ASGNU2(rmw, SUBU2(INDIRU2(rmw), conB)) "\t%{#alsoVAC}SUBVI(%2,%0);\n" mincpu6(if_rmw(a, 50))
 stmt: ASGNI2(rmw, SUBI2(INDIRI2(rmw), conB)) "\t%{#alsoVAC}SUBVI(%2,%0);\n" mincpu6(if_rmw(a, 50))
 
-stmt: ASGNI2(rmw, conB) "\tMOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
-stmt: ASGNU2(rmw, conB) "\tMOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
-stmt: ASGNP2(rmw, conB) "\tMOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
-stmt: ASGNI1(rmw, conB) "\tMOVQB(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,27))
-stmt: ASGNU1(rmw, conB) "\tMOVQB(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,27))
+stmt: ASGNI2(rmw, conB) "\t%{#keepsAC}MOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
+stmt: ASGNU2(rmw, conB) "\t%{#keepsAC}MOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
+stmt: ASGNP2(rmw, conB) "\t%{#keepsAC}MOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
+stmt: ASGNI1(rmw, conB) "\t%{#keepsAC}MOVQB(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,27))
+stmt: ASGNU1(rmw, conB) "\t%{#keepsAC}MOVQB(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,27))
 
 
 

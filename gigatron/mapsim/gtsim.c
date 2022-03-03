@@ -266,6 +266,7 @@ unsigned int regbase = 0x80;
 #define vSP       (0x1c)
 #define sysFn     (0x22)
 #define sysArgs0  (0x24+0)
+#define B0        (0xc1)
 #define LAC       (0xc4)
 #define T0        (0xc8)
 #define R0        (regbase+0)
@@ -857,6 +858,9 @@ int disassemble(word addr, char **pm, char *operand)
           // more
         case 0x1a: *pm = "ADDLP"; return 2;
         case 0x1d: *pm = "SUBLP"; return 2;
+        case 0x20: *pm = "ANDLP"; return 2;
+        case 0x23: *pm = "ORLP"; return 2;
+        case 0x26: *pm = "XORLP"; return 2;
         default:
           return 2;
         }
@@ -881,6 +885,8 @@ int disassemble(word addr, char **pm, char *operand)
         case 0x34: *pm = "SMCPY"; goto oper8p2;
         case 0x37: *pm = "CMPWS"; goto oper8p2;
         case 0x39: *pm = "CMPWU"; goto oper8p2;
+        case 0x3b: *pm = "LEEKA"; goto oper8p2;
+        case 0x3d: *pm = "LOKEA"; goto oper8p2;
           // exp
         case 0xcd: *pm = "NCOPY"; goto oper8p2;
         oper8p2:
@@ -989,7 +995,7 @@ void print_trace(CpuState *S)
     fprintf(stderr, " vSP=%02x", peek(vSP));
   if (strchr(trace, 'l'))
     fprintf(stderr, " B[0-2]=%02x %02x %02x LAC=%08x",
-            peek(0x81), peek(0x82), peek(0x83), leek(0x84));
+            peek(B0), peek(B0+1), peek(B0+2), leek(LAC));
   if (strchr(trace, 't'))
     fprintf(stderr, " T[0-3]=%04x %04x %04x %04x",
             deek(T0), deek(T0+2), deek(T0+4), deek(T0+6));

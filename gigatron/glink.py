@@ -1277,6 +1277,15 @@ def ADDLP():
 @vasm
 def SUBLP():
     emit_prefx1(0x1d)
+@vasm
+def ANDLP():
+    emit_prefx1(0x20)
+@vasm
+def ORLP():
+    emit_prefx1(0x23)
+@vasm
+def XORLP():
+    emit_prefx1(0x26)
 
     
 
@@ -1746,16 +1755,25 @@ def _LCOM():
     _CALLJ('_@_lcom')               # ~LAC --> LAC
 @vasm
 def _LAND():
-    extern('_@_land')
-    _CALLI('_@_land')               # LAC&[vAC] --> LAC
+    if args.cpu >= 6:
+        ANDLP()
+    else:
+        extern('_@_land')
+        _CALLI('_@_land')       # LAC&[vAC] --> LAC
 @vasm
 def _LOR():
-    extern('_@_lor')
-    _CALLI('_@_lor')                # LAC|[vAC] --> LAC
+    if args.cpu >= 6:
+        ORLP()
+    else:
+        extern('_@_lor')
+        _CALLI('_@_lor')        # LAC|[vAC] --> LAC
 @vasm
 def _LXOR():
-    extern('_@_lxor')
-    _CALLI('_@_lxor')               # LAC^[vAC] --> LAC
+    if args.cpu >= 6:
+        XORLP()
+    else:
+        extern('_@_lxor')
+        _CALLI('_@_lxor')       # LAC^[vAC] --> LAC
 @vasm
 def _LCMPS():
     extern('_@_lcmps')
@@ -1766,16 +1784,25 @@ def _LCMPU():
     _CALLI('_@_lcmpu')              # SGN(LAC-[vAC]) --> vAC
 @vasm
 def _LCMPX():
-    extern('_@_lcmpx')
-    _CALLI('_@_lcmpx')              # TST(LAC-[vAC]) --> vAC
+    if args.cpu >= 6:
+        XORLP()
+    else:
+        extern('_@_lcmpx')
+        _CALLI('_@_lcmpx')      # TST(LAC-[vAC]) --> vAC
 @vasm
-def _LCVI():
-    extern('_@_lcvi')               # vAC --> LAC
-    _CALLI('_@_lcvi')
+def _STLU(d):
+    if args.cpu >= 6:
+        STW(d);MOVQW(0,d+2)
+    else:
+        STW(d);LDI(0);STW(d+2);
 @vasm
-def _LEXTS():
-    extern('_@_lexts')              # (vAC<0) ? -1 : 0 --> vAC
-    _CALLI('_@_lexts')
+def _STLS(d):
+    if d == vAC:
+        extern('_@_lcvi')       # vAC --> LAC
+        _CALLI('_@_lcvi')
+    else:
+        extern('_@_lexts')      # (vAC<0) ? -1 : 0 --> vAC
+        STW(d);_CALLI('_@_lexts');STW(d+2)
 @vasm
 def _MOVF(s,d): # was _FMOV
     '''Move float from reg s to d with special cases when s or d is FAC.

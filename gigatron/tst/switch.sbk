@@ -32,9 +32,9 @@ def code0():
 	_MOVW(R8,[SP,2]);
 	CALLI('big');
 	label('.9');
-	LDW(R6);_LCVI();_LDI('.12');_LADD();LDW(LAC);STW(R6);
+	LDW(R6);_STLS(LAC);_LDI('.12');_LADD();LDW(LAC);STW(R6);
 	label('.11');
-	LDW(R6);_LCVI();_LDI('.13');_LAND();_LDI('.14');_LCMPX();_BNE('.8');
+	LDW(R6);_STLS(LAC);_LDI('.13');_LAND();_LDI('.14');_LCMPX();_BNE('.8');
 	CALLI('limit');
 	LDI(0);
 	label('.1');
@@ -409,7 +409,7 @@ def code9():
 	label('big');
 	_PROLOGUE(12,6,0xe0); # save=R5-7
 	LDW(R8);STW(R7);
-	LDW(R7);STW(LAC);LDI(0);STW(LAC+2);_LDI('.112');_LAND();_MOVL(LAC,L5);
+	LDW(R7);_STLU(LAC);_LDI('.112');_LAND();_MOVL(LAC,L5);
 	_MOVL('.120',L21);
 	_MOVL(L5,LAC);LDI(L21);_LCMPX();_BEQ('.115');
 	_MOVL(L5,LAC);LDI(L21);_LCMPS();_BGT('.119');

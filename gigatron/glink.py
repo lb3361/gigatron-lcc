@@ -1272,13 +1272,11 @@ def MOVF(s,d):
 def NCOPY(n):
     emit_prefx2(0xcd, check_zp(n))
 @vasm
-def NPEEKAp(n,v):
-    v = check_zp(v)
-    emit_prefx3(0xd3, (v+n) & 0xff, v)
+def ADDLP():
+    emit_prefx1(0x1a)
 @vasm
-def NPOKEAp(n,v):
-    v = check_zp(v)
-    emit_prefx3(0xd6, (v+n) & 0xff, v)
+def SUBLP():
+    emit_prefx1(0x1d)
 
     
 
@@ -1694,16 +1692,22 @@ def _MOVL(s,d): # was _LMOV
             _CALLJ('_@_lcopy_')  # [T0..T0+4) --> [T2..T2+4)
 @vasm
 def _LADD():
-    extern('_@_ladd')              
-    _CALLI('_@_ladd')              # LAC+[vAC] --> LAC
+    if args.cpu >= 6:
+        ADDLP()
+    else:
+        extern('_@_ladd')
+        _CALLI('_@_ladd')       # LAC+[vAC] --> LAC
 @vasm
 def _LSUB():
-    extern('_@_lsub') 
-    _CALLI('_@_lsub')              # LAC-[vAC] --> LAC
+    if args.cpu >= 6:
+        SUBLP()
+    else:
+        extern('_@_lsub')
+        _CALLI('_@_lsub')       # LAC-[vAC] --> LAC
 @vasm
 def _LMUL():
     extern('_@_lmul')
-    _CALLI('_@_lmul')              # LAC*[vAC] --> LAC
+    _CALLI('_@_lmul')               # LAC*[vAC] --> LAC
 @vasm
 def _LDIVS():
     extern('_@_ldivs')

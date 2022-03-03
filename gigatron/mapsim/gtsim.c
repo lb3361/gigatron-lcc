@@ -854,6 +854,9 @@ int disassemble(word addr, char **pm, char *operand)
         case 0x11: *pm = "NOTE"; return 2;
         case 0x14: *pm = "MIDI"; return 2;
         case 0x17: *pm = "XLA"; return 2;
+          // more
+        case 0x1a: *pm = "ADDLP"; return 2;
+        case 0x1d: *pm = "SUBLP"; return 2;
         default:
           return 2;
         }
@@ -918,8 +921,6 @@ int disassemble(word addr, char **pm, char *operand)
           // exp
         case 0xcd:  *pm = "MOVL"; goto oper88p3;
         case 0xd0:  *pm = "MOVF"; goto oper88p3;
-        case 0xd3:  *pm = "NDEEKA+"; goto oper88p3n;
-        case 0xd6:  *pm = "NDOKEA+"; goto oper88p3n;
         oper16p3:
           sprintf(operand, "$%02x%02x", peek(addlo(addr,1)),peek(addlo(addr,3)));
           return 4;

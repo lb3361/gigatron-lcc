@@ -42,14 +42,17 @@ def scope():
                 label('.ldw3');LSLW();STW(T2)
             
             _CALLJ('__@lcmpu_t0t1');_BLT('.ldiv1')
-            _CALLJ('__@lsub_t0t1');INC(T2)
+            if args.cpu >= 6:
+                LDI(T0);SUBLP();INC(T2)
+            else:
+                _CALLJ('__@lsub_t0t1');INC(T2)
             label('.ldiv1')
             INC(B1);LD(B1);XORI(32);_BNE('.ldiv0')
             tryhop(2);POP();RET()
 
         module(name='rt_ldivworker.s',
                code=[ ('EXPORT', '__@ldivworker'),
-                      ('IMPORT', '__@lsub_t0t1'),
+                      ('IMPORT', '__@lsub_t0t1') if args.cpu < 6 else ('NOP',),
                       ('IMPORT', '__@lcmpu_t0t1'),
                       ('CODE', '__@ldivworker', code_ldivworker) ])
 

@@ -812,8 +812,11 @@ def scope():
         label('.fdl1')
         _CALLJ('__@amshl1')
         label('.fdl2')
-        LDW(AM+3);_CMPWU(BM+2);_BGT('.fdl3');BLT('.fdl4')
-        LDW(AM+1);_CMPWU(BM);BLT('.fdl4')
+        if args.cpu >= 6:
+            LDI(BM);CMPLPU();_BLT('.fdl4')
+        else:
+            LDW(AM+3);_CMPWU(BM+2);_BGT('.fdl3');_BLT('.fdl4')
+            LDW(AM+1);_CMPWU(BM);_BLT('.fdl4')
         label('.fdl3')
         INC(CM)
         if args.cpu >= 6:
@@ -830,8 +833,11 @@ def scope():
         PUSH()
         LDW(AM+3);_BLT('.fdr1')
         _CALLJ('__@amshl1')
-        LDW(AM+3);_CMPWU(BM+2);_BGT('.fdr1');BLT('.fdr0')
-        LDW(AM+1);_CMPWU(BM);BLT('.fdr0')
+        if args.cpu >= 6:
+            LDI(BM);CMPLPU();_BLT('.fdr0')
+        else:
+            LDW(AM+3);_CMPWU(BM+2);_BGT('.fdr1');_BLT('.fdr0')
+            LDW(AM+1);_CMPWU(BM);_BLT('.fdr0')
         label('.fdr1')
         LDI(1);ADDW(CM);STW(CM);_BNE('.fdr0')
         LDI(1);ADDW(CM+2);STW(CM+2);_BNE('.fdr0')

@@ -1287,6 +1287,12 @@ def ORLP():
 def XORLP():
     emit_prefx1(0x26)
 @vasm
+def CMPLPU():
+    emit_prefx1(0x29)
+@vasm
+def CMPLPS():
+    emit_prefx1(0x2c)
+@vasm
 def STLU(n):
     emit_prefx2(0xd0, check_zp(n))
 @vasm
@@ -1782,12 +1788,18 @@ def _LXOR():
         _CALLI('_@_lxor')       # LAC^[vAC] --> LAC
 @vasm
 def _LCMPS():
-    extern('_@_lcmps')
-    _CALLI('_@_lcmps')              # SGN(LAC-[vAC]) --> vAC
+    if args.cpu >= 6:
+        CMPLPS()
+    else:
+        extern('_@_lcmps')
+        _CALLI('_@_lcmps')      # SGN(LAC-[vAC]) --> vAC
 @vasm
 def _LCMPU():
-    extern('_@_lcmpu')
-    _CALLI('_@_lcmpu')              # SGN(LAC-[vAC]) --> vAC
+    if args.cpu >= 6:
+        CMPLPU()
+    else:
+        extern('_@_lcmpu')
+        _CALLI('_@_lcmpu')      # SGN(LAC-[vAC]) --> vAC
 @vasm
 def _LCMPX():
     if args.cpu >= 6:

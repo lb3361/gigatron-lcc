@@ -861,6 +861,8 @@ int disassemble(word addr, char **pm, char *operand)
         case 0x20: *pm = "ANDLP"; return 2;
         case 0x23: *pm = "ORLP"; return 2;
         case 0x26: *pm = "XORLP"; return 2;
+        case 0x29: *pm = "CMPLPU"; return 2;
+        case 0x2c: *pm = "CMPLPS"; return 2;
         default:
           return 2;
         }

@@ -41,10 +41,11 @@ def scope():
                 LDI(1);ORW(T2+2);STW(T2+2);LDW(T2)
                 label('.ldw3');LSLW();STW(T2)
             
-            _CALLJ('__@lcmpu_t0t1');_BLT('.ldiv1')
             if args.cpu >= 6:
+                LDI(T0);CMPLPU();BLT('.ldiv1')
                 LDI(T0);SUBLP();INC(T2)
             else:
+                _CALLJ('__@lcmpu_t0t1');_BLT('.ldiv1')
                 _CALLJ('__@lsub_t0t1');INC(T2)
             label('.ldiv1')
             INC(B1);LD(B1);XORI(32);_BNE('.ldiv0')

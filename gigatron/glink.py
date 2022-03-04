@@ -1118,10 +1118,10 @@ def LSRVL(d): # revisit
 def LSLVL(d): # revisit
     emit_prefx2(0x4b, check_zp(d))
 @vasm
-def INCL(d): # revisit
+def INCL(d):
     emit_prefx2(0x4e, check_zp(d))
 @vasm
-def DECL(d): # revisit
+def DECL(d):
     emit_prefx2(0x51, check_zp(d))
 
 # -- prefix3 instructions

@@ -1002,11 +1002,11 @@ void print_trace(CpuState *S)
     fprintf(stderr, " T[0-3]=%04x %04x %04x %04x",
             deek(T0), deek(T0+2), deek(T0+4), deek(T0+6));
   if (strchr(trace, 'f')) {
-    int as = peek(0x81);
-    int ae = peek(0x82);
-    int64_t am = leek(0x83) + ((int64_t)peek(0x87) << 32);
-    int be = peek(0x8d);
-    int64_t bm = leek(0x88) + ((int64_t)peek(0x8c) << 32);
+    int as = peek(B0);
+    int ae = peek(B0+1);
+    int64_t am = leek(LAC-1) + ((int64_t)peek(LAC+3) << 32);
+    int be = peek(T0+5);
+    int64_t bm = leek(T0) + ((int64_t)peek(T0+4) << 32);
     fprintf(stderr, "\n\t AS=%02x AE=%02x AM=%010llx BE=%02x BM=%010llx\n\t FAC=%.8g FARG=%.8g",
             as, ae, (long long)am, be, (long long)bm,
             ((as&0x80) ? -1.0 : +1.0) * ((ae) ? ldexp((double)am, ae-168) : 0.0),

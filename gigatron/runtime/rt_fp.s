@@ -556,7 +556,11 @@ def scope():
     def code_amaddbm():
         nohop()
         label('__@amaddbm')
-        if args.cpu <= 5:
+        if args.cpu >= 6:
+            LDI(BM+1);ADDLP() # four high bytes of AM/BM
+            LD(AM);ADDBA(BM);ST(AM)
+            LD(vACH);BEQ('.a1');INCL(AM+1);label('.a1')
+        else:
             LD(AM);ADDW(BM);ST(AM);LD(vACH)
             BNE('.a1');LD(BM+1);BEQ('.a1');LDWI(0x100);label('.a1')
             ADDW(AM+1);ST(AM+1);LD(vACH)
@@ -565,12 +569,6 @@ def scope():
             BNE('.a3');LD(BM+3);BEQ('.a3');LDWI(0x100);label('.a3')
             ADDW(AM+3);ST(AM+3);LD(vACH)
             ADDW(BM+4);ST(AM+4)
-        else:
-            LD(BM);ADDBA(AM);ST(AM);LD(vACH)
-            ADDBA(BM+1);ADDBA(AM+1);ST(AM+1);LD(vACH)
-            ADDBA(BM+2);ADDBA(AM+2);ST(AM+2);LD(vACH)
-            ADDBA(BM+3);ADDBA(AM+3);ST(AM+3);LD(vACH)
-            ADDBA(BM+4);ADDBA(AM+4);ST(AM+4)
         RET()
 
     module(name='rt_amaddbm.s',
@@ -778,44 +776,23 @@ def scope():
 
     # ==== division
 
-    def code_amcmpbm32():
-        # bm high byte is assumed zero but never accessed
-        nohop()
-        label('__@amcmpbm32')
-        LD(BM+3);SUBW(AM+3);BLT('.gt');BGT('.lt')
-        LDW(BM+1);_CMPWU(AM+1);BLT('.gt');BGT('.lt')
-        LDW(BM);_CMPWU(AM);BLT('.gt');BGT('.lt')
-        RET()
-        label('.gt');LDI(1);RET()
-        label('.lt');_LDI(-1);RET()
-
-    module(name='rt_amcmpbm32.s',
-           code=[ ('EXPORT', '__@amcmpbm32'),
-                  ('CODE', '__@amcmpbm32', code_amcmpbm32) ] )
-
     def code_amsubbm32():
-        # bm high byte is assumed zero but never accessed
+        # subtract BM<<8 from AM
         nohop()
-        label('__@amsubbm32')
-        if args.cpu <= 5:
-            # alternating pattern
-            LD(AM);SUBW(BM);ST(AM);LD(vACH)
-            BNE('.a1');LD(BM+1);XORI(255);BEQ('.a1');LDWI(0x100);label('.a1')
-            ADDW(AM+1);ST(AM+1);LD(vACH)
-            BNE('.a2');LD(AM+2);BEQ('.a2');LDWI(0x100);label('.a2')
-            SUBI(1);SUBW(BM+2);ST(AM+2);LD(vACH)
-            BNE('.a3');LD(BM+3);XORI(255);BEQ('.a3');LDWI(0x100);label('.a3')
-            ADDW(AM+3);ST(AM+3);LD(vACH);SUBI(1);ST(AM+4)
-        else:
-            LD(AM);SUBBA(BM);ST(AM);LD(vACH);ST(vACH)
-            ADDBA(AM+1);SUBBA(BM+1);ST(AM+1);LD(vACH);ST(vACH)
-            ADDBA(AM+2);SUBBA(BM+2);ST(AM+2);LD(vACH);ST(vACH)
-            ADDW(AM+3);SUBBA(BM+3);STW(AM+3)
+        label('__@amsubbm32_')
+        # alternating pattern
+        LD(AM+1);SUBW(BM);ST(AM+1);LD(vACH)
+        BNE('.a1');LD(BM+1);XORI(255);BEQ('.a1');LDWI(0x100);label('.a1')
+        ADDW(AM+2);ST(AM+2);LD(vACH)
+        BNE('.a2');LD(AM+3);BEQ('.a2');LDWI(0x100);label('.a2')
+        SUBI(1);SUBW(BM+2);ST(AM+3);LD(vACH)
+        BNE('.a3');LD(BM+3);XORI(255);BEQ('.a3');LDWI(0x100);label('.a3')
+        ADDW(AM+4);ST(AM+4)
         RET()
         
     module(name='rt_amsubbm32.s',
-           code=[ ('EXPORT', '__@amsubbm32'),
-                  ('CODE', '__@amsubbm32', code_amsubbm32) ] )
+           code=[ ('EXPORT', '__@amsubbm32_'),
+                  ('CODE', '__@amsubbm32_', code_amsubbm32) ] )
 
     def code_fdivloop():
         '''LDLW(2) is the quotient exponent which is 
@@ -824,30 +801,38 @@ def scope():
            either the high bit is set or LDLW(2) reaches 0.'''
         label('__@fdivloop')
         PUSH()
-        _CALLJ('__@amshr8')              # - working with the low 32 bits of AM
-        _CALLJ('__@bmshr8')              #   and the low 32 bits of BM
+        _CALLJ('__@bmshr8')              # - working with the low 32 bits of BM
         LDI(0);STW(CM);STW(CM+2)         #   makes room for CM
-        _BRA('.fdl1')
+        _BRA('.fdl2')
         label('.fdl0')
-        LDLW(2);SUBI(1);_BLT('.fdl3');STLW(2)
-        _CALLJ('__@amshl1')
+        LDLW(2);SUBI(1);_BLT('.fdl5');STLW(2)
         _CALLJ('__@cmshl1')
+        LDW(AM+3);BGE('.fdl1')
+        _CALLJ('__@amshl1');_BRA('.fdl3')
         label('.fdl1')
-        _CALLJ('__@amcmpbm32')
-        _BLT('.fdl2')
-        INC(CM)
-        _CALLJ('__@amsubbm32')
+        _CALLJ('__@amshl1')
         label('.fdl2')
-        LDW(CM+2);_BGE('.fdl0')
+        LDW(AM+3);_CMPWU(BM+2);_BGT('.fdl3');BLT('.fdl4')
+        LDW(AM+1);_CMPWU(BM);BLT('.fdl4')
         label('.fdl3')
+        INC(CM)
+        if args.cpu >= 6:
+            LDI(BM);SUBLP()
+        else:
+            _CALLJ('__@amsubbm32_')
+        label('.fdl4')
+        LDW(CM+2);_BGE('.fdl0')
+        label('.fdl5')
         tryhop(2);POP();RET()
 
     def code_fdivrnd():
         label('__@fdivrnd')
         PUSH()
+        LDW(AM+3);_BLT('.fdr1')
         _CALLJ('__@amshl1')
-        _CALLJ('__@amcmpbm32')
-        _BLT('.fdr0')
+        LDW(AM+3);_CMPWU(BM+2);_BGT('.fdr1');BLT('.fdr0')
+        LDW(AM+1);_CMPWU(BM);BLT('.fdr0')
+        label('.fdr1')
         LDI(1);ADDW(CM);STW(CM);_BNE('.fdr0')
         LDI(1);ADDW(CM+2);STW(CM+2);_BNE('.fdr0')
         _LDI(0xffff);STW(CM);STW(CM+2)
@@ -861,8 +846,7 @@ def scope():
                   ('IMPORT', '__@cmshl1'),
                   ('IMPORT', '__@amshr8'),
                   ('IMPORT', '__@bmshr8'),
-                  ('IMPORT', '__@amcmpbm32'),
-                  ('IMPORT', '__@amsubbm32'),
+                  ('IMPORT', '__@amsubbm32_') if args.cpu < 6 else ('NOP',),
                   ('CODE', '__@fdivloop', code_fdivloop),
                   ('CODE', '__@fdivrnd', code_fdivrnd) ] )
         
@@ -951,7 +935,6 @@ def scope():
         LD(BE);ST(AE)
         _CALLJ('__@fdivloop')
         LDLW(0);ALLOC(2);_BNE('.zero')
-        _CALLJ('__@amshl8')
         _CALLJ('__@fnorm')
         label('.ret')
         LDW(CM)

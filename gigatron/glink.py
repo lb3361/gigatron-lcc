@@ -1286,6 +1286,12 @@ def ORLP():
 @vasm
 def XORLP():
     emit_prefx1(0x26)
+@vasm
+def STLU(n):
+    emit_prefx2(0xd0, check_zp(n))
+@vasm
+def STLS(n):
+    emit_prefx2(0xd3, check_zp(n))
 
     
 
@@ -1792,12 +1798,14 @@ def _LCMPX():
 @vasm
 def _STLU(d):
     if args.cpu >= 6:
-        STW(d);MOVQW(0,d+2)
+        STLU(d)
     else:
         STW(d);LDI(0);STW(d+2);
 @vasm
 def _STLS(d):
-    if d == vAC:
+    if args.cpu >= 6:
+        STLS(d)
+    elif d == vAC:
         extern('_@_lcvi')       # vAC --> LAC
         _CALLI('_@_lcvi')
     else:

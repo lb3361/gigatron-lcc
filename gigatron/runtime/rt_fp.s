@@ -430,11 +430,16 @@ def scope():
     def code_amneg():
         nohop()
         label('__@amneg')
-        LDI(0xff);XORW(AM+4);ST(AM+4)
-        _LDI(0xffff);XORW(AM+2);STW(AM+2)
-        _LDI(0xffff);XORW(AM);ADDI(1);STW(AM);BNE('.ret')
-        LDI(1);ADDW(AM+2);STW(AM+2);BNE('.ret')
-        INC(AM+4)
+        if args.cpu >= 6:
+            NEGL(AM);XORBI(0xff,AM+4)
+            LDW(AM);ORW(AM+2);_BNE('.ret')
+            INC(AM+4)
+        else:
+            LDI(0xff);XORW(AM+4);ST(AM+4)
+            _LDI(0xffff);XORW(AM+2);STW(AM+2)
+            _LDI(0xffff);XORW(AM);ADDI(1);STW(AM);BNE('.ret')
+            LDI(1);ADDW(AM+2);STW(AM+2);BNE('.ret')
+            INC(AM+4)
         label('.ret')
         RET()
 
@@ -987,8 +992,11 @@ def scope():
         LD(BE);SUBW(AE)     # - [AE+1] = [AM] = 0 because of _@_rndfac above
         _BLT('.plus');_BGT('.minus')
         label('.fcmp2')     # comparing mantissa
-        LDW(AM+3);_CMPWU(BM+3);_BLT('.minus');_BGT('.plus')
-        LDW(AM+1);_CMPWU(BM+1);_BLT('.minus');_BGT('.plus')
+        if args.cpu >= 6:
+            LDI(BM+1);CMPLPU();_BLT('.minus');_BGT('.plus')
+        else:
+            LDW(AM+3);_CMPWU(BM+3);_BLT('.minus');_BGT('.plus')
+            LDW(AM+1);_CMPWU(BM+1);_BLT('.minus');_BGT('.plus')
         label('.zero')
         LDI(0);tryhop(2);POP();RET()
 

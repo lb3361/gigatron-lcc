@@ -893,6 +893,8 @@ int disassemble(word addr, char **pm, char *operand)
         case 0xcd: *pm = "NCOPY"; goto oper8p2;
         case 0xd0: *pm = "STLU"; goto oper8p2;
         case 0xd3: *pm = "STLS"; goto oper8p2;
+        case 0xd6: *pm = "NOTL"; goto oper8p2;
+        case 0xd9: *pm = "NEGL"; goto oper8p2;
         oper8p2:
           sprintf(operand, "$%02x", peek(addlo(addr,1)));
         default:

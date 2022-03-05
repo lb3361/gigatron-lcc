@@ -1,6 +1,6 @@
 def scope():
 
-    # T3<<T2 -> vAC
+    # T3<<vAC -> vAC
     def code0():
         label('_@_shl')
         PUSH();STW(T2);_BEQ('.ret')

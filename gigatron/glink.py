@@ -1082,15 +1082,15 @@ def MODZ(d):
     '''MODZ: [(((imm & 3) + 1) <<8) | 0x00FA] = 0x0200, imm = [0..3], 22 + 24 cycles'''
     emit_prefx2(0x32, check_zp(d))
 @vasm
-def SMPCPY(d): # doc?
+def SMPCPY(d):                  # doc?
     '''SMPCPY: ???'''
     emit_prefx2(0x34, check_zp(d))
 @vasm
-def CMPWS(d):
+def CMPWS(d):                   # not using, broken
     '''CMPWS: CMPHS + SUBW'''
     emit_prefx2(0x37, check_zp(d))
 @vasm
-def CMPWU(d):
+def CMPWU(d):                   # not using, broken
     '''CMPWU: CMPHU + SUBW'''
     emit_prefx2(0x39, check_zp(d))
 @vasm
@@ -1100,22 +1100,22 @@ def LEEKA(d):
 def LOKEA(d):
     emit_prefx2(0x3d, check_zp(d))
 @vasm
-def FEEKA(d): # not using
+def FEEKA(d):                   # not using
     emit_prefx2(0x3f, check_zp(d))
 @vasm
-def FOKEA(d): # not using
+def FOKEA(d):                   # not using
     emit_prefx2(0x42, check_zp(d))
 @vasm
-def MEEKA(d): # not using
+def MEEKA(d):                   # not using
     emit_prefx2(0x44, check_zp(d))
 @vasm
-def MOKEA(d): # not using
+def MOKEA(d):                   # not using
     emit_prefx2(0x46, check_zp(d))
 @vasm
-def LSRVL(d): # revisit
+def LSRVL(d):                   # revisit
     emit_prefx2(0x48, check_zp(d))
 @vasm
-def LSLVL(d): # revisit
+def LSLVL(d):                   # revisit
     emit_prefx2(0x4b, check_zp(d))
 @vasm
 def INCL(d):
@@ -1126,7 +1126,7 @@ def DECL(d):
 
 # -- prefix3 instructions
 @vasm
-def STB2(d): # was ST2
+def STB2(d):                    # was ST2
     '''STB2: Store vAC.lo into 16bit immediate address, (22 + 20 cycles)'''
     d=int(v(d)); emit_prefx3(0x11, lo(d), hi(d))
 @vasm
@@ -1134,7 +1134,7 @@ def STW2(d):
     '''STW2: Store vAC into 16bit immediate address, (22 + 22 cycles)'''
     d=int(v(d)); emit_prefx3(0x14, lo(d), hi(d))
 @vasm
-def XCHGB(s,d): # was XCHG
+def XCHGB(s,d):                 # was XCHG
     '''XCHG: Swap two zero byte variables, (22 + 30 cycles)'''
     emit_prefx3(0x17, check_zp(s), check_zp(d))
 @vasm
@@ -1190,57 +1190,57 @@ def XCHGW(s,d):
     '''XCHGW: Exchange two zero word variables, 22 + 46 cycles, destroys vAC'''
     emit_prefx3(0x35, check_zp(d), check_zp(s))
 @vasm
-def OSCPX(s, d): # doc? correct?
+def OSCPX(s, d):                # doc? correct?
     '''OSCPX: '''
     emit_prefx3(0x38, check_zp(d), check_zp(s))
 @vasm
-def SWAPB(s, d): # doc?
+def SWAPB(s, d):                # doc?
     '''SWAPB: swap bytes pointed to by vars s and d, 22 + 46 cycles'''
     emit_prefx3(0x3a, check_zp(d), check_zp(s))
 @vasm
-def SWAPW(s, d): # doc?
+def SWAPW(s, d):                # doc?
     '''SWAPW: swap words pointed to by vars s and d, 22 + 46 cycles'''
     emit_prefx3(0x3d, check_zp(d), check_zp(s))
 @vasm
-def NEEKA(n, d): # not using
+def NEEKA(n, d):                # not using
     '''NEEKA: Peek <n> bytes from [vAC] into [var], 22 + 34*n + 24 cycles'''
     emit_prefx3(0x40, check_zp(d), check_zp(n))
 @vasm
-def NOKEA(n, d): # not using
+def NOKEA(n, d):                # not using
     '''Poke <n> bytes from [var] into [vAC], 22 + 34*n + 24 cycles'''
     emit_prefx3(0x43, check_zp(d), check_zp(n))
 @vasm
-def ADDVL(s, d): #revisit
+def ADDVL(s, d):                # not using, broken
     emit_prefx3(0x46, check_zp(s), check_zp(d))
 @vasm
-def SUBVL(s, d): #revisit
+def SUBVL(s, d):                # not using, broken
     emit_prefx3(0x49, check_zp(s), check_zp(d))
 @vasm
-def ANDVL(s, d): #revisit
+def ANDVL(s, d):                # not using
     emit_prefx3(0x4c, check_zp(s), check_zp(d))
 @vasm
-def ORVL(s, d): #revisit
+def ORVL(s, d):                 # not using
     emit_prefx3(0x4f, check_zp(s), check_zp(d))
 @vasm
-def XORVL(s, d): #revisit
+def XORVL(s, d):                # not using
     emit_prefx3(0x52, check_zp(s), check_zp(d))
 @vasm
-def JEQL(d):
+def JEQL(d):                    # not using
     d = int(v(d)); emit_prefx3(0x55, hi(d), lo(d-2))
 @vasm
-def JNEL(d):
+def JNEL(d):                    # not using
     d = int(v(d)); emit_prefx3(0x58, hi(d), lo(d-2))
 @vasm
-def JLTL(d):
+def JLTL(d):                    # not using
     d = int(v(d)); emit_prefx3(0x5b, hi(d), lo(d-2))
 @vasm
-def JGTL(d):
+def JGTL(d):                    # not using
     d = int(v(d)); emit_prefx3(0x5e, hi(d), lo(d-2))
 @vasm
-def JLEL(d):
+def JLEL(d):                    # not using
     d = int(v(d)); emit_prefx3(0x61, hi(d), lo(d-2))
 @vasm
-def JGEL(d):
+def JGEL(d):                    # not using
     d = int(v(d)); emit_prefx3(0x64, lo(d-2), hi(d))
 @vasm
 def ANDBI(imm,d):
@@ -1293,11 +1293,17 @@ def CMPLPU():
 def CMPLPS():
     emit_prefx1(0x2c)
 @vasm
-def STLU(n):
-    emit_prefx2(0xd0, check_zp(n))
+def STLU(d):
+    emit_prefx2(0xd0, check_zp(d))
 @vasm
-def STLS(n):
-    emit_prefx2(0xd3, check_zp(n))
+def STLS(d):
+    emit_prefx2(0xd3, check_zp(d))
+@vasm
+def NOTL(d):
+    emit_prefx2(0xd6, check_zp(d))
+@vasm
+def NEGL(d):
+    emit_prefx2(0xd9, check_zp(d))
 
     
 
@@ -1728,23 +1734,23 @@ def _LSUB():
 @vasm
 def _LMUL():
     extern('_@_lmul')
-    _CALLI('_@_lmul')               # LAC*[vAC] --> LAC
+    _CALLI('_@_lmul')           # LAC*[vAC] --> LAC
 @vasm
 def _LDIVS():
     extern('_@_ldivs')
-    _CALLI('_@_ldivs')              # LAC/[vAC] --> LAC
+    _CALLI('_@_ldivs')          # LAC/[vAC] --> LAC
 @vasm
 def _LDIVU():
     extern('_@_ldivu')
-    _CALLI('_@_ldivu')              # LAC/[vAC] --> LAC
+    _CALLI('_@_ldivu')          # LAC/[vAC] --> LAC
 @vasm
 def _LMODS():
     extern('_@_lmods')
-    _CALLI('_@_lmods')              # LAC%[vAC] --> LAC
+    _CALLI('_@_lmods')          # LAC%[vAC] --> LAC
 @vasm
 def _LMODU():
     extern('_@_lmodu')
-    _CALLI('_@_lmodu')              # LAC%[vAC] --> LAC
+    _CALLI('_@_lmodu')          # LAC%[vAC] --> LAC
 @vasm
 def _LSHL():
     extern('_@_lshl')
@@ -1759,12 +1765,18 @@ def _LSHRU():
     _CALLI('_@_lshru')              # LAC>>vAC --> LAC
 @vasm
 def _LNEG():
-    extern('_@_lneg')
-    _CALLJ('_@_lneg')              # -LAC --> LAC
+    if args.cpu >= 6:
+        NEGL(LAC)
+    else:
+        extern('_@_lneg')
+        _CALLJ('_@_lneg')       # -LAC --> LAC
 @vasm
 def _LCOM():
-    extern('_@_lcom')
-    _CALLJ('_@_lcom')               # ~LAC --> LAC
+    if args.cpu >= 6:
+        NOTL(LAC)
+    else:
+        extern('_@_lcom')
+        _CALLJ('_@_lcom')       # ~LAC --> LAC
 @vasm
 def _LAND():
     if args.cpu >= 6:

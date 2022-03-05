@@ -111,19 +111,25 @@ def scope():
         PUSH()
         LDI(0);ST(B2)
         LDW(LAC+2);_BGE('.lds1')
-        _CALLJ('_@_lneg')
+        if args.cpu >= 6:
+            NEGL(LAC)
+        else:
+            _CALLJ('_@_lneg')
         LD(B2);XORI(0x81);ST(B2)
         label('.lds1')
         LDW(T0+2);_BGE('.lds2')
-        _CALLJ('__@lneg_t0t1')
+        if args.cpu >= 6:
+            NEGL(T0)
+        else:
+            _CALLJ('__@lneg_t0t1')
         LD(B2);XORI(0x80);ST(B2)
         label('.lds2')
         tryhop(2);POP();RET()
 
     module(name='rt_ldivsign.s',
            code=[ ('EXPORT', '__@ldivsign'),
-                  ('IMPORT', '__@lneg_t0t1'),
-                  ('IMPORT', '_@_lneg'),
+                  ('IMPORT', '__@lneg_t0t1') if args.cpu < 6 else ('NOP',),
+                  ('IMPORT', '_@_lneg') if args.cpu < 6 else ('NOP',),
                   ('CODE',   '__@ldivsign', code_ldivsign) ] )
 
     def code_ldivs():
@@ -135,7 +141,10 @@ def scope():
         CallWorker()
         LDW(T2);STW(LAC);LDW(T2+2);STW(LAC+2)
         LD(B2);ANDI(0x80);_BEQ('.ret')
-        _CALLJ('_@_lneg')
+        if args.cpu >= 6:
+            NEGL(LAC)
+        else:
+            _CALLJ('_@_lneg')
         label('.ret')
         tryhop(2);POP();RET()
 
@@ -143,7 +152,7 @@ def scope():
            code=[ ('EXPORT', '_@_ldivs'),
                   ('IMPORT', '__@ldivprep'),
                   ('IMPORT', '__@ldivsign'),
-                  ('IMPORT', '_@_lneg'),
+                  ('IMPORT', '_@_lneg') if args.cpu < 6 else ('NOP',),
                   ('CODE',   '_@_ldivs', code_ldivs) ] + morecode )
 
     def code_lmods():
@@ -156,10 +165,16 @@ def scope():
         CallWorker()
         LDW(T2);STW(T0);LDW(T2+2);STW(T0+2)
         LD(B2);ANDI(0x80);_BEQ('.lms1')
-        _CALLJ('__@lneg_t0t1')
+        if args.cpu >= 6:
+            NEGL(T0)
+        else:
+            _CALLJ('__@lneg_t0t1')
         label('.lms1')
         LD(B2);ANDI(0x01);BEQ('.lms2')
-        _CALLJ('_@_lneg')
+        if args.cpu >= 6:
+            NEGL(LAC)
+        else:
+            _CALLJ('_@_lneg')
         label('.lms2')
         tryhop(2);POP();RET()
 
@@ -167,8 +182,8 @@ def scope():
            code=[ ('EXPORT', '_@_lmods'),
                   ('IMPORT', '__@ldivprep'),
                   ('IMPORT', '__@ldivsign'),
-                  ('IMPORT', '__@lneg_t0t1'),
-                  ('IMPORT', '_@_lneg'),
+                  ('IMPORT', '__@lneg_t0t1') if args.cpu < 6 else ('NOP',),
+                  ('IMPORT', '_@_lneg') if args.cpu < 6 else ('NOP',),
                   ('CODE',   '_@_lmods', code_lmods) ] + morecode )
 
 scope()

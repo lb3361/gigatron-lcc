@@ -86,20 +86,22 @@ def scope():
         LDI(0);STW(AE)        # [AE,AM]
         STW(AM+1);STW(AM+3)   # [AM+1,AM+2] [AM+3,AM+4]
         if args.cpu >= 6:
-            XORBA(AS);ANDI(128);_BEQ('.ret')
+            LD(AS);ANDI(128);_BEQ('.ret')
             ORI(1);XORBA(AS);ST(AS)
         else:
-            XORW(AS);ANDI(128);_BEQ('.ret')
+            LD(AS);ANDI(128);_BEQ('.ret')
             ORI(1);XORW(AS);ST(AS)
         label('.ret')
         RET()
         ## Round fac
         label('_@_rndfac')
         LD(AE);_BEQ('_@_clrfac')
-        LD(AM);_BEQ('.ret')
-        ANDI(128);_BEQ('.rnd0')
-        LDI(1);ADDW(AM+1);STW(AM+1);_BNE('.rnd0')
-        LDI(1);ADDW(AM+3);STW(AM+3);_BNE('.rnd0')
+        LD(AM);ANDI(128);_BEQ('.rnd0')
+        if args.cpu >= 6:
+            INCL(AM+1);LDW(AM+1);ORW(AM+3);_BNE('.rnd0')
+        else:
+            LDI(1);ADDW(AM+1);STW(AM+1);_BNE('.rnd0')
+            LDI(1);ADDW(AM+3);STW(AM+3);_BNE('.rnd0')
         LDI(128);ST(AM+4);INC(AE);LD(AE);_BNE('.rnd0')
         # overflow during rounding: just revert.
         _LDI(0xffff);STW(AM+1);STW(AM+3);ST(AE)
@@ -411,25 +413,6 @@ def scope():
            code=[ ('EXPORT', '__@bmshr8'),
                   ('CODE', '__@bmshr8', code_bmshr8) ]  )
 
-    def code_bmshr2():
-        nohop()
-        label('__@bmshr2')
-        if args.cpu >= 6:
-            LDI(0);NROR(5,BM)
-            LDI(0);NROR(5,BM)
-        else:
-            LDWI('SYS_LSRW2_52')
-            STW('sysFn')
-            LDW(BM);SYS(52);ST(BM)
-            LDW(BM+1);SYS(52);ST(BM+1)
-            LDW(BM+2);SYS(52);ST(BM+2)
-            LDW(BM+3);SYS(52);STW(BM+3)
-        RET()
-
-    module(name='rt_bmshr2.s',
-           code=[ ('EXPORT', '__@bmshr2'),
-                  ('CODE', '__@bmshr2', code_bmshr2) ]  )
-
 
     # ==== two complement
 
@@ -437,9 +420,9 @@ def scope():
         nohop()
         label('__@amneg')
         if args.cpu >= 6:
-            NEGL(AM);XORBI(0xff,AM+4)
-            LDW(AM);ORW(AM+2);_BNE('.ret')
-            INC(AM+4)
+            NOTL(AM+1);XORBI(0xff,AM)
+            INC(AM);LD(AM);_BNE('.ret')
+            INCL(AM+1)
         else:
             LDI(0xff);XORW(AM+4);ST(AM+4)
             _LDI(0xffff);XORW(AM+2);STW(AM+2)
@@ -461,7 +444,7 @@ def scope():
         label('__@fnorm')
         PUSH()
         label('.norm1a')
-        LDW(AM+3);_BNE('.norm1b')
+        LDW(AM+3);_BLT('.done');_BNE('.norm1b')
         LD(AE);SUBI(16);_BLT('.norm1b');ST(AE)
         _CALLJ('__@amshl16')
         LDW(AM+3);_BNE('.norm1b')
@@ -486,31 +469,16 @@ def scope():
         label('.done')
         tryhop(2);POP();RET()
 
-    def code_fnorm2():
-        # Multiply FAC by four and normalize
-        label('__@fnorm2')
-        PUSH()
-        _CALLJ('__@fnorm')
-        LD(AE);_BNE('.frenorm1')
-        LDI(2);ST(AE);_CALLJ('.norm1d')
-        label('.frenorm1')
-        ADDI(2);ST(AE);LD(vACH);_BEQ('.frenorm2')
-        _CALLJ('__@foverflow')
-        label('.frenorm2')
-        tryhop(2);POP();RET()
-        
     module(name='rt_fnorm.s',
            code=[ ('EXPORT', '__@fnorm'),
-                  ('EXPORT', '__@fnorm2'),
                   ('IMPORT', '__@amshl16'),
                   ('IMPORT', '__@amshl8'),
                   ('IMPORT', '__@amshl4'),
                   ('IMPORT', '__@amshl1') if args.cpu < 6 else ('NOP',),
                   ('IMPORT', '__@foverflow'),
                   ('IMPORT', '_@_clrfac'),
-                  ('CODE', '__@fnorm', code_fnorm),
-                  ('CODE', '__@fnorm2', code_fnorm2) ] )
-
+                  ('CODE', '__@fnorm', code_fnorm) ] )
+    
     # ==== conversions
 
     def code_fcv():
@@ -573,8 +541,9 @@ def scope():
         label('__@amaddbm')
         if args.cpu >= 6:
             LDI(BM+1);ADDLP() # four high bytes of AM/BM
-            LD(AM);ADDBA(BM);ST(AM)
-            LD(vACH);BEQ('.a1');INCL(AM+1);label('.a1')
+            LD(BM);_BEQ('.a1')
+            ADDBA(AM);ST(AM);LD(vACH);BEQ('.a1')
+            INCL(AM+1);label('.a1')
         else:
             LD(AM);ADDW(BM);ST(AM);LD(vACH)
             BNE('.a1');LD(BM+1);BEQ('.a1');LDWI(0x100);label('.a1')
@@ -590,6 +559,24 @@ def scope():
            code=[ ('EXPORT', '__@amaddbm'),
                   ('CODE', '__@amaddbm', code_amaddbm) ])
 
+    def code_amcarry():
+        nohop()
+        label('__@amcarry')
+        if args.cpu >= 6:
+            LDNI(1);NROR(5,AM)
+        else:
+            PUSH();LDI(1);_CALLI('__@amshra');POP()
+            LD(AM+4);ORI(128);ST(AM+4)
+        INC(AE);LD(AE);_BNE('.ret')
+        _CALLJ('__@foverflow')
+        label('.ret')
+        RET()
+
+    module(name='rt_amcarry.s',
+           code=[ ('EXPORT', '__@amcarry'),
+                  ('IMPORT', '__@foverflow'),
+                  ('IMPORT', '__@amshra') if args.cpu < 6 else ('NOP',),
+                  ('CODE', '__@amcarry', code_amcarry) ]  )
 
     def code_fadd_t3():
         label('__@fadd_t3')
@@ -602,35 +589,49 @@ def scope():
         _CALLJ('__@fldfac_t3')           # - ensure FAC exponent <= arg_exponent
         label('.faddx2')
         LD(AE);STW(T3)                   # - we don't need T3 anymore
-        LD(BE);_BEQ('.faddx5')           # - adding zero is simple
+        LD(BE);_BEQ('.faddx3')           # - adding zero is simple
         ST(AE)                           # - assume arg exponent
-        SUBW(T3);ADDI(2)
-        _CALLI('__@amshra')              # - align fac mantissa (two bits down)
-        _CALLJ('__@bmshr2')              # - align farg mantissa
-        LD(AS);ANDI(1);_BEQ('.faddx3')   # - if signs are different
-        _CALLJ('__@amneg')               #   - complement fac
-        LD(AS);XORI(0x80)                #   - and assume farg sign
-        ANDI(0x80);ST(AS)
+        SUBW(T3)
+        _CALLI('__@amshra')              # - align fac mantissa
+        LD(AS);ANDI(1);_BNE('.fsubx1')   # - are signs different?
+        # addition branch
+        LD(AM+4);XORI(128);ST(T3+1)
+        if args.cpu >= 6:
+            LDI(BM+1);ADDLP()
+        else:
+            _CALLJ('__@amaddbm')
+        LDW(AM+3);ANDW(T3)
+        _BLT('.faddx3')                  # > carry
+        _CALLJ('__@amcarry')
         label('.faddx3')
-        _CALLJ('__@amaddbm')             # - add
-        LDW(AM+3);_BGE('.faddx4')        # - test sign
+        tryhop(2);POP();RET()
+        # subtraction branch
+        label('.fsubx1')
+        LD(AS);XORI(0x80);ST(AS)         # - assume farg sign
+        LD(AM+4);STW(T3+1)
+        _CALLJ('__@amneg')               # - negate fac
+        if args.cpu >= 6:                # - add
+            LDI(BM+1);ADDLP()
+        else:
+            _CALLJ('__@amaddbm')
+        LDW(AM+3);ANDW(T3)
+        _BGE('.fsubx2')                  # > normalize
+        LD(AS);XORI(129);ST(AS)          # - negate fac
         _CALLJ('__@amneg')
-        LD(AS);XORI(129);ST(AS)
-        label('.faddx4')
-        _CALLJ('__@fnorm2')
-        label('.faddx5')
+        label('.fsubx2')
+        _CALLJ('__@fnorm')               # - normalize 
         tryhop(2);POP();RET()
 
     module(name='rt_faddt3.s',
            code=[ ('EXPORT', '__@fadd_t3'),
                   ('IMPORT', '__@amshra'),
-                  ('IMPORT', '__@bmshr2'),
                   ('IMPORT', '__@amneg'),
                   ('IMPORT', '__@fac2farg'),
                   ('IMPORT', '__@fldfac_t3'),
                   ('IMPORT', '__@fldarg_t3'),
-                  ('IMPORT', '__@amaddbm'),
-                  ('IMPORT', '__@fnorm2'),
+                  ('IMPORT', '__@amaddbm') if args.cpu < 6 else ('NOP',),
+                  ('IMPORT', '__@amcarry'),
+                  ('IMPORT', '__@fnorm'),
                   ('CODE', '__@fadd_t3', code_fadd_t3) ] )
 
     def code_fadd():
@@ -654,9 +655,15 @@ def scope():
         label('_@_fsub')
         PUSH();STW(T3)
         _CALLJ('__@fsavevsp')
-        _CALLJ('_@_fneg')
+        if args.cpu >= 6:
+            XORBI(0x81, AS)
+        else:
+            _CALLJ('_@_fneg')
         _CALLJ('__@fadd_t3')
-        _CALLJ('_@_fneg')
+        if args.cpu >= 6:
+            XORBI(0x81, AS)
+        else:
+            _CALLJ('_@_fneg')
         _CALLJ('_@_rndfac')
         tryhop(2);POP();RET()
 
@@ -664,7 +671,7 @@ def scope():
            code=[ ('EXPORT', '_@_fsub'),
                   ('CODE', '_@_fsub', code_fsub),
                   ('IMPORT', '__@fsavevsp'),
-                  ('IMPORT', '_@_fneg'),
+                  ('IMPORT', '_@_fneg') if args.cpu < 6 else ('NOP',),
                   ('IMPORT', '__@fadd_t3'),
                   ('IMPORT', '_@_rndfac') ] )
 
@@ -678,25 +685,24 @@ def scope():
         label('_@_fmul10')
         PUSH()
         _CALLJ('__@fsavevsp')
-        LD(AE);ADDI(3);ST(AE);LD(vACH);_BEQ('.mul10')
-        _CALLJ('__@foverflow')
-        label('.mul10')
+        LD(AE);ADDI(3);ST(AE);LD(vACH);_BNE('.err')
         _CALLJ('__@fac2farg')
-        _CALLJ('__@bmshr2')
-        LDI(4);
-        _CALLI('__@amshra')
+        LDI(2);_CALLI('__@amshra')
         _CALLJ('__@amaddbm')
-        _CALLJ('__@fnorm2')
+        LDW(AM+3);_BLT('.ret')
+        _CALLJ('__@amcarry')
+        label('.ret')
         tryhop(2);POP();RET()
-        
+        label('.err')
+        _CALLJ('__@foverflow')
+
     module(name='rt_fmul10.s',
            code=[ ('EXPORT', '_@_fmul10'),
                   ('IMPORT', '__@amshra'),
-                  ('IMPORT', '__@bmshr2'),
                   ('IMPORT', '__@fac2farg'),
                   ('IMPORT', '__@amaddbm'),
+                  ('IMPORT', '__@amcarry'),
                   ('IMPORT', '__@foverflow'),
-                  ('IMPORT', '__@fnorm2'),
                   ('CODE', '_@_fmul10', code_fmul10) ] )
 
 
@@ -828,7 +834,7 @@ def scope():
             LDI(0);NROL(4,CM)
         else:
             _CALLJ('__@cmshl1')
-        LDW(AM+3);BGE('.fdl1')
+        LDW(AM+3);_BGE('.fdl1')
         if args.cpu >= 6:
             LDI(0);NROL(5,AM)
         else:
@@ -1056,7 +1062,10 @@ def scope():
         '''_@_fneg: Changes the sign of FAC. Fast'''
         nohop()
         label('_@_fneg')
-        LD(AS);XORI(0x81);ST(AS)
+        if args.cpu >= 6:
+            XORBI(0x81, AS)
+        else:
+            LD(AS);XORI(0x81);ST(AS)
         RET()
 
     module(name='rt_fneg.s',

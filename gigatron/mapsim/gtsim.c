@@ -889,6 +889,8 @@ int disassemble(word addr, char **pm, char *operand)
         case 0x39: *pm = "CMPWU"; goto oper8p2;
         case 0x3b: *pm = "LEEKA"; goto oper8p2;
         case 0x3d: *pm = "LOKEA"; goto oper8p2;
+        case 0x4e: *pm = "INCL"; goto oper8p2;
+        case 0x51: *pm = "DECL"; goto oper8p2;
           // exp
         case 0xcd: *pm = "NCOPY"; goto oper8p2;
         case 0xd0: *pm = "STLU"; goto oper8p2;

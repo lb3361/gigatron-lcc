@@ -6,8 +6,8 @@ def scope():
         nohop()
         label('_@_lshl1')
         if args.cpu >= 6:
-            LSLV(LAC+2);LDW(LAC);LSLV(LAC);BGE('.l1');ORBI(1, LAC+2);
-            label('.l1')
+            LDI(0)
+            NROL(4,LAC)
             RET()
         else:
             LDW(LAC);BLT('.l1')
@@ -25,8 +25,8 @@ def scope():
         nohop()
         label('__@lshl1_t0t1')
         if args.cpu >= 6:
-            LSLV(T0+2);LDW(T0);LSLV(T0);BGE('.l1');ORBI(1, T0+2);
-            label('.l1')
+            LDI(0)
+            NROL(4,T0)
             RET()
         else:
             LDW(T0);BLT('.lsl1')
@@ -57,14 +57,18 @@ def scope():
         label('.l6')
         LD(B0);ANDI(3);_BEQ('.ret')
         label('.l7')
-        ST(B0);_CALLJ('_@_lshl1')
+        ST(B0);
+        if args.cpu >= 6:
+            NROL(4, LAC)
+        else:
+            _CALLJ('_@_lshl1')
         LD(B0);SUBI(1);_BNE('.l7')
         label('.ret')
         tryhop(2);POP();RET()
 
     module(name='rt_lshl.s',
            code=[ ('EXPORT', '_@_lshl'),
-                  ('IMPORT', '_@_lshl1'),
+                  ('IMPORT', '_@_lshl1') if args.cpu < 6 else ('NOP',),
                   ('CODE', '_@_lshl', code2) ] )
 
 scope()

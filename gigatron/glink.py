@@ -1304,7 +1304,12 @@ def NOTL(d):
 @vasm
 def NEGL(d):
     emit_prefx2(0xd9, check_zp(d))
-
+@vasm
+def NROL(n,d):
+    emit_prefx3(0xd3, check_zp((d+check_zp(n))&0xff), check_zp(d))
+@vasm
+def NROR(n,d):
+    emit_prefx3(0xd6, check_zp(d), check_zp((d+check_zp(n))&0xff))
     
 
 # pseudo instructions used by the compiler
@@ -1754,15 +1759,15 @@ def _LMODU():
 @vasm
 def _LSHL():
     extern('_@_lshl')
-    _CALLI('_@_lshl')               # LAC<<vAC --> LAC
+    _CALLI('_@_lshl')           # LAC<<vAC --> LAC
 @vasm
 def _LSHRS():
     extern('_@_lshrs')
-    _CALLI('_@_lshrs')              # LAC>>vAC --> LAC
+    _CALLI('_@_lshrs')          # LAC>>vAC --> LAC
 @vasm
 def _LSHRU():
     extern('_@_lshru')
-    _CALLI('_@_lshru')              # LAC>>vAC --> LAC
+    _CALLI('_@_lshru')          # LAC>>vAC --> LAC
 @vasm
 def _LNEG():
     if args.cpu >= 6:

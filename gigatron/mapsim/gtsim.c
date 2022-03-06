@@ -933,17 +933,26 @@ int disassemble(word addr, char **pm, char *operand)
           // exp
         case 0xcd:  *pm = "MOVL"; goto oper88p3;
         case 0xd0:  *pm = "MOVF"; goto oper88p3;
+        case 0xd3:  *pm = "NROL"; goto oper88p3n;
+        case 0xd6:  *pm = "NROR"; goto oper88p3nr;
         oper16p3:
           sprintf(operand, "$%02x%02x", peek(addlo(addr,1)),peek(addlo(addr,3)));
           return 4;
         oper88p3r:
           sprintf(operand, "$%02x, $%02x", peek(addlo(addr,1)),peek(addlo(addr,3)));
           return 4;
-        oper88p3n:
-          sprintf(operand, "$%02x, $%02x", (peek(addlo(addr,3))-peek(addlo(addr,1)))&0xff,peek(addlo(addr,3)));
-          return 4;
         oper88p3:
           sprintf(operand, "$%02x, $%02x", peek(addlo(addr,3)),peek(addlo(addr,1)));
+          return 4;
+        oper88p3n:
+          sprintf(operand, "$%02x, $%02x",
+                  (peek(addlo(addr,3))-peek(addlo(addr,1)))&0xff,
+                  peek(addlo(addr,1)));
+          return 4;
+        oper88p3nr:
+          sprintf(operand, "$%02x, $%02x",
+                  (peek(addlo(addr,1))-peek(addlo(addr,3)))&0xff,
+                  peek(addlo(addr,3)));
           return 4;
         default:
           return 4;

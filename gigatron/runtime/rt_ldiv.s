@@ -22,13 +22,7 @@ def scope():
             LDI(0);ST(B1);STW(LAC);STW(LAC+2)
             label('.ldiv0')
             if args.cpu >= 6:
-                LSLV(LAC+2)
-                LDW(LAC);_BGE('.ldw1');ORBI(1,LAC+2);label('.ldw1')
-                LSLV(LAC)
-                LDW(T2+2);_BGE('.ldw2');ORBI(1,LAC);label('.ldw2')
-                LSLV(T2+2)
-                LDW(T2);_BGE('.ldw3');ORBI(1,T2+2);label('.ldw3')
-                LSLV(T2)
+                LDI(0);NROL(4,T2);NROL(4,LAC)
             else:
                 LDW(LAC+2);LSLW();STW(LAC+2)
                 LDW(LAC);_BGE('.ldw1')
@@ -54,7 +48,7 @@ def scope():
         module(name='rt_ldivworker.s',
                code=[ ('EXPORT', '__@ldivworker'),
                       ('IMPORT', '__@lsub_t0t1') if args.cpu < 6 else ('NOP',),
-                      ('IMPORT', '__@lcmpu_t0t1'),
+                      ('IMPORT', '__@lcmpu_t0t1') if args.cpu < 6 else ('NOP',),
                       ('CODE', '__@ldivworker', code_ldivworker) ])
 
         morecode = [('IMPORT', '__@ldivworker')]

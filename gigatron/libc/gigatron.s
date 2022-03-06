@@ -76,17 +76,13 @@ def scope():
         PUSH()
         _LDI('SYS_ReadRomDir_v5_80');STW('sysFn')
         LDW(R8);SYS(80);STW(R8)
-        LDW(R9);STW(T2)
-        if args.cpu >= 6:
-            LDI('sysArgs0');NCOPY(8)
-        else:
-            LDI('sysArgs0');STW(T0);ADDI(8);STW(T1);_CALLJ('_@_bcopy_')
+        LDW(R9);_MOVM('sysArgs0',[vAC],8,2)
         POP();LDW(R8);RET()
 
     module(name='sys_readromdir.s',
            code=[('EXPORT', 'SYS_ReadRomDir'),
                  ('CODE', 'SYS_ReadRomDir', code0),
-                 ('IMPORT', '_@_bcopy') if args.cpu < 6 else ('NOP',) ])
+                 ('IMPORT', '_@_bcopy_') if args.cpu < 6 else ('NOP',) ])
 
 
     # ----------------------------------------

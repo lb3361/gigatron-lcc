@@ -290,6 +290,10 @@ def scope():
         label('__@amshl1')
         macro_shl1(AM, ext=True, ret=True)
 
+    module(name='rt_fshl1.s',
+           code=[ ('EXPORT', '__@amshl1'),
+                  ('CODE', '__@amshl1', code_amshl1) ] )
+
     def code_amshl4():  # AM <<= 4
         nohop()
         label('__@amshl4')
@@ -309,11 +313,9 @@ def scope():
         RET()
 
     module(name='rt_fshl.s',
-           code=[ ('EXPORT', '__@amshl1'),
-                  ('EXPORT', '__@amshl4'),
+           code=[ ('EXPORT', '__@amshl4'),
                   ('EXPORT', '__@amshl8'),
                   ('EXPORT', '__@amshl16'),
-                  ('CODE', '__@amshl1', code_amshl1),
                   ('CODE', '__@amshl4', code_amshl4),
                   ('CODE', '__@amshl8', code_amshl8),
                   ('CODE', '__@amshl16', code_amshl16) ] )
@@ -412,12 +414,16 @@ def scope():
     def code_bmshr2():
         nohop()
         label('__@bmshr2')
-        LDWI('SYS_LSRW2_52')
-        STW('sysFn')
-        LDW(BM);SYS(52);ST(BM)
-        LDW(BM+1);SYS(52);ST(BM+1)
-        LDW(BM+2);SYS(52);ST(BM+2)
-        LDW(BM+3);SYS(52);STW(BM+3)
+        if args.cpu >= 6:
+            LDI(0);NROR(5,BM)
+            LDI(0);NROR(5,BM)
+        else:
+            LDWI('SYS_LSRW2_52')
+            STW('sysFn')
+            LDW(BM);SYS(52);ST(BM)
+            LDW(BM+1);SYS(52);ST(BM+1)
+            LDW(BM+2);SYS(52);ST(BM+2)
+            LDW(BM+3);SYS(52);STW(BM+3)
         RET()
 
     module(name='rt_bmshr2.s',
@@ -472,7 +478,11 @@ def scope():
         label('.norm1d')
         LDW(AM+3);_BLT('.done')
         LD(AE);SUBI(1);_BLT('.done');ST(AE)
-        _CALLJ('__@amshl1');_BRA('.norm1d')
+        if args.cpu >= 6:
+            NROL(5, AM)
+        else:
+            _CALLJ('__@amshl1')
+        _BRA('.norm1d')
         label('.done')
         tryhop(2);POP();RET()
 
@@ -495,7 +505,7 @@ def scope():
                   ('IMPORT', '__@amshl16'),
                   ('IMPORT', '__@amshl8'),
                   ('IMPORT', '__@amshl4'),
-                  ('IMPORT', '__@amshl1'),
+                  ('IMPORT', '__@amshl1') if args.cpu < 6 else ('NOP',),
                   ('IMPORT', '__@foverflow'),
                   ('IMPORT', '_@_clrfac'),
                   ('CODE', '__@fnorm', code_fnorm),
@@ -710,7 +720,10 @@ def scope():
         ST(T3H);ANDW(T3L);BEQ('.skip')
         _CALLJ('__@amaddbm')
         label('.skip')
-        _CALLJ('__@bmshl1')
+        if args.cpu >= 6:
+            LDI(0);NROL(5,BM)
+        else:
+            _CALLJ('__@bmshl1')
         LD(T3H);LSLW();LD(vAC);_BNE('.loop')
         POP();RET()
 
@@ -720,7 +733,7 @@ def scope():
                   ('IMPORT', '__@amshr8'),
                   ('IMPORT', '__@bmshr8'),
                   ('IMPORT', '__@amaddbm'),
-                  ('IMPORT', '__@bmshl1'),
+                  ('IMPORT', '__@bmshl1') if args.cpu < 6 else ('NOP',),
                   ('CODE', '__@macbm32x8', code_macbm32x8) ] )
 
     def code_fmulmac():
@@ -811,11 +824,21 @@ def scope():
         _BRA('.fdl2')
         label('.fdl0')
         LDLW(2);SUBI(1);_BLT('.fdl5');STLW(2)
-        _CALLJ('__@cmshl1')
+        if args.cpu >= 6:
+            LDI(0);NROL(4,CM)
+        else:
+            _CALLJ('__@cmshl1')
         LDW(AM+3);BGE('.fdl1')
-        _CALLJ('__@amshl1');_BRA('.fdl3')
+        if args.cpu >= 6:
+            LDI(0);NROL(5,AM)
+        else:
+            _CALLJ('__@amshl1')
+        _BRA('.fdl3')
         label('.fdl1')
-        _CALLJ('__@amshl1')
+        if args.cpu >= 6:
+            LDI(0);NROL(5,AM)
+        else:
+            _CALLJ('__@amshl1')
         label('.fdl2')
         if args.cpu >= 6:
             LDI(BM);CMPLPU();_BLT('.fdl4')
@@ -837,7 +860,10 @@ def scope():
         label('__@fdivrnd')
         PUSH()
         LDW(AM+3);_BLT('.fdr1')
-        _CALLJ('__@amshl1')
+        if args.cpu >= 6:
+            NROL(5,AM)
+        else:
+            _CALLJ('__@amshl1')
         if args.cpu >= 6:
             LDI(BM);CMPLPU();_BLT('.fdr0')
         else:
@@ -853,8 +879,8 @@ def scope():
     module(name='rt_fdivloop.s',
            code=[ ('EXPORT', '__@fdivloop'),
                   ('EXPORT', '__@fdivrnd'),
-                  ('IMPORT', '__@amshl1'),
-                  ('IMPORT', '__@cmshl1'),
+                  ('IMPORT', '__@amshl1') if args.cpu < 6 else ('NOP',),
+                  ('IMPORT', '__@cmshl1') if args.cpu < 6 else ('NOP',),
                   ('IMPORT', '__@amshr8'),
                   ('IMPORT', '__@bmshr8'),
                   ('IMPORT', '__@amsubbm32_') if args.cpu < 6 else ('NOP',),

@@ -76,7 +76,9 @@ struct cpustate_s { // TTL state that the CPU controls
 
 uint8_t ROM[1<<16][2], RAM[1<<16], IN=0xff;
 uint16_t opc;
-long long ot;
+uint8_t  pfx;
+uint8_t  cpuselect;
+long long ot, vt;
 long long t;
 
 CpuState cpuCycle(const CpuState S)
@@ -149,6 +151,7 @@ void sim(void)
 {
   int vgaX = 0;
   int vgaY = 0;
+  uint16_t cpupage;
   CpuState S;
 
   memset(&S, 0, sizeof(S));
@@ -187,8 +190,18 @@ void sim(void)
       } else if (S.PC == 0x301) {
         next_0x301(&T);
       } else if (S.PC == 0x307) {
+        pfx = *(uint8_t*)(RAM+0x02);
         opc = *(uint16_t*)(RAM+0x16);
         ot = t - 6;
+      } else {
+        uint16_t cpupage = (RAM[2]+1)<<8;
+        if (pfx == 2 && S.PC == (cpupage | 0x10)) {
+          vt = t - 8;
+          pfx = 1;
+        } else if (pfx == 1 && S.PC == (cpupage | 0x01)) {
+          ot += t - vt;
+          pfx = 2;
+        }
       }
       // commit
       S = T;
@@ -384,6 +397,8 @@ word loadGt1(const char *gt1)
   fclose(fp);
   if (c >= 0)
     fatal("Extra data in GT1 file '%s'\n", gt1);
+  if (pc2cycs)
+    memset(pc2cycs, 0, 0x10000 * sizeof(pc2cycs[0]));
   return addr;
  eof:
   fclose(fp);
@@ -701,6 +716,7 @@ void sys_0x3b4(CpuState *S)
           // And return from SYS_Exec
           S->IR = 0x00; S->D = 0xf8; /* LD(-16/2) */
           S->PC = 0x3cb;             /* REENTER */
+          ot = t+3;
           nogt1 = 1;
         }
     }

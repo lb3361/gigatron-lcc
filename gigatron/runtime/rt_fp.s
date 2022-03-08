@@ -719,6 +719,7 @@ def scope():
         label('__@macbm32x8')
         PUSH()
         label('.prep')
+        LD(T3L);_BEQ('.ret')
         _CALLJ('__@bmshr8')
         LDI(0);ST(BM+4)
         LDI(1)
@@ -731,9 +732,10 @@ def scope():
         else:
             _CALLJ('__@bmshl1')
         LD(T3H);LSLW();LD(vAC);_BNE('.loop')
+        label('.ret')
         POP();RET()
 
-    module(name='__@macbm32x8',
+    module(name='rt_macbm32x8.s',
            code=[ ('EXPORT', '__@macbm32x8'),
                   ('EXPORT', '__@smacbm32x8'),
                   ('IMPORT', '__@amshr8'),
@@ -782,7 +784,7 @@ def scope():
         _CALLJ('_@_clrfac')
         tryhop(2);POP();RET()
     
-    module(name='_@_fmul',
+    module(name='rt_fmul.s',
            code=[ ('EXPORT', '_@_fmul'),
                   ('CODE', '_@_fmul', code_fmul),
                   ('IMPORT', '_@_rndfac'),

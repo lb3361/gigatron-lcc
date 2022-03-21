@@ -916,6 +916,7 @@ stmt: ASGNU1(rmw, LOADU1(ADDI2(CVUI2(INDIRU1(rmw)), con1))) "\t%{#keepsAC}INC(%0
 stmt: ASGNI1(rmw, LOADI1(ADDI2(CVII2(INDIRI1(rmw)), con1))) "\t%{#keepsAC}INC(%0);\n" if_rmw(a,16)
 stmt: ASGNU1(rmw, LOADU1(SUBI2(CVUI2(INDIRU1(rmw)), con1))) "\t%{#keepsAC}DEC(%0);\n" mincpu6(if_rmw(a,16))
 stmt: ASGNI1(rmw, LOADI1(SUBI2(CVII2(INDIRI1(rmw)), con1))) "\t%{#keepsAC}DEC(%0);\n" mincpu6(if_rmw(a,16))
+
 stmt: ASGNP2(rmw, ADDP2(INDIRP2(rmw), con1)) "\t%{#keepsAC}INCW(%0);\n" mincpu6(if_rmw(a, 26))
 stmt: ASGNU2(rmw, ADDU2(INDIRU2(rmw), con1)) "\t%{#keepsAC}INCW(%0);\n" mincpu6(if_rmw(a, 26))
 stmt: ASGNI2(rmw, ADDI2(INDIRI2(rmw), con1)) "\t%{#keepsAC}INCW(%0);\n" mincpu6(if_rmw(a, 26))
@@ -931,6 +932,7 @@ stmt: ASGNU2(rmw, BCOMU2(INDIRU2(rmw))) "\t%{#keepsAC}NOTW(%0);\n" mincpu6(if_rm
 stmt: ASGNI2(rmw, LSHI2(INDIRI2(rmw),con1)) "\t%{#keepsAC}LSLV(%0);\n" mincpu6(if_rmw(a, 56))
 stmt: ASGNU2(rmw, LSHU2(INDIRU2(rmw),con1)) "\t%{#keepsAC}LSLV(%0);\n" mincpu6(if_rmw(a, 56))
 stmt: ASGNU2(rmw, RSHU2(INDIRU2(rmw),con1)) "\t%{#keepsAC}LSRV(%0);\n" mincpu6(if_rmw(a, 56))
+
 stmt: ASGNP2(rmw, ADDP2(INDIRP2(rmw), conB)) "\t%{#alsoVAC}ADDVI(%2,%0);\n" mincpu6(if_rmw(a, 50))
 stmt: ASGNU2(rmw, ADDU2(INDIRU2(rmw), conB)) "\t%{#alsoVAC}ADDVI(%2,%0);\n" mincpu6(if_rmw(a, 50))
 stmt: ASGNI2(rmw, ADDI2(INDIRI2(rmw), conB)) "\t%{#alsoVAC}ADDVI(%2,%0);\n" mincpu6(if_rmw(a, 50))
@@ -940,6 +942,12 @@ stmt: ASGNI2(rmw, ADDI2(INDIRI2(rmw), conBn)) "\t%{#alsoVAC}SUBVI(-(%2),%0);\n" 
 stmt: ASGNP2(rmw, SUBP2(INDIRP2(rmw), conB)) "\t%{#alsoVAC}SUBVI(%2,%0);\n" mincpu6(if_rmw(a, 50))
 stmt: ASGNU2(rmw, SUBU2(INDIRU2(rmw), conB)) "\t%{#alsoVAC}SUBVI(%2,%0);\n" mincpu6(if_rmw(a, 50))
 stmt: ASGNI2(rmw, SUBI2(INDIRI2(rmw), conB)) "\t%{#alsoVAC}SUBVI(%2,%0);\n" mincpu6(if_rmw(a, 50))
+stmt: ASGNP2(rmw, ADDP2(INDIRP2(rmw), iarg)) "\t%{#alsoVAC}%[2b]ADDVW(%2,%0);\n" mincpu6(if_rmw(a, 52))
+stmt: ASGNU2(rmw, ADDU2(INDIRU2(rmw), iarg)) "\t%{#alsoVAC}%[2b]ADDVW(%2,%0);\n" mincpu6(if_rmw(a, 52))
+stmt: ASGNI2(rmw, ADDI2(INDIRI2(rmw), iarg)) "\t%{#alsoVAC}%[2b]ADDVW(%2,%0);\n" mincpu6(if_rmw(a, 52))
+stmt: ASGNP2(rmw, SUBP2(INDIRP2(rmw), iarg)) "\t%{#alsoVAC}%[2b]SUBVW(%2,%0);\n" mincpu6(if_rmw(a, 52))
+stmt: ASGNU2(rmw, SUBU2(INDIRU2(rmw), iarg)) "\t%{#alsoVAC}%[2b]SUBVW(%2,%0);\n" mincpu6(if_rmw(a, 52))
+stmt: ASGNI2(rmw, SUBI2(INDIRI2(rmw), iarg)) "\t%{#alsoVAC}%[2b]SUBVW(%2,%0);\n" mincpu6(if_rmw(a, 52))
 
 stmt: ASGNI2(rmw, conB) "\t%{#keepsAC}MOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
 stmt: ASGNU2(rmw, conB) "\t%{#keepsAC}MOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))

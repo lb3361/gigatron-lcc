@@ -955,6 +955,11 @@ stmt: ASGNP2(rmw, conB) "\t%{#keepsAC}MOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,
 stmt: ASGNI1(rmw, conB) "\t%{#keepsAC}MOVQB(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,27))
 stmt: ASGNU1(rmw, conB) "\t%{#keepsAC}MOVQB(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,27))
 
+reg: LOADI1(conBs)  "\t%{#keepsAC}MOVQB(%0,%c)\n" mincpu6(27)
+reg: LOADU1(conB)   "\t%{#keepsAC}MOVQB(%0,%c)\n" mincpu6(27)
+reg: LOADI2(conB)   "\t%{#keepsAC}MOVQW(%0,%c)\n" mincpu6(29)
+reg: LOADU2(conB)   "\t%{#keepsAC}MOVQW(%0,%c)\n" mincpu6(29)
+reg: LOADP2(conB)   "\t%{#keepsAC}MOVQW(%0,%c)\n" mincpu6(29)
 
 
 

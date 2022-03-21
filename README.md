@@ -170,8 +170,9 @@ is preserved.
 Thanks to the feedback of axelb, you can use the `make` method
 to compile gigatron-lcc under cygwin. For this, you must first
 install cygwin >= 3.2 from http://cygwin.org, make sure to 
-select the packages `gcc-core`, `make`, `bison`, and `python3`, then issue
-the `make`, `make install`, or `make test` command from the cygwin shell.
+select the packages `gcc-core`, `make`, `bison`, `git`, and `python3`, 
+then issue the `make`, `make install`, or `make test` 
+command from the cygwin shell.
 The main drawback of building `gigatron-lcc` under cygwin is
 that you have to execute it from the cygwin shell as well since
 it depends on the cygwin infrastructure.

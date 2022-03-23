@@ -1,11 +1,9 @@
 #include <stdio.h>
-#include <gigatron/console.h>
 #include <gigatron/sys.h>
 #define TIMER 1
 
 /** This is a minor modification of the genuine C program of the sieve benchmark.
-    It uses cprintf instead of printf. Loop conditions and certain expressions 
-    have been rewritten. **/
+    Loop conditions and certain expressions have been made optimizer friendly. **/
 
 #define true 1
 #define false 0
@@ -13,12 +11,12 @@
 #define sizepl 8191
 char flags[sizepl];
 main() {
-    int i, prime, k, count, iter, ticks; 
-    cprintf("10 iterations\n");
-    ticks = 0;
+    int i, prime, k, count, iter;
 #if TIMER
+    unsigned int ticks = 0;
     frameCount = 0;
 #endif
+    printf("10 iterations\n");
     for (iter = 1; iter <= 10; iter ++) {
         count=0 ; 
 	for (i = 0; i != sizepl; i++)
@@ -39,9 +37,9 @@ main() {
 	frameCount = 0;
 #endif
     }
-    cprintf("\n%d primes", count);
+    printf("\n%d primes", count);
 #if TIMER
-    cprintf("\n%d %d/60 seconds", ticks/60, ticks % 60, count);
+    printf("\n%d %d/60 seconds", ticks/60, ticks % 60, count);
 #endif
 }
 

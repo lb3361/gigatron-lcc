@@ -1,6 +1,5 @@
 #include <gigatron/libc.h>
 #include <gigatron/sys.h>
-#include <gigatron/console.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -33,10 +32,9 @@ int sieve() {
 }
 
 int main() {
-    int iter, count, ticks;
-    char buf8[8];
-    cprintf("10 iterations\n\n");
-    ticks = 0;
+    int iter, count;
+    unsigned int ticks = 0;
+    printf("10 iterations\n\n");
     frameCount = 0;
     for (iter = 1; iter <= 10; iter ++) {
         memset(flags, 1, sizepl);
@@ -44,8 +42,8 @@ int main() {
         ticks += frameCount;
         frameCount = 0;
     }
-    cprintf("%d primes\n", count);
-    cprintf("%d %d/60 seconds\n", ticks/60, ticks%60);
+    printf("%d primes\n", count);
+    printf("%d %d/60 seconds\n", ticks/60, ticks%60);
     return 0;
 }
 

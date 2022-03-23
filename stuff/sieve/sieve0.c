@@ -12,12 +12,12 @@
 #define sizepl 8191
 char flags[sizepl];
 main() {
-    int i, prime, k, count, iter, ticks; 
-    printf("10 iterations\n");
-    ticks = 0;
+    int i, prime, k, count, iter;
 #if TIMER
+    unsigned int ticks = 0;
     frameCount = 0;
 #endif
+    printf("10 iterations\n");
     for (iter = 1; iter <= 10; iter ++) {
         count=0 ; 
 	for (i = 0; i <= size; i++)

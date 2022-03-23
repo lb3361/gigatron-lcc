@@ -2,7 +2,7 @@
 CC=../../build/glcc
 ROM=v5a
 MAP=64k,hionly
-CFLAGS=-rom=$(ROM) -map=$(MAP)
+CFLAGS=-rom=$(ROM) -map=$(MAP) -Dprintf=mincprintf
 
 PGMS=sieve0.gt1 sieve1.gt1 sieve2.gt1
 

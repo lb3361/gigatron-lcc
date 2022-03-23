@@ -48,8 +48,10 @@ extern void console_clear_to_eol(void);
 /* -------- formatted output ----------- */
 
 /* These functions are similar to the stdio printf functions but they
-   bypass stdio and hit directly the console. Using them imports the
-   relatively heavy printf machinery but not the stdio machinery. */
+   bypass stdio and hit directly the console. The cprintf function still
+   import the relatively heavy printf machinery but not the stdio machinery.
+   The mincprintf function is considerably smaller because it only
+   understands %%, %s, and %d. */
 
 /* Print formatted text at the cursor position */
 extern int cprintf(const char *fmt, ...);
@@ -58,6 +60,9 @@ extern int cprintf(const char *fmt, ...);
    with a va_list instead of a variable number of arguments. */
 extern int vcprintf(const char *fmt, __va_list ap);
 
+/* Print formatted text at the cursor position.
+   Only knows %%, %s, and %d. */
+extern void mincprintf(const char *fmt, ...);
 
 
 /* -------- input ----------- */

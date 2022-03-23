@@ -304,11 +304,11 @@ reg: LOADI4(reg)  "\t_MOVL(%0,%c);\n" 120
 reg: LOADU4(reg)  "\t_MOVL(%0,%c);\n" 120
 reg: LOADF5(reg)  "\t_MOVF(%0,%c);\n" 150
 # -- these were missing, really
-reg: LOADI1(conBs) "\tLDI(%0);%{dst!=vAC:ST(%c);}\n" 36
-reg: LOADU1(conB)  "\tLDI(%0);%{dst!=vAC:ST(%c);}\n" 36
-reg: LOADI2(con)   "\t_LDI(%0);%{dst!=vAC:STW(%c);}\n" 41
-reg: LOADU2(con)   "\t_LDI(%0);%{dst!=vAC:STW(%c);}\n" 41
-reg: LOADP2(con)   "\t_LDI(%0);%{dst!=vAC:STW(%c);}\n" 41
+reg: LOADI1(conBs) "\t%{#alsoVAC}LDI(%0);%{dst!=vAC:ST(%c);}\n" 36
+reg: LOADU1(conB)  "\t%{#alsoVAC}LDI(%0);%{dst!=vAC:ST(%c);}\n" 36
+reg: LOADI2(con)   "\t%{#alsoVAC}_LDI(%0);%{dst!=vAC:STW(%c);}\n" 41
+reg: LOADU2(con)   "\t%{#alsoVAC}_LDI(%0);%{dst!=vAC:STW(%c);}\n" 41
+reg: LOADP2(con)   "\t%{#alsoVAC}_LDI(%0);%{dst!=vAC:STW(%c);}\n" 41
 
 # -- constants
 # These non terminal represent constants in the tree grammar

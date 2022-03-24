@@ -39,7 +39,7 @@ main() {
     }
     printf("\n%d primes", count);
 #if TIMER
-    printf("\n%d %d/60 seconds", ticks/60, ticks % 60, count);
+    printf("\n%d %d/60 seconds", ticks/60, ticks % 60);
 #endif
 }
 

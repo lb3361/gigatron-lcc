@@ -1319,7 +1319,7 @@ def _SP(n):
     n = v(n)
     if is_zero(n):
         LDW(SP);
-    elif isinstance(n,int) and not isinstance(n,Unk) and n < 0 and n > -256:
+    elif args.cpu < 6 and is_zeropage(-n):
         LDW(SP); SUBI(-n)
     else:
         _LDI(n); ADDW(SP)
@@ -1381,7 +1381,7 @@ def _SHRIS(imm):
     '''Shift vAC right (signed) by imm positions'''
     imm &= 0xf
     if imm == 8:
-        LD(vACH);XORI(128); SUBI(128)
+        LD(vACH);XORI(128);SUBI(128)
     elif imm == 1:
         extern("_@_shrs1")
         _CALLI("_@_shrs1")           # T3 >> 1 -> vAC
@@ -1981,35 +1981,38 @@ def _CALLJ(d):
 @vasm
 def _PROLOGUE(framesize,maxargoffset,mask):
     '''Function prologue'''
-    if args.cpu >= 5:
-        tryhop(4);LDW(vLR);DOKE(SP);_SP(-framesize);STW(SP)
-        if mask:
-            ADDI(maxargoffset)
-            extern('_@_save_%02x' % mask)
-            _CALLI('_@_save_%02x' % mask)
+    if args.cpu >= 6 and framesize < 256:
+        tryhop(4);LDW(vLR);DOKE(SP);SUBVI(framesize,SP)
     else:
         tryhop(4);LDW(vLR);DOKE(SP);_SP(-framesize);STW(SP)
-        if mask:
-            ADDI(maxargoffset);STW(T3)
-            extern('_@_save_%02x' % mask)
-            _CALLJ('_@_save_%02x' % mask)
+    if mask:
+        ADDI(maxargoffset)
+        extern('_@_save_%02x' % mask)
+        if args.cpu >= 5:
+            _CALLI('_@_save_%02x' % mask)
+        else:
+            STW(T3); _CALLJ('_@_save_%02x' % mask)
 @vasm
 def _EPILOGUE(framesize,maxargoffset,mask,saveAC=False):
     '''Function epilogue'''
     if saveAC:
         STW(T2);
     diff = framesize - maxargoffset;
-    _SP(framesize);STW(SP);
+    if args.cpu >= 6 and framesize < 256:
+        ADDVI(framesize, SP)
+    else:
+        _SP(framesize);STW(SP);
     if diff >= 0 and diff < 256:
         SUBI(diff)
+    elif args.cpu >= 6:
+        SUBWI(diff)
     else:
         _SP(-diff);
     extern('_@_rtrn_%02x' % mask)
     if args.cpu >= 5:
         _CALLI('_@_rtrn_%02x' % mask)
     else:
-        STW(T3)
-        _CALLJ('_@_rtrn_%02x' % mask)
+        STW(T3); _CALLJ('_@_rtrn_%02x' % mask)
         
 # compat
 module_dict['_MOV'] = _MOVW

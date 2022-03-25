@@ -78,7 +78,7 @@ def scope():
         BRA('.loop1')
         label('.loop0')                            #   (loops at most 3 times)
         INC(MV)
-        LDW(XV);SUBW(YV);STW(XV)
+        LDW(XV);SUBW(YV);STW(XV)                   #   (warning: SUBVW overwrites MV!)
         label('.loop1')
         _CMPWU(YV);_BGE('.loop0')
         LDW(XV);STW(RV)                            # - for modu

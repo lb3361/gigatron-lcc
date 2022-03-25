@@ -46,15 +46,21 @@ def scope():
                  ('IMPORT', '__@shrsysfn'),
                  ('CODE', '_@_shru', code1) ] )
 
-    # SHRS: T3<<T2 -> vAC  (signed)
+    # SHRS: T3<<vAC -> vAC  (signed)
     # clobbers T0
     def code2():
        label('_@_shrs')
        PUSH();ST(T2)
        LDW(T3);_BGE('.shrs1')
-       _LDI(0xffff);XORW(T3);STW(T3)
+       if args.cpu >= 6:
+           NOTW(T3)
+       else:
+           _LDI(0xffff);XORW(T3);STW(T3)
        _CALLJ('__@shru_t2')
-       STW(T3);_LDI(0xffff);XORW(T3)
+       if args.cpu >= 6:
+           NOTW(vAC)
+       else:
+           STW(T3);_LDI(0xffff);XORW(T3)
        _BRA('.shrs2')
        label('.shrs1')
        _CALLJ('__@shru_t2')
@@ -70,13 +76,19 @@ def scope():
     def code0():
         nohop()
         label('_@_shru1')
-        STW(T3); LDWI('SYS_LSRW1_48'); STW('sysFn'); LDW(T3)
-        SYS(48)
+        if args.cpu >= 6:
+            LSRV(vAC)
+        else:
+            STW(T3); LDWI('SYS_LSRW1_48'); STW('sysFn'); LDW(T3)
+            SYS(48)
         RET()
         label('_@_shrs1')
         BGE('_@_shru1')
-        STW(T3); LDWI('SYS_LSRW1_48'); STW('sysFn'); LDWI(0x8000); STW(T2); LDW(T3)
-        SYS(48); ORW(T2)
+        if args.cpu >= 6:
+            LSRV(vAC);ORWI(0x8000)
+        else:
+            STW(T3); LDWI('SYS_LSRW1_48'); STW('sysFn'); LDWI(0x8000); STW(T2); LDW(T3)
+            SYS(48); ORW(T2)
         RET()
 
     module(name='rt_shr1.s',

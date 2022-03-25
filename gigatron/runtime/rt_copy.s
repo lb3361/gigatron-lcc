@@ -8,6 +8,8 @@ def scope():
         nohop()
         label('_@_lcopy_')
         if args.cpu >= 6:
+            ## With cpu>=6, the macro _MOVL does not call this function
+            ## but uses opcodes MOVL, DEEKL, DOKEL, or NCOPY instead.
             DEEKV(T0);DOKE(T2)
             ADDVI(2,T0);ADDVI(2,T2)
             DEEKV(T0);DOKE(T2)
@@ -27,6 +29,8 @@ def scope():
     def code2():
         nohop()
         if args.cpu >= 6:
+            ## With cpu>=6, the macros _MOVF and _MOVL do not call this
+            ## function but use opcodes MOVF, MOVL, or NCOPY instead.
             label('_@_fcopyz_')
             ST(T0);LD(vACH);STW(T2)
             LD(T0);STW(T0)
@@ -75,6 +79,8 @@ def scope():
         label('_@_bcopy_')
         _PEEKV(T0);POKE(T2)
         if args.cpu >= 6:
+            ## With cpu>=6, the macro _MOVF and _MOVM do not call this
+            ## function but use opcode NCOPY instead.
             INCW(T2);INCW(T0);LDW(T0)
         else:
             LDI(1);ADDW(T2);STW(T2)
@@ -95,6 +101,8 @@ def scope():
         label('_@_wcopy_')
         _DEEKV(T0);DOKE(T2)
         if args.cpu >= 6:
+            ## With cpu>=6, the macro _MOVF and _MOVM do not call this
+            ## function but use opcode NCOPY instead.
             ADDVI(2,T2);ADDVI(2,T0)
         else:
             LDI(2);ADDW(T2);STW(T2)
@@ -107,6 +115,7 @@ def scope():
                   ('CODE', '_@_wcopy_', code4) ])
 
     # LEXTS: (vAC<0) ? -1 : 0 --> vAC
+    # Cpu6 uses opcode STLS instead
     def code5():
         nohop()
         label('_@_lexts')
@@ -120,6 +129,7 @@ def scope():
                   ('CODE', '_@_lexts', code5) ])
 
     # LCVI: AC to LAC with sign extension
+    # Cpu6 uses opcode STLS instead
     def code6():
         nohop()
         label('_@_lcvi')

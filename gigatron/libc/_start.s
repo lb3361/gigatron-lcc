@@ -7,7 +7,10 @@ def code0():
     # save vLR, vSP
     PUSH();LDWI('_exitvsp');STW(T3);LD(vSP);POKE(T3)
     # create stack headroom for argc and argv
-    LDWI(-4);ADDW(SP);STW(SP)
+    if args.cpu >= 6:
+        SUBWI(SP,4)
+    else:
+        LDWI(-4);ADDW(SP);STW(SP)
     # initialize bss
     if not args.no_runtime_bss_initialization:
         _CALLJ('_init_bss')

@@ -77,6 +77,7 @@ static const char *parsespec(const char *s, doprintspec_t *spec, va_list *ap)
 		c = *++s;
 	}
 	spec->flags = f;
+	spec->conv = c;
 	return s;
 }
 

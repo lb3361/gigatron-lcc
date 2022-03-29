@@ -17,7 +17,7 @@ HOSTFILE=${TOP}etc/gigatron-lcc.c
 GLCC=${B}glcc
 GTSIM=${B}gtsim
 
-SUBDIRS=${G}runtime ${G}libc ${G}map32k ${G}map64k ${G}mapsim ${G}mapconx
+SUBDIRS=${G}runtime ${G}libc ${G}map32k ${G}map64k ${G}mapsim ${G}mapconx ${G}map512k
 GFILES=${B}glcc ${B}glink ${B}glink.py ${B}glccver.py ${B}interface.json ${B}roms.json ${GFILES_W}
 ROMFILES=${wildcard ${G}roms/*.rom}
 ROMS=${patsubst ${G}roms/%.rom,%,${ROMFILES}}

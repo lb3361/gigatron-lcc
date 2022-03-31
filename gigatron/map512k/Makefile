@@ -25,8 +25,7 @@ ${B}${MAPDIR}/%.py: %.py
 	cp $+ $@
 
 clean: FORCE subdirs-clean
-	-rm -rf ${PYTARGETS} ${B}${MAPDIR}/${LIBNAME}.a
-	-rm ${OFILES}
+	-rm -rf ${PYTARGETS}
 	-rmdir ${B}${MAPDIR}
 
 install: FORCE subdirs-install

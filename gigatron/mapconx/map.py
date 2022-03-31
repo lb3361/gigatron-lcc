@@ -68,9 +68,10 @@ def map_modules(romtype):
             LD('memSize');SUBI(1);ANDI(0xff);SUBI(minram-1);BLT('.err')
         # Call _start
         LDWI(v(args.e));CALL(vAC)
-        # Run Marcel's smallest program when machine check fails
+        # Run sanitized version of Marcel's smallest program when machine check fails
         label('.err')
-        LDW('frameCount');DOKE(vPC+1);BRA('.err')
+        LDW('frameCount');STW(vLR);ANDI(0x7f);BEQ('.err');
+        LDW(vLR);DOKE(vPC+1);BRA('.err')
 
     module(name='_gt1exec.s',
            code=[ ('EXPORT', '_gt1exec'),

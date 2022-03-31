@@ -591,7 +591,7 @@ stmt: GTU2(iarg,ac) "\t%1%[0b]_CMPWU(%0);_BLT(%a);\n" 100
 stmt: GEU2(iarg,ac) "\t%1%[0b]_CMPWU(%0);_BLE(%a);\n" 100
 
 # Nonterminals for assignments with MOVM/MOVL/MOVF:
-#   stmt: ASGNx(vdst,xac) "\t%1%[0b]_xMOV(%1,%0);\n"
+#   stmt: ASGNx(vdst,xAC) "\t%1%[0b]_xMOV(xAC,%0);\n"
 #   stmt: ASGNx(vdst,reg) "\t%[0b]_xMOV(%1,%0);\n"
 #   stmt: ASGNx(addr,INDIRx(asrc)) "\t%[1b]_xMOV(%1,%0);\n"
 #   stmt: ASGNx(ac,  INDIRx(asrc)) "\t%0STW(T2);%[1b]_xMOV(%1,[T2]);\n"
@@ -621,8 +621,8 @@ larg: INDIRU4(eac) "%0"
 reg: lac "\t%{#alsoLAC}%0%{dst!=LAC:_MOVL(LAC,%c);}\n" 120
 reg: INDIRI4(ac)   "\t%0_MOVL([vAC],%c);\n" 120
 reg: INDIRU4(ac)   "\t%0_MOVL([vAC],%c);\n" 120
-reg: INDIRI4(lddr) "\t%_MOVL([SP,%0],%c);\n" 160
-reg: INDIRU4(lddr) "\t%_MOVL([SP,%0],%c);\n" 160
+reg: INDIRI4(lddr) "\t_MOVL([SP,%0],%c);\n" 160
+reg: INDIRU4(lddr) "\t_MOVL([SP,%0],%c);\n" 160
 reg: INDIRI4(addr) "\t_MOVL(%0,%c);\n" 120
 reg: INDIRU4(addr) "\t_MOVL(%0,%c);\n" 120
 lac: reg "%{src!=LAC:_MOVL(%0,LAC);}" 120
@@ -710,7 +710,7 @@ farg: reg "LDI(%0);" 21
 farg: INDIRF5(eac) "%0"
 reg: fac "\t%{#alsoFAC}%0%{dst!=FAC:_MOVF(FAC,%c);}\n" 180
 reg: INDIRF5(ac)   "\t%0_MOVF([vAC],%c);\n" 150
-reg: INDIRF5(lddr) "\t%_MOVF([SP,%0],%c);\n" 190
+reg: INDIRF5(lddr) "\t_MOVF([SP,%0],%c);\n" 190
 reg: INDIRF5(addr) "\t_MOVF(%0,%c);\n" 150
 fac: reg            "%{src!=FAC:_MOVF(%0,FAC);}" 150
 fac: INDIRF5(ac)    "%0_MOVF([vAC],FAC);" 180
@@ -764,9 +764,9 @@ ac: CALLP2(ac)    "%0CALL(vAC);" 26
 stmt: CALLV(addr) "\tCALLI(%0);\n" mincpu5(28)
 stmt: CALLV(reg)  "\tCALL(%0);\n" 26
 stmt: CALLV(ac)   "\t%0CALL(vAC);\n" 26
-stmt: ARGF5(reg) "\t%_MOVF(%0,[SP,%c]);\n"  if_arg_stk(a)
-stmt: ARGI4(reg) "\t%_MOVL(%0,[SP,%c]);\n"  if_arg_stk(a)
-stmt: ARGU4(reg) "\t%_MOVL(%0,[SP,%c]);\n"  if_arg_stk(a)
+stmt: ARGF5(reg) "\t_MOVF(%0,[SP,%c]);\n"  if_arg_stk(a)
+stmt: ARGI4(reg) "\t_MOVL(%0,[SP,%c]);\n"  if_arg_stk(a)
+stmt: ARGU4(reg) "\t_MOVL(%0,[SP,%c]);\n"  if_arg_stk(a)
 stmt: ARGI2(reg)  "\t_MOVW(%0,[SP,%c]);\n"   if_arg_stk(a)
 stmt: ARGU2(reg)  "\t_MOVW(%0,[SP,%c]);\n"   if_arg_stk(a)
 stmt: ARGP2(reg)  "\t_MOVW(%0,[SP,%c]);\n"   if_arg_stk(a)

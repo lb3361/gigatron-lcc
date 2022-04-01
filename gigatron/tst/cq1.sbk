@@ -271,8 +271,8 @@ def code10():
 	STW(T3);_MOVW(R22,[SP,-472+492]);LDW(T3) #genspill
 	_MOVL([vAC],L8);
 	_MOVL(L8,[SP,4]);
-	CALLI('pow2');_MOVL(LAC,L20);
-	_SP(-472+492);DEEK();_MOVL(L20,[vAC]);
+	CALLI('pow2');
+	_SP(-472+492);DEEK();_MOVL(LAC,[vAC]);
 	LDW(R6);_SHLI(2);STW(R22);
 	_LDI('.45');ADDW(R22);_MOVL([vAC],LAC);_LDI('.74');_LSUB();_LDI(v('.45')-4);ADDW(R22);_MOVL(LAC,[vAC]);
 	LDI(2);ADDW(R6);STW(R6);

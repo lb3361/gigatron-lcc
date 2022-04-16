@@ -844,6 +844,7 @@ int disassemble(word addr, char **pm, char *operand)
     case 0x7d: *pm="DOKEA"; goto oper8;
     case 0x8a: *pm="PEEKA+"; goto oper8;
     case 0x8e: *pm="DBGE"; goto oper8br;
+    case 0x95: *pm="INCWA"; goto oper8;
     case 0x9c: *pm="LDNI"; goto oper8n;
     case 0x9e: *pm="ANDBK"; goto oper88r;
     case 0xa0: *pm="ORBK"; goto oper88r;
@@ -864,6 +865,7 @@ int disassemble(word addr, char **pm, char *operand)
     case 0xd7: *pm="TLT"; goto oper8;
     case 0xd9: *pm="TGT"; goto oper8;
     case 0xdb: *pm="TLE"; goto oper8;
+    case 0xdd: *pm="DECWA"; goto oper8;
     case 0xe1: *pm="SUBBI"; goto oper88;
     case 0xb1: {
       switch(peek(addlo(addr,1)))

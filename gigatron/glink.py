@@ -930,6 +930,10 @@ def DBGE(v, d):
     '''DBGE:  Decrement byte var and branch if >= 0, 30 cycles'''
     check_cpu(6); tryhop(3); emit(0x8e, check_br(d), check_zp(v))
 @vasm
+def INCWA(d):
+    '''INCWA: Increment word var, vAC=var, 26-28 cycles'''
+    check_cpu(6); tryhop(2); emit(0x95, check_br(d))
+@vasm
 def LDNI(d):
     '''LDNI: Load an 8bit immediate as a negative 16bit immediate into vAC'''
     check_cpu(6); tryhop(2); emit(0x9c, check_zp(d))
@@ -1009,6 +1013,10 @@ def TGT(d):
 def TLE(d):
     '''TLE: Test for LE, returns 0x0000 or 0x0001 in var, 28 cycles'''
     check_cpu(6); tryhop(2); emit(0xdb, check_zp(d))
+@vasm
+def DECWA(d):
+    '''DECWA: Decrement word var, vAC=var, 28-30 cycles'''
+    check_cpu(6); tryhop(3); emit(0xdd, check_zp(d))
 @vasm
 def SUBBI(imm,d):
     '''SUBBI: Subtract a constant 0..255 from a byte var, 28 cycles'''

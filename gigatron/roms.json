@@ -27,7 +27,6 @@
     "exp" : { "cpu" : 5,
 	      "romType" : "0xf8",
 	      "inherits" : "dev",
-	      "has_SYS_OsCall" :              { "addr" : "0xe0", "cycs" : 80 },
 	      "has_SYS_ScanMemoryExt" :       { "addr" : "0xe3", "cycs" : 50 }
 	    },
 

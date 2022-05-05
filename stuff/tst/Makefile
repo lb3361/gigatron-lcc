@@ -1,9 +1,9 @@
 CC=../../build/glcc
 ROM=v5a
 MAP=32k
-CFLAGS=-rom=${ROM} -map=${MAP}
+CFLAGS=-map=${MAP} -rom=${ROM}
 
-PGMS=TSTconsole.gt1 TSTio.gt1 TSTcontroller.gt1 TSTmemcpyext.gt1
+PGMS=TSTconsole.gt1 TSTio.gt1 TSTcontroller.gt1 TSTmemcpyext.gt1 TSTmem.gt1
 
 all: $(PGMS)
 
@@ -20,8 +20,7 @@ TSTcontroller.gt1: TSTcontroller.c
 	${CC} ${CFLAGS} TSTcontroller.c -o $@
 
 TSTmemcpyext.gt1: TSTmemcpyext.c
-	@if [ "$(MAP)" != 32k ] || [ "$(ROM)" != dev ] ; then \
-	    test -r $@ && rm $@; \
-	    echo "Cannot compile TSTmemcpyext unless MAP=32k and ROM=dev"; \
-	    false ; fi
-	${CC} ${CFLAGS} TSTmemcpyext.c -o $@
+	${CC} -map=32k -rom=dev TSTmemcpyext.c -o $@
+
+TSTmem.gt1: TSTmem.c
+	${CC} -map=32k -rom=${ROM} TSTmem.c -o $@

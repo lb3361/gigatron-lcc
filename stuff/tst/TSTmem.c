@@ -22,6 +22,16 @@ void probe_ram()
 	has_512krom =  (videoModeB ^ 0xfc ==0xfc);
 	has_64k =      (memSize == 0);
 
+	// double check expander (reset memory detection bug)
+	if (has_expander) {
+		SYS_ExpanderControl(0x3c);    // set bank 0
+		hSysArgs4 = sysArgs4 ^ 0xaa;
+		if (hSysArgs4 != sysArgs4)
+			has_expander = 0;
+		hSysArgs4 = sysArgs4 ^ 0xaa;
+		SYS_ExpanderControl(0x7c);    // back to default
+	}
+	
 	// check for 128k
 	if (has_expander) {
 		SYS_ExpanderControl(0xbc);    // set bank 2

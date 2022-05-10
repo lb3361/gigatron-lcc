@@ -4,17 +4,12 @@
 #include <gigatron/libc.h>
 #include <gigatron/sys.h>
 
-
-static struct channel_s bell = {0,1,77,21};
+#define CTRL_TABS 1
+#define CTRL_BELL 1
 
 int _console_ctrl(register int c)
 {
 	switch(c) {
-	case '\a':
-		for (c = channelMask_v4 & 3; c >= 0; c--)
-			channel(c+1) = bell;
-		soundTimer = 4;
-		break;
 	case '\b': /* backspace */
 		if (console_state.cx > 0)
 			console_state.cx -= 1;
@@ -23,19 +18,30 @@ int _console_ctrl(register int c)
 			console_state.cy -= 1;
 		}
 		break;
-	case '\t':  /* tab */
-		console_state.cx = (console_state.cx | 3) + 1;
-		break;
 	case '\n': /* lf */
 		console_state.cy += 1;
 	case '\r': /* cr */
 		console_state.cx = 0;
+		break;
+#if CTRL_TABS
+	case '\t':  /* tab */
+		console_state.cx = (console_state.cx | 3) + 1;
 		break;
 	case '\f':
 		console_clear_screen();
 		break;
 	case '\v':
 		console_clear_to_eol();
+		break;
+#endif
+#if CTRL_BELL
+	case '\a': {
+		static struct channel_s bell = {0,1,77,21};
+		for (c = channelMask_v4 & 3; c >= 0; c--)
+			channel(c+1) = bell;
+		soundTimer = 4; }
+		break;
+#endif
 	default:
 		return 0;
 	}

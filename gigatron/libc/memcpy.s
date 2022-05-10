@@ -23,7 +23,6 @@ def scope_ncopy():
     
 
 # This longer variant uses SYS_CopyMemory.
-# It can also use NCOPY for small blocks on cpu>=6.
 def scope_syscopymemory():
     info = rominfo['has_SYS_CopyMemory']
     addr = int(str(info['addr']),0)

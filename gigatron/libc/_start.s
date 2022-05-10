@@ -8,7 +8,7 @@ def code0():
     PUSH();LDWI('_exitvsp');STW(T3);LD(vSP);POKE(T3)
     # create stack headroom for argc and argv
     if args.cpu >= 6:
-        SUBWI(SP,4)
+        SUBVI(4,SP)
     else:
         LDWI(-4);ADDW(SP);STW(SP)
     # initialize bss

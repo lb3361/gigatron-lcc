@@ -88,7 +88,7 @@ void test_upper(char seed,  int bank)
 
 void set_bank(char bank)
 {
-	if (has_512k && bank >= 4) {
+	if (has_512k && (bank == 0 || bank >= 4)) {
 		// map desired bank onto classic bank 0
 		SYS_ExpanderControl(0x00f0 | ((bank & 15) << 12));
 		bank = 0;

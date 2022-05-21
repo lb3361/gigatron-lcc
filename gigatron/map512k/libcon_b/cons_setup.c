@@ -21,7 +21,7 @@ static void console_exitm_msgfunc(int retcode, const char *s)
     /* Halting code (flash pixel using the proper screen) */
     char c = 0;
     char *row = (char*)(((*(char*)0x100)|0x80) << 8);
-    SYS_ExpanderControl(0xe1f0u);
+    SYS_ExpanderControl(0xe0f0u);
     SYS_ExpanderControl(ctrlBits_v5 & 0x3f);
     while (1)
       row[(char)retcode] = ++c;

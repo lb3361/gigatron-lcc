@@ -2549,8 +2549,8 @@ def process_magic_heap(s, head_module, head_addr):
     for s in segment_list:
         if s.flags & 0x4:
             continue
-        a0 = (s.pc + 1) & ~0x1
-        a1 = s.eaddr &  ~0x1
+        a0 = (s.pc + 3) & ~0x3
+        a1 = s.eaddr &  ~0x3
         if a1 - a0 >= max(24, args.mhss or 24):
             s.pc = a0 + 4
             if not s.buffer:

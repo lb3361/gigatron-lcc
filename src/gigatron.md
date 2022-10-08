@@ -374,15 +374,15 @@ zddr: conB "%0"
 stmt: reg  ""
 stmt: ac   "\t%0\n"
 reg:  ac   "\t%{#alsoVAC}%0%{dst!=vAC:STW(%c);}\n" 20
-ac:  reg   "%{src!=vAC:LDW(%0);}" 20
-ac:  reg   "%{src!=vAC:LDW(%0);}" 20
+ac0: eac0  "%0"
 ac:  ac0   "%0"
 ac:  eac   "%0" 
-ac0: eac0  "%0"
-ac0: conB  "LDI(%0);" 16
-ac:  con   "_LDI(%0);" 21
-ac:  zddr  "LDI(%0);" 16
-ac:  addr  "_LDI(%0);" 21
+eac:  reg   "%{src!=vAC:LDW(%0);}" 20
+eac:  reg   "%{src!=vAC:LDW(%0);}" 20
+eac0: conB  "LDI(%0);" 16
+eac:  con   "_LDI(%0);" 21
+eac:  zddr  "LDI(%0);" 16
+eac:  addr  "_LDI(%0);" 21
 eac:  reg  "%{src!=vAC:LDW(%0);}" 20
 eac:  eac0 "%0"
 eac0: zddr "LDI(%0);" 16

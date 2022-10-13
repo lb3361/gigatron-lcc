@@ -1752,6 +1752,9 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   maxoffset = (maxoffset + 1) & ~0x1;
   framesize = maxargoffset + sizesave + maxoffset;
   assert(framesize >= 2);
+  if (framesize > 32768)
+    error("%s() framesize (%d) too large for a gigatron\n",
+          f->name, framesize);
   /* can we make a frameless leaf function */
   if (ncalls == 0 && framesize == 2 && (tmask[IREG] & ~usedmask[IREG]))
     framesize = 0;

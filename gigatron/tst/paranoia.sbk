@@ -1733,7 +1733,7 @@ def code17():
 	LDWI('.352');STW(R8);
 	CALLI('printf');
 	LDWI('I');STW(R22);
-	LDWI(-1);DOKE(R22);
+	_LDI(-1);DOKE(R22);
 	_MOVF('BMinusU2','X');
 	_MOVF('Radix',F20);
 	_MOVF(F20,'Y');
@@ -2207,7 +2207,7 @@ def code17():
 	LDWI('N');STW(R22);
 	LDI(0);DOKE(R22);
 	LDWI('I');STW(R22);
-	LDWI(-4);DOKE(R22);
+	_LDI(-4);DOKE(R22);
 	label('.461');
 	label('.456');
 	LDWI('Break');DEEK();_BEQ('.455');

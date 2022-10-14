@@ -1273,7 +1273,7 @@ def code43():
 	POKE(R22);
 	LD(R21);_BNE('.524');
 	_SP(-18+48);STW(R22);
-	LDWI(-19);DOKE(R22);
+	_LDI(-19);DOKE(R22);
 	_SP(-18+48);DEEK();_STLS(LAC);_MOVL(LAC,[SP,-24+48]);
 	_MOVL('.529',LAC);_SP(-24+48);_LCMPX();_BEQ('.527');
 	LDI(1);ADDW(R2);STW(R2);
@@ -1678,7 +1678,7 @@ def code50():
 	CALLI('printf');
 	label('.707');
 	label('.701');
-	LDWI(-5);STW(R8);
+	_LDI(-5);STW(R8);
 	_MOVW(R8,[SP,2]);
 	CALLI('McCarthy');
 	XORI(91);_BEQ('.709');
@@ -3894,7 +3894,7 @@ def code72():
 	LDI(16);SUBW(R22);
 	_BRA('.1429');
 	label('.1468');
-	LDWI(-1);
+	_LDI(-1);
 	label('.1429');
 	_EPILOGUE(88,2,0xfe,saveAC=True);
 # ======== ('CODE', 'regi', code73)
@@ -4078,7 +4078,7 @@ def code73():
 	LDI(16);SUBW(R22);
 	_BRA('.1470');
 	label('.1509');
-	LDWI(-1);
+	_LDI(-1);
 	label('.1470');
 	_EPILOGUE(112,2,0xfe,saveAC=True);
 # ======== ('CODE', 'regp', code74)
@@ -4262,7 +4262,7 @@ def code74():
 	LDI(16);SUBW(R22);
 	_BRA('.1511');
 	label('.1550');
-	LDWI(-1);
+	_LDI(-1);
 	label('.1511');
 	_EPILOGUE(112,2,0xfe,saveAC=True);
 # ======== ('BSS', '.1553', code75, 210, 2)
@@ -4569,7 +4569,7 @@ def code87():
 	LDW(R22);_SHLI(14);_SHRIS(14);_SHLI(13);_SHRIS(13);_SHLI(3);ANDI(56);STW(R20);
 	LDWI(0xffc7);ANDW(R22);ORW(R20);DOKE(R21);
 	_SP(-168+276);DEEK();_SHLI(10);_SHRIS(13);XORI(3);_BEQ('.1655');
-	LDWI(-1);STW(R22);
+	_LDI(-1);STW(R22);
 	_SP(-168+276);DEEK();_SHLI(10);_SHRIS(13);XORW(R22);_BNE('.1657');
 	LDI(26);ADDW(R7);DEEK();_BEQ('.1658');
 	LDWI('.1661');STW(R8);

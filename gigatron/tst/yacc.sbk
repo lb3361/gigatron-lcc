@@ -17,7 +17,7 @@ def code2():
 	_BRA('.3');
 	label('.2');
 	label('.5');
-	LDWI(-1);_CMPWS(R7);_BGT('.6');
+	_LDI(-1);_CMPWS(R7);_BGT('.6');
 	LDW(R7);_CMPIS(4);_BGT('.6');
 	LDWI(v('.17')+2);STW(R22);
 	LDW(R7);LSLW();ADDW(R22);DEEK();CALL(vAC);
@@ -586,7 +586,7 @@ def code14():
 	_SP(-2+28);STW(R22);
 	LDWI('yytchar');DEEK();DOKE(R22);
 	label('.58');
-	LDWI(-1);STW(R22);
+	_LDI(-1);STW(R22);
 	_SP(-2+28);DEEK();XORW(R22);_BNE('.55');
 	LDI(0);STW(R0);
 	_BRA('.56');
@@ -826,7 +826,7 @@ def code14():
 	_SP(-2+28);STW(R22);
 	LDWI('yytchar');DEEK();DOKE(R22);
 	label('.114');
-	LDWI(-1);STW(R22);
+	_LDI(-1);STW(R22);
 	_SP(-2+28);DEEK();XORW(R22);_BNE('.111');
 	LDI(0);STW(R0);
 	_BRA('.112');
@@ -914,7 +914,7 @@ def code16():
 	label('.138');
 	LDWI('yytchar');DEEK();STW(R6);
 	label('.139');
-	LDWI(-1);XORW(R6);_BNE('.136');
+	_LDI(-1);XORW(R6);_BNE('.136');
 	LDI(0);STW(R7);
 	_BRA('.137');
 	label('.136');
@@ -1407,7 +1407,7 @@ def code32():
 	_PROLOGUE(324,6,0xff); # save=R0-7
 	LDI(0);STW(R6);
 	LDWI('yychar');STW(R22);
-	LDWI(-1);DOKE(R22);
+	_LDI(-1);DOKE(R22);
 	LDWI('yynerrs');STW(R22);
 	LDI(0);DOKE(R22);
 	LDWI('yyerrflag');STW(R22);
@@ -1455,7 +1455,7 @@ def code32():
 	LDWI('yychar');DEEK();STW(R20);
 	LDW(R22);LSLW();ADDW(R21);DEEK();XORW(R20);_BNE('.174');
 	LDWI('yychar');STW(R22);
-	LDWI(-1);DOKE(R22);
+	_LDI(-1);DOKE(R22);
 	LDWI('yyval');STW(R22);
 	LDWI('yylval');DEEK();DOKE(R22);
 	LDW(R4);STW(R6);
@@ -1468,7 +1468,7 @@ def code32():
 	LDWI('yydef');STW(R22);
 	LDW(R6);LSLW();ADDW(R22);DEEK();STW(R22);
 	STW(R4);
-	LDWI(-2);XORW(R22);_BNE('.178');
+	_LDI(-2);XORW(R22);_BNE('.178');
 	LDWI('yychar');DEEK();_BGE('.180');
 	CALLI('yylex');STW(R22);
 	LDWI('yychar');STW(R21);
@@ -1484,7 +1484,7 @@ def code32():
 	label('.185');
 	LDI(4);ADDW(R2);STW(R2);
 	label('.187');
-	LDWI(-1);STW(R22);
+	_LDI(-1);STW(R22);
 	LDW(R2);DEEK();XORW(R22);_BNE('.184');
 	LDI(2);ADDW(R2);DEEK();XORW(R6);_BNE('.184');
 	_BRA('.189');
@@ -1549,7 +1549,7 @@ def code32():
 	_BRA('.209');
 	label('.211');
 	LDWI('yychar');STW(R22);
-	LDWI(-1);DOKE(R22);
+	_LDI(-1);DOKE(R22);
 	_BRA('.163');
 	label('.197');
 	label('.195');

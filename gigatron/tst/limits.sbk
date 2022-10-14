@@ -82,7 +82,7 @@ def code0():
 	CALLI('printf');
 	LDWI('.14');STW(R8);
 	_MOVW(R8,[SP,2]);
-	LDWI(-128);STW(R22);
+	_LDI(-128);STW(R22);
 	STW(R9);
 	_MOVW(R9,[SP,4]);
 	LDW(R22);STW(R10);

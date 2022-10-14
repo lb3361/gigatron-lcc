@@ -306,9 +306,9 @@ reg: LOADF5(reg)  "\t%{#mov0}_MOVF(%0,%c);\n" 150
 # -- these were missing, really
 reg: LOADI1(conBs) "\t%{#alsoVAC}LDI(%0);%{dst!=vAC:ST(%c);}\n" 36
 reg: LOADU1(conB)  "\t%{#alsoVAC}LDI(%0);%{dst!=vAC:ST(%c);}\n" 36
-reg: LOADI2(con)   "\t%{#alsoVAC}_LDI(%0);%{dst!=vAC:STW(%c);}\n" 41
-reg: LOADU2(con)   "\t%{#alsoVAC}_LDI(%0);%{dst!=vAC:STW(%c);}\n" 41
-reg: LOADP2(con)   "\t%{#alsoVAC}_LDI(%0);%{dst!=vAC:STW(%c);}\n" 41
+reg: LOADI2(con)   "\t%{#alsoVAC}LDWI(%0);%{dst!=vAC:STW(%c);}\n" 41
+reg: LOADU2(con)   "\t%{#alsoVAC}LDWI(%0);%{dst!=vAC:STW(%c);}\n" 41
+reg: LOADP2(con)   "\t%{#alsoVAC}LDWI(%0);%{dst!=vAC:STW(%c);}\n" 41
 
 # -- constants
 # These non terminal represent constants in the tree grammar
@@ -380,13 +380,13 @@ ac:  eac   "%0"
 eac:  reg   "%{src!=vAC:LDW(%0);}" 20
 eac:  reg   "%{src!=vAC:LDW(%0);}" 20
 eac0: conB  "LDI(%0);" 16
-eac:  con   "_LDI(%0);" 21
+eac:  con   "LDWI(%0);" 21
 eac:  zddr  "LDI(%0);" 16
-eac:  addr  "_LDI(%0);" 21
+eac:  addr  "LDWI(%0);" 21
 eac:  reg  "%{src!=vAC:LDW(%0);}" 20
 eac:  eac0 "%0"
 eac0: zddr "LDI(%0);" 16
-eac:  addr "_LDI(%0);" 21
+eac:  addr "LDWI(%0);" 21
 eac:  lddr "_SP(%0);"  41
 
 

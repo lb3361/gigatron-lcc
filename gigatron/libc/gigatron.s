@@ -47,7 +47,7 @@ def scope():
         label('SYS_Exec')
         _LDI('SYS_Exec_88');STW('sysFn')
         LDW(R8);STW('sysArgs0')
-        LDW(R9);BEQ('.se1');STW(vLR)
+        LDW(R9);_BEQ('.se1');STW(vLR)
         label('.se1')
         SYS(88);RET()
 

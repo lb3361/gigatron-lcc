@@ -545,14 +545,18 @@ def scope():
             ADDBA(AM);ST(AM);LD(vACH);BEQ('.a1')
             INCL(AM+1);label('.a1')
         else:
-            LD(AM);ADDW(BM);ST(AM);LD(vACH)
-            BNE('.a1');LD(BM+1);BEQ('.a1');LDWI(0x100);label('.a1')
-            ADDW(AM+1);ST(AM+1);LD(vACH)
-            BNE('.a2');LD(AM+2);BEQ('.a2');LDWI(0x100);label('.a2')
-            ADDW(BM+2);ST(AM+2);LD(vACH)
-            BNE('.a3');LD(BM+3);BEQ('.a3');LDWI(0x100);label('.a3')
-            ADDW(AM+3);ST(AM+3);LD(vACH)
-            ADDW(BM+4);ST(AM+4)
+            LD(BM);BEQ('.a0')
+            ADDW(AM);ST(AM);LD(vACH);SUBW(AM+1);LD(vACL)
+            label('.a0')
+            PUSH()
+            ADDW(BM+1);STW(vLR);ADDW(AM+1);STW(AM+1);BLT('.a1')
+            SUBW(vLR);ORW(BM+1);BRA('.a2')
+            label('.a1')
+            SUBW(vLR);ANDW(BM+1)
+            label('.a2')
+            POP()
+            LD(vACH);ANDI(128);PEEK()
+            ADDW(BM+3);ADDW(AM+3);STW(AM+3)
         RET()
 
     module(name='rt_amaddbm.s',
@@ -806,14 +810,13 @@ def scope():
         # subtract BM<<8 from AM
         nohop()
         label('__@amsubbm32_')
-        # alternating pattern
-        LD(AM+1);SUBW(BM);ST(AM+1);LD(vACH)
-        BNE('.a1');LD(BM+1);XORI(255);BEQ('.a1');LDWI(0x100);label('.a1')
-        ADDW(AM+2);ST(AM+2);LD(vACH)
-        BNE('.a2');LD(AM+3);BEQ('.a2');LDWI(0x100);label('.a2')
-        SUBI(1);SUBW(BM+2);ST(AM+3);LD(vACH)
-        BNE('.a3');LD(BM+3);XORI(255);BEQ('.a3');LDWI(0x100);label('.a3')
-        ADDW(AM+4);ST(AM+4)
+        LDW(AM+1);BLT('.a1')
+        SUBW(BM);STW(AM+1);ORW(BM);BRA('.a2')
+        label('.a1')
+        SUBW(BM);STW(AM+1);ANDW(BM)
+        label('.a2')
+        LD(vACH);ANDI(128);PEEK();XORI(1);SUBI(1)
+        ADDW(AM+3);SUBW(BM+2);STW(AM+3)
         RET()
         
     module(name='rt_amsubbm32.s',

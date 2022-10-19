@@ -1132,7 +1132,7 @@ def scope():
                   ('CODE', '__@fmask', code_fmask) ] )
 
     def code_frndz():
-        '''_@_frndz: Make FAC, rounding it towards zero'''
+        '''_@_frndz: Make FAC integer, rounding towards zero'''
         label('_@_frndz')
         PUSH()
         _CALLJ('__@fmask')

@@ -154,12 +154,5 @@ void SYS_SpiExchangeBytes(void *dst, void *src, void *srcend);
 	(((romType & 0xfc) >= romTypeValue_ROMv5) && (ctrlBits_v5 != 0))
 
 
-/* -- SYS_OsCall --
-   Notes: This only exists in the exp ROM. */
-int SYS_OsCall(unsigned char n);
-#define has_SYS_OsCall() \
-	(((romType & 0xfc) > romTypeValue_ROMv5) && (ctrlBits_v5 != 0))
-
-
 
 #endif

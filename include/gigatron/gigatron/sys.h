@@ -46,6 +46,13 @@ typedef struct channel_s {
 # define word unsigned int
 #endif
 
+/* Using macro definitions like this is not very
+ * good because it prevents us from declaring local
+ * variables with the same name. Best would be 
+ * to augment LCC with a way to declare placed
+ * global variables (another project).
+ */
+
 #define zeroConst             (*(byte*)(0x0000)) // byte zeroConst;
 #define memSize               (*(byte*)(0x0001)) // byte memSize;
 #define entropy      ( (volatile byte*)(0x0006)) // byte entropy[3];

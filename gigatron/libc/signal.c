@@ -2,9 +2,7 @@
 #include <gigatron/libc.h>
 #include <gigatron/sys.h>
 
-extern void _exits(register int signo, register int fpeinfo);
-extern void _virq_handler(void);
-
+extern void __glink_weak__setsigvirq(void*);
 static sig_handler_t sigvec[8];
 
 sig_handler_t signal(int signo, sig_handler_t h)
@@ -18,9 +16,8 @@ sig_handler_t signal(int signo, sig_handler_t h)
 	sigvec[signo] = h;
 	/* activate */
 	_raise_disposition = RAISE_EMITS_SIGNAL;
-	if (signo == SIGVIRQ &&
-	    (romType & 0xfc) >= romTypeValue_ROMv5 )
-		vIRQ_v5 = (~1u&(unsigned)h)?(unsigned int)_virq_handler:0;
+	if (__glink_weak__setsigvirq && signo == 7 /* sigvirq */)
+		__glink_weak__setsigvirq(h);
 	return old;
 }
 

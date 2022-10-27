@@ -34,7 +34,7 @@ int main()
 	printf("%ld/0 = %ld\n", b , b / 0);
 	signal(SIGVIRQ, vhandler);
 	
-	if ( (*(char*)(0x21)) & 0xfc >= 0x40 )
+	if ( ((*(char*)(0x21)) & 0xfc) >= 0x40 )
 		{
 			/* The rom supports vIRQ */
 			while (vblcount < 10)

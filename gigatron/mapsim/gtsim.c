@@ -1048,7 +1048,7 @@ void print_trace(CpuState *S)
   if (strchr(trace, 'S')) {
     int i;
     fprintf(stderr, "\n\t sysFn=%04x sysArgs=%02x", deek(sysFn), peek(sysArgs0));
-    for(i=1; i<7; i++)
+    for(i=1; i<=7; i++)
       fprintf(stderr, " %02x", peek(sysArgs0+i));
   }
   if (strchr(trace, 'r')) {

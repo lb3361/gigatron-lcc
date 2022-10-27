@@ -28,45 +28,83 @@ def code0():
     # return to vLR saved by raise()
     LDW(SP);DEEK();tryhop(5);STW(vLR);LDW(T3);RET()
 
+module(name='_sigcall.s',
+       code=[ ('IMPORT', '_sigcall'),
+              ('IMPORT', '_@_wcopy_') if args.cpu < 6 else ('NOP',),
+              ('EXPORT', '_raise_emits_signal'),
+              ('CODE', '_raise_emits_signal', code0) ] )
+
+
+
+## SIGVIRQ support
+
+def code0():
+    '''Programs that use macro SIGVIRQ will reference this
+       constant and cause SIGVIRQ support to be linked'''
+    label('_sigvirq')
+    bytes(7)
+
 def code1():
     '''vIRQ handler'''
     nohop()
-    label('_virq_handler')
+    label('.virq')
     # save vLR/T0-T3 without using registers
     # skip 2 stack bytes because a lot of code uses STLW(-2)/LDLW(2) to save AC
     ALLOC(-10);LDW(T0);STLW(0);LDW(T1);STLW(2);LDW(T2);STLW(4);LDW(T3);STLW(6);PUSH()
     # clear virq vector
     LDWI('vIRQ_v5');STW(T0);LDI(0);DOKE(T0)
     # save sysFn/sysArgs[0-7]/B[0-2]/LAC
-    LDW(SP);SUBI(22);STW(SP);ADDI(2);STW(T2)
     if args.cpu >= 6:
-        LDI('_runbase');NCOPY(8);LDI('sysFn');NCOPY(10)
+        LDW(SP);SUBI(20);STW(SP);ADDI(2);STW(T2)
+        LDW('sysArgs6');DOKEp(T2)  ## cpu6 prefix instructions change sysArgs+[67]
+        LDI('_runbase');NCOPY(8);LDI('sysFn');NCOPY(8)
     else:
+        LDW(SP);SUBI(20);STW(SP);ADDI(2);STW(T2)
         LDI('_runbase');STW(T0);ADDI(8);STW(T1);_CALLJ('_@_wcopy_')
         LDI('sysFn');STW(T0);LDI(v('sysArgs7')+1);STW(T1);_CALLJ('_@_wcopy_')
-    LDWI('.rti');DOKE(SP)
+    LDWI('.vrti');DOKE(SP)
     LDI(0);STW(T3);LDI(7);_CALLI('_raise_emits_signal')
 
 def code2():
     '''vIRQ return'''
     nohop()
-    label('.rti')    # restore...
+    label('.vrti')    # restore...
     if args.cpu >= 6:
-        LDI(2);ADDW(SP);MOVQW('_runbase',T2);NCOPY(8);MOVQW('sysFn',T2);NCOPY(10);STW(SP)
+        LDI(4);ADDW(SP);MOVQW('_runbase',T2);NCOPY(8)
+        MOVQW('sysFn',T2);NCOPY(8);STW(SP)
+        SUBI(18);DEEK();STW('sysArgs6')
     else:
         LDI(2);ADDW(SP);STW(T0);ADDI(8);STW(T1);LDI('_runbase');STW(T2);_CALLJ('_@_wcopy_')
         LDI(10);ADDW(T1);STW(T1);STW(SP);LDI('sysFn');STW(T2);_CALLJ('_@_wcopy_')
     POP();LDLW(0);STW(T0);LDLW(2);STW(T1);LDLW(4);STW(T2);LDLW(6);STW(T3);ALLOC(10)
     LDWI(0x400);LUP(0)
 
-module(name='_sigcall.s',
-       code=[ ('IMPORT', '_sigcall'),
+def code3():
+    '''set vIRQ'''
+    nohop()
+    label('_setsigvirq')
+    if 'has_vIRQ' in rominfo:
+        LD('romType');ANDI(0xfc);SUBI(0x40);BLT('.ret')
+        if args.cpu < 6:
+            LDWI('vIRQ_v5');STW(T3)
+        LDWI(0xfffe);ANDW(R8);BEQ('.doke');LDWI('.virq')
+        label('.doke')
+        if args.cpu < 6:
+            DOKE(T3)
+        else:
+            STW2('vIRQ_v5')
+        label('.ret')
+    RET()
+    
+module(name='_sigvirq.s',
+       code=[ ('IMPORT', '_raise_emits_signal'),
               ('IMPORT', '_@_wcopy_') if args.cpu < 6 else ('NOP',),
-              ('EXPORT', '_raise_emits_signal'),
-              ('EXPORT', '_virq_handler'),
-              ('CODE', '_raise_emits_signal', code0),
-              ('CODE', '_virq_handler', code1),
-              ('CODE', '.rti', code2) ] )
+              ('EXPORT', '_sigvirq'),
+              ('EXPORT', '_setsigvirq'),
+              ('DATA', '_sigvirq', code0, 1, 1),
+              ('CODE', '.virq', code1) if 'has_vIRQ' in rominfo else ('NOP',),
+              ('CODE', '.vrti', code2) if 'has_vIRQ' in rominfo else ('NOP',),
+              ('CODE', '_setsigvirq', code3) ] )
 
 # Local Variables:
 # mode: python

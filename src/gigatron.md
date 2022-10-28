@@ -1806,11 +1806,11 @@ static void defconst(int suffix, int size, Value v)
   } else {
     unsigned long x = (suffix == P) ? (unsigned)(size_t)v.p : (suffix == I) ? v.i : v.u;
     if (size == 1) 
-      print("\tbytes(%d);", x&0xff);
+      xprint("\tbytes(%d);", x&0xff);
     else if (size == 2)
-      print("\twords(%d);", x&0xffff);
+      xprint("\twords(%d);", x&0xffff);
     else if (size == 4)
-      print("\twords(%d,%d);", x&0xffff, (x>>16)&0xffff);
+      xprint("\twords(%d,%d);", x&0xffff, (x>>16)&0xffff);
     if (suffix == I)
       xprint(" # %D", (long)x);
     else if (suffix == U)

@@ -48,10 +48,10 @@ def code1():
     '''vIRQ handler'''
     nohop()
     label('.virq')
-    # save vLR/T0-T3 without using registers
-    ALLOC(-8);LDW(T0);STLW(0);LDW(T1);STLW(2);LDW(T2);STLW(4);LDW(T3);STLW(6)
-    # clear virq vector
-    LDI(0);STW('_vIrqRelay')
+    # save vLR/T0-T3 without using registers and clear virq vector
+    ALLOC(-8);LDW(T0);STLW(0)
+    LDWI('_vIrqRelay');STW(T0);LDI(0);DOKE(T0)
+    LDW(T1);STLW(2);LDW(T2);STLW(4);LDW(T3);STLW(6)
     # save sysFn/sysArgs[0-7]/B[0-2]/LAC
     if args.cpu >= 6:
         LDW(SP);SUBI(20);STW(SP);ADDI(2);STW(T2)
@@ -85,7 +85,9 @@ def code3():
         LDWI(0xfffe);ANDW(R8);BEQ('.s1')
         LDWI('.virq')
         label('.s1')
-        STW('_vIrqRelay') ## defined in clock.s
+        STW(T1)
+        LDWI('_vIrqRelay');STW(T2)
+        LDW(T1);DOKE(T2)
     else:
         warning('SIGVIRQ cannot work without vIRQ (needs rom>=v5a)', dedup=True)
     RET()

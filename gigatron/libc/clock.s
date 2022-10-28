@@ -4,14 +4,13 @@ def scope():
         '''zero page variables'''
         label('_vIrqCounter')
         words(0)
-        label('_vIrqRelay')
-        words(0)
 
     def code1():
         nohop()
         label('_vIrqHandler')
         LDI(1);ADDW('_vIrqCounter');STW('_vIrqCounter')
-        LDW('_vIrqRelay');_BEQ('.h1')
+        label('_vIrqRelay', pc()+1)
+        LDWI(0);_BEQ('.h1')
         PUSH();CALL(vAC);POP()
         label('.h1')
         LDWI(0x400);LUP(0)
@@ -39,7 +38,7 @@ def scope():
     module(name='_virq.s',
            code=[ ('EXPORT', '_vIrqCounter'),
                   ('EXPORT', '_vIrqRelay'),
-                  ('BSS', '_vIrqCounter', code0, 4, 2),
+                  ('BSS', '_vIrqCounter', code0, 2, 1),
                   ('PLACE', '_vIrqCounter', 0x0000, 0x00ff) ]
            +    ( [ ('CODE', '_vIrqHandler', code1),
                     ('CODE', '_vIrqInit', code2), 

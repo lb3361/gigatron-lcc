@@ -2,6 +2,7 @@
 #include <gigatron/sys.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 /** This is a more substantial modification of the sieve program.
     Besides the sieve1 modifications, sieve2 uses memset to clear the flag array
@@ -33,7 +34,7 @@ int sieve() {
 
 int main() {
     int iter, count;
-    unsigned int ticks = 0;
+    unsigned int ticks = _clock();
     printf("10 iterations\n\n");
 #ifdef MODE
 # if MODE == 4
@@ -42,12 +43,9 @@ int main() {
     SYS_SetMode(MODE);
 # endif
 #endif
-    frameCount = 0;
     for (iter = 1; iter <= 10; iter ++) {
         memset(flags, 1, sizepl);
         count = sieve();
-        ticks += frameCount;
-        frameCount = 0;
     }
 #ifdef MODE
 # if MODE == 4
@@ -56,6 +54,7 @@ int main() {
     SYS_SetMode(-1);
 # endif
 #endif
+    ticks = _clock() - ticks;
     printf("%d primes\n", count);
     printf("%d %d/60 seconds\n", ticks/60, ticks%60);
     return 0;

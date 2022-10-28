@@ -1,5 +1,8 @@
 #include <stdio.h>
 #include <gigatron/sys.h>
+#include <gigatron/libc.h>
+#include <time.h>
+
 #define TIMER 1
 
 /** This is the genuine C program of the sieve benchmark.
@@ -14,8 +17,7 @@ char flags[sizepl];
 main() {
     int i, prime, k, count, iter;
 #if TIMER
-    unsigned int ticks = 0;
-    frameCount = 0;
+    unsigned int ticks = _clock();
 #endif
     printf("10 iterations\n");
 #ifdef MODE
@@ -40,10 +42,6 @@ main() {
                 count = count + 1;
             }
         }
-#if TIMER
-	ticks += frameCount;
-	frameCount = 0;
-#endif
     }
 #ifdef MODE
 # if MODE == 4
@@ -54,6 +52,7 @@ main() {
 #endif
     printf("\n%d primes", count);
 #if TIMER
+    ticks = _clock() - ticks;
     printf("\n%d %d/60 seconds", ticks/60, ticks % 60);
 #endif
 }

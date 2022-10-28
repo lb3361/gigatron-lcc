@@ -179,4 +179,15 @@ extern void *_memchr2ext(char bank, const void *s, char c0, char c1, size_t n);
 extern void *_memcpyext(char banks, void *dst, const void* src, size_t n);
 
 
+/* ---- Clock ---- */
+
+/* The standard function clock() returns a clock_t which is a long
+   but only contains 24 bits numbers (0 to 16M). The alternative
+   entry point _clock() returns a 16 bits integer which is often
+   sufficient and avoids long int overhead. */
+extern unsigned int _clock(void);
+
+/* Wait for n vertical blanks (or n clocks) */
+extern void _wait(int n);
+
 #endif

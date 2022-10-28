@@ -68,15 +68,17 @@ def scope():
 
     def code6():
         nohop()
-        label('_wait')
         # Following at67: 179 is normally the start of vBlank, but if
         # a vBlank routine is executing there is a very good chance by
         # the time the vBlank routine is over giga_videoY will have
         # progressed past 179, (by how much is nondeterministic). So
         # instead we wait for the scanline before vBlank, i.e. when
         # videoY = 0xEE, (videoTablePtr = 0x01EE)
+        label('.w1')
+        LD('videoY');XORI(0xee);_BEQ('.w1')
+        label('_wait')
         LD('videoY');XORI(0xee);_BNE('_wait')
-        LDW(R8);SUBI(1);STW(R8);BGT('_wait')
+        LDW(R8);SUBI(1);STW(R8);BGT('.w1')
         RET();
 
     module(name='_wait.s',

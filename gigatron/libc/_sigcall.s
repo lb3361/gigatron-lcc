@@ -49,10 +49,9 @@ def code1():
     nohop()
     label('.virq')
     # save vLR/T0-T3 without using registers
-    # skip 2 stack bytes because a lot of code uses STLW(-2)/LDLW(2) to save AC
-    ALLOC(-10);LDW(T0);STLW(0);LDW(T1);STLW(2);LDW(T2);STLW(4);LDW(T3);STLW(6);PUSH()
+    ALLOC(-8);LDW(T0);STLW(0);LDW(T1);STLW(2);LDW(T2);STLW(4);LDW(T3);STLW(6)
     # clear virq vector
-    LDWI('vIRQ_v5');STW(T0);LDI(0);DOKE(T0)
+    LDI(0);STW('_vIrqRelay')
     # save sysFn/sysArgs[0-7]/B[0-2]/LAC
     if args.cpu >= 6:
         LDW(SP);SUBI(20);STW(SP);ADDI(2);STW(T2)
@@ -76,28 +75,24 @@ def code2():
     else:
         LDI(2);ADDW(SP);STW(T0);ADDI(8);STW(T1);LDI('_runbase');STW(T2);_CALLJ('_@_wcopy_')
         LDI(10);ADDW(T1);STW(T1);STW(SP);LDI('sysFn');STW(T2);_CALLJ('_@_wcopy_')
-    POP();LDLW(0);STW(T0);LDLW(2);STW(T1);LDLW(4);STW(T2);LDLW(6);STW(T3);ALLOC(10)
-    LDWI(0x400);LUP(0)
+    LDLW(0);STW(T0);LDLW(2);STW(T1);LDLW(4);STW(T2);LDLW(6);STW(T3);ALLOC(8)
+    POP();LDWI(0x400);LUP(0)
 
 def code3():
-    '''set vIRQ'''
     nohop()
     label('_setsigvirq')
     if 'has_vIRQ' in rominfo:
-        LD('romType');ANDI(0xfc);SUBI(0x40);BLT('.ret')
-        if args.cpu < 6:
-            LDWI('vIRQ_v5');STW(T3)
-        LDWI(0xfffe);ANDW(R8);BEQ('.doke');LDWI('.virq')
-        label('.doke')
-        if args.cpu < 6:
-            DOKE(T3)
-        else:
-            STW2('vIRQ_v5')
-        label('.ret')
+        LDWI(0xfffe);ANDW(R8);BEQ('.s1')
+        LDWI('.virq')
+        label('.s1')
+        STW('_vIrqRelay') ## defined in clock.s
+    else:
+        warning('SIGVIRQ cannot work without vIRQ (needs rom>=v5a)', dedup=True)
     RET()
     
 module(name='_sigvirq.s',
-       code=[ ('IMPORT', '_raise_emits_signal'),
+       code=[ ('IMPORT', '_vIrqRelay'),
+              ('IMPORT', '_raise_emits_signal'),
               ('IMPORT', '_@_wcopy_') if args.cpu < 6 else ('NOP',),
               ('EXPORT', '_sigvirq'),
               ('EXPORT', '_setsigvirq'),

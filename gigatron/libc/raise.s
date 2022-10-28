@@ -12,12 +12,12 @@ def scope():
         LDW(R9);STW(T3)
         LDW(R8)
         label('__@raisem')                   # signo in vAC, msg in T3
-        STLW(-2);
+        STW(T1)                              # (can we use T1 here?)
         label('_raise_disposition', pc()+1)
         LDWI(0)
         _BEQ('.raise2')
         STW(T2);
-        LDW(vLR);DOKE(SP);LDLW(-2);CALL(T2)  # dispatcher (no return)
+        LDW(vLR);DOKE(SP);LDW(T1);CALL(T2)   # dispatcher (no return)
         label('.raise2')
         LDI(20);STW(R8);
         LDW(T3);STW(R9);

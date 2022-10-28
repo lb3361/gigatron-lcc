@@ -57,7 +57,7 @@ def scope():
             LDI(0);ST(LAC+3)
             LDW(LAC);RET()
         else:
-            warning('clock() cannot work without vIRQ (rom>=v5a)', dedup=True)
+            warning('clock() cannot work without vIRQ (needs rom>=v5a)', dedup=True)
             LDI(0);STW(LAC);STW(LAC+2);RET()
 
     module(name='clock.s',

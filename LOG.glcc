@@ -2,7 +2,9 @@
 - Added placement overrides in map files
 - Runtime: faster long addition and subtraction
 - Library: slightly simplified stdio (less buffering)
-
+- Library: added clock() function using vIRQ
+- Library: redirected SIGVIRQ through clock vIRQ
+- Library: no SIGVIRQ overhead unless used
 
 GLCC_RELEASE_1.5
 

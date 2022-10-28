@@ -63,7 +63,7 @@ def scope():
                 LDW('sysArgs0');RET()
 
         code.append(('CODE', '_memscan0ext', code0))
-        code.append(('PLACE', '_memscan0ext', 0x0000, 0x7fff))
+        code.append(('PLACE', '_memscan0ext', 0x0200, 0x7fff))
 
 
     # void *_memchr2ext(char bank, const void *s, char c0, char c1, size_t len)

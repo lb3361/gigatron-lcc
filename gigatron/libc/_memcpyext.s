@@ -66,7 +66,7 @@ def scope():
             RET()
 
         code.append(('CODE', '_memcpyext0', code0))
-        code.append(('PLACE', '_memcpyext0', 0x0000, 0x8000))
+        code.append(('PLACE', '_memcpyext0', 0x0200, 0x7fff))
 
 
     # void *_memcpyext(int banks, void *dest, const void *src, size_t n);

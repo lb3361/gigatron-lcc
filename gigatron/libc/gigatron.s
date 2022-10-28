@@ -97,7 +97,9 @@ def scope():
 
     module(name='sys_expandercontrol.s',
            code=[('EXPORT', 'SYS_ExpanderControl'),
-                 ('CODE', 'SYS_ExpanderControl', code0) ])
+                 ('CODE', 'SYS_ExpanderControl', code0),
+                 ('PLACE', 'SYS_ExpanderControl', 0x0200, 0x7fff) ] )
+
 
     # ----------------------------------------
     # void SYS_SpiExchangeBytes(void *dst, void *src, void *srcend);

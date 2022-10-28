@@ -2367,6 +2367,8 @@ def find_code_segment(size):
     for (i,s) in enumerate(segment_list):
         if amin == None and s.flags & 0x1:  # not a code segment
             continue
+        if amin and amax and amin < 0x100 and amax >= 0x100:
+            amin = 0x100                    # do not place code in page zero
         addr = s.pc
         if amin != None and amin > s.pc:
             addr = amin
@@ -2403,14 +2405,16 @@ def find_code_segment(size):
     # not found
     return None
 
-def assemble_code_fragments(m, placed=False):
+def assemble_code_fragments(m, placed=False, absolute=False):
     global the_module, the_fragment, the_segment, the_pc
     global hops_enabled, short_function
     the_module = m
     for frag in m.code:
         the_fragment = frag
         if frag.segment == 'CODE':
-            if bool(frag.amin and not frag.amax) != bool(placed):
+            if bool(frag.amin) != bool(placed):
+                continue
+            if placed and bool(frag.amax) == absolute:
                 continue
             funcsize = frag.size
             the_segment = None
@@ -2482,9 +2486,11 @@ def run_pass():
         segment_list.append(Segment(s,e,d))
     debug(f"pass {the_pass}")
     try:
-        # code segments with explicit address
+        # code segments with explicit address or placement constraints
         for m in module_list:
-            assemble_code_fragments(m, placed=True)
+            assemble_code_fragments(m, placed=True, absolute=True)
+        for m in module_list:
+            assemble_code_fragments(m, placed=True, absolute=False)
         # remaining code segments
         for m in module_list:
             assemble_code_fragments(m, placed=False)

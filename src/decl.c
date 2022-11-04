@@ -52,10 +52,10 @@ void program(void) {
 		warning("empty input file\n");
 }
 static Type specifier(int *sclass) {
-	int cls, cons, sign, size, type, vol;
+	int cls, cons, sign, size, type, vol, fnqual;
 	Type ty = NULL;
 
-	cls = vol = cons = sign = size = type = 0;
+	cls = vol = cons = sign = size = type = fnqual = 0;
 	if (sclass == NULL)
 		cls = AUTO;
 	for (;;) {
@@ -69,6 +69,8 @@ static Type specifier(int *sclass) {
 		case TYPEDEF:  p = &cls;  t = gettok();      break;
 		case CONST:    p = &cons; t = gettok();      break;
 		case VOLATILE: p = &vol;  t = gettok();      break;
+		case NEAR: 
+		case FAR:      p = &fnqual; t = gettok();    break;
 		case SIGNED:
 		case UNSIGNED: p = &sign; t = gettok();      break;
 		case LONG:     if (size == LONG) {
@@ -91,10 +93,8 @@ static Type specifier(int *sclass) {
 				if (isqual(ty)
 				&& ty->size != ty->type->size) {
 					ty = unqual(ty);
-					if (isconst(tsym->type))
-						ty = qual(CONST, ty);
-					if (isvolatile(tsym->type))
-						ty = qual(VOLATILE, ty);
+					if (isqual(tsym->type))
+						ty = qual(tsym->type->op, ty);
 					tsym->type = ty;
 				}
 				p = &type;
@@ -139,6 +139,8 @@ static Type specifier(int *sclass) {
 		ty = qual(CONST, ty);
 	if (vol  == VOLATILE)
 		ty = qual(VOLATILE, ty);
+	if (fnqual)
+		ty = qual(fnqual, ty);
 	return ty;
 }
 static void decl(Symbol (*dcl)(int, char *, Type, Coordinate *)) {
@@ -306,7 +308,7 @@ static Type dclr(Type basety, char **id, Symbol **params, int abstract) {
 		case ARRAY:
 			basety = array(basety, ty->size, 0);
 			break;
-		case CONST: case VOLATILE:
+		case QUAL:
 			basety = qual(ty->op, basety);
 			break;
 		default: assert(0);
@@ -332,10 +334,11 @@ static Type dclr1(char **id, Symbol **params, int abstract) {
 				else
 					error("extraneous identifier `%s'\n", token);
 				t = gettok(); break;
-	case '*': t = gettok(); if (t == CONST || t == VOLATILE) {
+	case '*': t = gettok(); if (t == CONST || t == VOLATILE || t == NEAR || t == FAR) {
 					Type ty1;
 					ty1 = ty = tnode(t, NULL);
-					while ((t = gettok()) == CONST || t == VOLATILE)
+					while ((t = gettok()) == CONST
+					       || t == VOLATILE || t == NEAR || t == FAR)
 						ty1 = tnode(t, ty1);
 					ty->type = dclr1(id, params, abstract);
 					ty = ty1;
@@ -943,6 +946,9 @@ static Symbol dcllocal(int sclass, char *id, Type ty, Coordinate *pos) {
 			error("redeclaration of `%s' previously declared at %w\n", q->name, &q->src);
 
 	assert(level >= LOCAL);
+	if (sclass == REGISTER || sclass == AUTO)
+		if (fnqual(ty))
+			error("illegal type `%t' for local variable `%s'\n", ty, id);
 	p = install(id, &identifiers, level, sclass == STATIC || sclass == EXTERN ? PERM : FUNC);
 	p->type = ty;
 	p->sclass = sclass;
@@ -976,11 +982,12 @@ static Symbol dcllocal(int sclass, char *id, Type ty, Coordinate *pos) {
 	case REGISTER: registers = append(p, registers);
 		       regcount++;
 		       p->defined = 1;
- break;
+		       break;
 	case AUTO:     autos = append(p, autos);
 		       p->defined = 1;
 		       if (isarray(ty))
-		       	p->addressed = 1; break;
+			       p->addressed = 1;
+		       break;
 	default: assert(0);
 	}
 	if (t == '=') {

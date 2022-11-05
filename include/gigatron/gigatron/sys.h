@@ -4,37 +4,40 @@
 
 /* ---- Well known constants from interface.json ---- */
 
-#define romTypeValue_ROMv1    0x1c
-#define romTypeValue_ROMv2    0x20
-#define romTypeValue_ROMv3    0x28
-#define romTypeValue_ROMv4    0x38
-#define romTypeValue_ROMv5    0x40
-#define romTypeValue_DEVROM   0xf8
+enum {
+	romTypeValue_ROMv1  = 0x1c,
+	romTypeValue_ROMv2  = 0x20,
+	romTypeValue_ROMv3  = 0x28,
+	romTypeValue_ROMv4  = 0x38,
+	romTypeValue_ROMv5a = 0x40,
+	romTypeValue_ROMv5  = 0x40, /* ??? */
+	romTypeValue_DEVROM = 0xf8
+};
 
-#define qqVgaWidth            160
-#define qqVgaHeight           120
+enum {
+	qqVgaWidth = 160,
+	qqVgaHeigh = 120
+};
 
-#define buttonRight           1
-#define buttonLeft            2
-#define buttonDown            4
-#define buttonUp              8
-#define buttonStart           16
-#define buttonSelect          32
-#define buttonB               64
-#define buttonA               128
-
-typedef struct channel_s {
-	char wavA, wavX;
-	char keyL, keyH;
-	char oscL, oscH;
-} channel_t;
+enum {
+	buttonRight  = 1,
+	buttonLeft   = 2,
+	buttonDown   = 4,
+	buttonUp     = 8,
+	buttonStart  = 16,
+	buttonSelect = 32,
+	buttonB      = 64,
+	buttonA      = 128
+};
 
 /* ---- Well known rom locations from interface.json ---- */
 
-#define font32up              0x0700
-#define font82up              0x0800
-#define notesTable            0x0900
-#define invTable              0x0a00
+enum {
+	font32up = 0x0700,
+	font82up = 0x0800,
+	notesTable = 0x0900,
+	invTable = 0x0a00
+};
 
 /* ---- Well known memory locations from interface.json ---- */
 
@@ -46,72 +49,76 @@ typedef struct channel_s {
 # define word unsigned int
 #endif
 
-/* Using macro definitions like this is not very
- * good because it prevents us from declaring local
- * variables with the same name. Best would be 
- * to augment LCC with a way to declare placed
- * global variables (another project).
- */
+extern __near byte zeroConst;
+extern __near byte memSize;
+extern __near byte entropy[3];
+extern __near byte videoY;
+extern __near byte frameCount;
+extern __near byte serialRaw;
+extern __near byte buttonState;
+extern __near byte xoutMask;
+extern __near word vPC;
+extern __near byte vPCL;
+extern __near byte vPCH;
+extern __near word vAC;
+extern __near byte vACL;
+extern __near byte vACH;
+extern __near word vLR;
+extern __near byte vLRL;
+extern __near byte vLRH;
+extern __near byte vSP;
+extern __near byte romType;
+extern __near byte channelMask_v4;
+extern __near word sysFn;
+extern __near byte sysArgs0;
+extern __near byte sysArgs1;
+extern __near byte sysArgs2;
+extern __near byte sysArgs3;
+extern __near byte sysArgs4;
+extern __near byte sysArgs5;
+extern __near byte sysArgs6;
+extern __near byte sysArgs7;
+extern __near byte soundTimer;
+extern __near byte ledState;
+extern __near byte ledTempo;
+extern __near byte userVars[];
+extern __near byte oneConst;
+extern __near byte userVars2[];
+extern __near word v6502_PC;
+extern __near byte v6502_PCL;
+extern __near byte v6502_PCH;
+extern __near byte v6502_A;
+extern __near byte v6502_X;
+extern __near byte v6502_Y;
 
-#define zeroConst             (*(byte*)(0x0000)) // byte zeroConst;
-#define memSize               (*(byte*)(0x0001)) // byte memSize;
-#define entropy      ( (volatile byte*)(0x0006)) // byte entropy[3];
-#define videoY       (*(volatile byte*)(0x0009)) // byte videoY;
-#define frameCount   (*(volatile byte*)(0x000e)) // byte frameCount;
-#define serialRaw    (*(volatile byte*)(0x000f)) // byte serialRaw;
-#define buttonState  (*(volatile byte*)(0x0011)) // byte buttonState;
-#define xoutMask              (*(byte*)(0x0014)) // byte xoutMask;
-#define vPC          (*(volatile word*)(0x0016)) // word vPC;
-#define vPCL         (*(volatile byte*)(0x0016)) // byte vPCL;
-#define vPCH         (*(volatile byte*)(0x0017)) // byte vPCH;
-#define vAC          (*(volatile word*)(0x0018)) // word vAC;
-#define vACL         (*(volatile byte*)(0x0018)) // byte vACL;
-#define vACH         (*(volatile byte*)(0x0019)) // byte vACH;
-#define vLR                   (*(word*)(0x001a)) // word vLR;
-#define vLRL                  (*(byte*)(0x001a)) // byte vLRL;
-#define vLRH                  (*(byte*)(0x001b)) // byte vLRH;
-#define vSP                   (*(byte*)(0x001c)) // byte vSP;
-#define romType               (*(byte*)(0x0021)) // byte romType;
-#define channelMask_v4        (*(byte*)(0x0021)) // byte channelMask_v4;
-#define sysFn                 (*(word*)(0x0022)) // word sysFn;
-#define sysArgs0              (*(byte*)(0x0024)) // byte sysArgs0;
-#define sysArgs1              (*(byte*)(0x0025)) // byte sysArgs1;
-#define sysArgs2              (*(byte*)(0x0026)) // byte sysArgs2;
-#define sysArgs3              (*(byte*)(0x0027)) // byte sysArgs3;
-#define sysArgs4              (*(byte*)(0x0028)) // byte sysArgs4;
-#define sysArgs5              (*(byte*)(0x0029)) // byte sysArgs5;
-#define sysArgs6              (*(byte*)(0x002a)) // byte sysArgs6;
-#define sysArgs7              (*(byte*)(0x002b)) // byte sysArgs7;
-#define soundTimer            (*(byte*)(0x002c)) // byte soundTimer;
-#define ledState_v2           (*(byte*)(0x002e)) // byte ledState;
-#define ledTempo              (*(byte*)(0x002f)) // byte ledTempo;
-#define userVars              ( (byte*)(0x0030)) // byte *userVars;
-#define oneConst              (*(byte*)(0x0080)) // byte oneConst;
-#define userVars2             ( (byte*)(0x0081)) // byte *userVars2;
-#define v6502_PC              (*(word*)(0x001a)) // word v6502_PC;
-#define v6502_PCL             (*(byte*)(0x001a)) // byte v6502_PCL;
-#define v6502_PCH             (*(byte*)(0x001b)) // byte v6502_PCH;
-#define v6502_A               (*(byte*)(0x0018)) // byte v6502_A;
-#define v6502_X               (*(byte*)(0x002a)) // byte v6502_X;
-#define v6502_Y               (*(byte*)(0x002b)) // byte v6502_Y;
+extern byte videoTable[];
+extern void vReset(void);
+extern word vIRQ_c5;
+extern byte videoTop_v5;
+extern byte userCode[];
+extern byte soundTable[];
+extern byte screenMemory[][256];
+extern byte ctrlBits_v5;          /* not in interface.json */
 
-#define videoTable            ( (byte*)(0x0100)) // byte *videoTable;
-#define vReset         ((void(*)(void))(0x01f0)) // void  vReset(void);
-#define vIRQ_v5               (*(word*)(0x01f6)) // word  vIRQ_v5;
-#define videoTop_v5           (*(byte*)(0x01f9)) // byte  videoTop_v5;
-#define userCode              ( (void*)(0x0200)) // void *userCode;
-#define soundTable            ( (void*)(0x0700)) // byte  soundTable[]
-#define screenMemory    ((byte(*)[256])(0x0800)) // byte  screenMemory[][256]
+/* ---- Sound channels ---- */
 
-#define channel1         (*(channel_t*)(0x01fa)) // chanel_t channel1
-#define channel2         (*(channel_t*)(0x02fa)) // chanel_t channel2
-#define channel3         (*(channel_t*)(0x03fa)) // chanel_t channel3
-#define channel4         (*(channel_t*)(0x04fa)) // chanel_t channel4
-#define channel(c)       (*(channel_t*)(((1+((c-1)&0xff))<<8)|0xfa))
+typedef struct channel_s {
+	char wavA, wavX;
+#if STRUCT_CHANNEL_HAS_KEYW
+	word keyW;
+#else
+	char keyL, keyH;
+#endif
+#if STRUCT_CHANNEL_HAS_OSC
+	char oscL, oscH;
+#endif
+} channel_t;
 
-/* ---- Unofficial memory locations ---- */
-
-#define ctrlBits_v5           (*(byte*)(0x01f8))  // byte  ctrlBits_v5;
+extern channel_t channel1;
+extern channel_t channel2;
+extern channel_t channel3;
+extern channel_t channel4;
+extern channel_t *channel(int);
 
 
 /* ---- Calling SYS functions ---- */

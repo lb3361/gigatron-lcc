@@ -104,6 +104,9 @@ extern int _console_printchars(int fgbg, char *addr, const char *s, int len);
    Repeats for nl successive lines. */
 extern void _console_clear(char *addr, int clr, int nl);
 
+/* Sounds the bell for n frames */
+extern void _console_bell(int n);
+
 
 /* -------- extra ------------ */
 

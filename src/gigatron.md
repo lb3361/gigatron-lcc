@@ -1049,7 +1049,9 @@ static int if_zpconst(Node p)
 
 static int if_zpglobal(Node p)
 {
-  /* TODO */
+  Symbol s = p->syms[0];
+  if (s && s->type && fnqual(s->type) == NEAR)
+    return 0;
   return LBURG_MAX;
 }
 
@@ -1859,9 +1861,14 @@ static void defsymbol(Symbol p)
 
 static void address(Symbol q, Symbol p, long n)
 {
-  if (p->scope == GLOBAL || p->sclass == STATIC || p->sclass == EXTERN)
+  if (p->scope == GLOBAL || p->sclass == STATIC || p->sclass == EXTERN) {
+    Type ty0 = p->type;
+    Type ty1 = q->type;
     q->x.name = stringf("v(%s)%s%D", p->x.name, n >= 0 ? "+" : "", n);
-  else {
+    if (ty0 && fnqual(ty0) == NEAR && n >= 0 && n < ty0->size)
+      if (ty1 && !fnqual(ty1))
+        q->type = qual(NEAR, ty1);
+  } else {
     assert(n <= INT_MAX && n >= INT_MIN);
     q->x.offset = p->x.offset + n;
     q->x.name = stringd(q->x.offset);
@@ -1871,14 +1878,19 @@ static void address(Symbol q, Symbol p, long n)
 static void global(Symbol p)
 {
   unsigned int size = p->type->size;
+  int isnear = fnqual(p->type) == NEAR;
   const char *s = segname();
-  if (p->u.seg == BSS && p->sclass != STATIC)
+  const char *n;
+  if (p->u.seg == BSS && p->sclass != STATIC && !isnear)
     s = "COMMON";
   if (p->u.seg == LIT)
     size = 0; /* unreliable in switch tables */
   lprint("('%s', %s, code%d, %d, %d)",
           s, p->x.name, codenum, size, p->type->align);
-  xprint("# ======== %s\n", lhead.prev->s);
+  n = lhead.prev->s;
+  if (isnear)
+    lprint("('PLACE', %s, 0x00, 0xff)", p->x.name);
+  xprint("# ======== %s\n", n);
   xprint("def code%d():\n", codenum++);
   if (p->type->align > 1)
     xprint("\talign(%d);\n", p->type->align);

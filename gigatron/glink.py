@@ -2676,8 +2676,9 @@ def print_fragments():
             if nparts > 1:
                 name = name + f" ({part}/{nparts})"
         plen = rng[1] - rng[0]
-        blen = f"({plen} byte{'s' if plen > 1 else ''})"
-        print(f"\t{rng[0]:04x}-{rng[1]-1:04x} {blen:<14s} {cseg:<5s} {name:<28s} {m.fname:<22s}")
+        if plen > 0:
+            blen = f"({plen} byte{'s' if plen > 1 else ''})"
+            print(f"\t{rng[0]:04x}-{rng[1]-1:04x} {blen:<14s} {cseg:<5s} {name:<28s} {m.fname:<22s}")
 
     
 # ------------- main function

@@ -17,7 +17,7 @@ def scope():
 
     def code2():
         label('_vIrqInit')
-        LDI(0);STW('_vIrqCounter');STW('_vIrqRelay');ST('frameCount')
+        LDI(0);STW('_vIrqCounter');ST('frameCount')
         LDWI('_vIrqHandler');_BRA('.v1')
         label('_vIrqFini')
         LDI(0)

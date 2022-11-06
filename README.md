@@ -14,7 +14,7 @@ code generator is fundamentally different.
 
 This project provides a complete toolchain and C library for ANSI C 1989.
 
-### 1.1. Implementation details and caveats
+### 1.1. Implementation details
 
 Some useful things to know:
 
@@ -31,6 +31,13 @@ Some useful things to know:
 	or maybe use the compiler option `-Wf-unsigned_char=0`. This
 	is not recommended. 
 
+* The nonstandard type qualifier `__near` can be used to indicate
+  that the data lives in page zero. This allows the compiler to
+  generate more compact code and tells the linker to place such
+  variables in page zero. The nonstandard type qualifier `__far`
+  is also recognized but currently inoperative. It will eventually
+  indicate that the data lives in banked memory.
+
 * The traditional C standard library offers feature rich functions
   like `printf()` and `scanf()`. These functions are present but their
   implementation requires a lot of space. Instead one can call some of
@@ -41,8 +48,14 @@ Some useful things to know:
 * Alternatively one can completely bypass stdio and use the 
   low-level console functions whose prototypes are provided in
   [`<gigatron/console.h>`](include/gigatron/gigatron/console.h).
-  Even lower-level functions are provided in 
-  [`<gigatron/sys.h>`](include/gigatron/gigatron/sys.h).
+  The function `cprintf()` has all the formatting abilities of `printf`
+  but saves memory by bypassing standard io and printing to the console.
+  The function `mincprintf()` further saves space but only recognizes
+  `%d` and `%s` in format strings.
+
+* The include file [`<gigatron/sys.h>`](include/gigatron/gigatron/sys.h)
+  provides declarations to access the gigatron hardware and wrappers
+  to call native SYS routines.
   
 * Many parts of the main library can be overriden to provide special 
   functionalities. For instance the console has the usual 15x26 characters, 
@@ -54,9 +67,9 @@ Some useful things to know:
   But one just has to redefine a few functions to change that.
   This is one happens when one compiles with `-map=sim` which
   [forwards](gigatron/mapsim/libsim) all the stdio calls to 
-  the emulator. Note that such binaries only run in `gtsim`
-  because they attempt to communicate with `gtsim` to forward
-  the stdio calls.
+  the emulator. Note that such binaries only run in the command
+  line gigatron emulator `gtsim` because they attempt to 
+  communicate with `gtsim` to forward the stdio calls.
   
 * Over time the linker `glink` has accumulated 
   a lot of capabilites. It supports common symbols,
@@ -70,20 +83,6 @@ Some useful things to know:
   are documented by comments in the [source](gigatron/glink.py)
   or comments in the library source files that use them...
   
-### 1.2. What remains to be done?
-
-*  The library implements ANSI C 89 but few Gigatron specific functions.
-   For instance, one could add more Gigatron SYS stubs into `gigatron/libc/gigatron.s`,
-   one could provide a graphic and sprite library, etc.
-
-*   The compiler could also be improved but with diminishing returns.
-    A way to begin could be, for instance, to rewrite the python
-    compiler driver `glcc` to be self-contained. The current version
-    delegates a lot of work to the historical lcc driver `lcc` which
-    then calls the python assembler and linker. Cleaning this up 
-    would make option processing simpler to understand. This
-    is harder than it seems.
-
 ## 2. Compiling and installing
 
 You can build GLCC from source using two methods.

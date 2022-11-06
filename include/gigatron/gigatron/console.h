@@ -22,11 +22,16 @@ extern const struct console_info_s {
 
 /* Console state: colors, cursor, wrapping and scrolling modes.
    These fields can be changed as needed between calls to console functions. */
-extern struct console_state_s {
-	int fgbg;                                /* fg and bg colors   */
-	int cx, cy;                              /* cursor coordinates */
-	char wrapx, wrapy;                       /* wrap/scroll enable */
+extern __near struct console_state_s {
+	int  fgbg;		/* fg and bg colors   */
+	char cy, cx;		/* cursor coordinates */
+	char wrapy, wrapx;	/* wrap/scroll enable */
 } console_state;
+
+#define console_state_set_cycx(cycx) \
+	*(unsigned*)&console_state.cy = (cycx)
+#define console_state_set_wrap(wrap) \
+	*(unsigned*)&console_state.wrapy = (wrap)
 
 /* -------- output ----------- */
 

@@ -18,6 +18,12 @@
 
 char mscp_c_rcsid[] = "@(#)$Id: mscp.c,v 1.18 2003/12/14 15:12:12 marcelk Exp $";
 
+#ifdef __gigatron
+# define near __near
+#else
+# define near
+#endif
+
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
@@ -77,7 +83,7 @@ enum {                  /* 64 squares */
 };
 static byte board[64+3]; /* Board state */
 
-static int ply;         /* Number of half-moves made in game and search */
+static near int ply;    /* Number of half-moves made in game and search */
 #define WTM (~ply & 1)  /* White-to-move predicate */
 
 static byte castle[64]; /* Which pieces may participate in castling */
@@ -96,12 +102,14 @@ struct side {           /* Attacks */
         int king;
         byte pawns[10];
 };
-static struct side white, black, *friend, *enemy;
+static struct side white, black;
+static struct side * near friend, * near enemy;
 
 static unsigned short history[64*64]; /* History-move heuristic counters */
 
-static signed char undo_stack[6*1024], *undo_sp; /* Move undo administration */
+static signed char undo_stack[6*1024]; /* Move undo administration */
 static unsigned long hash_stack[1024]; /* History of hashes, for repetition */
+static signed char * near undo_sp;
 
 static int maxdepth = 4;                /* Maximum search depth */
 
@@ -122,7 +130,8 @@ struct move {
         unsigned short prescore;
 };
 
-static struct move move_stack[1024], *move_sp; /* History of moves */
+static struct move move_stack[1024];    /* History of moves */
+static struct move * near move_sp;
 
 static int piece_square[12][64];        /* Position evaluation tables */
 static unsigned long zobrist[12][64];   /* Hash-key construction */
@@ -135,7 +144,7 @@ static unsigned long zobrist[12][64];   /* Hash-key construction */
  */
 #ifdef __gigatron__
 #define CORE (256)
-static int booksize;                   /* Number of opening book entries */
+static near int booksize;                   /* Number of opening book entries */
 #else
 #define CORE (2048)
 static long booksize;                   /* Number of opening book entries */
@@ -699,7 +708,7 @@ static void make_move(int move)
 
 /* XXX Dirty hack. Used to signal normal move generation or
    generation of good captures only */
-static unsigned short caps;
+static near unsigned short caps;
 
 static int push_move(int fr, int to)
 {
@@ -1250,7 +1259,7 @@ static int cmp_bk(const void *ap, const void *bp)
 
 static void compact_book(void)
 {
-#ifdef __gigatron
+#ifdef __gigatron__
         int b = 0, c = 0;
 #else
         long b = 0, c = 0;
@@ -1265,7 +1274,7 @@ static void compact_book(void)
                 }
                 c++;
         }
-#ifdef __gigatron
+#ifdef __gigatron__
 	printf("Compacted book %d -> %d\n", booksize, c);
 #endif
         booksize = c;

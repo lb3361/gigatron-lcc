@@ -1877,8 +1877,9 @@ static void address(Symbol q, Symbol p, long n)
 
 static void global(Symbol p)
 {
-  unsigned int size = p->type->size;
   int isnear = fnqual(p->type) == NEAR;
+  unsigned int size = p->type->size;
+  unsigned int align = (isnear) ? 1 : p->type->align;
   const char *s = segname();
   const char *n;
   if (p->u.seg == BSS && p->sclass != STATIC && !isnear)
@@ -1886,14 +1887,14 @@ static void global(Symbol p)
   if (p->u.seg == LIT)
     size = 0; /* unreliable in switch tables */
   lprint("('%s', %s, code%d, %d, %d)",
-          s, p->x.name, codenum, size, p->type->align);
+          s, p->x.name, codenum, size, align);
   n = lhead.prev->s;
   if (isnear)
     lprint("('PLACE', %s, 0x00, 0xff)", p->x.name);
   xprint("# ======== %s\n", n);
   xprint("def code%d():\n", codenum++);
-  if (p->type->align > 1)
-    xprint("\talign(%d);\n", p->type->align);
+  if (align > 1)
+    xprint("\talign(%d);\n", align);
   xprint("\tlabel(%s);\n", p->x.name);
   if (p->u.seg == BSS)
     xprint("\tspace(%d);\n", p->type->size);

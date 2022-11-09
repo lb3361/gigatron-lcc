@@ -446,10 +446,13 @@ def zpage_reserve(rng, lbl, error_on_conflict=True):
 
 def create_zpage_map():
     zpage_reserve(range(0,0x30), "ROMVAR")
-    if 'has_vIRQ' in rominfo: zpage_reserve(range(0x30,0x35), "VIRQ")
     zpage_reserve(range(0x80,0x81), "ROMVAR")
     zpage_reserve(range(0xc0,0xd0), "RUNTIME")
     zpage_reserve(range(0xd0,0x100), "STACK")
+    if 'has_vIRQ' in rominfo:
+        zpage_reserve(range(0x30,0x36), "VIRQ") # saving vCpuSelect
+    if romtype == 0x38:                         # ctrlBits in ROMv4
+        zpage_reserve(range(0x81,0x82), "ROMVAR")
 
 def create_zpage_segments():
     segs = []
@@ -573,7 +576,8 @@ def genlabel():
 
 @vasm
 def zpReserve(addr0,addr1,lbl):
-    zpage_reserve(range(addr0,addr1+1),lbl)
+    if the_pass == 0:
+        zpage_reserve(range(addr0,addr1+1),lbl)
 @vasm
 def pc():
     return the_pc

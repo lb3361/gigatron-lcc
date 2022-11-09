@@ -19,9 +19,12 @@
 char mscp_c_rcsid[] = "@(#)$Id: mscp.c,v 1.18 2003/12/14 15:12:12 marcelk Exp $";
 
 #ifdef __gigatron
-# define near __near
-#else
-# define near
+# if _GLCC_VER >= 105040
+#  define near __near
+# endif
+#endif
+#ifndef near
+# define near /**/
 #endif
 
 #include <ctype.h>

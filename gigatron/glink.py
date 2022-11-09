@@ -434,13 +434,15 @@ def emit_prefx3(opcode, arg1, arg2):
 
 zpage_map = [ None for i in range(0,256) ]
 
-def zpage_reserve(rng, lbl):
+def zpage_reserve(rng, lbl, error_on_conflict=True):
     for i in rng:
         if i < 0 or i >= 256:
             fatal(f"Cannot reserve address {hex(i)} in page zero")
         elif zpage_map[i] and zpage_map[i] != lbl:
-            fatal(f"Zero page address {hex(i)} is both {zpage_map[i]} and {lbl}")
-        zpage_map[i] = lbl
+            if error_on_conflict:
+                fatal(f"Zero page address {hex(i)} is both {zpage_map[i]} and {lbl}")
+        else:
+            zpage_map[i] = lbl
 
 def create_zpage_map():
     zpage_reserve(range(0,0x30), "ROMVAR")

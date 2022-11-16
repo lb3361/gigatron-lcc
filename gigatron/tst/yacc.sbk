@@ -571,7 +571,7 @@ def code14():
 	LDW(R21);PEEK();DOKE(R22);
 	label('.62');
 	_SP(-4+28);STW(R22);
-	_SP(-4+28);DEEK();DOKE(R22);
+	DEEK();DOKE(R22);
 	label('.60');
 	_SP(-4+28);DEEK();STW(R22);
 	LDWI('yytchar');STW(R21);
@@ -812,7 +812,7 @@ def code14():
 	LDW(R21);PEEK();DOKE(R22);
 	label('.118');
 	_SP(-4+28);STW(R22);
-	_SP(-4+28);DEEK();DOKE(R22);
+	DEEK();DOKE(R22);
 	label('.116');
 	_SP(-4+28);DEEK();STW(R22);
 	LDWI('yytchar');STW(R21);

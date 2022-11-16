@@ -393,9 +393,9 @@ eac:  conBn "%{=%0}%{?0==vAC::_LDI(%0);}" 20
 eac:  zddr  "%{=%0}%{?0==vAC::LDI(%0);}" 16
 eac:  addr  "%{=%0}%{?0==vAC::LDWI(%0);}" 21
 eac:  addr  "%{=%0}%{?0==vAC::LDWI(%0);}" 21
-eac:  lddr  "_SP(%0);" 41
-ac:   ac0    "%{=%0}%0"
-ac:   eac    "%{=%0}%0" 
+eac:  lddr  "%{=%0}%{?0==vAC::_SP(%0);}" 41
+ac:   ac0   "%{=%0}%0"
+ac:   eac   "%{=%0}%0" 
 
 # Loads
 eac:  INDIRI2(eac) "%0DEEK();" 21
@@ -1147,7 +1147,7 @@ static Symbol get_cnst_or_reg(Node p, int nt)
   if (p)
     {
       p = reuse(p, nt);
-      if (generic(p->op) == CNST || generic(p->op) == ADDRG)
+      if (generic(p->op) == CNST || isaddrop(p->op))
         return p->syms[0];
       if (generic(p->op) == INDIR && specific(p->kids[0]->op) == VREG+P)
         return (p->x.inst && p->syms[RX]) ? p->syms[RX] : p->kids[0]->syms[0];
@@ -1496,7 +1496,7 @@ static void emitfmt2(const char *template, int len,
       vac_clobbered = 1;
       vac_equiv = 0;
       vac_constval = 0;
-      if (s && s->scope == CONSTANTS)
+      if (s && !s->x.regnode)
         vac_constval = s;
       else if (s && s->x.regnode && s->x.regnode->number < 24)
         vac_equiv = (1 << s->x.regnode->number);
@@ -1583,7 +1583,7 @@ static void emit3(const char *fmt, int len, Node p, int nt, Node *kids, short *n
           else if (fmt[1] == 'c')  
             eq = 0; /* literal comparison for destination register %c ! */
           else if (sym && cmp == ireg[31]->x.name /* vAC */
-                   && sym->scope == CONSTANTS && vac_constval
+                   && !sym->x.regnode && vac_constval
                    && vac_constval->x.name == sym->x.name )
             eq = 1;
           else if (sym && cmp == ireg[31]->x.name /* vAC */

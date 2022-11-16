@@ -3412,7 +3412,7 @@ def code17():
 	label('.766');
 	label('.763');
 	_SP(-104+144);STW(R22);
-	_SP(-104+144);DEEK();ADDI(1);DOKE(R22);
+	DEEK();ADDI(1);DOKE(R22);
 	_SP(-104+144);DEEK();_CMPIS(4);_BLT('.762');
 	LDWI('.44');STW(R8);
 	CALLI('printf');
@@ -3857,7 +3857,7 @@ def code32():
 	LDWI('N');STW(R22);
 	LDI(1);DOKE(R22);
 	LDWI(v('ErrCnt')+2);STW(R22);
-	LDWI(v('ErrCnt')+2);DEEK();ADDI(1);DOKE(R22);
+	DEEK();ADDI(1);DOKE(R22);
 	LDWI('.901');STW(R8);
 	CALLI('printf');
 	_BRA('.897');
@@ -3865,7 +3865,7 @@ def code32():
 	LDWI('N');STW(R22);
 	LDI(1);DOKE(R22);
 	LDWI(v('ErrCnt')+4);STW(R22);
-	LDWI(v('ErrCnt')+4);DEEK();ADDI(1);DOKE(R22);
+	DEEK();ADDI(1);DOKE(R22);
 	LDWI('.904');STW(R8);
 	CALLI('printf');
 	label('.897');
@@ -3918,7 +3918,7 @@ def code32():
 	label('.917');
 	_MOVF('Random2',FAC);LDWI('Random1');_FCMP();_BEQ('.920');
 	LDWI(v('ErrCnt')+4);STW(R22);
-	LDWI(v('ErrCnt')+4);DEEK();ADDI(1);DOKE(R22);
+	DEEK();ADDI(1);DOKE(R22);
 	LDI(2);STW(R8);
 	LDWI('.924');STW(R9);
 	CALLI('BadCond');
@@ -4154,11 +4154,11 @@ def code43():
 	label('.1024');
 	_MOVF(F5,FAC);LDI(F5);_FMUL();_MOVF(FAC,F5);
 	_SP(-6+44);STW(R22);
-	_SP(-6+44);DEEK();LSLW();DOKE(R22);
+	DEEK();LSLW();DOKE(R22);
 	LDWI('.1028');_FCMP();_BGE('.1017');
 	LDWI('.1029');_FMUL();_MOVF(FAC,F5);
 	_SP(-6+44);STW(R22);
-	_SP(-6+44);DEEK();SUBI(1);DOKE(R22);
+	DEEK();SUBI(1);DOKE(R22);
 	_BRA('.1017');
 	label('.1019');
 	label('.1014');

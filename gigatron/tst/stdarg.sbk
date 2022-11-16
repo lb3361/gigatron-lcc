@@ -161,7 +161,7 @@ def code2():
 	label('.19');
 	label('.15');
 	_SP(2+24);STW(R22);
-	_SP(2+24);DEEK();ADDI(1);DOKE(R22);
+	DEEK();ADDI(1);DOKE(R22);
 	label('.17');
 	_SP(2+24);DEEK();PEEK();_BNE('.14');
 	LDI(0);

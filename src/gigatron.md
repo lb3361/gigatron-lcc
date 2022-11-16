@@ -284,17 +284,33 @@ static unsigned vac_equiv, lac_equiv, fac_equiv;
 # defined by two components: the role it occupies on the tree grammar
 # and the role it occupies in the sequence grammar.
 
-# Templates contains a number of %{..} constructs defined in emit3()
-# such as conditional constructs. In particular, the construct %{!...}
-# informs the optimizer about clobbered registers. Inside the braces,
-# letter A, L, and F indicate that vAC, LAC, and FAC are affected.
-# Letters 4 and 5 are like A but apply only for cpu versions 4 or 5.
-# Note that L implies F and A, and F implies L and A.
-# Each template can also affect a target register implied by its non terminal,
-# e.g. non terminal ac means that vAC is affected. The construction 
-# %{=..}, which should appear first in a template, informs the optimizer
-# about the value acquired by the targer register. Legal arguments
-# are %0..%9 for node children, vAC, LAC, or FAC.
+# The template syntax contains several augmentations.
+# * Templates might be split in sections with |. Writing $0 to $9
+#   only prints the first section of the specified kid template.
+#   The other sections can be accessed with syntax $[0b] where '0'
+#   is the kid number and 'b' is a letter indicating 
+#   which section to process. 
+# * Templates can contain complex constructs %{...} which are
+#   processed by function emit3. For instance %{mul..} is used
+#   to inline multiplications by small constants.
+# * Conditional constructs %{?x==...:yyy:nnn} and %{?x=~...:yyy:nnn}
+#   where x is 0..9 or a..c processes yyy if %x is equal to ... 
+#   and otherwise processes no. Comparison with == are always literal.
+#   When the right hand side of a comparison with =~ is an accumulator,
+#   the yes branch is also processed if the accumulator is known
+#   to be equal to register or constant %x.
+# * Clobbering annotations %{!...} inform the optimizer about clobbered 
+#   registers. Inside the braces, letter A, L, and F indicate that vAC, LAC, 
+#   and FAC are affected. Letters 4 and 5 are like A but apply only 
+#   for cpu versions less than 4 or 5. Note that L implies F and A, 
+#   and F implies L and A.
+# * Clobbering information is also deduced from the nonterminal
+#   identity.  For instance rules for nonterminal ac are assumed to
+#   clobber vAC.  When this is the case, annotations ${=x} where x is
+#   %0..9 %a--b, or an accumulator, can be used to indicate the value
+#   taken by the clobbered register. This used to statically track
+#   which registers are equal to which accumulator, informing
+#   conditional constructs with =~.
 
 
 # -- common rules
@@ -383,17 +399,17 @@ regx: reg  "%0"
 reg:  regx "%0"
 reg:  ac   "\t%{=vAC}%0%{?c==vAC::STW(%c);}\n" 19
 
-eac0: conB  "%{=%0}%{?0==vAC::LDI(%0);}" 16
-eac0: zddr  "%{=%0}%{?0==vAC::LDI(%0);}" 16
+eac0: conB  "%{=%0}%{?0=~vAC::LDI(%0);}" 16
+eac0: zddr  "%{=%0}%{?0=~vAC::LDI(%0);}" 16
 ac0:  eac0  "%{=%0}%0"
 eac:  eac0  "%{=%0}%0"
-eac:  reg   "%{=%0}%{?0==vAC::LDW(%0);}" 20
-eac:  con   "%{=%0}%{?0==vAC::LDWI(%0);}" 21
-eac:  conBn "%{=%0}%{?0==vAC::_LDI(%0);}" 20
-eac:  zddr  "%{=%0}%{?0==vAC::LDI(%0);}" 16
-eac:  addr  "%{=%0}%{?0==vAC::LDWI(%0);}" 21
-eac:  addr  "%{=%0}%{?0==vAC::LDWI(%0);}" 21
-eac:  lddr  "%{=%0}%{?0==vAC::_SP(%0);}" 41
+eac:  reg   "%{=%0}%{?0=~vAC::LDW(%0);}" 20
+eac:  con   "%{=%0}%{?0=~vAC::LDWI(%0);}" 21
+eac:  conBn "%{=%0}%{?0=~vAC::_LDI(%0);}" 20
+eac:  zddr  "%{=%0}%{?0=~vAC::LDI(%0);}" 16
+eac:  addr  "%{=%0}%{?0=~vAC::LDWI(%0);}" 21
+eac:  addr  "%{=%0}%{?0=~vAC::LDWI(%0);}" 21
+eac:  lddr  "%{=%0}%{?0=~vAC::_SP(%0);}" 41
 ac:   ac0   "%{=%0}%0"
 ac:   eac   "%{=%0}%0" 
 
@@ -554,7 +570,7 @@ stmt: EQI2(ac,con0)  "\t%0_BEQ(%a)%{!4};\n" 28
 stmt: EQI2(ac,conB)  "\t%0XORI(%1);_BEQ(%a)%{!A};\n" 42
 stmt: EQI2(ac,iarg)  "\t%0%[1b]XORW(%1);_BEQ(%a)%{!A};\n" 54
 stmt: EQI2(iarg,ac)  "\t%1%[0b]XORW(%0);_BEQ(%a)%{!A};\n" 54
-stmt: NEI2(ac,con0)  "\t%0_BNE(%a)%{!A};\n" 28
+stmt: NEI2(ac,con0)  "\t%0_BNE(%a)%{!4};\n" 28
 stmt: NEI2(ac,conB)  "\t%0XORI(%1);_BNE(%a)%{!A};\n" 42
 stmt: NEI2(ac,iarg)  "\t%0%[1b]XORW(%1);_BNE(%a)%{!A};\n" 54
 stmt: NEI2(iarg,ac)  "\t%1%[0b]XORW(%0);_BNE(%a)%{!A};\n" 54
@@ -632,7 +648,7 @@ reg: INDIRI4(lddr) "\t_MOVL([SP,%0],%c)%{!A};\n" 160
 reg: INDIRU4(lddr) "\t_MOVL([SP,%0],%c)%{!A};\n" 160
 reg: INDIRI4(addr) "\t_MOVL(%0,%c)%{!A};\n" 120
 reg: INDIRU4(addr) "\t_MOVL(%0,%c)%{!A};\n" 120
-lac: reg           "%{=%0}%{?0==LAC::_MOVL(%0,LAC);}%{!5}" 120
+lac: reg           "%{=%0}%{?0=~LAC::_MOVL(%0,LAC);}%{!5}" 120
 lac: INDIRI4(ac)   "%0_MOVL([vAC],LAC)%{!A};" 120
 lac: INDIRU4(ac)   "%0_MOVL([vAC],LAC)%{!A};" 120
 lac: INDIRU4(lddr) "_MOVL([SP,%0],LAC)%{!A};" 160
@@ -719,7 +735,7 @@ reg:  fac           "\t%{=FAC}%0%{?c==FAC::_MOVF(FAC,%c);}%{!A}\n" 179
 reg: INDIRF5(ac)    "\t%0_MOVF([vAC],%c)%{!A};\n" 150
 reg: INDIRF5(lddr)  "\t_MOVF([SP,%0],%c)%{!A};\n" 190
 reg: INDIRF5(addr)  "\t_MOVF(%0,%c)%{!A%c};\n"    150
-fac: reg            "%{=%0}%{?0==FAC::_MOVF(%0,FAC)%{!A};}"  179
+fac: reg            "%{=%0}%{?0=~FAC::_MOVF(%0,FAC)%{!A};}"  179
 fac: INDIRF5(ac)    "%0_MOVF([vAC],FAC)%{!A};"    180
 fac: INDIRF5(lddr)  "_MOVF([SP,%0],FAC)%{!A};"    220
 fac: INDIRF5(addr)  "_MOVF(%0,FAC)%{!A};"         180
@@ -804,9 +820,9 @@ ac: LOADU1(ac) "%{=%0}%0"
 ac: LOADI2(ac) "%{=%0}%0"
 ac: LOADU2(ac) "%{=%0}%0"
 ac: LOADP2(ac) "%{=%0}%0"
-ac: LOADI2(reg)  "%{=%0}%{?0==vAC::LDW(%0);}" 20
-ac: LOADU2(reg)  "%{=%0}%{?0==vAC::LDW(%0);}" 20
-ac: LOADP2(reg)  "%{=%0}%{?0==vAC::LDW(%0);}" 20
+ac: LOADI2(reg)  "%{=%0}%{?0=~vAC::LDW(%0);}" 20
+ac: LOADU2(reg)  "%{=%0}%{?0=~vAC::LDW(%0);}" 20
+ac: LOADP2(reg)  "%{=%0}%{?0=~vAC::LDW(%0);}" 20
 ac: LOADI2(lac) "%0LDW(LAC);" 20
 ac: LOADU2(lac) "%0LDW(LAC);" 20
 ac: LOADP2(lac) "%0LDW(LAC);" 20
@@ -814,8 +830,8 @@ lac: LOADI4(lac) "%{=%0}%0"
 lac: LOADU4(lac) "%{=%0}%0"
 fac: LOADF5(fac) "%{=%0}%0"
 
-reg: LOADI1(reg)   "\t%{?0==vAC::LD(%0);}ST(%c)%{!A};\n"   34
-reg: LOADU1(reg)   "\t%{?0==vAC::LD(%0);}ST(%c)%{!A};\n"   34
+reg: LOADI1(reg)   "\t%{?0=~vAC::LD(%0);}ST(%c)%{!A};\n"   34
+reg: LOADU1(reg)   "\t%{?0=~vAC::LD(%0);}ST(%c)%{!A};\n"   34
 reg: LOADI4(reg)   "\t_MOVL(%0,%c)%{!5};\n" 120
 reg: LOADU4(reg)   "\t_MOVL(%0,%c)%{!5};\n" 120
 regx: LOADF5(regx) "\t_MOVF(%0,%c)%{!5};\n" 150
@@ -884,11 +900,11 @@ reg: INDIRP2(ac) "\t%0%{?c==vAC:DEEK():DEEKA(%c)};\n" mincpu6(29)
 reg: INDIRI1(ac) "\t%0%{?c==vAC:PEEK():PEEKA(%c)};\n" mincpu6(27)
 reg: INDIRU1(ac) "\t%0%{?c==vAC:PEEK():PEEKA(%c)};\n" mincpu6(27)
 
-ac: INDIRI2(reg)  "%{?0==vAC:DEEK():DEEKV(%0)};" mincpu6(30)
-ac: INDIRU2(reg)  "%{?0==vAC:DEEK():DEEKV(%0)};" mincpu6(30)
-ac: INDIRP2(reg)  "%{?0==vAC:DEEK():DEEKV(%0)};" mincpu6(30)
-ac: INDIRI1(reg)  "%{?0==vAC:PEEK():PEEKV(%0)};" mincpu6(30)
-ac: INDIRU1(reg)  "%{?0==vAC:PEEK():PEEKV(%0)};" mincpu6(30)
+ac: INDIRI2(reg)  "%{?0=~vAC:DEEK():DEEKV(%0)};" mincpu6(30)
+ac: INDIRU2(reg)  "%{?0=~vAC:DEEK():DEEKV(%0)};" mincpu6(30)
+ac: INDIRP2(reg)  "%{?0=~vAC:DEEK():DEEKV(%0)};" mincpu6(30)
+ac: INDIRI1(reg)  "%{?0=~vAC:PEEK():PEEKV(%0)};" mincpu6(30)
+ac: INDIRU1(reg)  "%{?0=~vAC:PEEK():PEEKV(%0)};" mincpu6(30)
 ac: ADDI2(ac,con) "%0ADDWI(%1);" mincpu6(22+27)
 ac: ADDU2(ac,con) "%0ADDWI(%1);" mincpu6(22+27)
 ac: ADDP2(ac,con) "%0ADDWI(%1);" mincpu6(22+27)
@@ -1353,7 +1369,7 @@ static void preralloc_scan(Node p, int nt, Symbol sym, int frag,
             case 'L': case 'F': xac_clobbered = vac_clobbered = 1; break;
             default: break;
             }
-        } else if (tpl[0]=='%' && isdigit(tpl[1])) {
+        } else if (tpl[0]=='%' && isdigit(tpl[1])) { /* %0 */
           Node k = kids[tpl[1]-'0'];
           int knt = nts[tpl[1]-'0'];
           k = reuse(k, knt);
@@ -1364,7 +1380,7 @@ static void preralloc_scan(Node p, int nt, Symbol sym, int frag,
           else if (k->syms[RX] == sym)
             *usecount -= 1;
           tpl += 1;
-        } else if (tpl[0]=='%' && tpl[1]=='['
+        } else if (tpl[0]=='%' && tpl[1]=='['        /* %[0b] */
                    && isdigit(tpl[2]) && islower(tpl[3])  && tpl[4]==']') {
           Node k = kids[tpl[2]-'0'];
           int knt = nts[tpl[2]-'0'];
@@ -1372,13 +1388,14 @@ static void preralloc_scan(Node p, int nt, Symbol sym, int frag,
           if (k->x.inst != knt)
             preralloc_scan(k, knt, sym, tpl[3]-'a', usecount, rclobbered);
           tpl += 3;
-        } else if (tpl[0]=='%' && tpl[1]=='{' && tpl[2]=='=') {
-          for (tpl=tpl+3; *tpl && *tpl!='}' && *tpl!='|'; tpl++) /*skip ${=...}*/;
-        } else if (tpl[0]=='%' && tpl[1]=='{' && tpl[2]=='?') {
-          int s = 2;
-          for (tpl=tpl+3; *tpl && *tpl!='}' && *tpl!='|'; tpl++) /*else ${?..:..:..}*/
+        } else if (tpl[0]=='%'&&                    /* %{?...::} assumed != */
+                   tpl[1]=='{' && tpl[2]=='?') { 
+          int s = 2; 
+          for (tpl=tpl+3; *tpl && *tpl!='}' && *tpl!='|'; tpl++)
             if (*tpl == ':' && !--s) 
               break;
+        } else if (tpl[0]=='%' && tpl[1]=='{') {    /* %{...} skipped */
+          for (tpl=tpl+2; *tpl && *tpl!='}' && *tpl!='|'; tpl++) /**/;
         }
       }
     /* Process non-terminal clobber */
@@ -1560,7 +1577,9 @@ static void emit3(const char *fmt, int len, Node p, int nt, Node *kids, short *n
   if (len > 0 && fmt[0] == '=')
     return;
   /* %{?[0-9a-c]==...:ifeq:ifne} */
-  if (len > 3 && fmt[0] == '?' && fmt[2] == '=' && fmt[3] == '=')
+  /* %{?[0-9a-c]=~xAC:ifeq:ifne} */
+  if (len > 3 && fmt[0] == '?' && fmt[2] == '='
+      && (fmt[3] == '=' || fmt[3] == '~') )
     {
       int ifeq, ifne;
       for (ifeq=4; ifeq<len; ifeq++)
@@ -1580,8 +1599,8 @@ static void emit3(const char *fmt, int len, Node p, int nt, Node *kids, short *n
             sym = get_cnst_or_reg(kids[fmt[1]-'0'], nts[fmt[1]-'0']);
           if (sym && sym->x.name == cmp)
             eq = 1;
-          else if (fmt[1] == 'c')  
-            eq = 0; /* literal comparison for destination register %c ! */
+          else if (fmt[3] == '=')  
+            eq = 0; /* literal comparison */
           else if (sym && cmp == ireg[31]->x.name /* vAC */
                    && !sym->x.regnode && vac_constval
                    && vac_constval->x.name == sym->x.name )

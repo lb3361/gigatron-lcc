@@ -93,7 +93,7 @@ def code7():
 	LDI(36);ADDW(R7);DOKE(R22);
 	_SP(-40+64);STW(R22);
 	LDI(0);DOKE(R22);
-	LDI(0);STW(R5);
+	STW(R5);
 	LDI(30);ADDW(R7);DEEK();STW(R6);
 	label('.32');
 	label('.33');
@@ -103,9 +103,9 @@ def code7():
 	_SP(-36+64);DEEK();STW(R21);
 	_SP(-36+64);STW(R20);
 	LDI(1);ADDW(R21);DOKE(R20);
-	LDW(R21);PEEK();STW(R21);
+	LDW(R21);PEEK();
 	POKE(R22);
-	LD(R21);_BNE('.32');
+	LD(vAC);_BNE('.32');
 	LDI(5);STW(R4);
 	LDI(2);STW(R0);
 	ST(R4);
@@ -433,10 +433,10 @@ def code7():
 	label('.133');
 	label('.131');
 	_MOVL('.122',[SP,-4+64]);
-	_MOVL('.47',L21);
-	_MOVL(L21,[SP,-12+64]);
+	_MOVL('.47',LAC);
+	_MOVL(LAC,[SP,-12+64]);
 	_SP(-4+64);STW(T2);_MOVL([SP,-12+64],[T2]);
-	_MOVL(L21,LAC);_SP(-4+64);_LCMPX();_BEQ('.135');
+	_SP(-4+64);_LCMPX();_BEQ('.135');
 	LDI(25);STW(R5);
 	LDW(R6);_BEQ('.137');
 	LDWI('.29');STW(R8);

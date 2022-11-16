@@ -44,11 +44,11 @@ def code3():
 	LDW(R8);STW(R7);
 	LDW(R9);STW(R6);
 	LDI(0);STW(R5);
-	LDI(0);STW(R4);
-	LDI(0);STW(R3);
-	LDI(0);STW(R2);
-	LDI(0);STW(R1);
-	LDI(0);STW(R0);
+	STW(R4);
+	STW(R3);
+	STW(R2);
+	STW(R1);
+	STW(R0);
 	_SP(-2+32);STW(R22);
 	LDI(0);DOKE(R22);
 	_SP(-4+32);STW(R22);
@@ -78,11 +78,11 @@ def code4():
 	label('f4');
 	_PROLOGUE(12,2,0x0); # save=None
 	LDI(0);STW(R19);
-	LDI(0);STW(R18);
-	LDI(0);STW(R17);
-	LDI(0);STW(R16);
-	LDI(0);STW(R15);
-	LDI(0);STW(R14);
+	STW(R18);
+	STW(R17);
+	STW(R16);
+	STW(R15);
+	STW(R14);
 	LDWI('i');DEEK();STW(R22);
 	LDW(R22);LSLW();LSLW();ADDW(R22);STW(R21);
 	LDWI('a');ADDW(R21);_MOVF([vAC],F10);

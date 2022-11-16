@@ -103,7 +103,7 @@ def code4():
 	_PROLOGUE(12,6,0xc0); # save=R6-7
 	LDW(R8);STW(R7);
 	LDW(R9);STW(R6);
-	LDW(R6);DEEK();_BEQ('.24');
+	DEEK();_BEQ('.24');
 	LDW(R7);STW(R8);
 	_MOVW(R8,[SP,2]);
 	LDW(R6);DEEK();ADDI(6);DEEK();STW(R9);
@@ -165,9 +165,9 @@ def code4():
 	DEEK();STW(R21);
 	LDI(1);ADDW(R21);DOKE(R22);
 	LDWI('words');STW(R22);
-	LDW(R21);_SHLI(3);ADDW(R22);STW(R22);
+	LDW(R21);_SHLI(3);ADDW(R22);
 	DOKE(R6);
-	LDW(R22);
+	
 	label('.23');
 	_EPILOGUE(12,6,0xc0,saveAC=True);
 # ======== ('CODE', 'tprint', code5)
@@ -175,7 +175,7 @@ def code5():
 	label('tprint');
 	_PROLOGUE(12,8,0x80); # save=R7
 	LDW(R8);STW(R7);
-	LDW(R7);_BEQ('.42');
+	_BEQ('.42');
 	LDI(2);ADDW(R7);DEEK();STW(R8);
 	CALLI('tprint');
 	LDWI('.44');STW(R8);

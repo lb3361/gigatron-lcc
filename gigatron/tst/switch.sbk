@@ -89,7 +89,7 @@ def code2():
 	LDI(0);STW(R7);
 	label('.29');
 	LDW(R7);STW(R5);
-	LDW(R7);_CMPIS(1);_BLT('.33');
+	_CMPIS(1);_BLT('.33');
 	LDW(R7);_CMPIS(20);_BGT('.33');
 	LDWI(v('.45')-2);STW(R22);
 	LDW(R7);LSLW();ADDW(R22);DEEK();CALL(vAC);
@@ -131,7 +131,7 @@ def code2():
 	CALLI('printf');
 	label('.30');
 	LDI(1);ADDW(R7);STW(R7);
-	LDW(R7);_CMPIS(20);_BLE('.29');
+	_CMPIS(20);_BLE('.29');
 	LDI(0);
 	label('.27');
 	_EPILOGUE(12,6,0xe0,saveAC=True);
@@ -225,7 +225,7 @@ def code4():
 	label('.55');
 	label('.51');
 	LDI(1);ADDW(R7);STW(R7);
-	LDW(R7);_CMPIS(10);_BLE('.50');
+	_CMPIS(10);_BLE('.50');
 	LDI(0);
 	label('.48');
 	_EPILOGUE(8,6,0x80,saveAC=True);
@@ -409,14 +409,14 @@ def code9():
 	label('big');
 	_PROLOGUE(12,6,0xe0); # save=R5-7
 	LDW(R8);STW(R7);
-	LDW(R7);_STLU(LAC);LDWI('.112');_LAND();_MOVL(LAC,L5);
+	_STLU(LAC);LDWI('.112');_LAND();_MOVL(LAC,L5);
 	_MOVL('.120',L21);
-	_MOVL(L5,LAC);LDI(L21);_LCMPX();_BEQ('.115');
-	_MOVL(L5,LAC);LDI(L21);_LCMPS();_BGT('.119');
+	LDI(L21);_LCMPX();_BEQ('.115');
+	LDI(L21);_LCMPS();_BGT('.119');
 	label('.118');
 	_MOVL(L5,LAC);LDWI('.121');_LCMPX();_BEQ('.113');
-	_MOVL(L5,LAC);LDWI('.122');_LCMPX();_BEQ('.113');
-	_MOVL(L5,LAC);LDWI('.14');_LCMPX();_BEQ('.113');
+	LDWI('.122');_LCMPX();_BEQ('.113');
+	LDWI('.14');_LCMPX();_BEQ('.113');
 	_BRA('.109');
 	label('.119');
 	_MOVL(L5,LAC);LDWI('.123');_LCMPX();_BEQ('.116');

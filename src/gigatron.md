@@ -467,17 +467,17 @@ ac: LSHI2(ac, iarg) "%0%[1b]_SHL(%1);" 200
 ac: RSHI2(ac, iarg) "%0%[1b]_SHRS(%1);" 200
 ac: LSHU2(ac, iarg) "%0%[1b]_SHL(%1);" 200
 ac: RSHU2(ac, iarg) "%0%[1b]_SHRU(%1);" 200
-ac: MULI2(conB, ac) "%1%{mul0}" 100
-ac: MULI2(conBn, ac)  "%1%{mul0}" 110
-ac: MULI2(conB, reg)  "%{mul0%1}" 100
-ac: MULI2(conBn, reg) "%{mul0%1}" 110
-ac: MULI2(con, ac)    "%1_MULI(%0);" 200
-ac: MULI2(ac, iarg)   "%0%[1b]_MUL(%1);" 200
-ac: MULI2(iarg, ac)   "%1%[0b]_MUL(%0);" 200
-ac: MULU2(conB, ac)   "%1%{mul0}" 100
-ac: MULU2(con, ac)    "%1_MULI(%0);" 200
-ac: MULU2(ac, iarg)   "%0%[1b]_MUL(%1);" 200
-ac: MULU2(iarg, ac)   "%1%[0b]_MUL(%0);" 200
+ac: MULI2(conB, ac)    "%1%{mul0}" 100
+ac: MULI2(conBn, ac)   "%1%{mul0}" 110
+ac: MULI2(conB, regx)  "%{mul0%1}" 100
+ac: MULI2(conBn, regx) "%{mul0%1}" 110
+ac: MULI2(con, ac)     "%1_MULI(%0);" 200
+ac: MULI2(ac, iarg)    "%0%[1b]_MUL(%1);" 200
+ac: MULI2(iarg, ac)    "%1%[0b]_MUL(%0);" 200
+ac: MULU2(conB, ac)    "%1%{mul0}" 100
+ac: MULU2(con, ac)     "%1_MULI(%0);" 200
+ac: MULU2(ac, iarg)    "%0%[1b]_MUL(%1);" 200
+ac: MULU2(iarg, ac)    "%1%[0b]_MUL(%0);" 200
 ac: DIVI2(ac, iarg) "%0%[1b]_DIVS(%1);" 200
 ac: DIVU2(ac, iarg) "%0%[1b]_DIVU(%1);" 200
 ac: MODI2(ac, iarg) "%0%[1b]_MODS(%1);" 200
@@ -633,49 +633,49 @@ reg: INDIRU4(lddr) "\t_MOVL([SP,%0],%c)%{!A};\n" 160
 reg: INDIRI4(addr) "\t_MOVL(%0,%c)%{!A};\n" 120
 reg: INDIRU4(addr) "\t_MOVL(%0,%c)%{!A};\n" 120
 lac: reg           "%{=%0}%{?0==LAC::_MOVL(%0,LAC);}%{!5}" 120
-lac: INDIRI4(ac)   "%0_MOVL([vAC],LAC);" 120
-lac: INDIRU4(ac)   "%0_MOVL([vAC],LAC);" 120
-lac: INDIRU4(lddr) "_MOVL([SP,%0],LAC);" 160
-lac: INDIRU4(lddr) "_MOVL([SP,%0],LAC);" 160
-lac: INDIRI4(addr) "_MOVL(%0,LAC);" 120
-lac: INDIRU4(addr) "_MOVL(%0,LAC);" 120
-lac: ADDI4(lac,larg) "%0%1_LADD();" 200
-lac: ADDU4(lac,larg) "%0%1_LADD();" 200
-lac: ADDI4(larg,lac) "%1%0_LADD();" 200
-lac: ADDU4(larg,lac) "%1%0_LADD();" 200
-lac: SUBI4(lac,larg) "%0%1_LSUB();" 200
-lac: SUBU4(lac,larg) "%0%1_LSUB();" 200
-lac: MULI4(lac,larg) "%0%1_LMUL();" 200
-lac: MULU4(lac,larg) "%0%1_LMUL();" 200
-lac: MULI4(larg,lac) "%1%0_LMUL();" 200
-lac: MULU4(larg,lac) "%1%0_LMUL();" 200
-lac: DIVI4(lac,larg) "%0%1_LDIVS();" 200
-lac: DIVU4(lac,larg) "%0%1_LDIVU();" 200
-lac: MODI4(lac,larg) "%0%1_LMODS();" 200
-lac: MODU4(lac,larg) "%0%1_LMODU();" 200
-lac: LSHI4(lac,reg)  "%0LDW(%1);_LSHL();" 200
-lac: LSHI4(lac,conB) "%0LDI(%1);_LSHL();"  200
-lac: LSHU4(lac,reg)  "%0LDW(%1);_LSHL();"  200
-lac: LSHU4(lac,conB) "%0LDI(%1);_LSHL();"  200
-lac: RSHI4(lac,reg)  "%0LDW(%1);_LSHRS();" 200
-lac: RSHI4(lac,conB) "%0LDI(%1);_LSHRS();" 200
-lac: RSHU4(lac,reg)  "%0LDW(%1);_LSHRU();" 200
-lac: RSHU4(lac,conB) "%0LDI(%1);_LSHRU();" 200
-lac: NEGI4(lac) "%0_LNEG();" 200
-lac: BCOMU4(lac) "%0_LCOM();" 200
-lac: BANDU4(lac,larg) "%0%1_LAND();" 200
-lac: BANDU4(larg,lac) "%1%0_LAND();" 200
-lac: BORU4(lac,larg) "%0%1_LOR();" 200
-lac: BORU4(larg,lac) "%1%0_LOR();" 200
-lac: BXORU4(lac,larg) "%0%1_LXOR();" 200
-lac: BXORU4(larg,lac) "%1%0_LXOR();" 200
-lac: BCOMI4(lac) "%0_LCOM();" 200
-lac: BANDI4(lac,larg) "%0%1_LAND();" 200
-lac: BANDI4(larg,lac) "%1%0_LAND();" 200
-lac: BORI4(lac,larg) "%0%1_LOR();" 200
-lac: BORI4(larg,lac) "%1%0_LOR();" 200
-lac: BXORI4(lac,larg) "%0%1_LXOR();" 200
-lac: BXORI4(larg,lac) "%1%0_LXOR();" 200
+lac: INDIRI4(ac)   "%0_MOVL([vAC],LAC)%{!A};" 120
+lac: INDIRU4(ac)   "%0_MOVL([vAC],LAC)%{!A};" 120
+lac: INDIRU4(lddr) "_MOVL([SP,%0],LAC)%{!A};" 160
+lac: INDIRU4(lddr) "_MOVL([SP,%0],LAC)%{!A};" 160
+lac: INDIRI4(addr) "_MOVL(%0,LAC)%{!A};" 120
+lac: INDIRU4(addr) "_MOVL(%0,LAC)%{!A};" 120
+lac: ADDI4(lac,larg) "%0%1_LADD()%{!5};" 200
+lac: ADDU4(lac,larg) "%0%1_LADD()%{!5};" 200
+lac: ADDI4(larg,lac) "%1%0_LADD()%{!5};" 200
+lac: ADDU4(larg,lac) "%1%0_LADD()%{!5};" 200
+lac: SUBI4(lac,larg) "%0%1_LSUB()%{!5};" 200
+lac: SUBU4(lac,larg) "%0%1_LSUB()%{!5};" 200
+lac: MULI4(lac,larg) "%0%1_LMUL()%{!A};" 200
+lac: MULU4(lac,larg) "%0%1_LMUL()%{!A};" 200
+lac: MULI4(larg,lac) "%1%0_LMUL()%{!A};" 200
+lac: MULU4(larg,lac) "%1%0_LMUL()%{!A};" 200
+lac: DIVI4(lac,larg) "%0%1_LDIVS()%{!A};" 200
+lac: DIVU4(lac,larg) "%0%1_LDIVU()%{!A};" 200
+lac: MODI4(lac,larg) "%0%1_LMODS()%{!A};" 200
+lac: MODU4(lac,larg) "%0%1_LMODU()%{!A};" 200
+lac: LSHI4(lac,reg)  "%0LDW(%1);_LSHL()%{!A};"  200
+lac: LSHI4(lac,conB) "%0LDI(%1);_LSHL()%{!A};"  200
+lac: LSHU4(lac,reg)  "%0LDW(%1);_LSHL()%{!A};"  200
+lac: LSHU4(lac,conB) "%0LDI(%1);_LSHL()%{!A};"  200
+lac: RSHI4(lac,reg)  "%0LDW(%1);_LSHRS()%{!A};" 200
+lac: RSHI4(lac,conB) "%0LDI(%1);_LSHRS()%{!A};" 200
+lac: RSHU4(lac,reg)  "%0LDW(%1);_LSHRU()%{!A};" 200
+lac: RSHU4(lac,conB) "%0LDI(%1);_LSHRU()%{!A};" 200
+lac: NEGI4(lac)       "%0_LNEG()%{!5};"   200
+lac: BCOMU4(lac)      "%0_LCOM()%{!5};"   200
+lac: BANDU4(lac,larg) "%0%1_LAND()%{!A};" 200
+lac: BANDU4(larg,lac) "%1%0_LAND()%{!A};" 200
+lac: BORU4(lac,larg)  "%0%1_LOR()%{!A};"  200
+lac: BORU4(larg,lac)  "%1%0_LOR()%{!A};"  200
+lac: BXORU4(lac,larg) "%0%1_LXOR()%{!A};" 200
+lac: BXORU4(larg,lac) "%1%0_LXOR()%{!A};" 200
+lac: BCOMI4(lac)      "%0_LCOM()%{!5};"   200
+lac: BANDI4(lac,larg) "%0%1_LAND()%{!A};" 200
+lac: BANDI4(larg,lac) "%1%0_LAND()%{!A};" 200
+lac: BORI4(lac,larg) "%0%1_LOR()%{!A};"   200
+lac: BORI4(larg,lac) "%1%0_LOR()%{!A};"   200
+lac: BXORI4(lac,larg) "%0%1_LXOR()%{!A};" 200
+lac: BXORI4(larg,lac) "%1%0_LXOR()%{!A};" 200
 stmt: LTI4(lac,larg) "\t%0%1_LCMPS();_BLT(%a)%{!A};\n" 200
 stmt: LEI4(lac,larg) "\t%0%1_LCMPS();_BLE(%a)%{!A};\n" 200
 stmt: GTI4(lac,larg) "\t%0%1_LCMPS();_BGT(%a)%{!A};\n" 200
@@ -715,22 +715,22 @@ stmt: ASGNU4(lddr,INDIRU4(lsrc)) "\t_MOVL(%1,[SP,%0])%{!A};\n" 120
 stmt: fac "\t%0\n"
 farg: regx "LDI(%0)%{!A};" 21
 farg: INDIRF5(eac) "%0"
-reg:  fac           "\t%{=FAC}%0%{?c==FAC::_MOVF(FAC,%c);}%{!5}\n" 179
+reg:  fac           "\t%{=FAC}%0%{?c==FAC::_MOVF(FAC,%c);}%{!A}\n" 179
 reg: INDIRF5(ac)    "\t%0_MOVF([vAC],%c)%{!A};\n" 150
 reg: INDIRF5(lddr)  "\t_MOVF([SP,%0],%c)%{!A};\n" 190
 reg: INDIRF5(addr)  "\t_MOVF(%0,%c)%{!A%c};\n"    150
-fac: reg            "%{=%0}%{?0==FAC::_MOVF(%0,FAC);}"  150
-fac: INDIRF5(ac)    "%0_MOVF([vAC],FAC);"         180
-fac: INDIRF5(lddr)  "_MOVF([SP,%0],FAC);"         220
-fac: INDIRF5(addr)  "_MOVF(%0,FAC);"              180
-fac: ADDF5(fac,farg) "%0%1_FADD();"               200
-fac: ADDF5(farg,fac) "%1%0_FADD();"               200
-fac: SUBF5(fac,farg) "%0%1_FSUB();"               200
-fac: SUBF5(farg,fac) "%1_FNEG();%0_FADD();"       200+50
-fac: MULF5(fac,farg) "%0%1_FMUL();"               200
-fac: MULF5(farg,fac) "%1%0_FMUL();"               200
-fac: DIVF5(fac,farg) "%0%1_FDIV();"               200
-fac: NEGF5(fac)      "%0_FNEG();"                 50
+fac: reg            "%{=%0}%{?0==FAC::_MOVF(%0,FAC)%{!A};}"  179
+fac: INDIRF5(ac)    "%0_MOVF([vAC],FAC)%{!A};"    180
+fac: INDIRF5(lddr)  "_MOVF([SP,%0],FAC)%{!A};"    220
+fac: INDIRF5(addr)  "_MOVF(%0,FAC)%{!A};"         180
+fac: ADDF5(fac,farg) "%0%1_FADD()%{!A};"          200
+fac: ADDF5(farg,fac) "%1%0_FADD()%{!A};"          200
+fac: SUBF5(fac,farg) "%0%1_FSUB()%{!A};"          200
+fac: SUBF5(farg,fac) "%1_FNEG();%0_FADD()%{!A};"  200+50
+fac: MULF5(fac,farg) "%0%1_FMUL()%{!A};"          200
+fac: MULF5(farg,fac) "%1%0_FMUL()%{!A};"          200
+fac: DIVF5(fac,farg) "%0%1_FDIV()%{!A};"          200
+fac: NEGF5(fac)      "%0_FNEG()%{!A};"            50
 stmt: EQF5(fac,farg) "\t%0%1_FCMP();_BEQ(%a)%{!A};\n" 200
 stmt: NEF5(fac,farg) "\t%0%1_FCMP();_BNE(%a)%{!A};\n" 200
 stmt: LTF5(fac,farg) "\t%0%1_FCMP();_BLT(%a)%{!A};\n" 200
@@ -816,11 +816,9 @@ fac: LOADF5(fac) "%{=%0}%0"
 
 reg: LOADI1(reg)   "\t%{?0==vAC::LD(%0);}ST(%c)%{!A};\n"   34
 reg: LOADU1(reg)   "\t%{?0==vAC::LD(%0);}ST(%c)%{!A};\n"   34
-#reg: LOADI1(reg)   "\t%{=vAC}%{?0==vAC::LD(%0);}STW(%c)%{!A};\n"   34
-#reg: LOADU1(reg)   "\t%{=vAC}%{?0==vAC::LD(%0);}STW(%c)%{!A};\n"   34
 reg: LOADI4(reg)   "\t_MOVL(%0,%c)%{!5};\n" 120
 reg: LOADU4(reg)   "\t_MOVL(%0,%c)%{!5};\n" 120
-reg: LOADF5(reg)   "\t_MOVF(%0,%c)%{!5};\n" 150
+regx: LOADF5(regx) "\t_MOVF(%0,%c)%{!5};\n" 150
 
 # 2) extensions
 ac: CVII2(reg) "LD(%0);XORI(128);SUBI(128);" if_cv_from(a,1,66)
@@ -1149,17 +1147,15 @@ static Symbol get_cnst_or_reg(Node p, int nt)
   if (p)
     {
       p = reuse(p, nt);
-      if (generic(p->op) == CNST
-          || generic(p->op) == ADDRG)
+      if (generic(p->op) == CNST || generic(p->op) == ADDRG)
         return p->syms[0];
-      if (generic(p->op) == INDIR
-          && specific(p->kids[0]->op) == VREG+P)
-        return (p->syms[RX]) ? p->syms[RX] : p->kids[0]->syms[0];
+      if (generic(p->op) == INDIR && specific(p->kids[0]->op) == VREG+P)
+        return (p->x.inst && p->syms[RX]) ? p->syms[RX] : p->kids[0]->syms[0];
     }
   return 0;
 }
 
-static Symbol get_source_sym(Node p, int nt, Node *kids, short *nts, const char *tpl)
+static Symbol get_source_sym(Node p, int nt, Node *kids, const short *nts, const char *tpl)
 {
   const char *etpl;
   for (; *tpl; tpl++)
@@ -1329,53 +1325,72 @@ static void clobber(Node p)
   }
 }
 
-
-static int insn_can_use_ac_for_sym(Node n, int nt, Symbol sym, int *uses)
+static void preralloc_scan(Node p, int nt, Symbol sym, int frag,
+                           int *usecount, int *rclobbered)
 {
- recurse1:
-  int rulenum = (*IR->x._rule)(n->x.state, nt);
-  const short *nts = IR->x._nts[rulenum];
-  const char *template = IR->x._templates[rulenum];
- recurse2:
-  const char *tpl;
-  Node kids[10];
-  (*IR->x._kids)(n, rulenum, kids);
-  if (generic(n->op) == INDIR && specific(n->kids[0]->op) == VREG+P
-      && n->kids[0]->syms[0] == sym)
-    {
-      if (nt == _regx_NT)
-        return 0;
-      else if (nt == _reg_NT)
-        return (--*uses) ? 0 : 1;
-    }
-  for (tpl=template; tpl[0] && tpl[0]!='|' && tpl[0]!=';'; tpl++)
-    {
-      if (tpl[0]=='%' && isdigit(tpl[1])) {
-        int k = tpl[1] - '0';
-        n = kids[k];
-        nt = nts[k];
-        goto recurse1;
+  if ((p = reuse(p, nt))) {
+    int rulenum = (*IR->x._rule)(p->x.state, nt);
+    const short *nts = IR->x._nts[rulenum];
+    const char *template = IR->x._templates[rulenum];
+    const char *tpl = template;
+    Node kids[10];
+    Symbol t,s;
+    (*IR->x._kids)(p, rulenum, kids);
+    /* Scan template */
+    if (*tpl == '#')
+      return;
+    while(--frag >= 0)
+      while (*tpl && *tpl++ != '|')
+        { }
+    for(; *tpl && *tpl!='|' && !*rclobbered; tpl++)
+      {
+        if (tpl[0]=='%' && tpl[1]=='{' && tpl[2]=='!') {
+          for(tpl=tpl+3; *tpl && *tpl!='|' && *tpl!='}'; tpl++)
+            switch(*tpl) {
+            case '4': if (cpu > 4) break;
+            case '5': if (cpu > 5) break;
+            case 'A': vac_clobbered = 1; break;
+            case 'L': case 'F': xac_clobbered = vac_clobbered = 1; break;
+            default: break;
+            }
+        } else if (tpl[0]=='%' && isdigit(tpl[1])) {
+          Node k = kids[tpl[1]-'0'];
+          int knt = nts[tpl[1]-'0'];
+          k = reuse(k, knt);
+          if (knt == _regx_NT && k->x.inst && k->syms[RX] == sym)
+            *rclobbered = 1; /* a regx nonterminal kills preralloc */
+          else if (k->x.inst != knt)
+            preralloc_scan(k, knt, sym, 0, usecount, rclobbered);
+          else if (k->syms[RX] == sym)
+            *usecount -= 1;
+          tpl += 1;
+        } else if (tpl[0]=='%' && tpl[1]=='['
+                   && isdigit(tpl[2]) && islower(tpl[3])  && tpl[4]==']') {
+          Node k = kids[tpl[2]-'0'];
+          int knt = nts[tpl[2]-'0'];
+          k = reuse(k, knt);
+          if (k->x.inst != knt)
+            preralloc_scan(k, knt, sym, tpl[3]-'a', usecount, rclobbered);
+          tpl += 3;
+        } else if (tpl[0]=='%' && tpl[1]=='{' && tpl[2]=='=') {
+          for (tpl=tpl+3; *tpl && *tpl!='}' && *tpl!='|'; tpl++) /*skip ${=...}*/;
+        } else if (tpl[0]=='%' && tpl[1]=='{' && tpl[2]=='?') {
+          int s = 2;
+          for (tpl=tpl+3; *tpl && *tpl!='}' && *tpl!='|'; tpl++) /*else ${?..:..:..}*/
+            if (*tpl == ':' && !--s) 
+              break;
+        }
       }
-      if (tpl[0]=='%' && tpl[1]=='[' && isdigit(tpl[2])
-          && tpl[3]>='a' && tpl[3]<='z' && tpl[4]==']') {
-        int k = tpl[2]-'0';
-        int f = tpl[3]-'a';
-        int r = (*IR->x._rule)(kids[k]->x.state, nts[k]);
-        const char *t = IR->x._templates[r];
-        while (f>0 && *t)
-          if (*t++ == '|')
-            f -= 1;
-        if (f == 0)
-          {
-            n = kids[k];
-            nt = nts[k];
-            rulenum = r;
-            template = t;
-            goto recurse2;
-          }
-      }
+    /* Process non-terminal clobber */
+    t = get_target_reg(p, nt);
+    s = get_source_sym(p, nt, kids, nts, template);
+    if (s != sym) {
+      if (t == ireg[31])
+        vac_clobbered = 1;
+      else if (t == lreg[31] || t == freg[31])
+        vac_clobbered = xac_clobbered = 1;
     }
-  return 0;
+  }
 }
 
 static void preralloc(Node p)
@@ -1389,30 +1404,33 @@ static void preralloc(Node p)
         for (q = sym->x.lastuse; q; q = q->x.prevuse)
           usecount += 1;
       if (usecount > 0)
-        for (q=p->x.next; q; q = q->x.next)
-          {
-            /* Skip instructions that generate no code */
-            if (generic(q->op)==INDIR && specific(q->kids[0]->op) == VREG+P ||
-                generic(q->op)==ASGN && specific(q->kids[0]->op) == VREG+P
-                && q->kids[1]->x.nt == _reg_NT)
-              continue;
-            /* Scan for leftmost use of sym */
-            if (insn_can_use_ac_for_sym(q, q->x.inst, sym, &usecount)) {
-              /* Which accumulator to use? */
-              Symbol r = ireg[31];
-              if (optype(p->op) == FLOAT)
-                r = freg[31];
-              else if (opsize(p->op) == 4)
-                r = lreg[31];
-              /* Optimize sym out of existence */
-              r->x.lastuse = sym->x.lastuse;
-              for (q = sym->x.lastuse; q; q = q->x.prevuse) {
-                q->syms[RX] = r;
-                q->x.registered = 1;
-              }
+        {
+          /* Determine accumulator */
+          Symbol r = ireg[31];
+          int *rclobbered = &xac_clobbered;
+          if (optype(p->op) == FLOAT)
+            r = freg[31];
+          else if (opsize(p->op) == 4)
+            r = lreg[31];
+          if (r == ireg[31])
+            rclobbered = &vac_clobbered;
+          /* Hack because moves to/from FAC are costly */
+          if (r == freg[31] && usecount > 1)
+            return;
+          /* Search for references to sym until accumulator clobbered */
+          *rclobbered = 0;
+          for (q=p->x.next; q && usecount>0 && !*rclobbered; q = q->x.next)
+            preralloc_scan(q, q->x.inst, sym, 0, &usecount, rclobbered);
+          /* Did we find all uses of sym? */
+          if (! usecount) {
+            /* Optimize temporary sym out of existence */
+            r->x.lastuse = sym->x.lastuse;
+            for (q = sym->x.lastuse; q; q = q->x.prevuse) {
+              q->syms[RX] = r;
+              q->x.registered = 1;
             }
-            break;
           }
+        }
     }
 }
 
@@ -1555,13 +1573,15 @@ static void emit3(const char *fmt, int len, Node p, int nt, Node *kids, short *n
         {
           int eq = 0;
           Symbol sym = 0;
-          const char *cmp = stringn(fmt+4,ifeq-4);
+          const char *cmp  = stringn(fmt+4,ifeq-4);
           if (fmt[1] >= 'a' && fmt[1] <= 'c')
             sym = p->syms[fmt[1]-'a'];
           else if (fmt[1] >= '0' && fmt[1] <= '9')
             sym = get_cnst_or_reg(kids[fmt[1]-'0'], nts[fmt[1]-'0']);
           if (sym && sym->x.name == cmp)
             eq = 1;
+          else if (fmt[1] == 'c')  
+            eq = 0; /* literal comparison for destination register %c ! */
           else if (sym && cmp == ireg[31]->x.name /* vAC */
                    && sym->scope == CONSTANTS && vac_constval
                    && vac_constval->x.name == sym->x.name )

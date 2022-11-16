@@ -68,7 +68,7 @@ def code0():
 	label('.19');
 	label('.16');
 	LDI(1);ADDW(R5);STW(R5);
-	LDW(R5);_CMPIS(127);_BLE('.15');
+	_CMPIS(127);_BLE('.15');
 	LDI(0);
 	label('.1');
 	_EPILOGUE(28,10,0xf8,saveAC=True);

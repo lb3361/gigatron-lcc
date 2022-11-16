@@ -1847,7 +1847,8 @@ def _LCMPU():
 @vasm
 def _LCMPX():
     if args.cpu >= 6:
-        XORLP()
+        # keep LAC unchanged!
+        CMPLPU() 
     else:
         extern('_@_lcmpx')
         _CALLI('_@_lcmpx')      # TST(LAC-[vAC]) --> vAC

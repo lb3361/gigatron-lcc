@@ -45,7 +45,7 @@ def code2():
 	label('putd');
 	_PROLOGUE(8,4,0x80); # save=R7
 	LDW(R8);STW(R7);
-	LDW(R7);_BGE('.7');
+	_BGE('.7');
 	LDI(45);STW(R8);
 	_MOVW(R8,[SP,2]);
 	CALLI('putchar');
@@ -69,7 +69,7 @@ def code3():
 	LDW(R9);STW(R6);
 	LDWI('xx');STW(R22);
 	LDW(R7);DOKE(R22);
-	LDW(R7);STW(R8);
+	STW(R8);
 	_MOVW(R8,[SP,2]);
 	LDI(0);STW(R9);
 	_MOVW(R9,[SP,4]);

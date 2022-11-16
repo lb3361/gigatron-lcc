@@ -555,9 +555,9 @@ def code14():
 	_BRA('.60');
 	label('.59');
 	LDWI('yyin');DEEK();STW(R21);
-	DEEK();SUBI(1);STW(R20);
+	DEEK();SUBI(1);
 	DOKE(R21);
-	LDW(R20);_BGE('.61');
+	_BGE('.61');
 	LDWI('yyin');DEEK();STW(R8);
 	CALLI('_filbuf');STW(R21);
 	_SP(-4+28);STW(R22);
@@ -576,7 +576,7 @@ def code14():
 	_SP(-4+28);DEEK();STW(R22);
 	LDWI('yytchar');STW(R21);
 	LDW(R22);DOKE(R21);
-	LDW(R22);XORI(10);_BNE('.57');
+	XORI(10);_BNE('.57');
 	LDWI('yylineno');STW(R22);
 	DEEK();ADDI(1);DOKE(R22);
 	_SP(-2+28);STW(R22);
@@ -717,9 +717,9 @@ def code14():
 	LDW(R6);DEEK();STW(R22);
 	_BEQ('.94');
 	LDWI('yyfnd');STW(R21);
-	LDI(4);ADDW(R22);DEEK();STW(R22);
+	LDI(4);ADDW(R22);DEEK();
 	DOKE(R21);
-	LDW(R22);_BEQ('.94');
+	_BEQ('.94');
 	LDW(R21);DEEK();DEEK();_BLE('.94');
 	LDWI('yyolsp');STW(R22);
 	LDW(R6);DOKE(R22);
@@ -743,7 +743,8 @@ def code14():
 	label('.99');
 	LDW(R6);DEEK();ADDI(4);DEEK();STW(R8);
 	_MOVW(R8,[SP,2]);
-	LDWI('yyfnd');DEEK();DEEK();STW(T3);LDI(0);SUBW(T3);STW(R9);
+	LDWI('yyfnd');DEEK();DEEK();STW(R22);
+	LDI(0);SUBW(R22);STW(R9);
 	_MOVW(R9,[SP,4]);
 	CALLI('yyback');
 	XORI(1);_BEQ('.103');
@@ -795,9 +796,9 @@ def code14():
 	_BRA('.116');
 	label('.115');
 	LDWI('yyin');DEEK();STW(R22);
-	DEEK();SUBI(1);STW(R21);
+	DEEK();SUBI(1);
 	DOKE(R22);
-	LDW(R21);_BGE('.117');
+	_BGE('.117');
 	LDWI('yyin');DEEK();STW(R8);
 	CALLI('_filbuf');STW(R22);
 	_SP(-4+28);STW(R21);
@@ -816,7 +817,7 @@ def code14():
 	_SP(-4+28);DEEK();STW(R22);
 	LDWI('yytchar');STW(R21);
 	LDW(R22);DOKE(R21);
-	LDW(R22);XORI(10);_BNE('.113');
+	XORI(10);_BNE('.113');
 	LDWI('yylineno');STW(R22);
 	DEEK();ADDI(1);DOKE(R22);
 	_SP(-2+28);STW(R22);
@@ -840,9 +841,9 @@ def code14():
 	LD(R22);DOKE(R21);
 	LDWI('yyprevious');DEEK();_BLE('.119');
 	LDWI('yyout');DEEK();STW(R22);
-	DEEK();SUBI(1);STW(R21);
+	DEEK();SUBI(1);
 	DOKE(R22);
-	LDW(R21);_BGE('.122');
+	_BGE('.122');
 	LDWI('yyprevious');DEEK();LD(vACL);STW(R8);
 	LDWI('yyout');DEEK();STW(R9);
 	CALLI('_flsbuf');
@@ -884,15 +885,15 @@ def code16():
 	LDWI('yysbuf');STW(R22);
 	LDWI('yysptr');DEEK();_CMPWU(R22);_BLE('.140');
 	LDWI('yysptr');STW(R22);
-	DEEK();SUBI(-(-1));STW(R21);
+	DEEK();SUBI(-(-1));
 	DOKE(R22);
-	LDW(R21);PEEK();STW(R5);
+	PEEK();STW(R5);
 	_BRA('.141');
 	label('.140');
 	LDWI('yyin');DEEK();STW(R22);
-	DEEK();SUBI(1);STW(R21);
+	DEEK();SUBI(1);
 	DOKE(R22);
-	LDW(R21);_BGE('.142');
+	_BGE('.142');
 	LDWI('yyin');DEEK();STW(R8);
 	CALLI('_filbuf');
 	STW(R5);
@@ -906,7 +907,7 @@ def code16():
 	label('.141');
 	LDWI('yytchar');STW(R22);
 	LDW(R5);DOKE(R22);
-	LDW(R5);XORI(10);_BNE('.138');
+	XORI(10);_BNE('.138');
 	LDWI('yylineno');STW(R22);
 	DEEK();ADDI(1);DOKE(R22);
 	LDWI('yytchar');DEEK();STW(R6);
@@ -929,9 +930,9 @@ def code17():
 	_PROLOGUE(8,6,0x80); # save=R7
 	LDW(R8);STW(R7);
 	LDWI('yyout');DEEK();STW(R22);
-	DEEK();SUBI(1);STW(R21);
+	DEEK();SUBI(1);
 	DOKE(R22);
-	LDW(R21);_BGE('.146');
+	_BGE('.146');
 	LD(R7);STW(R8);
 	LDWI('yyout');DEEK();STW(R9);
 	CALLI('_flsbuf');
@@ -1436,7 +1437,7 @@ def code32():
 	CALLI('yylex');STW(R22);
 	LDWI('yychar');STW(R21);
 	LDW(R22);DOKE(R21);
-	LDW(R22);_BGE('.169');
+	_BGE('.169');
 	LDWI('yychar');STW(R22);
 	LDI(0);DOKE(R22);
 	label('.169');
@@ -1473,7 +1474,7 @@ def code32():
 	CALLI('yylex');STW(R22);
 	LDWI('yychar');STW(R21);
 	LDW(R22);DOKE(R21);
-	LDW(R22);_BGE('.182');
+	_BGE('.182');
 	LDWI('yychar');STW(R22);
 	LDI(0);DOKE(R22);
 	label('.182');
@@ -1507,8 +1508,8 @@ def code32():
 	label('.178');
 	LDW(R4);_BNE('.195');
 	LDWI('yyerrflag');DEEK();STW(R0);
-	LDW(R0);_BLT('.197');
-	LDW(R0);_CMPIS(3);_BGT('.197');
+	_BLT('.197');
+	_CMPIS(3);_BGT('.197');
 	LDWI('.213');STW(R22);
 	LDW(R0);LSLW();ADDW(R22);DEEK();CALL(vAC);
 	label('.200');
@@ -1526,7 +1527,7 @@ def code32():
 	LDWI(256);STW(R21);
 	LDW(R5);DEEK();LSLW();ADDW(R22);DEEK();ADDW(R21);STW(R4);
 	_BLT('.207');
-	LDW(R4);_CMPIS(249);_BGE('.207');
+	_CMPIS(249);_BGE('.207');
 	LDWI('yyact');STW(R22);
 	LDWI('yychk');STW(R21);
 	LDWI(256);STW(R20);
@@ -1581,7 +1582,7 @@ def code32():
 	LDW(R4);LSLW();ADDW(R22);DEEK();LSLW();ADDW(R21);DEEK();STW(R6);
 	label('.214');
 	_SP(-302+324);DEEK();STW(R0);
-	LDW(R0);_CMPIS(4);_BLT('.158');
+	_CMPIS(4);_BLT('.158');
 	LDW(R0);_CMPIS(14);_BGT('.158');
 	LDWI(v('.238')-8);STW(R22);
 	LDW(R0);LSLW();ADDW(R22);DEEK();CALL(vAC);

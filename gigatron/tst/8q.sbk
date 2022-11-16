@@ -13,7 +13,7 @@ def code0():
 	LDI(1);DOKE(R22);
 	label('.3');
 	LDI(1);ADDW(R7);STW(R7);
-	LDW(R7);_CMPIS(15);_BLT('.2');
+	_CMPIS(15);_BLT('.2');
 	LDI(0);STW(R7);
 	label('.6');
 	LDWI('rows');STW(R22);
@@ -21,7 +21,7 @@ def code0():
 	LDI(1);DOKE(R22);
 	label('.7');
 	LDI(1);ADDW(R7);STW(R7);
-	LDW(R7);_CMPIS(8);_BLT('.6');
+	_CMPIS(8);_BLT('.6');
 	LDI(0);STW(R8);
 	_MOVW(R8,[SP,2]);
 	CALLI('queens');
@@ -72,7 +72,7 @@ def code1():
 	label('.15');
 	label('.12');
 	LDI(1);ADDW(R6);STW(R6);
-	LDW(R6);_CMPIS(8);_BLT('.11');
+	_CMPIS(8);_BLT('.11');
 	LDI(0);
 	label('.10');
 	_EPILOGUE(8,4,0xc0,saveAC=True);
@@ -90,7 +90,7 @@ def code2():
 	CALLI('printf');
 	label('.24');
 	LDI(1);ADDW(R7);STW(R7);
-	LDW(R7);_CMPIS(8);_BLT('.23');
+	_CMPIS(8);_BLT('.23');
 	LDWI('.28');STW(R8);
 	_MOVW(R8,[SP,2]);
 	CALLI('printf');

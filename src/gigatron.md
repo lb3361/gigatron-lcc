@@ -85,6 +85,7 @@ static void xprint_finish(void);
 /* Cost functions */
 static int  if_zpconst(Node);
 static int  if_zpglobal(Node);
+static int  if_incr(Node,int,int);
 static int  if_rmw(Node,int);
 static int  if_not_asgn_tmp(Node,int);
 static int  if_cv_from(Node,int,int);
@@ -456,21 +457,21 @@ ac: ADDP2(ac,iarg)  "%0%[1b]ADDW(%1);" 28
 ac: ADDI2(iarg,ac)  "%1%[0b]ADDW(%0);" 28
 ac: ADDU2(iarg,ac)  "%1%[0b]ADDW(%0);" 28
 ac: ADDP2(iarg,ac)  "%1%[0b]ADDW(%0);" 28
-ac: ADDI2(ac,conB)  "%0ADDI(%1);" 27
-ac: ADDU2(ac,conB)  "%0ADDI(%1);" 27
-ac: ADDP2(ac,conB)  "%0ADDI(%1);" 27
-ac: ADDI2(ac,conBn) "%0SUBI(-(%1));" 27
-ac: ADDU2(ac,conBn) "%0SUBI(-(%1));" 27
-ac: ADDP2(ac,conBn) "%0SUBI(-(%1));" 27
+ac: ADDI2(ac,conB)  "%0ADDI(%1);"      if_incr(a,17,27)
+ac: ADDU2(ac,conB)  "%0ADDI(%1);"      if_incr(a,17,27)
+ac: ADDP2(ac,conB)  "%0ADDI(%1);"      if_incr(a,17,27)
+ac: ADDI2(ac,conBn) "%0SUBI(-(%1));"   if_incr(a,17,27)
+ac: ADDU2(ac,conBn) "%0SUBI(-(%1));"   if_incr(a,17,27)
+ac: ADDP2(ac,conBn) "%0SUBI(-(%1));"   if_incr(a,17,27)
 ac: SUBI2(ac,iarg)  "%0%[1b]SUBW(%1);" 28
 ac: SUBU2(ac,iarg)  "%0%[1b]SUBW(%1);" 28
 ac: SUBP2(ac,iarg)  "%0%[1b]SUBW(%1);" 28
-ac: SUBI2(ac,conB)  "%0SUBI(%1);" 27
-ac: SUBU2(ac,conB)  "%0SUBI(%1);" 27
-ac: SUBP2(ac,conB)  "%0SUBI(%1);" 27
-ac: SUBI2(ac,conBn) "%0ADDI(-(%1));" 27
-ac: SUBU2(ac,conBn) "%0ADDI(-(%1));" 27
-ac: SUBP2(ac,conBn) "%0ADDI(-(%1));" 27
+ac: SUBI2(ac,conB)  "%0SUBI(%1);"      27
+ac: SUBU2(ac,conB)  "%0SUBI(%1);"      27
+ac: SUBP2(ac,conB)  "%0SUBI(%1);"      27
+ac: SUBI2(ac,conBn) "%0ADDI(-(%1));"   27
+ac: SUBU2(ac,conBn) "%0ADDI(-(%1));"   27
+ac: SUBP2(ac,conBn) "%0ADDI(-(%1));"   27
 ac: NEGI2(ac)       "%0STW(T3);LDI(0);SUBW(T3);" 68
 ac: NEGI2(regx)     "LDI(0);SUBW(%0);" 48
 ac: LSHI2(ac, con1) "%0LSLW();" 28
@@ -1081,6 +1082,39 @@ static int if_zpglobal(Node p)
   if (s && s->type && fnqual(s->type) == NEAR)
     return 0;
   return LBURG_MAX;
+}
+
+static int if_incr(Node a, int c1, int c2)
+{
+  /* Avoid using the more efficient LDI(c);ADDW(r) over LDW(r);ADDI(c)
+     when value r is likely to be in a freshly assigned vAC. */
+  extern Node head; /* declared in gen.c */
+  Node k = a->kids[0];
+  if (generic(a->op) == ADD &&
+      k && generic(k->op) == INDIR &&
+      k->kids[0] && specific(k->kids[0]->op) == VREG+P)
+    {
+      Node h;
+      int cost = c2;
+      Symbol syma = k->kids[0]->syms[0];
+      if (syma->temporary)
+        for(h = head; h; h = h->link) {
+          if (h->kids[0] == a || h->kids[1] == a)
+            return cost;
+          else if (h->kids[0] == a && generic(h->op) == ARG)
+            return cost;
+          else if (generic(h->op) == ASGN && h->kids[0] &&
+                   h->kids[0]->syms[0] == syma)
+            cost = c1;
+          else if (generic(h->op) == ASGN && 
+                   h->kids[0] && specific(h->kids[0]->op) == VREG+P &&
+                   h->kids[0]->syms[0]->temporary )
+            /* cse temporary might go away */;
+          else
+            cost = c2;
+        }
+    }
+  return c2;
 }
 
 static int sametree(Node p, Node q) {

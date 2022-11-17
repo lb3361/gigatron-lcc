@@ -99,10 +99,10 @@ def code7():
 	label('.33');
 	_SP(-38+64);DEEK();STW(R22);
 	_SP(-38+64);STW(R21);
-	LDI(1);ADDW(R22);DOKE(R21);
+	LDW(R22);ADDI(1);DOKE(R21);
 	_SP(-36+64);DEEK();STW(R21);
 	_SP(-36+64);STW(R20);
-	LDI(1);ADDW(R21);DOKE(R20);
+	LDW(R21);ADDI(1);DOKE(R20);
 	LDW(R21);PEEK();
 	POKE(R22);
 	LD(vAC);_BNE('.32');

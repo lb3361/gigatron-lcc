@@ -62,7 +62,7 @@ def code2():
 	_BRA('.15');
 	label('.12');
 	LDW(R5);STW(R22);
-	LDI(1);ADDW(R22);STW(R5);
+	ADDI(1);STW(R5);
 	LD(R6);POKE(R22);
 	label('.13');
 	CALLI('getchar');
@@ -143,8 +143,8 @@ def code4():
 	LDI(0);DOKE(R22);
 	LDW(R7);STW(R8);
 	_MOVW(R8,[SP,2]);
-	CALLI('strlen');STW(R22);
-	LDI(1);ADDW(R22);STW(R8);
+	CALLI('strlen');
+	ADDI(1);STW(R8);
 	_MOVW(R8,[SP,2]);
 	CALLI('malloc');STW(R22);
 	LDWI(v('words')+6);STW(R21);
@@ -163,7 +163,7 @@ def code4():
 	CALLI('strcpy');
 	LDWI('next');STW(R22);
 	DEEK();STW(R21);
-	LDI(1);ADDW(R21);DOKE(R22);
+	ADDI(1);DOKE(R22);
 	LDWI('words');STW(R22);
 	LDW(R21);_SHLI(3);ADDW(R22);
 	DOKE(R6);
@@ -198,7 +198,7 @@ def code6():
 	_BRA('.47');
 	label('.46');
 	LDW(R8);STW(R22);
-	LDI(1);ADDW(R22);STW(R8);
+	ADDI(1);STW(R8);
 	LDW(R22);PEEK();_BNE('.49');
 	LDI(0);
 	_BRA('.45');

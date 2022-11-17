@@ -59,7 +59,7 @@ def code3():
 	LDI(0);DOKE(R22);
 	LDW(R6);STW(R22);
 	STW(T3);_MOVW(R22,[SP,-12+32]);LDW(T3) #genspill
-	LDI(2);ADDW(R22);STW(R6);
+	ADDI(2);STW(R6);
 	LDW(R7);_BEQ('.9');
 	CALLI('f');STW(R21);
 	_SP(-10+32);STW(R22);

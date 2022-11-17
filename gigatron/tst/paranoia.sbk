@@ -3960,7 +3960,7 @@ def code34():
 	label('.931');
 	LDWI('.934');STW(R8);
 	LDW(R7);STW(R22);
-	LDI(2);ADDW(R22);STW(R7);
+	ADDI(2);STW(R7);
 	LDW(R22);DEEK();STW(R9);
 	_MOVW(R9,[SP,4]);
 	CALLI('printf');

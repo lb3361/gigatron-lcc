@@ -18,7 +18,7 @@ def code0():
 	LDI(0);STW(R5);
 	label('.6');
 	LDW(R5);STW(R22);
-	LDI(1);ADDW(R22);STW(R5);
+	ADDI(1);STW(R5);
 	LDWI('f');STW(R21);
 	LDW(R22);LSLW();LSLW();ADDW(R22);ADDW(R21);STW(T2);_MOVF('.4',[T2]);
 	label('.7');

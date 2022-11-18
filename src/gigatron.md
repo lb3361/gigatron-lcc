@@ -443,10 +443,10 @@ iarg: INDIRI2(zddr) "%0"
 iarg: INDIRU2(zddr) "%0"
 iarg: INDIRP2(zddr) "%0"
 
-spill: ADDRLP2 "%a+%F" if_spill(50)
-iarg: INDIRU2(spill) "T3|STW(T1);_MOVW([SP,%0],T3);LDW(T1);" 21
-iarg: INDIRI2(spill) "T3|STW(T1);_MOVW([SP,%0],T3);LDW(T1);" 21
-iarg: INDIRP2(spill) "T3|STW(T1);_MOVW([SP,%0],T3);LDW(T1);" 21
+spill: ADDRLP2 "%a+%F" if_spill(20)
+iarg: INDIRU2(spill) "T3|STW(T1);_MOVW([SP,%0],T3);LDW(T1);" 0
+iarg: INDIRI2(spill) "T3|STW(T1);_MOVW([SP,%0],T3);LDW(T1);" 0
+iarg: INDIRP2(spill) "T3|STW(T1);_MOVW([SP,%0],T3);LDW(T1);" 0
 
 # Integer operations. This is verbose because there are variants for
 # types I2, U2, P2, variants for argument ordering, and variants for
@@ -721,12 +721,12 @@ stmt: ASGNI4(vdst,lac)           "\t%1%[0b]_MOVL(LAC,%0)%{!A};\n" 120
 stmt: ASGNI4(vdst,reg)           "\t%[0b]_MOVL(%1,%0)%{!A};\n" 120
 stmt: ASGNI4(addr,INDIRI4(asrc)) "\t%[1b]_MOVL(%1,%0)%{!A};\n" 120
 stmt: ASGNI4(ac,  INDIRI4(asrc)) "\t%0STW(T2);%[1b]_MOVL(%1,[T2])%{!A};\n" 120
-stmt: ASGNI4(lddr,INDIRI4(lsrc)) "\t_MOVL(%1,[SP,%0])%{!A};\n" 120
+stmt: ASGNI4(lddr,INDIRI4(lsrc)) "\t_MOVL(%1,[SP,%0])%{!A};\n" 160
 stmt: ASGNU4(vdst,lac)           "\t%1%[0b]_MOVL(LAC,%0)%{!A};\n" 120
 stmt: ASGNU4(vdst,reg)           "\t%[0b]_MOVL(%1,%0)%{!A};\n" 120
 stmt: ASGNU4(addr,INDIRU4(asrc)) "\t%[1b]_MOVL(%1,%0)%{!A};\n" 120
 stmt: ASGNU4(ac,  INDIRU4(asrc)) "\t%0STW(T2);%[1b]_MOVL(%1,[T2])%{!A};\n" 120
-stmt: ASGNU4(lddr,INDIRU4(lsrc)) "\t_MOVL(%1,[SP,%0])%{!A};\n" 120
+stmt: ASGNU4(lddr,INDIRU4(lsrc)) "\t_MOVL(%1,[SP,%0])%{!A};\n" 160
 
 # Floats
 stmt: fac "\t%0\n"
@@ -764,7 +764,7 @@ stmt: ASGNF5(vdst,fac) "\t%1%[0b]_MOVF(FAC,%0)%{!A};\n"                    180
 stmt: ASGNF5(vdst,reg) "\t%[0b]_MOVF(%1,%0)%{!A};\n"                       150
 stmt: ASGNF5(addr,INDIRF5(asrc)) "\t%[1b]_MOVF(%1,%0)%{!A};\n"             150
 stmt: ASGNF5(ac,  INDIRF5(asrc)) "\t%0STW(T2);%[1b]_MOVF(%1,[T2])%{!A};\n" 150
-stmt: ASGNF5(lddr,INDIRF5(lsrc)) "\t_MOVF(%1,[SP,%0])%{!A};\n"             150
+stmt: ASGNF5(lddr,INDIRF5(lsrc)) "\t_MOVF(%1,[SP,%0])%{!A};\n"             190
 
 # Calls
 fac: CALLF5(addr) "CALLI(%0)%{!ALF};" mincpu5(28)

@@ -1,7 +1,7 @@
 def scope():
 
     if 'has_at67_SYS_Multiply_s16' in rominfo:
-        # Muliply using SYS call
+        # Multiply using SYS call
         info = rominfo['has_at67_SYS_Multiply_s16']
         addr = int(str(info['addr']),0)
         cycs = int(str(info['cycs']),0)
@@ -20,7 +20,6 @@ def scope():
             else:
                 LDI(0);STW('sysArgs4');LDI(1);STW('sysArgs6')
             SYS(cycs)
-            LDW('sysArgs4')
             RET()
 
         module(name='rt_at67_mul.s',

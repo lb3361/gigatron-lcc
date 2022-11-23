@@ -13,11 +13,7 @@ static int doop(int op, int type, const char *sz, const char *opname) {
 	int count = 0;
 	static int last;
 
-<<<<<<< HEAD
 	if (op == LOAD)
-=======
-	*if (op == LOAD)
->>>>>>> a0778f8... added emacs runes to indent as lcc in lcc
 		return 0;
 	if (last != 0 && last != op)
 		printf("\n");

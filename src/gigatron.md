@@ -1,4 +1,4 @@
-# /* 
+# /*
 %{
 
 /*
@@ -124,7 +124,7 @@ static unsigned vac_equiv, lac_equiv, fac_equiv;
 %start stmt
 
 # From ./ops c=1 s=2 i=2 l=4 h=4 f=5 d=5 x=5 p=2
-   
+
 %term CNSTF5=5137
 %term CNSTI1=1045 CNSTI2=2069 CNSTI4=4117
 %term CNSTP2=2071
@@ -277,11 +277,11 @@ static unsigned vac_equiv, lac_equiv, fac_equiv;
 # repurposes the LCC mechanisms in the following way.  The LCC
 # register allocator no longer deals with actual registers but with a
 # piece of page zero memory that we call registers.  Instead of
-# computing a cover of the trees with instruction, we cover the trees
+# computing a cover of the trees with instructions, we cover the trees
 # with sequences of instructions that use the accumulator vAC and
-# the scratch registers (T0..T3) as they see fit. The LBURG grammar 
-# is no longer a tree grammar, but a transducer that converts tree 
-# fragments into sequences. As a result, each nonterminal must be 
+# the scratch registers (T0..T3) as they see fit. The LBURG grammar
+# is no longer a tree grammar, but a transducer that converts tree
+# fragments into sequences. As a result, each nonterminal must be
 # defined by two components: the role it occupies on the tree grammar
 # and the role it occupies in the sequence grammar.
 
@@ -289,29 +289,30 @@ static unsigned vac_equiv, lac_equiv, fac_equiv;
 # * Templates might be split in sections with |. Writing $0 to $9
 #   only prints the first section of the specified kid template.
 #   The other sections can be accessed with syntax $[0b] where '0'
-#   is the kid number and 'b' is a letter indicating 
-#   which section to process. 
+#   is the kid number and 'b' is a letter indicating
+#   which section to process.
 # * Templates can contain complex constructs %{...} which are
 #   processed by function emit3. For instance %{mul..} is used
 #   to inline multiplications by small constants.
 # * Conditional constructs %{?x==...:yyy:nnn} and %{?x=~...:yyy:nnn}
-#   where x is 0..9 or a..c processes yyy if %x is equal to ... 
+#   where x is 0..9 or a..c processes yyy if %x is equal to ...
 #   and otherwise processes no. Comparison with == are always literal.
 #   When the right hand side of a comparison with =~ is an accumulator,
 #   the yes branch is also processed if the accumulator is known
 #   to be equal to register or constant %x.
-# * Clobbering annotations %{!...} inform the optimizer about clobbered 
-#   registers. Inside the braces, letter A, L, and F indicate that vAC, LAC, 
-#   and FAC are affected. Letters 4 and 5 are like A but apply only 
-#   for cpu versions less than 4 or 5. Note that L implies F and A, 
-#   and F implies L and A.
-# * Clobbering information is also deduced from the nonterminal
+# * Clobbering information is deduced from the nonterminal
 #   identity.  For instance rules for nonterminal ac are assumed to
 #   clobber vAC.  When this is the case, annotations ${=x} where x is
 #   %0..9 %a--b, or an accumulator, can be used to indicate the value
 #   taken by the clobbered register. This used to statically track
 #   which registers are equal to which accumulator, informing
 #   conditional constructs with =~.
+# * Clobbering annotations %{!...} documents additional clobbered
+#   registers beyond those implied by the nonterminal.
+#   Inside the braces, letter A, L, and F indicate that vAC, LAC,
+#   and FAC are affected. Letters 4 and 5 are like A but apply only
+#   for cpu versions less than 4 or 5. Note that L implies F and A,
+#   and F implies L and A.
 
 
 # -- common rules
@@ -371,7 +372,7 @@ con: addr     "%0"
 # -- zddr represent a zero page address (equivalent to conB)
 lddr: ADDRLP2 "%a+%F"
 lddr: ADDRFP2 "%a+%F"
-addr: ADDRGP2 "%a" 
+addr: ADDRGP2 "%a"
 addr: con "%0"
 addr: zddr "%0"
 zddr: ADDRGP2 "%a" if_zpglobal(a)
@@ -396,8 +397,8 @@ zddr: conB "%0"
 
 stmt: reg  ""
 stmt: ac   "\t%0\n"
-regx: reg  "%0"
-reg:  regx "%0"
+regx: reg  "%{=%0}%0"
+reg:  regx "%{=%0}%0"
 reg:  ac   "\t%{=vAC}%0%{?c==vAC::STW(%c);}\n" 19
 
 eac0: conB  "%{=%0}%{?0=~vAC::LDI(%0);}" 16
@@ -412,17 +413,17 @@ eac:  addr  "%{=%0}%{?0=~vAC::LDWI(%0);}" 21
 eac:  addr  "%{=%0}%{?0=~vAC::LDWI(%0);}" 21
 eac:  lddr  "%{=%0}%{?0=~vAC::_SP(%0);}" 41
 ac:   ac0   "%{=%0}%0"
-ac:   eac   "%{=%0}%0" 
+ac:   eac   "%{=%0}%0"
 
 # Loads
 eac:  INDIRI2(eac) "%0DEEK();" 21
 eac:  INDIRU2(eac) "%0DEEK();" 21
 eac:  INDIRP2(eac) "%0DEEK();" 21
-eac0: INDIRI1(eac) "%0PEEK();" 17 
-eac0: INDIRU1(eac) "%0PEEK();" 17 
-eac:  INDIRI2(zddr) "LDW(%0);" 20 
-eac:  INDIRU2(zddr) "LDW(%0);" 20 
-eac:  INDIRP2(zddr) "LDW(%0);" 20 
+eac0: INDIRI1(eac) "%0PEEK();" 17
+eac0: INDIRU1(eac) "%0PEEK();" 17
+eac:  INDIRI2(zddr) "LDW(%0);" 20
+eac:  INDIRU2(zddr) "LDW(%0);" 20
+eac:  INDIRP2(zddr) "LDW(%0);" 20
 eac0: INDIRI1(zddr) "LD(%0);" 18
 eac0: INDIRU1(zddr) "LD(%0);" 18
 ac:   INDIRI2(ac) "%0DEEK();" 21
@@ -435,7 +436,7 @@ ac0:  INDIRU1(ac) "%0PEEK();" 17
 #    map to zero page locations in assembly instructions.  However the
 #    spiller needs to be able to reload a register from an auto
 #    variable without allocating a register. This is achieved by another
-#    branch which defines two fragments using the alternate expansion 
+#    branch which defines two fragments using the alternate expansion
 #    mechanism defined by emitfmt1. The two fragments are a register name (T3)
 #    and an instruction sequence.
 iarg: regx "%0"
@@ -509,20 +510,20 @@ ac: BANDI2(ac,iarg) "%0%[1b]ANDW(%1);" 28
 ac: BANDU2(ac,iarg) "%0%[1b]ANDW(%1);" 28
 ac: BANDI2(iarg,ac) "%1%[0b]ANDW(%0);" 28
 ac: BANDU2(iarg,ac) "%1%[0b]ANDW(%0);" 28
-ac: BANDI2(ac,conB) "%0ANDI(%1);" 16 
-ac: BANDU2(ac,conB) "%0ANDI(%1);" 16 
+ac: BANDI2(ac,conB) "%0ANDI(%1);" 16
+ac: BANDU2(ac,conB) "%0ANDI(%1);" 16
 ac: BORI2(ac,iarg)  "%0%[1b]ORW(%1);" 28
 ac: BORU2(ac,iarg)  "%0%[1b]ORW(%1);" 28
 ac: BORI2(iarg,ac)  "%1%[0b]ORW(%0);" 28
 ac: BORU2(iarg,ac)  "%1%[0b]ORW(%0);" 28
-ac: BORI2(ac,conB)  "%0ORI(%1);" 16 
-ac: BORU2(ac,conB)  "%0ORI(%1);" 16 
+ac: BORI2(ac,conB)  "%0ORI(%1);" 16
+ac: BORU2(ac,conB)  "%0ORI(%1);" 16
 ac: BXORI2(ac,iarg) "%0%[1b]XORW(%1);" 28
 ac: BXORU2(ac,iarg) "%0%[1b]XORW(%1);" 28
 ac: BXORI2(iarg,ac) "%1%[0b]XORW(%0);" 28
 ac: BXORU2(iarg,ac) "%1%[0b]XORW(%0);" 28
-ac: BXORI2(ac,conB) "%0XORI(%1);" 16 
-ac: BXORU2(ac,conB) "%0XORI(%1);" 
+ac: BXORI2(ac,conB) "%0XORI(%1);" 16
+ac: BXORU2(ac,conB) "%0XORI(%1);"
 
 # A couple EAC variants
 eac: ADDI2(eac,conB)  "%0ADDI(%1);" 28
@@ -636,12 +637,12 @@ stmt: ASGNB(lddr,INDIRB(lsrc)) "\t_MOVM(%1,[SP,%0],%a,%b)%{!A};\n" 200
 
 # Longs
 # - larg represent argument expressions in binary tree nodes,
-#   as well as sequence of instructions that compute the address 
+#   as well as sequence of instructions that compute the address
 #   holding the expressiong result.
 stmt: lac          "\t%0\n"
 larg: regx         "LDI(%0)%{!A};" 21
-larg: INDIRI4(eac) "%0" 
-larg: INDIRU4(eac) "%0" 
+larg: INDIRI4(eac) "%0"
+larg: INDIRU4(eac) "%0"
 reg:  lac          "\t%{=LAC}%0%{?c==LAC::_MOVL(LAC,%c);}%{!5}\n" 119
 reg: INDIRI4(ac)   "\t%0_MOVL([vAC],%c)%{!A};\n" 120
 reg: INDIRU4(ac)   "\t%0_MOVL([vAC],%c)%{!A};\n" 120
@@ -1106,7 +1107,7 @@ static int if_incr(Node a, int c1, int c2)
           else if (generic(h->op) == ASGN && h->kids[0] &&
                    h->kids[0]->syms[0] == syma)
             cost = c1;
-          else if (generic(h->op) == ASGN && 
+          else if (generic(h->op) == ASGN &&
                    h->kids[0] && specific(h->kids[0]->op) == VREG+P &&
                    h->kids[0]->syms[0]->temporary )
             /* cse temporary might go away */;
@@ -1302,7 +1303,7 @@ static Symbol rmap(int opk)
     return 0;
   }
 }
-  
+
 static Symbol argreg(int argno, int ty, int sz, int *roffset)
 {
   Symbol r = 0;
@@ -1423,10 +1424,10 @@ static void preralloc_scan(Node p, int nt, Symbol sym, int frag,
             preralloc_scan(k, knt, sym, tpl[3]-'a', usecount, rclobbered);
           tpl += 3;
         } else if (tpl[0]=='%'&&                    /* %{?...::} assumed != */
-                   tpl[1]=='{' && tpl[2]=='?') { 
-          int s = 2; 
+                   tpl[1]=='{' && tpl[2]=='?') {
+          int s = 2;
           for (tpl=tpl+3; *tpl && *tpl!='}' && *tpl!='|'; tpl++)
-            if (*tpl == ':' && !--s) 
+            if (*tpl == ':' && !--s)
               break;
         } else if (tpl[0]=='%' && tpl[1]=='{') {    /* %{...} skipped */
           for (tpl=tpl+2; *tpl && *tpl!='}' && *tpl!='|'; tpl++) /**/;
@@ -1494,8 +1495,8 @@ static void emitfmt2(const char *template, int len,
      - Templates might be split in sections with |. Writing $0 to $9
        only prints the first section of the specified kid template.
        The other sections can be accessed with syntax $[0b] where '0'
-       is the kid number and 'b' is a letter indicating 
-       which section to process. 
+       is the kid number and 'b' is a letter indicating
+       which section to process.
   */
   const char *fmt = template;
   static int alt_s;
@@ -1633,7 +1634,7 @@ static void emit3(const char *fmt, int len, Node p, int nt, Node *kids, short *n
             sym = get_cnst_or_reg(kids[fmt[1]-'0'], nts[fmt[1]-'0']);
           if (sym && sym->x.name == cmp)
             eq = 1;
-          else if (fmt[3] == '=')  
+          else if (fmt[3] == '=')
             eq = 0; /* literal comparison */
           else if (sym && cmp == ireg[31]->x.name /* vAC */
                    && !sym->x.regnode && vac_constval
@@ -1709,7 +1710,7 @@ static void doarg(Node p)
 {
   /* Important change in arg passing:
      - When calling a function, all arguments beyond
-       those specified in the prototype are written to the stack 
+       those specified in the prototype are written to the stack
        in addition to being possibly passed in registers.
        In particular this happens for all arguments
        when calling a non prototyped function,
@@ -1898,7 +1899,7 @@ static void defconst(int suffix, int size, Value v)
     mantissa = (unsigned long)(frexp(fabs(d),&exp) * 4294967296.0 + 0.4999999995343387);
     if (exp < -127)
       mantissa = 0;
-    if (mantissa == 0) 
+    if (mantissa == 0)
       xprint("\tbytes(0,0,0,0,0);");
     else if (exp > 127)
       error("floating point constant overflow\n");
@@ -1909,7 +1910,7 @@ static void defconst(int suffix, int size, Value v)
     xprint(" # %g\n", d);
   } else {
     unsigned long x = (suffix == P) ? (unsigned)(size_t)v.p : (suffix == I) ? v.i : v.u;
-    if (size == 1) 
+    if (size == 1)
       xprint("\tbytes(%d);", x&0xff);
     else if (size == 2)
       xprint("\twords(%d);", x&0xffff);

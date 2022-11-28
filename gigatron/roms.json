@@ -22,14 +22,14 @@
 	      "has_SYS_CopyMemory" :          { "addr" : "0xe9", "cycs" : 80 },
 	      "has_SYS_CopyMemoryExt" :       { "addr" : "0xec", "cycs" : 100 },
 	      "has_SYS_ScanMemory" :          { "addr" : "0xe6", "cycs" : 50 },
-	      "has_SYS_ScanMemoryExt" :       { "addr" : "0xe3", "cycs" : 50 }
+	      "has_SYS_ScanMemoryExt" :       { "addr" : "0xe3", "cycs" : 50 },
+	      "has_at67_SYS_Multiply_s16" :   { "addr" : "0x9e", "cycs" : 66 },
+	      "has_at67_SYS_Divide_s16" :     { "addr" : "0xa1", "cycs" : 80 }
 	    },
 
     "exp" : { "cpu" : 5,
 	      "romType" : "0xf8",
-	      "inherits" : "dev",
-	      "has_at67_SYS_Multiply_s16" :   { "addr" : "0x9e", "cycs" : 66 },
-	      "has_at67_SYS_Divide_s16" :     { "addr" : "0xa1", "cycs" : 80 }
+	      "inherits" : "dev"
 	    },
 
     "vx0" : { "cpu" : 6,

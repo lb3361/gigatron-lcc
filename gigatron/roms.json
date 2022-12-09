@@ -16,8 +16,8 @@
 	      "has_vIRQ" : 1
 	    },
 
-    "dev" : { "cpu" : 5,
-	      "romType" : "0xf8",
+    "v6" : { "cpu" : 5,
+	      "romType" : "0x48",
 	      "inherits" : "v5a",
 	      "has_SYS_CopyMemory" :          { "addr" : "0xe9", "cycs" : 80 },
 	      "has_SYS_CopyMemoryExt" :       { "addr" : "0xec", "cycs" : 100 },
@@ -27,8 +27,12 @@
 	      "has_at67_SYS_Divide_s16" :     { "addr" : "0xa1", "cycs" : 80 }
 	    },
 
-    "exp" : { "cpu" : 5,
+    "dev" : { "cpu" : 5,
 	      "romType" : "0xf8",
+	      "inherits" : "v6"
+	    },
+
+    "exp" : { "cpu" : 5,
 	      "inherits" : "dev",
 	      "has_at67_SYS_Multiply_s16" :   { "addr" : "0x9e", "cycs" : 34 },
 	      "has_at67_SYS_Divide_s16" :     { "addr" : "0xa1", "cycs" : 34 }

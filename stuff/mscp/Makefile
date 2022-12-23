@@ -1,7 +1,8 @@
-ROM=dev
-CC=../../build/glcc
+ROM=dev7
+B=../../build/
+CC=${B}glcc
 CFLAGS=-map=sim,allout -rom=${ROM}
-GTSIM=gtsim -rom ../../gigatron/roms/${ROM}.rom
+GTSIM=${B}gtsim -rom ../../gigatron/roms/${ROM}.rom
 
 mscp.gt1: mscp.c
 	${CC} ${CFLAGS} mscp.c -o $@

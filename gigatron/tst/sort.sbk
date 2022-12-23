@@ -1,4 +1,4 @@
-#VCPUv5
+#VCPUv7
 
 # ======== ('DATA', 'in', code0, 0, 2)
 def code0():
@@ -205,7 +205,7 @@ code=[
 	('IMPORT', 'putchar'),
 	('COMMON', 'xx', code7, 2, 2),
 	('DATA', '.28', code8, 0, 1) ]
-module(code=code, name='tst/sort.c', cpu=5);
+module(code=code, name='tst/sort.c', cpu=7);
 
 # Local Variables:
 # mode: python

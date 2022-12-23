@@ -172,9 +172,18 @@ void sim(void)
         vgaY = -36;
       vgaX++;
       if (hSync > 0) {
-        if (vgaX != 200 && t >= 6250000)
+        if (vgaX != 200 && t >= 6250000) {
           fprintf(stderr, "(gtsim) Horizontal timing error:"
                   "vgaY %-3d, vgaX %-3d, t=%0.3f\n", vgaY, vgaX, t/6.25e6);
+#if EXTRA_DEBUG
+          for(int i=0; i<48; i+=16) {
+            fprintf(stderr, "\t%04x:", i);
+            for (int j=0; j<16; j++)
+              fprintf(stderr, " %02x", RAM[i+j]);
+            fprintf(stderr, "\n");
+          }
+#endif     
+        }
         vgaX = 0;
         vgaY++;
       }
@@ -703,8 +712,13 @@ void sys_0x3b4(CpuState *S)
   if (deek(sysFn) == SYS_Exec_88)
     {
       static int exec_count = 0;
-      debug("vPC=%#x SYS(%d) [EXEC] ", deek(vPC), S->AC); debugSysFn(); debug("\n");
-      if (++exec_count == 2 && gt1)
+      int pc = deek(vPC);
+      debug("vPC=%#x SYS(%d) [EXEC] ", pc, S->AC); debugSysFn(); debug("\n");
+      if (exec_count==0 && pc>=0x1f0 && pc<0x1f8)
+        {
+          debug("Execing Reset.gt1\n");
+        }
+      else if (++exec_count == 1 && gt1)
         {
           // First exec is Reset.
           // Second exec is MainMenu.
@@ -791,16 +805,22 @@ int disassemble(word addr, char **pm, char *operand)
     case 0x35: {
       switch(peek(addlo(addr,1)))
         {
-        case 0x3f:  *pm = "BEQ"; break;
-        case 0x72:  *pm = "BNE"; break;
-        case 0x50:  *pm = "BLT"; break;
-        case 0x4d:  *pm = "BGT"; break;
-        case 0x56:  *pm = "BLE"; break;
-        case 0x53:  *pm = "BGE"; break;
-        default:    *pm = "B??"; break;
+        case 0x3d:  *pm = "MULW"; goto operx8; /* v7 */
+        case 0x3f:  *pm = "BEQ"; goto operxbr;
+        case 0x72:  *pm = "BNE"; goto operxbr;
+        case 0x50:  *pm = "BLT"; goto operxbr;
+        case 0x5c:  *pm = "RESET"; return 2;   /* v7 */
+        case 0x4d:  *pm = "BGT"; goto operxbr;
+        case 0x56:  *pm = "BLE"; goto operxbr;
+        case 0x53:  *pm = "BGE"; goto operxbr;
+        default:    *pm = "PF35"; goto oper8;
+        operx8:
+          sprintf(operand, "$%02x", peek(addlo(addr,2)));
+          return 3;
+        operxbr:
+          sprintf(operand, "$%04x", (addr&0xff00)|((peek(addlo(addr,2))+2)&0xff));
+          return 3;
         }
-      sprintf(operand, "$%04x", (addr&0xff00)|((peek(addlo(addr,2))+2)&0xff));
-      return 3;
     }
     case 0xb4: {
       sbyte b = peek(addlo(addr,1));
@@ -810,207 +830,29 @@ int disassemble(word addr, char **pm, char *operand)
         *pm = (b > 0) ? "S??" : "HALT";
       return 2;
     }
-    /* CPU6 instructions below */
-    case 0x14: *pm="DEC"; goto oper8;
-    case 0x16: *pm="MOVQB"; goto oper88;
-    case 0x18: *pm="LSRB"; goto oper8;
-    case 0x1c: *pm="LOKEQI"; goto oper16;
-    case 0x23: *pm="PEEK+"; goto oper8;
-    case 0x25: *pm="POKEI"; goto oper8;
-    case 0x27: *pm="LSLV"; goto oper8;
-    case 0x29: *pm="ADDBA"; goto oper8;
-    case 0x2d: *pm="ADDBI"; goto oper88;
-    case 0x32: *pm="DBNE"; goto oper8br;
-    case 0x37: *pm="DOKEI"; goto oper16r;
-    case 0x39: *pm="PEEKV"; goto oper8;
-    case 0x3b: *pm="DEEKV"; goto oper8;
-    case 0x3d: *pm="LOKEI"; goto oper16;
-    case 0x42: *pm="ADDVI"; goto oper88;
-    case 0x44: *pm="SUBVI"; goto oper88;
-    case 0x46: *pm="DOKE+"; goto oper8;
-    case 0x48: *pm="NOTB"; goto oper8;
-    case 0x4a: *pm="DJGE"; goto oper8x16p2;
-    case 0x5b: *pm="MOVQW"; goto oper88;
-    case 0x60: *pm="DEEK+"; goto oper8;
-    case 0x65: *pm="MOV"; goto oper88r;
-    case 0x67: *pm="PEEKA"; goto oper8;
-    case 0x69: *pm="POKEA"; goto oper8;
-    case 0x6b: *pm="TEQ"; goto oper8;
-    case 0x6d: *pm="TNE"; goto oper8;
-    case 0x6f: *pm="DEEKA"; goto oper8;
-    case 0x77: *pm="SUBBA"; goto oper8;
-    case 0x79: *pm="INCW"; goto oper8;
-    case 0x7b: *pm="DECW"; goto oper8;
-    case 0x7d: *pm="DOKEA"; goto oper8;
-    case 0x8a: *pm="PEEKA+"; goto oper8;
-    case 0x8e: *pm="DBGE"; goto oper8br;
-    case 0x95: *pm="INCWA"; goto oper8;
-    case 0x9c: *pm="LDNI"; goto oper8n;
-    case 0x9e: *pm="ANDBK"; goto oper88r;
-    case 0xa0: *pm="ORBK"; goto oper88r;
-    case 0xa2: *pm="XORBK"; goto oper88r;
-    case 0xa4: *pm="DJNE"; goto oper8x16p2;
-    case 0xa7: *pm="CMPI"; goto oper88;
-    case 0xa9: *pm="ADDVW"; goto oper88;
-    case 0xab: *pm="SUBVW"; goto oper88;
-    case 0xbb: *pm="JEQ"; goto oper16p2;
-    case 0xbd: *pm="JNE"; goto oper16p2;
-    case 0xbf: *pm="JLT"; goto oper16p2;
-    case 0xc1: *pm="JGT"; goto oper16p2;
-    case 0xc3: *pm="JLE"; goto oper16p2;
-    case 0xc5: *pm="JGE"; goto oper16p2;
-    case 0xd1: *pm="POKE+"; goto oper8;
-    case 0xd3: *pm="LSRV"; goto oper8;
-    case 0xd5: *pm="TGE"; goto oper8;
-    case 0xd7: *pm="TLT"; goto oper8;
-    case 0xd9: *pm="TGT"; goto oper8;
-    case 0xdb: *pm="TLE"; goto oper8;
-    case 0xdd: *pm="DECWA"; goto oper8;
-    case 0xe1: *pm="SUBBI"; goto oper88;
-    case 0xb1: {
-      switch(peek(addlo(addr,1)))
-        {
-        case 0x11: *pm = "NOTE"; return 2;
-        case 0x14: *pm = "MIDI"; return 2;
-        case 0x17: *pm = "XLA"; return 2;
-          // more
-        case 0x1a: *pm = "ADDLP"; return 2;
-        case 0x1d: *pm = "SUBLP"; return 2;
-        case 0x20: *pm = "ANDLP"; return 2;
-        case 0x23: *pm = "ORLP"; return 2;
-        case 0x26: *pm = "XORLP"; return 2;
-        case 0x29: *pm = "CMPLPU"; return 2;
-        case 0x2c: *pm = "CMPLPS"; return 2;
-        default:
-          return 2;
-        }
-    }
-    case 0x2f: {
-      switch(peek(addlo(addr,2)))
-        {
-        case 0x11: *pm = "LSLN"; goto oper8p2;
-        case 0x13: *pm = "SEXT"; goto oper8p2;
-        case 0x15: *pm = "NOTW"; goto oper8p2;
-        case 0x17: *pm = "NEGQ"; goto oper8p2;
-        case 0x19: *pm = "ANDBA"; goto oper8p2;
-        case 0x1c: *pm = "ORBA"; goto oper8p2;
-        case 0x1f: *pm = "XORBA"; goto oper8p2;
-        case 0x22: *pm = "FREQM"; goto oper8p2;
-        case 0x24: *pm = "FREQA"; goto oper8p2;
-        case 0x27: *pm = "FREQZ"; goto oper8p2;
-        case 0x2a: *pm = "VOLM"; goto oper8p2;
-        case 0x2c: *pm = "VOLA"; goto oper8p2;
-        case 0x2f: *pm = "MODA"; goto oper8p2;
-        case 0x32: *pm = "MODZ"; goto oper8p2;
-        case 0x34: *pm = "SMCPY"; goto oper8p2;
-        case 0x37: *pm = "CMPWS"; goto oper8p2;
-        case 0x39: *pm = "CMPWU"; goto oper8p2;
-        case 0x3b: *pm = "LEEKA"; goto oper8p2;
-        case 0x3d: *pm = "LOKEA"; goto oper8p2;
-        case 0x4e: *pm = "INCL"; goto oper8p2;
-        case 0x51: *pm = "DECL"; goto oper8p2;
-          // exp
-        case 0xcd: *pm = "NCOPY"; goto oper8p2;
-        case 0xd0: *pm = "STLU"; goto oper8p2;
-        case 0xd3: *pm = "STLS"; goto oper8p2;
-        case 0xd6: *pm = "NOTL"; goto oper8p2;
-        case 0xd9: *pm = "NEGL"; goto oper8p2;
-        oper8p2:
-          sprintf(operand, "$%02x", peek(addlo(addr,1)));
-        default:
-          return 3;
-        }
-    }
-    case 0xc7: {
-      switch(peek(addlo(addr,2)))
-        {
-        case 0x11:  *pm = "STB2"; goto oper16p3;
-        case 0x14:  *pm = "STW2"; goto oper16p3;
-        case 0x17:  *pm = "XCHGB"; goto oper88p3;
-        case 0x19:  *pm = "MOVW"; goto oper88p3;
-        case 0x1b:  *pm = "ADDWI"; goto oper16p3;
-        case 0x1d:  *pm = "SUBWI"; goto oper16p3;
-        case 0x1f:  *pm = "ANDWI"; goto oper16p3;
-        case 0x21:  *pm = "ORWI"; goto oper16p3;
-        case 0x23:  *pm = "XORWI"; goto oper16p3;
-        case 0x25:  *pm = "LDPX"; goto oper88p3;
-        case 0x28:  *pm = "STPX"; goto oper88p3;
-        case 0x2b:  *pm = "CONDI"; goto oper88p3;
-        case 0x2d:  *pm = "CONDB"; goto oper88p3;
-        case 0x30:  *pm = "CONDIB"; goto oper88p3;
-        case 0x33:  *pm = "CONDBI"; goto oper88p3;
-        case 0x35:  *pm = "XCHGW"; goto oper88p3;
-        case 0x38:  *pm = "OSCPX"; goto oper88p3;
-        case 0x3a:  *pm = "SWAPB"; goto oper88p3;
-        case 0x3d:  *pm = "SWAPW"; goto oper88p3;
-        case 0x40:  *pm = "NEEKA"; goto oper88p3;
-        case 0x43:  *pm = "NOKEA"; goto oper88p3;
-          // more
-        case 0x67:  *pm = "ANDBI"; goto oper88p3r;
-        case 0x6a:  *pm = "ORBI"; goto oper88p3r;
-        case 0x6d:  *pm = "XORBI"; goto oper88p3r;
-        case 0x70:  *pm = "JMPI"; goto oper16p3;
-          // exp
-        case 0xcd:  *pm = "MOVL"; goto oper88p3;
-        case 0xd0:  *pm = "MOVF"; goto oper88p3;
-        case 0xd3:  *pm = "NROL"; goto oper88p3n;
-        case 0xd6:  *pm = "NROR"; goto oper88p3nr;
-        oper16p3:
-          sprintf(operand, "$%02x%02x", peek(addlo(addr,1)),peek(addlo(addr,3)));
-          return 4;
-        oper88p3r:
-          sprintf(operand, "$%02x, $%02x", peek(addlo(addr,1)),peek(addlo(addr,3)));
-          return 4;
-        oper88p3:
-          sprintf(operand, "$%02x, $%02x", peek(addlo(addr,3)),peek(addlo(addr,1)));
-          return 4;
-        oper88p3n:
-          sprintf(operand, "$%02x, $%02x",
-                  (peek(addlo(addr,3))-peek(addlo(addr,1)))&0xff,
-                  peek(addlo(addr,1)));
-          return 4;
-        oper88p3nr:
-          sprintf(operand, "$%02x, $%02x",
-                  (peek(addlo(addr,1))-peek(addlo(addr,3)))&0xff,
-                  peek(addlo(addr,3)));
-          return 4;
-        default:
-          return 4;
-        }
-    }
+    case 0x3f:  *pm = "JEQ"; goto oper16p2; /* v7 */
+    case 0x72:  *pm = "JNE"; goto oper16p2; /* v7 */
+    case 0x50:  *pm = "JLT"; goto oper16p2; /* v7 */
+    case 0x4d:  *pm = "JGT"; goto oper16p2; /* v7 */
+    case 0x56:  *pm = "JLE"; goto oper16p2; /* v7 */
+    case 0x53:  *pm = "JGE"; goto oper16p2; /* v7 */
     default:
       return 2;
     oper8:
       sprintf(operand, "$%02x", peek(addlo(addr,1)));
       return 2;
-    oper8n:
-      sprintf(operand, "-$%02x", peek(addlo(addr,1)));
-      return 2;
-    oper88:
-      sprintf(operand, "$%02x, $%02x", peek(addlo(addr,1)),peek(addlo(addr,2)));
-      return 3;
-    oper88r:
-      sprintf(operand, "$%02x, $%02x", peek(addlo(addr,2)),peek(addlo(addr,1)));
-      return 3;
     oper16:
       sprintf(operand, "$%04x", deek(addlo(addr,1)));
       return 3;
     oper16r:
       sprintf(operand, "$%02x%02x", peek(addlo(addr,1)), peek(addlo(addr,2)));
       return 3;
-    oper16p2:
-      sprintf(operand, "$%04x", addlo(deek(addlo(addr,1)),2));
-      return 3;
-    oper8x16p2:
-      sprintf(operand, "$%02x, $%04x", peek(addlo(addr,1)), addlo(deek(addlo(addr,2)),2));
-      return 4;
     operbr:
       sprintf(operand, "$%04x", (addr&0xff00)|((peek(addlo(addr,1))+2)&0xff));
       return 2;
-    oper8br:
-      sprintf(operand, "$%02x, $%04x", peek(addlo(addr,2)),
-              (addr&0xff00)|((peek(addlo(addr,1))+2)&0xff) );
-      return 3;
+    oper16p2:
+      sprintf(operand, "$%04x", (addr&0xff00)|((peek(addlo(addr,1))+2)&0xff));
+      return 2;
     }
 }
 

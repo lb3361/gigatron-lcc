@@ -110,8 +110,7 @@ def scope():
 
     module(name='sys_readromdir.s',
            code=[('EXPORT', 'SYS_ReadRomDir'),
-                 ('CODE', 'SYS_ReadRomDir', code0),
-                 ('IMPORT', '_@_bcopy_') if args.cpu < 6 else ('NOP',) ])
+                 ('CODE', 'SYS_ReadRomDir', code0) ])
 
 
     # ----------------------------------------

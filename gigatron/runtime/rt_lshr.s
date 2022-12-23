@@ -8,10 +8,6 @@ def scope():
         ST(B0)
         label('__@lshru_b0')
         PUSH()
-        if args.cpu >= 6:
-            LD(B0);XORI(1);_BNE('.not1')
-            NROR(4, LAC);_BRA('.ret')
-            label('.not1')
         LD(B0);ANDI(16);_BEQ('.l4')
         LDW(LAC+2);STW(LAC);LDI(0);STW(LAC+2)
         label('.l4')
@@ -39,17 +35,11 @@ def scope():
         LDW(LAC+2);_BLT('.s1')
         _CALLJ('__@lshru_b0');_BRA('.sret')
         label('.s1')
-        if args.cpu >= 6:
-            NOTL(LAC)
-        else:
-            _LDI(0xffff);STW(T0);XORW(LAC);STW(LAC)
-            LDW(T0);XORW(LAC+2);STW(LAC+2)
+        _LDI(0xffff);STW(T0);XORW(LAC);STW(LAC)
+        LDW(T0);XORW(LAC+2);STW(LAC+2)
         _CALLJ('__@lshru_b0')
-        if args.cpu >= 6:
-            NOTL(LAC)
-        else:
-            LDW(T0);XORW(LAC);STW(LAC)
-            LDW(T0);XORW(LAC+2);STW(LAC+2)
+        LDW(T0);XORW(LAC);STW(LAC)
+        LDW(T0);XORW(LAC+2);STW(LAC+2)
         label('.sret')
         tryhop(2);POP();RET()
 

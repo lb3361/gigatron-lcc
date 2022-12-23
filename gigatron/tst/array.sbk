@@ -1,4 +1,4 @@
-#VCPUv5
+#VCPUv7
 
 # ======== ('CODE', 'main', code0)
 def code0():
@@ -176,7 +176,7 @@ code=[
 	('COMMON', 'x', code4, 24, 2),
 	('DATA', '.28', code5, 0, 1),
 	('DATA', '.27', code6, 0, 1) ]
-module(code=code, name='tst/array.c', cpu=5);
+module(code=code, name='tst/array.c', cpu=7);
 
 # Local Variables:
 # mode: python

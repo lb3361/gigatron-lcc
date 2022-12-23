@@ -1,10 +1,7 @@
 def scope():
 
     def _MOVQW(i,d):
-        if args.cpu >= 6:
-            MOVQW(i,d)
-        else:
-            LDI(i);STW(d)
+        LDI(i);STW(d)
 
     if 'has_SYS_Divide_u16' in rominfo:
         # Divide using SYS call
@@ -134,36 +131,22 @@ def scope():
     def code2():
         label('_@_divs')
         PUSH()
-        if args.cpu >= 6:
-            MOVQB(0,B2)
-            _BGT('.divs1');_BNE('.divs0')
-            _CALLJ('_@_raise_zdiv')
-            label('.divs0')
-            NEGW(vAC);INC(B2)
-            label('.divs1')
-            STW(YV)
-            LDW(T3);_BGE('.divs2')
-            NEGW(vAC);XORBI(3,B2)
-        else:
-            STW(YV);
-            LDI(0);ST(B2)
-            LDW(YV);_BGT('.divs1');_BNE('.divs0')
-            _CALLJ('_@_raise_zdiv')
-            label('.divs0')
-            LDI(0);SUBW(YV);STW(YV);INC(B2)
-            label('.divs1')
-            LDW(T3);_BGE('.divs2')
-            LD(B2);XORI(3);ST(B2)
-            LDI(0);SUBW(T3)
+        STW(YV);
+        LDI(0);ST(B2)
+        LDW(YV);_BGT('.divs1');_BNE('.divs0')
+        _CALLJ('_@_raise_zdiv')
+        label('.divs0')
+        LDI(0);SUBW(YV);STW(YV);INC(B2)
+        label('.divs1')
+        LDW(T3);_BGE('.divs2')
+        LD(B2);XORI(3);ST(B2)
+        LDI(0);SUBW(T3)
         label('.divs2')
         STW(XV)
         CallWorker()
         LD(B2);ANDI(1);_BEQ('.divs4')
-        if args.cpu >= 6:
-            NEGW(XV)
-        else:
-            LDI(0);SUBW(XV)
-            tryhop(2);POP();RET()
+        LDI(0);SUBW(XV)
+        tryhop(2);POP();RET()
         label('.divs4')
         LDW(XV)
         tryhop(2);POP();RET()
@@ -183,11 +166,8 @@ def scope():
         _CALLI('_@_divs')
         STW(T1)               # quotient
         LD(B2);ANDI(2);_BEQ('.mods1')
-        if args.cpu >= 6:
-            NEGW(RV)
-        else:
-            LDI(0);SUBW(RV)
-            tryhop(2);POP();RET()
+        LDI(0);SUBW(RV)
+        tryhop(2);POP();RET()
         label('.mods1')
         LDW(RV)               # remainder
         tryhop(2);POP();RET()

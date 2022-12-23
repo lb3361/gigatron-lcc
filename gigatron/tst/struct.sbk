@@ -1,4 +1,4 @@
-#VCPUv5
+#VCPUv7
 
 # ======== ('CODE', 'addpoint', code0)
 def code0():
@@ -263,7 +263,7 @@ code=[
 	('DATA', '.70', code12, 0, 1),
 	('DATA', '.65', code13, 0, 1),
 	('DATA', '.56', code14, 0, 1) ]
-module(code=code, name='tst/struct.c', cpu=5);
+module(code=code, name='tst/struct.c', cpu=7);
 
 # Local Variables:
 # mode: python

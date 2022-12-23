@@ -5,16 +5,11 @@ def scope():
     def code0():
         nohop()
         label('_@_lshl1')
-        if args.cpu >= 6:
-            LDI(0)
-            NROL(4,LAC)
-            RET()
-        else:
-            LDW(LAC);_BLT('.l1')
-            LSLW();STW(LAC);LDW(LAC+2);LSLW();STW(LAC+2);RET()
-            label('.l1')
-            LSLW();STW(LAC);LDW(LAC+2);LSLW();ORI(1);STW(LAC+2)
-            RET()
+        LDW(LAC);_BLT('.l1')
+        LSLW();STW(LAC);LDW(LAC+2);LSLW();STW(LAC+2);RET()
+        label('.l1')
+        LSLW();STW(LAC);LDW(LAC+2);LSLW();ORI(1);STW(LAC+2)
+        RET()
 
     module(name='rt_lshl1.s',
            code=[ ('EXPORT', '_@_lshl1'),
@@ -24,16 +19,11 @@ def scope():
     def code1():
         nohop()
         label('__@lshl1_t0t1')
-        if args.cpu >= 6:
-            LDI(0)
-            NROL(4,T0)
-            RET()
-        else:
-            LDW(T0);_BLT('.lsl1')
-            LSLW();STW(T0);LDW(T0+2);LSLW();STW(T0+2);RET()
-            label('.lsl1')
-            LSLW();STW(T0);LDW(T0+2);LSLW();ORI(1);STW(T0+2)
-            RET()
+        LDW(T0);_BLT('.lsl1')
+        LSLW();STW(T0);LDW(T0+2);LSLW();STW(T0+2);RET()
+        label('.lsl1')
+        LSLW();STW(T0);LDW(T0+2);LSLW();ORI(1);STW(T0+2)
+        RET()
 
     module(name='rt_lshl1t0t1.s',
            code=[ ('EXPORT', '__@lshl1_t0t1'),
@@ -58,17 +48,14 @@ def scope():
         LD(B0);ANDI(3);_BEQ('.ret')
         label('.l7')
         ST(B0);
-        if args.cpu >= 6:
-            NROL(4, LAC)
-        else:
-            _CALLJ('_@_lshl1')
+        _CALLJ('_@_lshl1')
         LD(B0);SUBI(1);_BNE('.l7')
         label('.ret')
         tryhop(2);POP();RET()
 
     module(name='rt_lshl.s',
            code=[ ('EXPORT', '_@_lshl'),
-                  ('IMPORT', '_@_lshl1') if args.cpu < 6 else ('NOP',),
+                  ('IMPORT', '_@_lshl1'),
                   ('CODE', '_@_lshl', code2) ] )
 
 scope()

@@ -38,10 +38,7 @@ def scope():
             STW('sysArgs2')
             label('.1')
             LDWI(addr);STW('sysFn')
-            if args.cpu >= 6:
-                MOVQW(0, 'sysArgs4');MOVQW(1, 'sysArgs6')
-            else:
-                LDI(0);STW('sysArgs4');LDI(1);STW('sysArgs6')
+            LDI(0);STW('sysArgs4');LDI(1);STW('sysArgs6')
             SYS(cycs)
             RET()
 

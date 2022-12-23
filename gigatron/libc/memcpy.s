@@ -77,16 +77,11 @@ def scope_vcpu():
         LD('sysArgs4');ANDI(0xfe);ST('sysArgs4');_BEQ('.cpydone')
         # even length
         label('.cpy2')
-        if args.cpu <= 5:
-           label('.cpy2loop')
-           LDW('sysArgs2');DEEK();DOKE('sysArgs0')
-           INC('sysArgs2');INC('sysArgs0')
-           INC('sysArgs2');INC('sysArgs0')
-           LD('sysArgs4');SUBI(2);ST('sysArgs4');_BNE('.cpy2loop')
-        else:
-           label('.cpy2loop')
-           DEEKp('sysArgs2'); DOKEp('sysArgs0')
-           DEC('sysArgs4'); DBNE('sysArgs4', '.cpy2loop')
+        label('.cpy2loop')
+        LDW('sysArgs2');DEEK();DOKE('sysArgs0')
+        INC('sysArgs2');INC('sysArgs0')
+        INC('sysArgs2');INC('sysArgs0')
+        LD('sysArgs4');SUBI(2);ST('sysArgs4');_BNE('.cpy2loop')
         label('.cpydone')
         RET()
 
@@ -124,9 +119,7 @@ def scope_vcpu():
                  ('CODE', 'memcpy', code1) ])
 
 
-if args.cpu >= 6 and False:
-    scope_ncopy()
-elif 'has_SYS_CopyMemory' in rominfo:
+if 'has_SYS_CopyMemory' in rominfo:
     scope_syscopymemory()
 else:
     scope_vcpu()

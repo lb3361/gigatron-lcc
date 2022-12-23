@@ -1,4 +1,4 @@
-#VCPUv5
+#VCPUv7
 
 # ======== ('CODE', 'main', code0)
 def code0():
@@ -111,7 +111,7 @@ code=[
 	('CODE', 'regchar', code3),
 	('EXPORT', 'regint'),
 	('CODE', 'regint', code4) ]
-module(code=code, name='tst/incr.c', cpu=5);
+module(code=code, name='tst/incr.c', cpu=7);
 
 # Local Variables:
 # mode: python

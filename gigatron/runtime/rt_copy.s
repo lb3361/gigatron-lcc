@@ -7,16 +7,9 @@ def scope():
     def code1():
         nohop()
         label('_@_lcopy_')
-        if args.cpu >= 6:
-            ## With cpu>=6, the macro _MOVL does not call this function
-            ## but uses opcodes MOVL, DEEKL, DOKEL, or NCOPY instead.
-            DEEKV(T0);DOKE(T2)
-            ADDVI(2,T0);ADDVI(2,T2)
-            DEEKV(T0);DOKE(T2)
-        else:
-            LDW(T0);DEEK();DOKE(T2)
-            LDI(2);ADDW(T2);STW(T2)
-            LDI(2);ADDW(T0);DEEK();DOKE(T2)
+        LDW(T0);DEEK();DOKE(T2)
+        LDI(2);ADDW(T2);STW(T2)
+        LDI(2);ADDW(T0);DEEK();DOKE(T2)
         RET()
 
     module(name='rt_lcopy.s',
@@ -28,39 +21,22 @@ def scope():
     # FCOPYNC: Float copy when no page crossings
     def code2():
         nohop()
-        if args.cpu >= 6:
-            ## With cpu>=6, the macros _MOVF and _MOVL do not call this
-            ## function but use opcodes MOVF, MOVL, or NCOPY instead.
-            label('_@_fcopyz_')
-            ST(T0);LD(vACH);STW(T2)
-            LD(T0);STW(T0)
-            label('_@_fcopync_')
-            PEEKp(T0);POKEp(T2)
-            BRA('.cont')
-            label('_@_lcopyz_')
-            ST(T0);LD(vACH);STW(T2)
-            MOVQB(0, T0+1)
-            label('.cont')
-            DEEKp(T0);DOKEp(T2)
-            DEEKp(T0);DOKEp(T2)
-            RET()
-        else:
-            label('_@_fcopyz_')
-            ST(T0);LD(vACH);STW(T2)
-            LD(T0);STW(T0);
-            label('_@_fcopync_')
-            LDW(T0);PEEK();POKE(T2)
-            INC(T2);INC(T0);LDW(T0)
-            BRA('.cont')
-            label('_@_lcopyz_')
-            ST(T0);LD(vACH);STW(T2)
-            LD(T0);STW(T0)
-            label('.cont')
-            DEEK();DOKE(T2)
-            INC(T2);INC(T0)
-            INC(T2);INC(T0)
-            LDW(T0);DEEK();DOKE(T2)
-            RET()
+        label('_@_fcopyz_')
+        ST(T0);LD(vACH);STW(T2)
+        LD(T0);STW(T0);
+        label('_@_fcopync_')
+        LDW(T0);PEEK();POKE(T2)
+        INC(T2);INC(T0);LDW(T0)
+        BRA('.cont')
+        label('_@_lcopyz_')
+        ST(T0);LD(vACH);STW(T2)
+        LD(T0);STW(T0)
+        label('.cont')
+        DEEK();DOKE(T2)
+        INC(T2);INC(T0)
+        INC(T2);INC(T0)
+        LDW(T0);DEEK();DOKE(T2)
+        RET()
 
     module(name='rt_copyz.s',
            code=[ ('EXPORT', '_@_lcopyz_'),
@@ -78,13 +54,8 @@ def scope():
         LDI(5);ADDW(T0);STW(T1)
         label('_@_bcopy_')
         _PEEKV(T0);POKE(T2)
-        if args.cpu >= 6:
-            ## With cpu>=6, the macro _MOVF and _MOVM do not call this
-            ## function but use opcode NCOPY instead.
-            INCW(T2);INCW(T0);LDW(T0)
-        else:
-            LDI(1);ADDW(T2);STW(T2)
-            LDI(1);ADDW(T0);STW(T0)
+        LDI(1);ADDW(T2);STW(T2)
+        LDI(1);ADDW(T0);STW(T0)
         XORW(T1);_BNE('_@_bcopy_')
         RET()
 
@@ -95,18 +66,12 @@ def scope():
 
     # WCOPY [T0..T1) --> [T2..]
     # Same as BCOPY but word aligned
-
     def code4():
         nohop()
         label('_@_wcopy_')
         _DEEKV(T0);DOKE(T2)
-        if args.cpu >= 6:
-            ## With cpu>=6, the macro _MOVF and _MOVM do not call this
-            ## function but use opcode NCOPY instead.
-            ADDVI(2,T2);ADDVI(2,T0)
-        else:
-            LDI(2);ADDW(T2);STW(T2)
-            LDI(2);ADDW(T0);STW(T0)
+        LDI(2);ADDW(T2);STW(T2)
+        LDI(2);ADDW(T0);STW(T0)
         XORW(T1);_BNE('_@_wcopy_')
         RET()
 
@@ -115,7 +80,6 @@ def scope():
                   ('CODE', '_@_wcopy_', code4) ])
 
     # LEXTS: (vAC<0) ? -1 : 0 --> vAC
-    # Cpu6 uses opcode STLS instead
     def code5():
         nohop()
         label('_@_lexts')
@@ -129,7 +93,6 @@ def scope():
                   ('CODE', '_@_lexts', code5) ])
 
     # LCVI: AC to LAC with sign extension
-    # Cpu6 uses opcode STLS instead
     def code6():
         nohop()
         label('_@_lcvi')

@@ -1,4 +1,4 @@
-#VCPUv5
+#VCPUv7
 
 # ======== ('DATA', 'Zero', code0, 5, 1)
 def code0():
@@ -7658,7 +7658,7 @@ code=[
 	('DATA', '.8', code449, 0, 1),
 	('DATA', '.7', code450, 0, 1),
 	('DATA', '.2', code451, 0, 1) ]
-module(code=code, name='tst/paranoia.c', cpu=5);
+module(code=code, name='tst/paranoia.c', cpu=7);
 
 # Local Variables:
 # mode: python

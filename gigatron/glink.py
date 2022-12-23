@@ -179,7 +179,7 @@ def check_br(x):
 def check_cpu(v):
     if args.cpu < v and final_pass:
         stb = traceback.extract_stack(limit=2)
-        warning(f"opcode {stb[0].name} not implemented by cpu={args.cpu}", dedup=True)
+        error(f"opcode {stb[0].name} not implemented by cpu={args.cpu}", dedup=True)
 
 def resolve(s, ignore=None):
     '''Resolve a global symbol and return its value or None.
@@ -415,19 +415,36 @@ def emitjcc(BCC, BNCC, JCC, d):
             hops_enabled = False
     hops_enabled = save_hops_enabled
 
-def emit_prefx1(opcode):
-    check_cpu(6); tryhop(2)
-    emit(0xb1, opcode)
+# ------------- opcode helpers (FIXME)
 
-def emit_prefx2(opcode, arg1):
-    check_cpu(6); tryhop(3)
-    emit(0x2f, arg1, opcode)
-    # emit(0x2f, opcode, arg1) # old style
+def emit_json(*args):
+    '''Calls emits with strings replaced by opcodes according to interface.json.
+       This displaces the knowledge of the correct opcodes into inteface[-dev].json
+       but one still has to provide the right arguments.'''
+    bytes=[]
+    for arg in args:
+        if not isinstance(arg, str):
+            bytes.append(arg)
+        elif not arg in symdefs:
+            error(f"emit_json: opcode {arg} not defined in interface.json")
+        else:
+            if arg[-3:-1] == "_v":
+                check_cpu(int(arg[-1:]))
+            op = symdefs[arg]
+            oq = op >> 8
+            if oq == 0x35:
+                bytes.append(0x35)
+            elif oq != 0x3:
+                error(f"emit_json: cannot emit opcode {arg} defined as {hex(op)}")
+            bytes.append(op & 0xff)
+    emit(*bytes)
 
-def emit_prefx3(opcode, arg1, arg2):
-    check_cpu(6); tryhop(4)
-    emit(0xc7, arg2, opcode, arg1)
-    # emit(0xc7, opcode, arg1, arg2) # old style
+def cpu6_fixme(opcode, stop=True):
+    msg = f"Check the cpu6 encoding for opcode {opcode} in glink.py."
+    if stop:
+        error(msg, dedup=True)
+    else:
+        warning(msg, dedup=True)
 
 
 # ------------- map of page zero
@@ -677,115 +694,116 @@ def label(sym, val=None, hop=None):
 
 @vasm
 def ST(d):
-    tryhop(2); emit(0x5e, check_zp(d))
+    tryhop(2); emit_json("ST", check_zp(d))
 @vasm
 def STW(d):
-    tryhop(2); emit(0x2b, check_zp(d))
+    tryhop(2); emit_json("STW", check_zp(d))
 @vasm
 def STLW(d):
-    tryhop(2); emit(0xec, check_im8s(d))
+    tryhop(2); emit_json("STLW", check_im8s(d))
 @vasm
 def LD(d):
-    tryhop(2); emit(0x1a, check_zp(d))
+    tryhop(2); emit_json("LD", check_zp(d))
 @vasm
 def LDI(d, hop=True):
-    tryhop(2); emit(0x59, check_im8s(d))
+    tryhop(2); emit_json("LDI", check_im8s(d))
 @vasm
 def LDWI(d):
-    tryhop(3); d=int(v(d)); emit(0x11, lo(d), hi(d))
+    tryhop(3); d=int(v(d)); emit_json("LDWI", lo(d), hi(d))
 @vasm
 def LDW(d):
-    tryhop(2); emit(0x21, check_zp(d))
+    tryhop(2); emit_json("LDW", check_zp(d))
 @vasm
 def LDLW(d):
-    tryhop(2); emit(0xee, check_im8s(d))
+    tryhop(2); emit_json("LDLW", check_im8s(d))
 @vasm
 def ADDW(d):
-    tryhop(2); emit(0x99, check_zp(d))
+    tryhop(2); emit_json("ADDW", check_zp(d))
 @vasm
 def SUBW(d):
-    tryhop(2); emit(0xb8, check_zp(d))
+    tryhop(2); emit_json("SUBW", check_zp(d))
 @vasm
 def ADDI(d):
-    tryhop(2); emit(0xe3, check_imm8(d))
+    tryhop(2); emit_json("ADDI", check_imm8(d))
 @vasm
 def SUBI(d):
-    tryhop(2); emit(0xe6, check_imm8(d))
+    tryhop(2); emit_json("SUBI", check_imm8(d))
 @vasm
 def LSLW():
-    tryhop(1); emit(0xe9)
+    tryhop(1); emit_json("LSLW")
 @vasm
 def INC(d):
-    tryhop(2); emit(0x93, check_zp(d))
+    tryhop(2); emit_json("INC", check_zp(d))
 @vasm
 def ANDI(d):
-    tryhop(2); emit(0x82, check_imm8(d))
+    tryhop(2); emit_json("ANDI", check_imm8(d))
 @vasm
 def ANDW(d):
-    tryhop(2); emit(0xf8, check_zp(d))
+    tryhop(2); emit_json("ANDW", check_zp(d))
 @vasm
 def ORI(d):
-    tryhop(2); emit(0x88, check_imm8(d))
+    tryhop(2); emit_json("ORI", check_imm8(d))
 @vasm
 def ORW(d):
-    tryhop(2); emit(0xfa, check_zp(d))
+    tryhop(2); emit_json("ORW", check_zp(d))
 @vasm
 def XORI(d):
-    tryhop(2); emit(0x8c, check_imm8(d))
+    tryhop(2); emit_json("XORI", check_imm8(d))
 @vasm
 def XORW(d):
-    tryhop(2); emit(0xfc, check_zp(d))
+    tryhop(2); emit_json("XORW", check_zp(d))
 @vasm
 def PEEK():
-    tryhop(1); emit(0xad)
+    tryhop(1); emit_json("PEEK")
 @vasm
 def DEEK():
-    tryhop(1); emit(0xf6)
+    tryhop(1); emit_json("DEEK")
 @vasm
 def POKE(d):
-    tryhop(2); emit(0xf0, check_zp(d))
+    tryhop(2); emit_json("POKE", check_zp(d))
 @vasm
 def DOKE(d):
-    tryhop(2); emit(0xf3, check_zp(d))
+    tryhop(2); emit_json("DOKE", check_zp(d))
 @vasm
 def LUP(d):
-    tryhop(2); emit(0x7f, check_zp(d))
+    tryhop(2); emit_json("LUP", check_zp(d))
 @vasm
 def BRA(d):
-    emit(0x90, check_br(d)); tryhop(jump=False)
+    emit_json("BRA", check_br(d))
+    tryhop(jump=False)
 @vasm
 def BEQ(d):
-    tryhop(3); emit(0x35, 0x3f, check_br(d))
+    tryhop(3); emit_json("BCC", "EQ", check_br(d))
 @vasm
 def BNE(d):
-    tryhop(3); emit(0x35, 0x72, check_br(d))
+    tryhop(3); emit_json("BCC", "NE", check_br(d))
 @vasm
 def BLT(d):
-    tryhop(3); emit(0x35, 0x50, check_br(d))
+    tryhop(3); emit_json("BCC", "LT", check_br(d))
 @vasm
 def BGT(d):
-    tryhop(3); emit(0x35, 0x4d, check_br(d))
+    tryhop(3); emit_json("BCC", "GT", check_br(d))
 @vasm
 def BLE(d):
-    tryhop(3); emit(0x35, 0x56, check_br(d))
+    tryhop(3); emit_json("BCC", "LE", check_br(d))
 @vasm
 def BGE(d):
-    tryhop(3); emit(0x35, 0x53, check_br(d))
+    tryhop(3); emit_json("BCC", "GE", check_br(d))
 @vasm
 def CALL(d):
-    tryhop(3); emit(0xcf, check_zp(d))
+    tryhop(3); emit_json("CALL", check_zp(d))
 @vasm
 def RET():
-    emit(0xff); tryhop(jump=False)
+    emit_json("RET"); tryhop(jump=False)
 @vasm
 def PUSH():
-    tryhop(1); emit(0x75)
+    tryhop(1); emit_json("PUSH")
 @vasm
 def POP():
-    tryhop(1); emit(0x63)
+    tryhop(1); emit_json("POP")
 @vasm
 def ALLOC(d):
-    tryhop(2); emit(0xdf, check_im8s(d))
+    tryhop(2); emit_json("ALLOC", check_im8s(d))
 @vasm
 def SYS(op):
     op = v(op)
@@ -793,554 +811,125 @@ def SYS(op):
         if op & 1 != 0 or op < 0 or op >= 284:
             error(f"illegal argument {op} for SYS opcode")
         op = min(0, 14 - op // 2) & 0xff
-    tryhop(2); emit(0xb4, op)
+    tryhop(2); emit_json("SYS", op)
 @vasm
 def HALT():
     emit(0xb4, 0x80); tryhop(jump = False)
 @vasm
 def DEF(d):
-    tryhop(2); emit(0xcd, check_br(d))
+    tryhop(2); emit_json("DEF", check_br(d))
 @vasm
 def CALLI(d):
-    check_cpu(5); tryhop(3); d=int(v(d)); emit(0x85, lo(d), hi(d))
+    tryhop(3); d=int(v(d)); emit_json("CALLI_v5", lo(d), hi(d))
 @vasm
 def CMPHS(d):
-    check_cpu(5); tryhop(2); emit(0x1f, check_zp(d))
+    if args.cpu == 6:
+        tryhop(3); emit(0x2f, check_zp(d), 0x37)
+        cpu6_fixme("CMPHS_v5", stop=False)
+    else:
+        tryhop(2); emit_json("CMPHS_v5", check_zp(d))
 @vasm
 def CMPHU(d):
-    check_cpu(5); tryhop(2); emit(0x97, check_zp(d))
+    if args.cpu == 6:
+        tryhop(3); emit(0x2f, check_zp(d), 0x3a)
+        cpu6_fixme("CMPHU_v5", stop=False)
+    else:
+        tryhop(2); emit_json("CMPHU_v5", check_zp(d))
 
-# instructions for cpu6 (opcodes to be checked once at67's rom is released)
-# -- main page
 @vasm
-def DEC(d):
-    '''DEC: Decrement byte var ([D]--), 22 cycles'''
-    check_cpu(6); tryhop(2); emit(0x14, check_zp(d))
-@vasm
-def MOVQB(imm,d): # was MOVQ
-    '''MOVQB: Load a byte var with a small constant 0..255, 28 cycles'''
-    check_cpu(6); tryhop(3); emit(0x16, check_zp(imm), check_zp(d))
-@vasm
-def LSRB(d):
-    '''LSRB: Logical shift right on a byte var, 28 cycles'''
-    check_cpu(6); tryhop(2); emit(0x18, check_zp(d))
-@vasm
-def LOKEQI(d): # revisit
-    '''LOKEQI: Loke immediate unsigned word into address contained in [vAC], 34 cycles'''
-    check_cpu(6); tryhop(3); emit(0x1c, lo(d), hi(d))
-@vasm
-def PEEKp(d):
-    '''PEEK+: Peek byte at address contained in var, inc var, 30 cycles'''
-    check_cpu(6); tryhop(2); emit(0x23, check_zp(d))
-@vasm
-def POKEI(d):
-    '''POKEI: Poke immediate byte into address contained in [vAC], 20 cycles'''
-    check_cpu(6); tryhop(2); emit(0x25, check_im8s(d))
-@vasm
-def LSLV(d):
-    '''LSLV: Logical shift left word var, 28 cycles'''
-    check_cpu(6); tryhop(2);  emit(0x27, check_zp(d))
-@vasm
-def ADDBA(d):
-    '''ADDBA: vAC += var.lo, 28 cycles'''
-    check_cpu(6); tryhop(2); emit(0x29, check_zp(d))
-@vasm
-def ADDBI(imm,d):
-    '''ADDBI: Add a constant 0..255 to byte var, 28 cycles'''
-    check_cpu(6); tryhop(3); emit(0x2d, check_zp(imm), check_zp(d))
-@vasm
-def DBNE(v, d):
-    '''DBNE:  Decrement byte var and branch if not zero, 28 cycles'''
-    check_cpu(6); tryhop(3); emit(0x32, check_br(d), check_zp(v))
-@vasm
-def DOKEI(d):
-    '''DOKEI: Doke immediate word into address contained in [vAC], 30 cycles'''
-    check_cpu(6); tryhop(3); d=int(v(d)); emit(0x37, hi(d), lo(d))
-@vasm
-def PEEKV(d):
-    '''PEEKV: Read byte from address contained in var, 30 cycles'''
-    check_cpu(6); tryhop(2); emit(0x39, check_zp(d))
-@vasm
-def DEEKV(d):
-    '''DEEKV: Read word from address contained in var, 28 cycles'''
-    check_cpu(6); tryhop(2); emit(0x3b, check_zp(d))
-@vasm
-def LOKEI(d): # revisit
-    '''LOKEI: oke immediate long into address contained in [vAC], 42 cycles'''
-    check_cpu(6); tryhop(5); emit(0x3d, lo(d), hi(d), (d>>16)&0xff, (d>>24)&0xff) 
-@vasm
-def ADDVI(imm,d):
-    '''ADDVI: Add imm8 to 16bit zero page var, var += imm, vAC = var, 50 cycles'''
-    check_cpu(6); tryhop(3); emit(0x42, check_zp(imm), check_zp(d))
-@vasm
-def SUBVI(imm,d):
-    '''SUBVI: Subtract imm8 to 16bit zero page var, var -= imm, vAC = var, 50 cycles'''
-    check_cpu(6); tryhop(3); emit(0x44, check_zp(imm), check_zp(d))
-@vasm
-def DOKEp(d):
-    '''DOKE+: doke word in vAC to address contained in var, var += 2, 30 cycles'''
-    check_cpu(6); tryhop(2); emit(0x46, check_zp(d))
-@vasm
-def NOTB(d):
-    '''NOTB: var.lo = var.lo ^ 0xff, 22 cycles'''
-    check_cpu(6); tryhop(2); emit(0x48, check_zp(d))
-@vasm
-def DJGE(v, d):
-    '''DJGE:  long version of DBGE, 42 cycles'''
-    check_cpu(6); tryhop(3); emit(0x4a, check_zp(v), lo(d-1), hi(d))
+def MOVQB(imm,d):
+    check_cpu(99)
 @vasm
 def MOVQW(imm,d):
-    '''MOVQW: Load a word var with a small constant 0..255, 30 cycles'''
-    check_cpu(6); tryhop(3); emit(0x5b, check_zp(imm), check_zp(d))
+    check_cpu(99)
 @vasm
-def DEEKp(d):
-    '''DEEK+: Deek word at address contained in var, var += 2, 30 cycles'''
-    check_cpu(6); tryhop(2); emit(0x60, check_zp(d))
+def POKEI(d):
+    check_cpu(99)
 @vasm
-def MOVB(s,d): # was MOV
-    '''MOVB: Moves a byte from src var to dst var, 28 cycles'''
-    check_cpu(6); tryhop(3); emit(0x65, check_zp(d), check_zp(s))
+def DOKEI(d):
+    check_cpu(99)
 @vasm
-def PEEKA(d):
-    '''PEEKA: Peek a byte from [vAC] to var, 24 cycles'''
-    check_cpu(6); tryhop(2); emit(0x67, check_zp(d))
+def PEEKV(d):
+    check_cpu(99)
+@vasm
+def DEEKV(d):
+    check_cpu(99)
 @vasm
 def POKEA(d):
-    '''POKEA: Poke a byte from var to [vAC], 22 cycles'''
-    check_cpu(6); tryhop(2); emit(0x69, check_zp(d))
-@vasm
-def TEQ(d):
-    '''TEQ: Test for EQ, returns 0x0000 or 0x0001 in var, 28 cycles'''
-    check_cpu(6); tryhop(2); emit(0x6b, check_zp(d))
-@vasm
-def TNE(d):
-    '''TEQ: Test for NE, returns 0x0000 or 0x0001 in var, 28 cycles'''
-    check_cpu(6); tryhop(2); emit(0x6d, check_zp(d))
-@vasm
-def DEEKA(d):
-    '''DEEKA: Deek a word from [vAC] to var, 30 cycles'''
-    check_cpu(6); tryhop(2); emit(0x6f, check_zp(d))
-@vasm
-def SUBBA(d):
-    '''SUBBA: vAC -= var.lo, 28 cycles'''
-    check_cpu(6); tryhop(2); emit(0x77, check_zp(d))
-@vasm
-def INCW(d):
-    '''INCW: Increment word var, 26 cycles'''
-    check_cpu(6); tryhop(2); emit(0x79, check_zp(d))
-@vasm
-def DECW(d):
-    '''DECW: Decrement word var, 26 cycles'''
-    check_cpu(6); tryhop(2); emit(0x7b, check_zp(d))
+    check_cpu(99)
 @vasm
 def DOKEA(d):
-    '''DOKEA: Doke a word from var to [vAC], 30 cycles'''
-    check_cpu(6); tryhop(2); emit(0x7d, check_zp(d))
-@vasm
-def PEEKAp(d):
-    '''PEEKA+: Peek a byte from [vAC] to var, incw vAC, 26 to 30 cycles'''
-    check_cpu(6); tryhop(2); emit(0x8a, check_zp(d))
-@vasm
-def DBGE(v, d):
-    '''DBGE:  Decrement byte var and branch if >= 0, 30 cycles'''
-    check_cpu(6); tryhop(3); emit(0x8e, check_br(d), check_zp(v))
-@vasm
-def INCWA(d):
-    '''INCWA: Increment word var, vAC=var, 26-28 cycles'''
-    check_cpu(6); tryhop(2); emit(0x95, check_br(d))
+    check_cpu(99)
 @vasm
 def LDNI(d):
-    '''LDNI: Load an 8bit immediate as a negative 16bit immediate into vAC'''
-    check_cpu(6); tryhop(2); emit(0x9c, check_zp(d))
-@vasm
-def ANDBK(d,imm):
-    '''ANDBK: vAC = var & imm'''
-    check_cpu(6); tryhop(3); emit(0x9e, check_zp(imm), check_zp(d))
-@vasm
-def ORBK(d,imm):
-    '''ORBK: vAC = var | imm'''
-    check_cpu(6); tryhop(3); emit(0xa0, check_zp(imm), check_zp(d))
-@vasm
-def XORBK(d,imm):
-    '''XORBK: vAC = var ^ imm'''
-    check_cpu(6); tryhop(3); emit(0xa2, check_zp(imm), check_zp(d))
-@vasm
-def DJNE(v, d):
-    '''DJNE: long version of DBNE,E 42 cycles'''
-    check_cpu(6); tryhop(3); emit(0xa4, check_zp(v), lo(d-1), hi(d))
-@vasm
-def CMPI(d,imm):
-    '''CMPI: Compare byte variable to 8bit immediate, 30 cycles'''
-    check_cpu(6); tryhop(3); emit(0xa7, check_zp(imm), check_zp(d))
-@vasm
-def ADDVW(s,d):
-    '''ADDVW: Add two 16bit zero page vars, dst += src, vAC = dst, 28-54 cycles'''
-    check_cpu(6); tryhop(3); emit(0xa9, check_zp(s), check_zp(d))
-@vasm
-def SUBVW(s,d):
-    '''SUBVW: Subtract two 16bit zero page vars, dst -= src, vAC = dst, 30-54 cycles'''
-    check_cpu(6); tryhop(3); emit(0xab, check_zp(s), check_zp(d))
+    if args.cpu == 6:
+        tryhop(2);emit(0x9c, check_zp(-d))
+        cpu6_fixme("LDNI", stop=False)
+    else:
+        check_cpu(99)
 @vasm
 def JEQ(d):
-    '''JEQ: jump to 16bit address if vAC=0, 26 cycles'''
-    check_cpu(6); tryhop(3); d=int(v(d)); emit(0xbb, lo(d-2), hi(d))
+    tryhop(3); d=int(v(d));
+    if args.cpu == 6:
+        emit(0xbb, lo(d-2), hi(d))
+    else:
+        emit_json("JEQ_v7", lo(d-2), hi(d))
 @vasm
 def JNE(d):
-    '''JNE: jump to 16bit address if vAC!=0, 26 cycles'''
-    check_cpu(6); tryhop(3); d=int(v(d)); emit(0xbd, lo(d-2), hi(d))
+    tryhop(3); d=int(v(d));
+    if args.cpu == 6:
+        emit(0xbd, lo(d-2), hi(d))
+    else:
+        emit_json("JNE_v7", lo(d-2), hi(d))
 @vasm
 def JLT(d):
-    '''JLT: jump to 16bit address if vAC<0, 24 to 26 cycles'''
-    check_cpu(6); tryhop(3); d=int(v(d)); emit(0xbf, lo(d-2), hi(d))
+    tryhop(3); d=int(v(d));
+    if args.cpu == 6:
+        emit(0xbf, lo(d-2), hi(d))
+    else:
+        emit_json("JLT_v7", lo(d-2), hi(d))
 @vasm
 def JGT(d):
-    '''JGT: jump to 16bit address if vAC>0, 24 to 26 cycles'''
-    check_cpu(6); tryhop(3); d=int(v(d)); emit(0xc1, lo(d-2), hi(d))
+    tryhop(3); d=int(v(d));
+    if args.cpu == 6:
+        emit(0xc1, lo(d-2), hi(d))
+    else:
+        emit_json("JGT_v7", lo(d-2), hi(d))
 @vasm
 def JLE(d):
-    '''JLE: jump to 16bit address if vAC<=0, 24 to 28 cycles'''
-    check_cpu(6); tryhop(3); d=int(v(d)); emit(0xc3, lo(d-2), hi(d))
+    tryhop(3); d=int(v(d));
+    if args.cpu == 6:
+        emit(0xc3, lo(d-2), hi(d))
+    else:
+        emit_json("JLE_v7", lo(d-2), hi(d))
 @vasm
 def JGE(d):
-    '''JGE: jump to 16bit address if vAC>=0, 22 to 26 cycles'''
-    check_cpu(6); tryhop(3); d=int(v(d)); emit(0xc5, lo(d-2), hi(d))
+    tryhop(3); d=int(v(d));
+    if args.cpu == 6:
+        emit(0xc5, lo(d-2), hi(d))
+    else:
+        emit_json("JGE_v7", lo(d-2), hi(d))
 @vasm
-def POKEp(d):
-    '''POKE+: Poke byte in vAC to address contained in var, inc var, 30 cycles'''
-    check_cpu(6); tryhop(2); emit(0xd1, check_zp(d))
-@vasm
-def LSRV(d):
-    '''LSRV: Logical shift right word var, 56 cycles'''
-    check_cpu(6); tryhop(2);  emit(0xd3, check_zp(d))
-@vasm
-def TGE(d):
-    '''TEQ: Test for GE, returns 0x0000 or 0x0001 in var, 28 cycles'''
-    check_cpu(6); tryhop(2); emit(0xd5, check_zp(d))
-@vasm
-def TLT(d):
-    '''TLT: Test for LT, returns 0x0000 or 0x0001 in var, 28 cycles'''
-    check_cpu(6); tryhop(2); emit(0xd7, check_zp(d))
-@vasm
-def TGT(d):
-    '''TGT: Test for GT, returns 0x0000 or 0x0001 in var, 28 cycles'''
-    check_cpu(6); tryhop(2); emit(0xd9, check_zp(d))
-@vasm
-def TLE(d):
-    '''TLE: Test for LE, returns 0x0000 or 0x0001 in var, 28 cycles'''
-    check_cpu(6); tryhop(2); emit(0xdb, check_zp(d))
-@vasm
-def DECWA(d):
-    '''DECWA: Decrement word var, vAC=var, 28-30 cycles'''
-    check_cpu(6); tryhop(3); emit(0xdd, check_zp(d))
-@vasm
-def SUBBI(imm,d):
-    '''SUBBI: Subtract a constant 0..255 from a byte var, 28 cycles'''
-    check_cpu(6); tryhop(3); emit(0xe1, check_zp(imm), check_zp(d))
-
-# -- prefix1 instructions
-@vasm
-def NOTE():
-    '''NOTE: vAC = ROM:[NotesTable + vAC.lo*2], 22 + 28 cycles'''
-    emit_prefx1(0x11)
-@vasm
-def MIDI():
-    '''MIDI: vAC = ROM:[NotesTable + (vAC.lo - 11)*2], 22 + 30 cycles'''
-    emit_prefx1(0x14)
-
-# -- prefix2 instructions
-@vasm
-def LSLN(d):
-    '''Shifts vAC left by d positions'''
-    emit_prefx2(0x11, check_zp(d))
-@vasm
-def SEXT(d): # doc?
-    '''Sign extend vAC based on a variable mask (?)'''
-    emit_prefx2(0x13, check_zp(d))
-@vasm
-def NOTW(d):
-    '''NOTW: Boolean invert var'''
-    emit_prefx2(0x15, check_zp(d))
-@vasm
-def NEGW(d):
-    '''NEGW: Arithmetic negate var'''
-    emit_prefx2(0x17, check_zp(d))
-@vasm
-def ANDBA(d):
-    '''ANDBA: vAC &= var.lo, 22+22 cycles'''
-    emit_prefx2(0x19, check_zp(d))
-@vasm
-def ORBA(d):
-    '''ORBA: vAC |= var.lo, 22+20 cycles'''
-    emit_prefx2(0x1c, check_zp(d))
-@vasm
-def XORBA(d):
-    '''XORBA: vAC ^= var.lo, 22+20 cycles'''
-    emit_prefx2(0x1f, check_zp(d))
-@vasm
-def FREQM(d):
-    '''FREQM: [(((chan & 3) + 1) <<8) | 0x00FC] = vAC, chan var = [0..3], 22 + 26 cycles'''
-    emit_prefx2(0x22, check_zp(d))
-@vasm
-def FREQA(d):
-    '''FREQA: [((((chan - 1) & 3) + 1) <<8) | 0x00FC] = vAC, chan var = [1..4], 22 + 26 cycles'''
-    emit_prefx2(0x24, check_zp(d))
-@vasm
-def FREQZ(d):
-    '''FREQZ: [(((imm & 3) + 1) <<8) | 0x00FC] = 0, imm = [0..3], 22 + 22 cycles'''
-    emit_prefx2(0x27, check_zp(d))
-@vasm
-def VOLM(d):
-    '''VOLM: [(((chan & 3) + 1) <<8) | 0x00FA] = vAC.low, chan var = [0..3], 22 + 24 cycles'''
-    emit_prefx2(0x2a, check_zp(d))
-@vasm
-def VOLA(d):
-    '''VOLA: [((((chan - 1) & 3) + 1) <<8) | 0x00FA] = 63 - vAC.low + 64, chan var = [1..4],  22 + 26 cycles'''
-    emit_prefx2(0x2c, check_zp(d))
-@vasm
-def MODA(d):
-    '''MODA: [((((chan - 1) & 3) + 1) <<8) | 0x00FB] = vAC.low, chan var = [1..4], 22 + 24 cycles'''
-    emit_prefx2(0x2f, check_zp(d))
-@vasm
-def MODZ(d):
-    '''MODZ: [(((imm & 3) + 1) <<8) | 0x00FA] = 0x0200, imm = [0..3], 22 + 24 cycles'''
-    emit_prefx2(0x32, check_zp(d))
-@vasm
-def SMPCPY(d):                  # doc?
-    '''SMPCPY: ???'''
-    emit_prefx2(0x34, check_zp(d))
-@vasm
-def CMPWS(d):                   # not using, broken
-    '''CMPWS: CMPHS + SUBW'''
-    emit_prefx2(0x37, check_zp(d))
-@vasm
-def CMPWU(d):                   # not using, broken
-    '''CMPWU: CMPHU + SUBW'''
-    emit_prefx2(0x39, check_zp(d))
-@vasm
-def LEEKA(d):
-    emit_prefx2(0x3b, check_zp(d))
-@vasm
-def LOKEA(d):
-    emit_prefx2(0x3d, check_zp(d))
-@vasm
-def FEEKA(d):                   # not using
-    emit_prefx2(0x3f, check_zp(d))
-@vasm
-def FOKEA(d):                   # not using
-    emit_prefx2(0x42, check_zp(d))
-@vasm
-def MEEKA(d):                   # not using
-    emit_prefx2(0x44, check_zp(d))
-@vasm
-def MOKEA(d):                   # not using
-    emit_prefx2(0x46, check_zp(d))
-@vasm
-def LSRVL(d):                   # revisit
-    emit_prefx2(0x48, check_zp(d))
-@vasm
-def LSLVL(d):                   # revisit
-    emit_prefx2(0x4b, check_zp(d))
-@vasm
-def INCL(d):
-    emit_prefx2(0x4e, check_zp(d))
-@vasm
-def DECL(d):
-    emit_prefx2(0x51, check_zp(d))
-
-# -- prefix3 instructions
-@vasm
-def STB2(d):                    # was ST2
-    '''STB2: Store vAC.lo into 16bit immediate address, (22 + 20 cycles)'''
-    d=int(v(d)); emit_prefx3(0x11, lo(d), hi(d))
-@vasm
-def STW2(d):
-    '''STW2: Store vAC into 16bit immediate address, (22 + 22 cycles)'''
-    d=int(v(d)); emit_prefx3(0x14, lo(d), hi(d))
-@vasm
-def XCHGB(s,d):                 # was XCHG
-    '''XCHG: Swap two zero byte variables, (22 + 30 cycles)'''
-    emit_prefx3(0x17, check_zp(s), check_zp(d))
+def MOVB(s,d):
+    check_cpu(99)
 @vasm
 def MOVW(s,d):
-    '''MOVW: Move 16bits from src zero page var to dst zero page var, (22 + 28 cycles)'''
-    emit_prefx3(0x19, check_zp(s), check_zp(d))
-@vasm
-def ADDWI(d):
-    '''ADDWI: vAC += immediate 16bit value, (22 + 28 cycles)'''
-    d=int(v(d)); emit_prefx3(0x1b, lo(d), hi(d))
-@vasm
-def SUBWI(d):
-    '''SUBWI: vAC -= immediate 16bit value, (22 + 28 cycles)'''
-    d=int(v(d)); emit_prefx3(0x1d, lo(d), hi(d))
-@vasm
-def ANDWI(d):
-    '''ANDWI: vAC &= immediate 16bit value, (22 + 26 cycles)'''
-    d=int(v(d)); emit_prefx3(0x1f, lo(d), hi(d))
-@vasm
-def ORWI(d):
-    '''ORWI: vAC |= immediate 16bit value, (22 + 22 cycles)'''
-    d=int(v(d)); emit_prefx3(0x21, lo(d), hi(d))
-@vasm
-def XORWI(d):
-    '''XORWI: vAC &= immediate 16bit value, (22 + 22 cycles)'''
-    d=int(v(d)); emit_prefx3(0x23, lo(d), hi(d))
-@vasm
-def LDPX(a,c):
-    '''LDPX: Load Pixel, <address var>, <colour var>, (22 + 30 cycles)'''
-    emit_prefx3(0x25, check_zp(a), check_zp(c))
-@vasm
-def STPX(a,c):
-    '''STPX: Store Pixel, <address var>, <colour var>, (22 + 28 cycles)'''
-    emit_prefx3(0x28, check_zp(a), check_zp(c))
-@vasm
-def CONDI(i,j):
-    '''CONDI: chooses immediate operand based on condition, (vAC == 0), (22 + 26 cycles)'''
-    emit_prefx3(0x2b, check_zp(i), check_zp(j))
-@vasm
-def CONDB(v,w):
-    '''CONDB: chooses zero page byte var based on condition, (vAC == 0), (22 + 28 cycles)'''
-    emit_prefx3(0x2d, check_zp(v), check_zp(w))
-@vasm
-def CONDIB(i,v):
-    '''CONDIB: chooses between imm and zero page byte var based on condition, (vAC == 0), (22 + 26 cycles)'''
-    emit_prefx3(0x30, check_zp(i), check_zp(v))
-@vasm
-def CONDBI(v,i):
-    '''CONDBI: chooses between zero page byte var and imm based on condition, (vAC == 0), (22 + 26 cycles)'''
-    emit_prefx3(0x33, check_zp(v), check_zp(i))
-@vasm
-def XCHGW(s,d): 
-    '''XCHGW: Exchange two zero word variables, 22 + 46 cycles, destroys vAC'''
-    emit_prefx3(0x35, check_zp(d), check_zp(s))
-@vasm
-def OSCPX(s, d):                # doc? correct?
-    '''OSCPX: '''
-    emit_prefx3(0x38, check_zp(d), check_zp(s))
-@vasm
-def SWAPB(s, d):                # doc?
-    '''SWAPB: swap bytes pointed to by vars s and d, 22 + 46 cycles'''
-    emit_prefx3(0x3a, check_zp(d), check_zp(s))
-@vasm
-def SWAPW(s, d):                # doc?
-    '''SWAPW: swap words pointed to by vars s and d, 22 + 46 cycles'''
-    emit_prefx3(0x3d, check_zp(d), check_zp(s))
-@vasm
-def NEEKA(n, d):                # not using
-    '''NEEKA: Peek <n> bytes from [vAC] into [var], 22 + 34*n + 24 cycles'''
-    emit_prefx3(0x40, check_zp(d), check_zp(n))
-@vasm
-def NOKEA(n, d):                # not using
-    '''Poke <n> bytes from [var] into [vAC], 22 + 34*n + 24 cycles'''
-    emit_prefx3(0x43, check_zp(d), check_zp(n))
-@vasm
-def ADDVL(s, d):                # not using, broken
-    emit_prefx3(0x46, check_zp(s), check_zp(d))
-@vasm
-def SUBVL(s, d):                # not using, broken
-    emit_prefx3(0x49, check_zp(s), check_zp(d))
-@vasm
-def ANDVL(s, d):                # not using
-    emit_prefx3(0x4c, check_zp(s), check_zp(d))
-@vasm
-def ORVL(s, d):                 # not using
-    emit_prefx3(0x4f, check_zp(s), check_zp(d))
-@vasm
-def XORVL(s, d):                # not using
-    emit_prefx3(0x52, check_zp(s), check_zp(d))
-@vasm
-def JEQL(d):                    # not using
-    d = int(v(d)); emit_prefx3(0x55, hi(d), lo(d-2))
-@vasm
-def JNEL(d):                    # not using
-    d = int(v(d)); emit_prefx3(0x58, hi(d), lo(d-2))
-@vasm
-def JLTL(d):                    # not using
-    d = int(v(d)); emit_prefx3(0x5b, hi(d), lo(d-2))
-@vasm
-def JGTL(d):                    # not using
-    d = int(v(d)); emit_prefx3(0x5e, hi(d), lo(d-2))
-@vasm
-def JLEL(d):                    # not using
-    d = int(v(d)); emit_prefx3(0x61, hi(d), lo(d-2))
-@vasm
-def JGEL(d):                    # not using
-    d = int(v(d)); emit_prefx3(0x64, lo(d-2), hi(d))
-@vasm
-def ANDBI(imm,d):
-    '''ANDBI: And immediate byte with byte var, result in byte var, 22 + 20 cycles'''
-    emit_prefx3(0x67, check_zp(d), check_zp(imm))
-@vasm
-def ORBI(imm,d):
-    '''ORBI: Or immediate byte with byte var, result in byte var, 22 + 20 cycles'''
-    emit_prefx3(0x6a, check_zp(d), check_zp(imm))
-@vasm
-def XORBI(imm,d):
-    '''XORBI: Xor immediate byte with byte var, result in byte var, 22 + 20 cycles'''
-    emit_prefx3(0x6d, check_zp(d), check_zp(imm))
-
-# Experimental cpu6 instructions
-@vasm
-def XLA():
-    emit_prefx1(0x17)
-@vasm
-def JMPI(d):
-    emit_prefx3(0x70, lo(d), hi(d))
+    check_cpu(99)
 @vasm
 def MOVL(s,d):
+    check_cpu(99)
     emit_prefx3(0xcd, check_zp(s), check_zp(d))
 @vasm
 def MOVF(s,d):
+    check_cpu(99)
     emit_prefx3(0xd0, check_zp(s), check_zp(d))
 @vasm
 def NCOPY(n):
+    check_cpu(99)
     emit_prefx2(0xcd, check_zp(n))
 @vasm
-def ADDLP():
-    emit_prefx1(0x1a)
-@vasm
-def SUBLP():
-    emit_prefx1(0x1d)
-@vasm
-def ANDLP():
-    emit_prefx1(0x20)
-@vasm
-def ORLP():
-    emit_prefx1(0x23)
-@vasm
-def XORLP():
-    emit_prefx1(0x26)
-@vasm
-def CMPLPU():
-    emit_prefx1(0x29)
-@vasm
-def CMPLPS():
-    emit_prefx1(0x2c)
-@vasm
-def STLU(d):
-    emit_prefx2(0xd0, check_zp(d))
-@vasm
-def STLS(d):
-    emit_prefx2(0xd3, check_zp(d))
-@vasm
-def NOTL(d):
-    emit_prefx2(0xd6, check_zp(d))
-@vasm
-def NEGL(d):
-    emit_prefx2(0xd9, check_zp(d))
-@vasm
-def NROL(n,d):
-    emit_prefx3(0xd3, check_zp((d+check_zp(n))&0xff), check_zp(d))
-@vasm
-def NROR(n,d):
-    emit_prefx3(0xd6, check_zp(d), check_zp((d+check_zp(n))&0xff))
-    
-# more instructions (exp)
-@vasm
 def MULW(d):
-    if 'has_MULW' in rominfo:
-        tryhop(3); emit(0x35, 0x3d, d)
-    else:
-        check_cpu(999)
+    tryhop(3);emit_json("MULW_v7", d)
     
 # pseudo instructions used by the compiler
 @vasm
@@ -1363,8 +952,10 @@ def _LDI(d):
     d = v(d)
     if is_zeropage(d):
         LDI(d)
-    elif args.cpu >= 6 and is_zeropage(-d):
-        LDNI(-d)
+    elif args.cpu == 6 and is_zeropage(-d):
+        LDNI(d)
+    elif args.cpu >= 99 and is_zeropage(-d-1): # FIXME
+        LDNI(d)
     else:
         LDWI(d)
 @vasm
@@ -1374,7 +965,7 @@ def _LDW(d):
     if is_zeropage(d):
         LDW(d)
     else:
-        _LDI(d); DEEK()
+        LDWI(d); DEEK()
 @vasm
 def _LD(d):
     '''Emit LD or LDWI+PEEK depending on the size of d.'''
@@ -1382,18 +973,18 @@ def _LD(d):
     if is_zeropage(d):
         LD(d)
     else:
-        _LDI(d); PEEK()
+        LDWI(d); PEEK()
 @vasm
 def _PEEKV(d):
-    '''Compile as PEEKV(d) on cpu6, LDW(d);PEEK() otherwise'''
-    if args.cpu >= 6:
+    '''Compile as PEEKV(d) on cpu>=6, LDW(d);PEEK() otherwise'''
+    if args.cpu >= 99:  # FIXME
         PEEKV(d)
     else:
         LDW(d); PEEK()
 @vasm
 def _DEEKV(d):
-    '''Compile as DEEKV(d) on cpu6, LDW(d);DEEK() otherwise'''
-    if args.cpu >= 6:
+    '''Compile as DEEKV(d) on cpu>=6, LDW(d);DEEK() otherwise'''
+    if args.cpu >= 99:  # FIXME
         DEEKV(d)
     else:
         LDW(d); DEEK()
@@ -1405,9 +996,7 @@ def _SHLI(imm):
         ST('vACH');ORI(255);XORI(255)
         imm &= 0x7
     # too much overhead calling SYS_LSLW4_46
-    if args.cpu >= 6 and imm > 2:
-        LSLN(imm)
-    elif imm > 0:
+    if imm > 0:
         for i in range(0, imm):
             LSLW()
 @vasm
@@ -1429,8 +1018,6 @@ def _SHRIU(imm):
     imm &= 0xf
     if imm == 8:
         LD(vACH)
-    elif imm == 1 and args.cpu >= 6:
-        LSRV(vAC)
     elif imm == 1:
         extern("_@_shru1")
         _CALLI("_@_shru1")
@@ -1458,7 +1045,7 @@ def _SHRU(d):
     _CALLI('_@_shru')           # T3 >> AC --> vAC
 @vasm
 def _MUL(d):
-    if 'has_MULW' in rominfo:
+    if args.cpu >= 7:
         MULW(d)
     elif 'has_at67_SYS_Multiply_s16' in rominfo:
         STW('sysArgs0'); LDW(d)
@@ -1471,7 +1058,7 @@ def _MUL(d):
 @vasm
 def _MULI(d):
     STW(T3);_LDI(d);
-    if 'has_MULW' in rominfo:
+    if args.cpu >= 7:
         MULW(T3)
     else:
         extern('_@_mul')
@@ -1529,9 +1116,7 @@ def _MOVW(s,d): # was _MOV
             _SP(s[1]); s = [vAC]
         elif type(d) == list and len(d) == 2 and d[0] == SP:
             _SP(d[1]); d = [vAC]
-        if args.cpu >= 6 and s == [vAC] and is_zeropage(d) and d != vAC:
-            DEEKA(d)
-        elif args.cpu >= 6 and is_zeropage(s) and d == [vAC]:
+        if args.cpu >= 99 and is_zeropage(s) and d == [vAC]:  #FIXME
             DOKEA(s)
         elif d == [vAC] and s == vAC:
             error("Cannot _MOVW from vAC to [vAC] or [SP, offset]")
@@ -1547,13 +1132,8 @@ def _MOVW(s,d): # was _MOV
         elif s == vAC or s == [vAC]:
             if s == [vAC]:
                 DEEK()
-            if args.cpu >= 6:
-                STW2(d)
-            else:
-                STW(T3); _LDI(d); STW(T2);
-                LDW(T3); DOKE(T2)
-        elif args.cpu >= 6:
-            _LDW(s); STW2(d)
+            STW(T3); _LDI(d); STW(T2);
+            LDW(T3); DOKE(T2)
         else:
             _LDI(d); STW(T2); _LDW(s); DOKE(T2)
 @vasm
@@ -1561,37 +1141,37 @@ def _BRA(d):
     emitjump(v(d))
 @vasm
 def _BEQ(d):
-    if args.cpu >= 6 and args.jcconly:
+    if args.cpu >= 6:
         JEQ(d)
     else:
         emitjcc(BEQ, BNE, JEQ, v(d))
 @vasm
 def _BNE(d):
-    if args.cpu >= 6 and args.jcconly:
+    if args.cpu >= 6:
         JNE(d)
     else:
         emitjcc(BNE, BEQ, JNE, v(d))
 @vasm
 def _BLT(d):
-    if args.cpu >= 6 and args.jcconly:
+    if args.cpu >= 6:
         JLT(d)
     else:
         emitjcc(BLT, BGE, JLT, v(d))
 @vasm
 def _BGT(d):
-    if args.cpu >= 6 and args.jcconly:
+    if args.cpu >= 6:
         JGT(d)
     else:
         emitjcc(BGT, BLE, JGT, v(d))
 @vasm
 def _BLE(d):
-    if args.cpu >= 6 and args.jcconly:
+    if args.cpu >= 6:
         JLE(d)
     else:
         emitjcc(BLE, BGT, JLE, v(d))
 @vasm
 def _BGE(d):
-    if args.cpu >= 6 and args.jcconly:
+    if args.cpu >= 6:
         JGE(d)
     else:
         emitjcc(BGE, BLT, JGE, v(d))
@@ -1664,7 +1244,7 @@ def _MOVM(s,d,n,align=1): # was _BMOV
             _SP(s[1]); s = [vAC]
         elif type(d) == list and len(d) == 2 and d[0] == SP:
             _SP(d[1]); d = [vAC]
-        if args.cpu >= 6:
+        if args.cpu >= 99: # FIXME
             if d == [vAC]:
                 STW(T2)
             elif d != [T2] and s != [vAC]:
@@ -1712,7 +1292,7 @@ def _MOVL(s,d): # was _LMOV
             _SP(d[1]); d = [vAC]
         if is_zeropage(d, 3):
             if is_zeropage(s, 3):
-                if args.cpu >= 6:
+                if args.cpu >= 99: # FIXME
                     MOVL(s,d)                        # z->z :  4 bytes (cpu6)
                 elif args.cpu >= 5:
                     LDWI(((d & 0xff) << 8) | (s & 0xff))
@@ -1720,7 +1300,7 @@ def _MOVL(s,d): # was _LMOV
                     _CALLI('_@_lcopyz_')              # z->z :  6 bytes
                 else:
                     LDW(s);STW(d);LDW(s+2);STW(d+2)
-            elif args.cpu >= 6:
+            elif args.cpu >= 99: # FIXME
                 if s != [vAC]:
                     _LDI(s)
                 LEEKA(d)                             # a|l->z: 4,6,7 bytes (cpu6)
@@ -1731,13 +1311,13 @@ def _MOVL(s,d): # was _LMOV
                 STW(T0); LDI(d); STW(T2);
                 extern('_@_lcopy_')
                 _CALLI('_@_lcopy_')                   # a->l:   9 bytes
-        elif is_zeropage(s, 3) and args.cpu >= 6:
+        elif is_zeropage(s, 3) and args.cpu >= 99: #FIXME
             if d == [T2]:
                 LDW(T2)
             elif d != [vAC]:
                 _LDI(d)
             LOKEA(s)                                 # z->a|l: 4,6,7 bytes (cpu6)
-        elif args.cpu >= 6:
+        elif args.cpu >= 99: #FIXME
             if d == [vAC]:
                 STW(T2)
             elif d != [T2] and s != [vAC]:
@@ -1762,15 +1342,15 @@ def _MOVL(s,d): # was _LMOV
             _CALLJ('_@_lcopy_')  # [T0..T0+4) --> [T2..T2+4)
 @vasm
 def _LADD():
-    if args.cpu >= 6:
-        ADDLP()
+    if args.cpu >= 99: #FIXME
+        ADDLA()
     else:
         extern('_@_ladd')
         _CALLI('_@_ladd')       # LAC+[vAC] --> LAC
 @vasm
 def _LSUB():
-    if args.cpu >= 6:
-        SUBLP()
+    if args.cpu >= 99: #FIXME
+        SUBLA()
     else:
         extern('_@_lsub')
         _CALLI('_@_lsub')       # LAC-[vAC] --> LAC
@@ -1808,70 +1388,63 @@ def _LSHRU():
     _CALLI('_@_lshru')          # LAC>>vAC --> LAC
 @vasm
 def _LNEG():
-    if args.cpu >= 6:
-        NEGL(LAC)
-    else:
-        extern('_@_lneg')
-        _CALLJ('_@_lneg')       # -LAC --> LAC
+    extern('_@_lneg')
+    _CALLJ('_@_lneg')       # -LAC --> LAC
 @vasm
 def _LCOM():
-    if args.cpu >= 6:
-        NOTL(LAC)
-    else:
-        extern('_@_lcom')
-        _CALLJ('_@_lcom')       # ~LAC --> LAC
+    extern('_@_lcom')
+    _CALLJ('_@_lcom')       # ~LAC --> LAC
 @vasm
 def _LAND():
-    if args.cpu >= 6:
-        ANDLP()
+    if args.cpu >= 99: #FIXME
+        ANDLA()
     else:
         extern('_@_land')
         _CALLI('_@_land')       # LAC&[vAC] --> LAC
 @vasm
 def _LOR():
-    if args.cpu >= 6:
-        ORLP()
+    if args.cpu >= 99: #FIXME
+        ORLA()
     else:
         extern('_@_lor')
         _CALLI('_@_lor')        # LAC|[vAC] --> LAC
 @vasm
 def _LXOR():
-    if args.cpu >= 6:
-        XORLP()
+    if args.cpu >= 99: #FIXME
+        XORLA()
     else:
         extern('_@_lxor')
         _CALLI('_@_lxor')       # LAC^[vAC] --> LAC
 @vasm
 def _LCMPS():
-    if args.cpu >= 6:
-        CMPLPS()
+    if args.cpu >= 99: #FIXME
+        CMPLAS()
     else:
         extern('_@_lcmps')
         _CALLI('_@_lcmps')      # SGN(LAC-[vAC]) --> vAC
 @vasm
 def _LCMPU():
-    if args.cpu >= 6:
-        CMPLPU()
+    if args.cpu >= 99: #FIXME
+        CMPLAU()
     else:
         extern('_@_lcmpu')
         _CALLI('_@_lcmpu')      # SGN(LAC-[vAC]) --> vAC
 @vasm
 def _LCMPX():
-    if args.cpu >= 6:
-        # keep LAC unchanged!
-        CMPLPU() 
+    if args.cpu >= 99: #FIXME
+        CMPLAU() 
     else:
         extern('_@_lcmpx')
         _CALLI('_@_lcmpx')      # TST(LAC-[vAC]) --> vAC
 @vasm
 def _STLU(d):
-    if args.cpu >= 6:
+    if args.cpu >= 99: #FIXME
         STLU(d)
     else:
         STW(d);LDI(0);STW(d+2);
 @vasm
 def _STLS(d):
-    if args.cpu >= 6:
+    if args.cpu >= 99: #FIXME
         STLS(d)
     elif d == vAC:
         extern('_@_lcvi')       # vAC --> LAC
@@ -1904,7 +1477,7 @@ def _MOVF(s,d): # was _FMOV
             extern('_@_fstfac')
             _CALLI('_@_fstfac')   # FAC --> [vAC..vAC+5)
         elif is_zeropage(d, 4) and is_zeropage(s, 4):
-            if args.cpu >= 6:
+            if args.cpu >= 99: #FIXME
                 MOVF(s,d)
             elif args.cpu >= 5:
                 LDWI(((d & 0xff) << 8) | (s & 0xff))
@@ -1913,7 +1486,7 @@ def _MOVF(s,d): # was _FMOV
             else:
                 LDW(s);STW(d);LDW(s+2);STW(d+2)
                 LD(s+4);ST(d+4)
-        elif args.cpu >= 6:
+        elif args.cpu >= 99: #FIXME
             if d == [vAC]:
                 STW(T2)
             elif d != [T2] and s != [vAC]:
@@ -2020,10 +1593,7 @@ def _CALLJ(d):
 @vasm
 def _PROLOGUE(framesize,maxargoffset,mask):
     '''Function prologue'''
-    if args.cpu >= 6 and framesize < 256:
-        tryhop(4);LDW(vLR);DOKE(SP);SUBVI(framesize,SP)
-    else:
-        tryhop(4);LDW(vLR);DOKE(SP);_SP(-framesize);STW(SP)
+    tryhop(4);LDW(vLR);DOKE(SP);_SP(-framesize);STW(SP)
     if mask:
         ADDI(maxargoffset)
         extern('_@_save_%02x' % mask)
@@ -2037,14 +1607,9 @@ def _EPILOGUE(framesize,maxargoffset,mask,saveAC=False):
     if saveAC:
         STW(T2);
     diff = framesize - maxargoffset;
-    if args.cpu >= 6 and framesize < 256:
-        ADDVI(framesize, SP)
-    else:
-        _SP(framesize);STW(SP);
+    _SP(framesize);STW(SP);
     if diff >= 0 and diff < 256:
         SUBI(diff)
-    elif args.cpu >= 6:
-        SUBWI(diff)
     else:
         _SP(-diff);
     extern('_@_rtrn_%02x' % mask)
@@ -2058,11 +1623,6 @@ module_dict['_MOV'] = _MOVW
 module_dict['_LMOV'] = _MOVL
 module_dict['_FMOV'] = _MOVF
 module_dict['_BMOV'] = _MOVM
-module_dict['ST2'] = STB2
-module_dict['XCHG'] = XCHGB
-module_dict['MOVQ'] = MOVQB
-module_dict['MOV'] = MOVB
-
 
 # ------------- reading .s/.o/.a files
               
@@ -2130,6 +1690,9 @@ def read_interface():
     '''Read `interface.json' as known symbols.'''
     global symdefs
     with open(os.path.join(lccdir,'interface.json')) as file:
+        for (name, value) in json.load(file).items():
+            symdefs[name] = value if isinstance(value, int) else int(value, base=0)
+    with open(os.path.join(lccdir,'interface-dev.json')) as file:
         for (name, value) in json.load(file).items():
             symdefs[name] = value if isinstance(value, int) else int(value, base=0)
 

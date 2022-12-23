@@ -2194,7 +2194,10 @@ def process_magic_symbols():
        for the malloc() function. Each list record occupies
        the first 4 bytes of a segment. The first pointer contains
        the segment size.
+     * '__glink_magic_egt1' is not a list but merely a pointer
+       that marks the end of the highest gt1 segment.
     '''
+    egt1_addr = None
     for s in exporters:
         if s.startswith("__glink_magic_"):
             head_module = exporters[s]
@@ -2210,8 +2213,17 @@ def process_magic_symbols():
                 process_magic_bss(s, head_module, head_addr)
             elif s == '__glink_magic_heap':
                 process_magic_heap(s, head_module, head_addr)
+            elif s == '__glink_magic_egt1':
+                egt1_addr = head_addr
             else:
                 process_magic_list(s, head_module, head_addr)
+    if egt1_addr != None:
+        egt1 = 0
+        for s in segment_list:
+            if s.buffer and s.saddr + len(s.buffer) > egt1:
+                egt1 = s.saddr + len(s.buffer)
+        debug(f"Last GT1 segments ends at address {hex(egt1)}\n")
+        doke_gt1(egt1_addr, egt1)
 
 def save_gt1(fname, start):
     with open(fname,"wb") as fd:
@@ -2345,8 +2357,6 @@ def glink(argv):
         parser.add_argument('--long-function-segment-size', dest='lfss',
                             metavar='SIZE', type=int, action='store',
                             help='minimal segment size for functions split across segments.')
-        parser.add_argument('--prefer-bcc', action='store_false', dest='jcconly', default=True,
-                            help='use Bcc instructions instead of short Jcc instructions (cpu>=6)')
         parser.add_argument('--no-runtime-bss-initialization', action='store_true',
                             help='cause all bss segments to go as zeroes in the gt1 file')
         parser.add_argument('--minimal-heap-segment-size', dest='mhss',

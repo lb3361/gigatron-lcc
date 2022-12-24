@@ -1,6 +1,29 @@
 def scope():
 
-    if 'has_at67_SYS_Multiply_s16' in rominfo:
+    if 'has_SYS_Multiply_s16' in rominfo:
+        info = rominfo['has_SYS_Multiply_s16']
+        addr = int(str(info['addr']),0)
+        cycs = int(str(info['cycs']),0)
+        def code1():
+            nohop()
+            label('_@_mul')             # T3*vAC -> vAC  (traditional entry point)
+            STW('sysArgs2')
+            LDW(T3);STW('sysArgs0')
+            BRA('.1')
+            label('_@_at67_mul')        # sysArgs0*vAC -> vAC  (faster entry point)
+            STW('sysArgs2')
+            label('.1')
+            LDWI(addr);STW('sysFn')
+            LDI(0);STW('sysArgs4')
+            SYS(cycs)
+            RET()
+
+        module(name='rt_at67_mul.s',
+               code= [ ('EXPORT', '_@_mul'),
+                       ('EXPORT', '_@_at67_mul'),
+                       ('CODE', '_@_mul', code1) ] )
+    
+    elif 'has_at67_SYS_Multiply_s16' in rominfo:
         # Multiply using SYS call
         info = rominfo['has_at67_SYS_Multiply_s16']
         addr = int(str(info['addr']),0)
@@ -22,7 +45,7 @@ def scope():
             SYS(cycs)
             RET()
 
-        module(name='rt_at67_mul.s',
+        module(name='rt_mul.s',
                code= [ ('EXPORT', '_@_mul'),
                        ('EXPORT', '_@_at67_mul'),
                        ('CODE', '_@_mul', code1) ] )

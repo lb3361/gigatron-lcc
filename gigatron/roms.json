@@ -33,13 +33,10 @@
 	    },
 
     "exp" : { "cpu" : 5,
+	      "romType" : "0xf8",
 	      "inherits" : "dev",
-	      "has_at67_SYS_Multiply_s16" :   { "addr" : "0x9e", "cycs" : 34 },
-	      "has_at67_SYS_Divide_s16" :     { "addr" : "0xa1", "cycs" : 34 }
-	    },
-
-    "vx0" : { "cpu" : 6,
-	      "romType" : "0x80",
-	      "inherits" : "dev"
+	      "has_SYS_Multiply_s16" :   { "addr" : "0x9e", "cycs" : 34 },
+	      "has_SYS_Divide_u16" :     { "addr" : "0xa1", "cycs" : 34 },
+	      "has_MULW" : 1
 	    }
 }

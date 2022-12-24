@@ -1334,7 +1334,14 @@ def NROL(n,d):
 def NROR(n,d):
     emit_prefx3(0xd6, check_zp(d), check_zp((d+check_zp(n))&0xff))
     
-
+# more instructions (exp)
+@vasm
+def MULW(d):
+    if 'has_MULW' in rominfo:
+        tryhop(3); emit(0x35, 0x3d, d)
+    else:
+        check_cpu(999)
+    
 # pseudo instructions used by the compiler
 @vasm
 def _SP(n):
@@ -1451,20 +1458,24 @@ def _SHRU(d):
     _CALLI('_@_shru')           # T3 >> AC --> vAC
 @vasm
 def _MUL(d):
-    if 'has_at67_SYS_Multiply_s16' in rominfo:
+    if 'has_MULW' in rominfo:
+        MULW(d)
+    elif 'has_at67_SYS_Multiply_s16' in rominfo:
         STW('sysArgs0'); LDW(d)
         extern('_@_at67_mul')
         _CALLI('_@_at67_mul')   # sysArg0 * AC --> vAC
-        pass
     else:
         STW(T3); LDW(d)
         extern('_@_mul')
         _CALLI('_@_mul')        # T3 * AC --> vAC
 @vasm
 def _MULI(d):
-    STW(T3);_LDI(d)
-    extern('_@_mul')
-    _CALLI('_@_mul')            # T3 * AC --> vAC
+    STW(T3);_LDI(d);
+    if 'has_MULW' in rominfo:
+        MULW(T3)
+    else:
+        extern('_@_mul')
+        _CALLI('_@_mul')        # T3 * AC --> vAC
 @vasm
 def _DIVS(d):
     STW(T3); LDW(d)

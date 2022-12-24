@@ -6,7 +6,21 @@ def scope():
         else:
             LDI(i);STW(d)
 
-    if 'has_at67_SYS_Divide_s16' in rominfo:
+    if 'has_SYS_Divide_u16' in rominfo:
+        # Divide using SYS call
+        XV = v('sysArgs0'); YV = v('sysArgs2')
+        RV = v('sysArgs4'); MV = v('sysArgs6')
+
+        info = rominfo['has_SYS_Divide_u16']
+        addr = int(str(info['addr']),0)
+        cycs = int(str(info['cycs']),0)
+        def CallWorker():
+            _LDI(addr);STW('sysFn');SYS(cycs)
+
+        morecode = []
+        needbig = False
+
+    elif 'has_at67_SYS_Divide_s16' in rominfo:
         # Divide using SYS call
         XV = v('sysArgs0'); YV = v('sysArgs2')
         RV = v('sysArgs4'); MV = v('sysArgs6')
@@ -20,6 +34,7 @@ def scope():
             _LDI(addr);STW('sysFn');SYS(cycs)
 
         morecode = []
+        needbig = True
 
     else:
         # Divide using vCPU
@@ -52,38 +67,45 @@ def scope():
                       ('EXPORT', '__@divworker') ] )
 
         morecode = [('IMPORT', '__@divworker')]
+        needbig = True
 
     # DIVU:  T3/vAC -> vAC
     assert YV != T3
     def code2():
         label('_@_divu')
         PUSH()
-        STW(YV);_BLT('.bigy');_BNE('.divu1')
+        STW(YV)
+        if needbig:
+            _BLT('.bigy')
+        _BNE('.divu1')
         _CALLJ('_@_raise_zdiv')                    # divide by zero error (no return)
         label('.divu1')
         LDW(T3)
         if XV != T3: STW(XV)
-        _BLT('.bigx');
+        if needbig:
+            _BLT('.bigx');
         label('.divu2')
         CallWorker()
-        LDW(XV)
+        if needbig:
+            LDW(XV)
         tryhop(2);POP();RET()
         # special cases
-        label('.bigx')                             # x >= 0x8000
-        LD(YV+1);ANDI(0x40);_BEQ('.divu2')         # - but y is small enough
-        label('.bigy')                             # y large
-        _MOVQW(0,MV)                               # - repeated subtractions
-        LDW(T3)
-        if XV != T3: STW(XV)
-        BRA('.loop1')
-        label('.loop0')                            #   (loops at most 3 times)
-        INC(MV)
-        LDW(XV);SUBW(YV);STW(XV)                   #   (warning: SUBVW overwrites MV!)
-        label('.loop1')
-        _CMPWU(YV);_BGE('.loop0')
-        LDW(XV);STW(RV)                            # - for modu
-        LDW(MV)
-        tryhop(2);POP();RET()
+        if needbig:
+            label('.bigx')                          # x >= 0x8000
+            LD(YV+1);ANDI(0x40);_BEQ('.divu2')      # - but y is small enough
+            label('.bigy')                          # y large
+            _MOVQW(0,MV)                            # - repeated subtractions
+            LDW(T3)
+            if XV != T3: STW(XV)
+            BRA('.loop1')
+            label('.loop0')                         #   (loops at most 3 times)
+            INC(MV)
+            LDW(XV);SUBW(YV);STW(XV)                #   (warning: SUBVW overwrites MV!)
+            label('.loop1')
+            _CMPWU(YV);_BGE('.loop0')
+            LDW(XV);STW(RV)                         # - for modu
+            LDW(MV)
+            tryhop(2);POP();RET()
 
     module(name='rt_divu.s',
            code=[ ('CODE', '_@_divu', code2),

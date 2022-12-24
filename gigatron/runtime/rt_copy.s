@@ -25,7 +25,7 @@ def scope():
         ST(T0);LD(vACH);STW(T2)
         LD(T0);STW(T0);
         label('_@_fcopync_')
-        LDW(T0);PEEK();POKE(T2)
+        _PEEKV(T0);POKE(T2)
         INC(T2);INC(T0);LDW(T0)
         BRA('.cont')
         label('_@_lcopyz_')

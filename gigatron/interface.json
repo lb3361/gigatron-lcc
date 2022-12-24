@@ -85,7 +85,6 @@
  "buttonB"              : 64,
  "buttonA"              : 128,
 
- "maxTicks"             : 14,
  "LDWI"                 : "0x0311",
  "LD"                   : "0x031a",
  "CMPHS_v5"             : "0x031f",

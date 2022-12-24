@@ -72,7 +72,7 @@ def scope_vcpu():
         label('_memcpy0')
         # single byte
         LD('sysArgs4');ANDI(1);_BEQ('.cpy2')
-        _PEEKV('sysArgs2');POKE('sysArgs0')
+        LDW('sysArgs2');PEEK();POKE('sysArgs0')
         INC('sysArgs2');INC('sysArgs0')
         LD('sysArgs4');ANDI(0xfe);ST('sysArgs4');_BEQ('.cpydone')
         # even length

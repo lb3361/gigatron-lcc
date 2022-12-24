@@ -12,7 +12,10 @@ def scope():
         nohop()
         for i in range(0,8):
             label(savename(i))
-            if args.cpu >= 5:
+            if args.cpu >= 6:
+                DOKEA(R0+i+i)
+                if i < 7: ADDI(2) 
+            elif args.cpu >= 5:
                 STW(T3);LDW(R0+i+i);DOKE(T3)
                 if i < 7: LDI(2);ADDW(T3)
             else:
@@ -24,7 +27,10 @@ def scope():
         nohop()
         for i in range(0,8):
             label(rtrnname(i))
-            if args.cpu >= 5:
+            if args.cpu >= 6:
+                DEEKA(R0+i+i)
+                if i < 7: ADDI(2)
+            elif args.cpu >= 5:
                 STW(T3);DEEK();STW(R0+i+i)
                 if i < 7: LDI(2);ADDW(T3)
             else:

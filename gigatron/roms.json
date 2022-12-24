@@ -7,18 +7,19 @@
     "#" : "- Other keys can be tested by the runtime libraries",
 
     "v4"    : { "cpu" : 4,
-		"romType" : "0x38"
+		"romType" : "0x38",
+		"maxTicks" : 14
 	      },
 
     "v5a"   : { "cpu" : 5,
-		"romType" : "0x40",
 		"inherits" : "v4",
+		"romType" : "0x40",
 		"has_vIRQ" : 1
 	      },
 
     "dev6"  : { "cpu" : 5,
-		"romType" : "0xf8",
 		"inherits" : "v5a",
+		"romType" : "0xf8",
 		"has_SYS_CopyMemory" :          { "addr" : "0xe9", "cycs" : 80  },
 		"has_SYS_CopyMemoryExt" :       { "addr" : "0xec", "cycs" : 100 },
 		"has_SYS_ScanMemory" :          { "addr" : "0xe6", "cycs" : 50  },
@@ -34,12 +35,14 @@
 
     "vx0"   : { "cpu" : 6,
 		"inherits" : "dev6",
-		"romType" : "0x80"
+		"romType" : "0x80",
+		"maxTicks" : 15
 	      },
     
     "dev7"  : { "cpu" : 7,
-		"romType" : "0xf8",
 		"inherits" : "v6",
+		"romType" : "0xf8",
+		"maxTicks" : 15,
 		"has_SYS_Multiply_s16" :        { "addr" : "0x9e", "cycs" : 34  },
 		"has_SYS_Divide_u16" :          { "addr" : "0xa1", "cycs" : 34  }
 	      }

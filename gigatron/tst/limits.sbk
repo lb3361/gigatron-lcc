@@ -6,9 +6,9 @@ def code0():
 	_PROLOGUE(12,12,0x0); # save=None
 	LDWI('.2');STW(R8);
 	_MOVW(R8,[SP,2]);
-	LDI(255);STW(R9);
+	MOVQW(255,R9)
 	_MOVW(R9,[SP,4]);
-	LDI(255);STW(R10);
+	MOVQW(255,R10)
 	_MOVW(R10,[SP,6]);
 	CALLI('printf');
 	LDWI('.3');STW(R8);
@@ -37,16 +37,16 @@ def code0():
 	CALLI('printf');
 	LDWI('.7');STW(R8);
 	_MOVW(R8,[SP,2]);
-	LDI(255);STW(R9);
+	MOVQW(255,R9)
 	_MOVW(R9,[SP,4]);
-	LDI(255);STW(R10);
+	MOVQW(255,R10)
 	_MOVW(R10,[SP,6]);
 	CALLI('printf');
 	LDWI('.8');STW(R8);
 	_MOVW(R8,[SP,2]);
-	LDI(127);STW(R9);
+	MOVQW(127,R9)
 	_MOVW(R9,[SP,4]);
-	LDI(127);STW(R10);
+	MOVQW(127,R10)
 	_MOVW(R10,[SP,6]);
 	CALLI('printf');
 	LDWI('.9');STW(R8);
@@ -75,9 +75,9 @@ def code0():
 	CALLI('printf');
 	LDWI('.13');STW(R8);
 	_MOVW(R8,[SP,2]);
-	LDI(0);STW(R9);
+	MOVQW(0,R9)
 	_MOVW(R9,[SP,4]);
-	LDI(0);STW(R10);
+	MOVQW(0,R10)
 	_MOVW(R10,[SP,6]);
 	CALLI('printf');
 	LDWI('.14');STW(R8);

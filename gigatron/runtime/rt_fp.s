@@ -58,8 +58,11 @@ def scope():
     def code_fsavevsp():
         nohop()
         label('__@fsavevsp')
-        LDWI('.vspfpe');STW(T2)
-        LD(vSP);POKE(T2);RET()
+        if args.cpu >= 6:
+            LDWI('.vspfpe');POKEA(vSP);RET()
+        else:
+            LDWI('.vspfpe');STW(T2)
+            LD(vSP);POKE(T2);RET()
         label('__@frestorevsp')
         label('.vspfpe',pc()+1)        
         LDI(0)  # this instruction is patched by fsavevsp.
@@ -121,7 +124,7 @@ def scope():
         label('_@_fldfac')
         STW(T3)
         label('__@fldfac_t3')
-        LDW(T3);PEEK();ST(AE)
+        _PEEKV(T3);ST(AE)
         load_mantissa(T3,AM+1)
         XORW(AS);ANDI(128);_BEQ('.fld1')
         LD(AS);XORI(0x81);ST(AS)
@@ -143,7 +146,7 @@ def scope():
         label('__@fldarg')
         STW(T3)
         label('__@fldarg_t3')
-        LDW(T3);PEEK();ST(BE)
+        _PEEKV(T3);ST(BE)
         load_mantissa(T3,BM+1)
         XORW(AS);ANDI(128);PEEK()
         XORW(AS);ANDI(1);XORW(AS);ST(AS)

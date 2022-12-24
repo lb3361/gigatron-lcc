@@ -352,7 +352,8 @@ conB: CNSTP2  "%a"  if_zpconst(a)
 conB: CNSTI1  "%a"
 conB: CNSTU1  "%a"
 conB: zddr    "%0"
-conBn: CNSTI2  "%a"  range(a,-255,-1)
+conBn: CNSTI2 "%a"  range(a,-255,-1)
+conBs: CNSTI2 "%a"  range(a,-128,+127)
 con: CNSTI1   "%a"
 con: CNSTU1   "%a"
 con: CNSTI2   "%a"
@@ -404,7 +405,7 @@ ac0:  eac0  "%{=%0}%0"
 eac:  eac0  "%{=%0}%0"
 eac:  reg   "%{=%0}%{?0=~vAC::LDW(%0);}" 20
 eac:  con   "%{=%0}%{?0=~vAC::LDWI(%0);}" 21
-eac:  conBn "%{=%0}%{?0=~vAC::_LDI(%0);}" 20
+eac:  conBn "%{=%0}%{?0=~vAC::_LDI(%0);}" 18
 eac:  zddr  "%{=%0}%{?0=~vAC::LDI(%0);}" 16
 eac:  addr  "%{=%0}%{?0=~vAC::LDWI(%0);}" 21
 eac:  addr  "%{=%0}%{?0=~vAC::LDWI(%0);}" 21
@@ -587,30 +588,30 @@ stmt: GTI2(ac,con0) "\t%0_BGT(%a)%{!4};\n" 28
 stmt: GEI2(ac,con0) "\t%0_BGE(%a)%{!4};\n" 28
 stmt: GTU2(ac,con0) "\t%0_BNE(%a)%{!4};\n" 28
 stmt: LEU2(ac,con0) "\t%0_BEQ(%a)%{!4};\n" 28
-stmt: LTI2(ac,conB) "\t%0_CMPIS(%1);_BLT(%a)%{!A};\n" 80
-stmt: LEI2(ac,conB) "\t%0_CMPIS(%1);_BLE(%a)%{!A};\n" 80
-stmt: GTI2(ac,conB) "\t%0_CMPIS(%1);_BGT(%a)%{!A};\n" 80
-stmt: GEI2(ac,conB) "\t%0_CMPIS(%1);_BGE(%a)%{!A};\n" 80
-stmt: LTU2(ac,conB) "\t%0_CMPIU(%1);_BLT(%a)%{!A};\n" 80
-stmt: LEU2(ac,conB) "\t%0_CMPIU(%1);_BLE(%a)%{!A};\n" 80
-stmt: GTU2(ac,conB) "\t%0_CMPIU(%1);_BGT(%a)%{!A};\n" 80
-stmt: GEU2(ac,conB) "\t%0_CMPIU(%1);_BGE(%a)%{!A};\n" 80
-stmt: LTI2(ac,iarg) "\t%0%[1b]_CMPWS(%1);_BLT(%a)%{!A};\n" 100
-stmt: LEI2(ac,iarg) "\t%0%[1b]_CMPWS(%1);_BLE(%a)%{!A};\n" 100
-stmt: GTI2(ac,iarg) "\t%0%[1b]_CMPWS(%1);_BGT(%a)%{!A};\n" 100
-stmt: GEI2(ac,iarg) "\t%0%[1b]_CMPWS(%1);_BGE(%a)%{!A};\n" 100
-stmt: LTU2(ac,iarg) "\t%0%[1b]_CMPWU(%1);_BLT(%a)%{!A};\n" 100
-stmt: LEU2(ac,iarg) "\t%0%[1b]_CMPWU(%1);_BLE(%a)%{!A};\n" 100
-stmt: GTU2(ac,iarg) "\t%0%[1b]_CMPWU(%1);_BGT(%a)%{!A};\n" 100
-stmt: GEU2(ac,iarg) "\t%0%[1b]_CMPWU(%1);_BGE(%a)%{!A};\n" 100
-stmt: LTI2(iarg,ac) "\t%1%[0b]_CMPWS(%0);_BGT(%a)%{!A};\n" 100
-stmt: LEI2(iarg,ac) "\t%1%[0b]_CMPWS(%0);_BGE(%a)%{!A};\n" 100
-stmt: GTI2(iarg,ac) "\t%1%[0b]_CMPWS(%0);_BLT(%a)%{!A};\n" 100
-stmt: GEI2(iarg,ac) "\t%1%[0b]_CMPWS(%0);_BLE(%a)%{!A};\n" 100
-stmt: LTU2(iarg,ac) "\t%1%[0b]_CMPWU(%0);_BGT(%a)%{!A};\n" 100
-stmt: LEU2(iarg,ac) "\t%1%[0b]_CMPWU(%0);_BGE(%a)%{!A};\n" 100
-stmt: GTU2(iarg,ac) "\t%1%[0b]_CMPWU(%0);_BLT(%a)%{!A};\n" 100
-stmt: GEU2(iarg,ac) "\t%1%[0b]_CMPWU(%0);_BLE(%a)%{!A};\n" 100
+stmt: LTI2(ac,conB) "\t%0_CMPIS(%1);_BLT(%a)%{!A};\n" (cpu>=7?56:36)
+stmt: LEI2(ac,conB) "\t%0_CMPIS(%1);_BLE(%a)%{!A};\n" (cpu>=7?56:36)
+stmt: GTI2(ac,conB) "\t%0_CMPIS(%1);_BGT(%a)%{!A};\n" (cpu>=7?56:36)
+stmt: GEI2(ac,conB) "\t%0_CMPIS(%1);_BGE(%a)%{!A};\n" (cpu>=7?56:36)
+stmt: LTU2(ac,conB) "\t%0_CMPIU(%1);_BLT(%a)%{!A};\n" (cpu>=7?56:36)
+stmt: LEU2(ac,conB) "\t%0_CMPIU(%1);_BLE(%a)%{!A};\n" (cpu>=7?56:36)
+stmt: GTU2(ac,conB) "\t%0_CMPIU(%1);_BGT(%a)%{!A};\n" (cpu>=7?56:36)
+stmt: GEU2(ac,conB) "\t%0_CMPIU(%1);_BGE(%a)%{!A};\n" (cpu>=7?56:36)
+stmt: LTI2(ac,iarg) "\t%0%[1b]_CMPWS(%1);_BLT(%a)%{!A};\n" 56
+stmt: LEI2(ac,iarg) "\t%0%[1b]_CMPWS(%1);_BLE(%a)%{!A};\n" 56
+stmt: GTI2(ac,iarg) "\t%0%[1b]_CMPWS(%1);_BGT(%a)%{!A};\n" 56
+stmt: GEI2(ac,iarg) "\t%0%[1b]_CMPWS(%1);_BGE(%a)%{!A};\n" 56
+stmt: LTU2(ac,iarg) "\t%0%[1b]_CMPWU(%1);_BLT(%a)%{!A};\n" 56
+stmt: LEU2(ac,iarg) "\t%0%[1b]_CMPWU(%1);_BLE(%a)%{!A};\n" 56
+stmt: GTU2(ac,iarg) "\t%0%[1b]_CMPWU(%1);_BGT(%a)%{!A};\n" 56
+stmt: GEU2(ac,iarg) "\t%0%[1b]_CMPWU(%1);_BGE(%a)%{!A};\n" 56
+stmt: LTI2(iarg,ac) "\t%1%[0b]_CMPWS(%0);_BGT(%a)%{!A};\n" 56
+stmt: LEI2(iarg,ac) "\t%1%[0b]_CMPWS(%0);_BGE(%a)%{!A};\n" 56
+stmt: GTI2(iarg,ac) "\t%1%[0b]_CMPWS(%0);_BLT(%a)%{!A};\n" 56
+stmt: GEI2(iarg,ac) "\t%1%[0b]_CMPWS(%0);_BLE(%a)%{!A};\n" 56
+stmt: LTU2(iarg,ac) "\t%1%[0b]_CMPWU(%0);_BGT(%a)%{!A};\n" 56
+stmt: LEU2(iarg,ac) "\t%1%[0b]_CMPWU(%0);_BGE(%a)%{!A};\n" 56
+stmt: GTU2(iarg,ac) "\t%1%[0b]_CMPWU(%0);_BLT(%a)%{!A};\n" 56
+stmt: GEU2(iarg,ac) "\t%1%[0b]_CMPWU(%0);_BLE(%a)%{!A};\n" 56
 
 # Nonterminals for assignments with MOVM/MOVL/MOVF:
 #   stmt: ASGNx(vdst,xAC) "\t%1%[0b]_xMOV(xAC,%0);\n"
@@ -876,38 +877,51 @@ stmt: ASGNI4(spill,reg) "\tSTW(T3);_MOVL(%1,[SP,%0]);LDW(T3) #genspill\n" 0
 stmt: ASGNU4(spill,reg) "\tSTW(T3);_MOVL(%1,[SP,%0]);LDW(T3) #genspill\n" 0
 stmt: ASGNF5(spill,reg) "\tSTW(T3);_MOVF(%1,[SP,%0]);LDW(T3) #genspill\n" 0
 
-# Some opcodes for cpu=6
-#stmt: ASGNP2(ac,iarg)  "\t%0%[1b]DOKEA(%1);\n" mincpu6(30)
-#stmt: ASGNI2(ac,iarg)  "\t%0%[1b]DOKEA(%1);\n" mincpu6(30)
-#stmt: ASGNU2(ac,iarg)  "\t%0%[1b]DOKEA(%1);\n" mincpu6(30)
-#stmt: ASGNI1(ac,iarg)  "\t%0%[1b]POKEA(%1);\n" mincpu6(28)
-#stmt: ASGNU1(ac,iarg)  "\t%0%[1b]POKEA(%1);\n" mincpu6(28)
-#stmt: ASGNP2(ac,con)   "\t%0%[1b]DOKEI(%1);\n" mincpu6(29)
-#stmt: ASGNI2(ac,con)   "\t%0%[1b]DOKEI(%1);\n" mincpu6(29)
-#stmt: ASGNU2(ac,con)   "\t%0%[1b]DOKEI(%1);\n" mincpu6(29)
-#stmt: ASGNI1(ac,conBs) "\t%0%[1b]POKEI(%1);\n" mincpu6(27)
-#stmt: ASGNU1(ac,conB)  "\t%0%[1b]POKEI(%1);\n" mincpu6(28)
-#ac: INDIRI2(reg)  "%{?0=~vAC:DEEK():DEEKV(%0)};" mincpu6(30)
-#ac: INDIRU2(reg)  "%{?0=~vAC:DEEK():DEEKV(%0)};" mincpu6(30)
-#ac: INDIRP2(reg)  "%{?0=~vAC:DEEK():DEEKV(%0)};" mincpu6(30)
-#ac: INDIRI1(reg)  "%{?0=~vAC:PEEK():PEEKV(%0)};" mincpu6(30)
-#ac: INDIRU1(reg)  "%{?0=~vAC:PEEK():PEEKV(%0)};" mincpu6(30)
-#stmt: ASGNI2(rmw, conB)  "\tMOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
-#stmt: ASGNU2(rmw, conB)  "\tMOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
-#stmt: ASGNP2(rmw, conB)  "\tMOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
-#stmt: ASGNI1(rmw, conBs) "\tMOVQB(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,27))
-#stmt: ASGNU1(rmw, conB)  "\tMOVQB(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,27))
-#regx: LOADI1(conBs)      "\tMOVQB(%0,%c)\n" mincpu6(27)
-#regx: LOADU1(conB)       "\tMOVQB(%0,%c)\n" mincpu6(27)
-#regx: LOADI2(conB)       "\tMOVQW(%0,%c)\n" mincpu6(29)
-#regx: LOADU2(conB)       "\tMOVQW(%0,%c)\n" mincpu6(29)
-#regx: LOADP2(conB)       "\tMOVQW(%0,%c)\n" mincpu6(29)
+# Some opcodes for cpu > 5
+stmt: ASGNP2(ac,iarg)  "\t%0%[1b]DOKEA(%1);\n" mincpu6(28)
+stmt: ASGNI2(ac,iarg)  "\t%0%[1b]DOKEA(%1);\n" mincpu6(28)
+stmt: ASGNU2(ac,iarg)  "\t%0%[1b]DOKEA(%1);\n" mincpu6(28)
+stmt: ASGNI1(ac,iarg)  "\t%0%[1b]POKEA(%1);\n" mincpu6(28)
+stmt: ASGNU1(ac,iarg)  "\t%0%[1b]POKEA(%1);\n" mincpu6(28)
+stmt: ASGNP2(ac,con)   "\t%0%[1b]DOKEI(%1);\n" mincpu6(29)
+stmt: ASGNI2(ac,con)   "\t%0%[1b]DOKEI(%1);\n" mincpu6(29)
+stmt: ASGNU2(ac,con)   "\t%0%[1b]DOKEI(%1);\n" mincpu6(29)
+stmt: ASGNP2(ac,conB)  "\t%0%[1b]DOKEQ(%1);\n" mincpu7(21)
+stmt: ASGNI2(ac,conB)  "\t%0%[1b]DOKEQ(%1);\n" mincpu7(21)
+stmt: ASGNU2(ac,conB)  "\t%0%[1b]DOKEQ(%1);\n" mincpu7(21)
+stmt: ASGNI1(ac,conBs) "\t%0%[1b]POKEQ(%1);\n" mincpu6(19)
+stmt: ASGNU1(ac,conB)  "\t%0%[1b]POKEQ(%1);\n" mincpu6(19)
+ac: INDIRI2(reg)     "%{?0=~vAC:DEEK():DEEKV(%0)};" mincpu6(28)
+ac: INDIRU2(reg)     "%{?0=~vAC:DEEK():DEEKV(%0)};" mincpu6(28)
+ac: INDIRP2(reg)     "%{?0=~vAC:DEEK():DEEKV(%0)};" mincpu6(28)
+ac: INDIRI1(reg)     "%{?0=~vAC:PEEK():PEEKV(%0)};" mincpu6(28)
+ac: INDIRU1(reg)     "%{?0=~vAC:PEEK():PEEKV(%0)};" mincpu6(28)
+reg: INDIRI2(ac)     "\t%0%{?c==vAC:DEEK():DEEKA(%c)};\n" mincpu6(30)
+reg: INDIRU2(ac)     "\t%0%{?c==vAC:DEEK():DEEKA(%c)};\n" mincpu6(30)
+reg: INDIRP2(ac)     "\t%0%{?c==vAC:DEEK():DEEKA(%c)};\n" mincpu6(30)
+stmt: ASGNI2(rmw, conB)  "\tMOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
+stmt: ASGNU2(rmw, conB)  "\tMOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
+stmt: ASGNP2(rmw, conB)  "\tMOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
+stmt: ASGNI1(rmw, conBs) "\tMOVQB(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,27))
+stmt: ASGNU1(rmw, conB)  "\tMOVQB(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,27))
+regx: LOADI1(conBs)      "\tMOVQB(%0,%c)\n" mincpu6(27)
+regx: LOADU1(conB)       "\tMOVQB(%0,%c)\n" mincpu6(27)
+regx: LOADI2(conB)       "\tMOVQW(%0,%c)\n" mincpu6(29)
+regx: LOADU2(conB)       "\tMOVQW(%0,%c)\n" mincpu6(29)
+regx: LOADP2(conB)       "\tMOVQW(%0,%c)\n" mincpu6(29)
 
 # Read-modify-write
 rmw: VREGP "%a"
 rmw: zddr "%0"
 stmt: ASGNU1(rmw, LOADU1(ADDI2(CVUI2(INDIRU1(rmw)), con1))) "\tINC(%0);\n" if_rmw(a,16)
 stmt: ASGNI1(rmw, LOADI1(ADDI2(CVII2(INDIRI1(rmw)), con1))) "\tINC(%0);\n" if_rmw(a,16)
+stmt: ASGNI2(rmw, ADDI2(INDIRI2(rmw), ac)) "\t%2ADDV(%0);\n" mincpu6(if_rmw(a, 30))
+stmt: ASGNU2(rmw, ADDU2(INDIRU2(rmw), ac)) "\t%2ADDV(%0);\n" mincpu6(if_rmw(a, 30))
+stmt: ASGNP2(rmw, ADDP2(INDIRP2(rmw), ac)) "\t%2ADDV(%0);\n" mincpu6(if_rmw(a, 30))
+stmt: ASGNI2(rmw, SUBI2(INDIRI2(rmw), ac)) "\t%2SUBV(%0);\n" mincpu6(if_rmw(a, 30))
+stmt: ASGNU2(rmw, SUBU2(INDIRU2(rmw), ac)) "\t%2SUBV(%0);\n" mincpu6(if_rmw(a, 30))
+stmt: ASGNP2(rmw, SUBP2(INDIRP2(rmw), ac)) "\t%2SUBV(%0);\n" mincpu6(if_rmw(a, 30))
+
 
 
 # /*-- END RULES --/
@@ -1121,8 +1135,14 @@ static Symbol get_cnst_or_reg(Node p, int nt)
   if (p)
     {
       p = reuse(p, nt);
-      if (generic(p->op) == CNST || isaddrop(p->op))
+      if (generic(p->op) == CNST || generic(p->op) == ADDRG)
         return p->syms[0];
+      if ((generic(p->op) == ADDRL || generic(p->op) == ADDRF) && p->syms[0])
+        { /* Masquerade frame offsets as string constants.
+             There should not be string constants here anymore. */
+          Value v; v.p = p->syms[0]->name;
+          return constant(array(chartype,strlen(p->syms[0]->name),0), v);
+        }
       if (generic(p->op) == INDIR && specific(p->kids[0]->op) == VREG+P)
         return (p->x.inst && p->syms[RX]) ? p->syms[RX] : p->kids[0]->syms[0];
     }
@@ -1563,7 +1583,7 @@ static void emit3(const char *fmt, int len, Node p, int nt, Node *kids, short *n
             eq = 0; /* literal comparison */
           else if (sym && cmp == ireg[31]->x.name /* vAC */
                    && !sym->x.regnode && vac_constval
-                   && vac_constval->x.name == sym->x.name )
+                   && vac_constval == sym )
             eq = 1;
           else if (sym && cmp == ireg[31]->x.name /* vAC */
                    && sym->x.regnode && sym->x.regnode->number < 24

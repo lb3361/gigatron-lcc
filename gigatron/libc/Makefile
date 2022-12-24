@@ -42,7 +42,7 @@ ${B}cpu6/libc.a: ${SFILES} ${O6FILES} ${RFILES}
 
 ${B}cpu7/libc.a: ${SFILES} ${O7FILES} ${RFILES}
 	-@mkdir -p ${B}cpu7
-	cat ${SFILES} ${O6FILES} ${RFILES} > ${B}/cpu7/libc.a
+	cat ${SFILES} ${O7FILES} ${RFILES} > ${B}/cpu7/libc.a
 
 # this is incomplete but better than nothing
 DEPS=_stdio.h ${INC}stdio.h ${INC}gigatron/libc.h ${B}rcc${E}

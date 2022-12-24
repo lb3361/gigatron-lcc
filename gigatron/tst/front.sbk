@@ -14,7 +14,7 @@ def code0():
 def code1():
 	label('nested');
 	PUSH();
-	LDW(R8);_CMPIS(4);_BGE('.6');
+	LDI(4);_CMPWS(R8);_BLE('.6');
 	LDW(R9);XORI(114);_BEQ('.9');
 	label('.6');
 	LDW(R8);XORI(1);_BNE('.8');

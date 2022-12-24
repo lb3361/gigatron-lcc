@@ -415,9 +415,9 @@ def emitjcc(BCC, BNCC, JCC, d):
             hops_enabled = False
     hops_enabled = save_hops_enabled
 
-# ------------- opcode helpers (FIXME)
+# ------------- opcode helpers
 
-def emit_json(*args):
+def emit_op(*args):
     '''Calls emits with strings replaced by opcodes according to interface.json.
        This displaces the knowledge of the correct opcodes into inteface[-dev].json
        but one still has to provide the right arguments.'''
@@ -426,7 +426,7 @@ def emit_json(*args):
         if not isinstance(arg, str):
             bytes.append(arg)
         elif not arg in symdefs:
-            error(f"emit_json: opcode {arg} not defined in interface.json")
+            error(f"emit_op: opcode {arg} not defined in interface.json")
         else:
             if arg[-3:-1] == "_v":
                 check_cpu(int(arg[-1:]))
@@ -435,8 +435,9 @@ def emit_json(*args):
             if oq == 0x35:
                 bytes.append(0x35)
             elif oq != 0x3:
-                error(f"emit_json: cannot emit opcode {arg} defined as {hex(op)}")
+                error(f"emit_op: cannot emit opcode {arg} defined as {hex(op)}")
             bytes.append(op & 0xff)
+    tryhop(len(bytes))
     emit(*bytes)
 
 def cpu6_fixme(opcode, stop=True):
@@ -694,242 +695,307 @@ def label(sym, val=None, hop=None):
 
 @vasm
 def ST(d):
-    tryhop(2); emit_json("ST", check_zp(d))
+    emit_op("ST", check_zp(d))
 @vasm
 def STW(d):
-    tryhop(2); emit_json("STW", check_zp(d))
+    emit_op("STW", check_zp(d))
 @vasm
 def STLW(d):
-    tryhop(2); emit_json("STLW", check_im8s(d))
+    emit_op("STLW", check_im8s(d))
 @vasm
 def LD(d):
-    tryhop(2); emit_json("LD", check_zp(d))
+    emit_op("LD", check_zp(d))
 @vasm
 def LDI(d, hop=True):
-    tryhop(2); emit_json("LDI", check_im8s(d))
+    emit_op("LDI", check_im8s(d))
 @vasm
 def LDWI(d):
-    tryhop(3); d=int(v(d)); emit_json("LDWI", lo(d), hi(d))
+    d=int(v(d)); emit_op("LDWI", lo(d), hi(d))
 @vasm
 def LDW(d):
-    tryhop(2); emit_json("LDW", check_zp(d))
+    emit_op("LDW", check_zp(d))
 @vasm
 def LDLW(d):
-    tryhop(2); emit_json("LDLW", check_im8s(d))
+    emit_op("LDLW", check_im8s(d))
 @vasm
 def ADDW(d):
-    tryhop(2); emit_json("ADDW", check_zp(d))
+    emit_op("ADDW", check_zp(d))
 @vasm
 def SUBW(d):
-    tryhop(2); emit_json("SUBW", check_zp(d))
+    emit_op("SUBW", check_zp(d))
 @vasm
 def ADDI(d):
-    tryhop(2); emit_json("ADDI", check_imm8(d))
+    emit_op("ADDI", check_imm8(d))
 @vasm
 def SUBI(d):
-    tryhop(2); emit_json("SUBI", check_imm8(d))
+    emit_op("SUBI", check_imm8(d))
 @vasm
 def LSLW():
-    tryhop(1); emit_json("LSLW")
+    emit_op("LSLW")
 @vasm
 def INC(d):
-    tryhop(2); emit_json("INC", check_zp(d))
+    emit_op("INC", check_zp(d))
 @vasm
 def ANDI(d):
-    tryhop(2); emit_json("ANDI", check_imm8(d))
+    emit_op("ANDI", check_imm8(d))
 @vasm
 def ANDW(d):
-    tryhop(2); emit_json("ANDW", check_zp(d))
+    emit_op("ANDW", check_zp(d))
 @vasm
 def ORI(d):
-    tryhop(2); emit_json("ORI", check_imm8(d))
+    emit_op("ORI", check_imm8(d))
 @vasm
 def ORW(d):
-    tryhop(2); emit_json("ORW", check_zp(d))
+    emit_op("ORW", check_zp(d))
 @vasm
 def XORI(d):
-    tryhop(2); emit_json("XORI", check_imm8(d))
+    emit_op("XORI", check_imm8(d))
 @vasm
 def XORW(d):
-    tryhop(2); emit_json("XORW", check_zp(d))
+    emit_op("XORW", check_zp(d))
 @vasm
 def PEEK():
-    tryhop(1); emit_json("PEEK")
+    emit_op("PEEK")
 @vasm
 def DEEK():
-    tryhop(1); emit_json("DEEK")
+    emit_op("DEEK")
 @vasm
 def POKE(d):
-    tryhop(2); emit_json("POKE", check_zp(d))
+    emit_op("POKE", check_zp(d))
 @vasm
 def DOKE(d):
-    tryhop(2); emit_json("DOKE", check_zp(d))
+    emit_op("DOKE", check_zp(d))
 @vasm
 def LUP(d):
-    tryhop(2); emit_json("LUP", check_zp(d))
+    emit_op("LUP", check_zp(d))
 @vasm
 def BRA(d):
-    emit_json("BRA", check_br(d))
+    emit_op("BRA", check_br(d))
     tryhop(jump=False)
 @vasm
 def BEQ(d):
-    tryhop(3); emit_json("BCC", "EQ", check_br(d))
+    emit_op("BCC", "EQ", check_br(d))
 @vasm
 def BNE(d):
-    tryhop(3); emit_json("BCC", "NE", check_br(d))
+    emit_op("BCC", "NE", check_br(d))
 @vasm
 def BLT(d):
-    tryhop(3); emit_json("BCC", "LT", check_br(d))
+    emit_op("BCC", "LT", check_br(d))
 @vasm
 def BGT(d):
-    tryhop(3); emit_json("BCC", "GT", check_br(d))
+    emit_op("BCC", "GT", check_br(d))
 @vasm
 def BLE(d):
-    tryhop(3); emit_json("BCC", "LE", check_br(d))
+    emit_op("BCC", "LE", check_br(d))
 @vasm
 def BGE(d):
-    tryhop(3); emit_json("BCC", "GE", check_br(d))
+    emit_op("BCC", "GE", check_br(d))
 @vasm
 def CALL(d):
-    tryhop(3); emit_json("CALL", check_zp(d))
+    emit_op("CALL", check_zp(d))
 @vasm
 def RET():
-    emit_json("RET"); tryhop(jump=False)
+    emit_op("RET"); tryhop(jump=False)
 @vasm
 def PUSH():
-    tryhop(1); emit_json("PUSH")
+    emit_op("PUSH")
 @vasm
 def POP():
-    tryhop(1); emit_json("POP")
+    emit_op("POP")
 @vasm
 def ALLOC(d):
-    tryhop(2); emit_json("ALLOC", check_im8s(d))
+    emit_op("ALLOC", check_im8s(d))
 @vasm
 def SYS(op):
     op = v(op)
     if not isinstance(op ,Unk):
         if op & 1 != 0 or op < 0 or op >= 284:
             error(f"illegal argument {op} for SYS opcode")
+        # If maxTicks is not defined, use 14.
+        # All ROMs should ensure that 14 works.
+        maxTicks = 14
+        if 'maxTicks' in rominfo:
+            maxTicks = rominfo['maxTicks']
         op = min(0, 14 - op // 2) & 0xff
-    tryhop(2); emit_json("SYS", op)
+    emit_op("SYS", op)
 @vasm
 def HALT():
-    emit(0xb4, 0x80); tryhop(jump = False)
+    tryhop(2); emit(0xb4, 0x80); tryhop(jump = False)
 @vasm
 def DEF(d):
-    tryhop(2); emit_json("DEF", check_br(d))
+    emit_op("DEF", check_br(d))
 @vasm
 def CALLI(d):
-    tryhop(3); d=int(v(d)); emit_json("CALLI_v5", lo(d), hi(d))
+    d=int(v(d)); emit_op("CALLI_v5", lo(d), hi(d))
 @vasm
 def CMPHS(d):
     if args.cpu == 6:
         tryhop(3); emit(0x2f, check_zp(d), 0x37)
         cpu6_fixme("CMPHS_v5", stop=False)
     else:
-        tryhop(2); emit_json("CMPHS_v5", check_zp(d))
+        emit_op("CMPHS_v5", check_zp(d))
 @vasm
 def CMPHU(d):
     if args.cpu == 6:
         tryhop(3); emit(0x2f, check_zp(d), 0x3a)
         cpu6_fixme("CMPHU_v5", stop=False)
     else:
-        tryhop(2); emit_json("CMPHU_v5", check_zp(d))
-
+        emit_op("CMPHU_v5", check_zp(d))
 @vasm
 def MOVQB(imm,d):
-    check_cpu(99)
+    if args.cpu == 6:
+        tryhop(3);emit(0x16, check_zp(imm), check_zp(d))
+    else:
+        emit_op("MOVQB_v7", check_zp(imm), check_zp(d))
 @vasm
 def MOVQW(imm,d):
-    check_cpu(99)
+    if args.cpu == 6:
+        tryhop(3);emit(0x4d, check_zp(imm), check_zp(d))
+    else:
+        emit_op("MOVQW_v7", check_zp(imm), check_zp(d))
 @vasm
-def POKEI(d):
-    check_cpu(99)
+def POKEQ(d):
+    if args.cpu == 6:
+        tryhop(2);emit(0x25, check_zp(d)) # aka POKEI
+    else:
+        emit_op("POKEQ_v7", check_zp(d))
+@vasm
+def DOKEQ(d):
+    emit_op("DOKEQ_v7", check_zp(d))
 @vasm
 def DOKEI(d):
-    check_cpu(99)
-@vasm
-def PEEKV(d):
-    check_cpu(99)
-@vasm
-def DEEKV(d):
-    check_cpu(99)
+    d = int(v(d))
+    if args.cpu == 6:
+        tryhop(3);emit(0x77, (d>>8)&0xff, d&0xff)
+    else:
+        emit_op("DOKEI_v7", (d>>8)&0xff, d&0xff)
 @vasm
 def POKEA(d):
-    check_cpu(99)
+    if args.cpu == 6:
+        tryhop(2);emit(0x69, check_zp(d))
+    else:
+        emit_op("POKEA_v7", check_zp(d))
 @vasm
 def DOKEA(d):
-    check_cpu(99)
+    if args.cpu == 6:
+        tryhop(2);emit(0x7d, check_zp(d))
+    else:
+        emit_op("DOKEA_v7", check_zp(d))
+@vasm
+def DEEKV(d):
+    if args.cpu == 6:
+        tryhop(2);emit(0x3b, check_zp(d))
+    else:
+        emit_op("DEEKV_v7", check_zp(d))
+@vasm
+def PEEKV(d):
+    if args.cpu == 6:
+        tryhop(2);emit(0x5b, check_zp(d))
+    else:
+        emit_op("PEEKV_v7", check_zp(d))
+@vasm
+def DEEKA(d):
+    if args.cpu == 6:
+        tryhop(2);emit(0x6f, check_zp(d))
+    else:
+        emit_op("DEEKA_v7", check_zp(d))
 @vasm
 def LDNI(d):
     if args.cpu == 6:
         tryhop(2);emit(0x9c, check_zp(-d))
-        cpu6_fixme("LDNI", stop=False)
     else:
-        check_cpu(99)
+        emit_op("LDNI_v7", check_zp(d ^ 0xff00))
 @vasm
 def JEQ(d):
     tryhop(3); d=int(v(d));
     if args.cpu == 6:
         emit(0xbb, lo(d-2), hi(d))
     else:
-        emit_json("JEQ_v7", lo(d-2), hi(d))
+        emit_op("JEQ_v7", lo(d-2), hi(d))
+@vasm
+def CMPWS(d):
+    emit_op("CMPWS_v7", check_zp(d))
+@vasm
+def CMPWU(d):
+    emit_op("CMPWU_v7", check_zp(d))
+@vasm
+def CMPIS(d):
+    emit_op("CMPIS_v7", check_zp(d))
+@vasm
+def CMPIU(d):
+    emit_op("CMPIU_v7", check_zp(d))
 @vasm
 def JNE(d):
     tryhop(3); d=int(v(d));
     if args.cpu == 6:
         emit(0xbd, lo(d-2), hi(d))
     else:
-        emit_json("JNE_v7", lo(d-2), hi(d))
+        emit_op("JNE_v7", lo(d-2), hi(d))
 @vasm
 def JLT(d):
     tryhop(3); d=int(v(d));
     if args.cpu == 6:
         emit(0xbf, lo(d-2), hi(d))
     else:
-        emit_json("JLT_v7", lo(d-2), hi(d))
+        emit_op("JLT_v7", lo(d-2), hi(d))
 @vasm
 def JGT(d):
     tryhop(3); d=int(v(d));
     if args.cpu == 6:
         emit(0xc1, lo(d-2), hi(d))
     else:
-        emit_json("JGT_v7", lo(d-2), hi(d))
+        emit_op("JGT_v7", lo(d-2), hi(d))
 @vasm
 def JLE(d):
     tryhop(3); d=int(v(d));
     if args.cpu == 6:
         emit(0xc3, lo(d-2), hi(d))
     else:
-        emit_json("JLE_v7", lo(d-2), hi(d))
+        emit_op("JLE_v7", lo(d-2), hi(d))
 @vasm
 def JGE(d):
     tryhop(3); d=int(v(d));
     if args.cpu == 6:
         emit(0xc5, lo(d-2), hi(d))
     else:
-        emit_json("JGE_v7", lo(d-2), hi(d))
+        emit_op("JGE_v7", lo(d-2), hi(d))
 @vasm
 def MOVB(s,d):
-    check_cpu(99)
+    check_cpu(99) # FIXME
 @vasm
 def MOVW(s,d):
-    check_cpu(99)
+    check_cpu(99) # FIXME
 @vasm
 def MOVL(s,d):
-    check_cpu(99)
+    check_cpu(99) # FIXME
     emit_prefx3(0xcd, check_zp(s), check_zp(d))
 @vasm
 def MOVF(s,d):
-    check_cpu(99)
+    check_cpu(99) # FIXME
     emit_prefx3(0xd0, check_zp(s), check_zp(d))
 @vasm
 def NCOPY(n):
-    check_cpu(99)
+    check_cpu(99) # FIXME
     emit_prefx2(0xcd, check_zp(n))
 @vasm
+def NEGW():
+    if args.cpu == 6:
+        tryhop(3);emit(0x2f,vAC,0x17)
+    else:
+        emit_op("NEGW_v7")
+@vasm
 def MULW(d):
-    tryhop(3);emit_json("MULW_v7", d)
+    emit_op("MULW_v7", check_zp(d))
+@vasm
+def RDIVU(d):
+    emit_op("RDIVU_v7", check_zp(d))
+@vasm
+def ADDV(d):
+    emit_op("ADDV_v7", check_zp(d))
+@vasm
+def SUBV(d):
+    emit_op("SUBV_v7", check_zp(d))
+
     
 # pseudo instructions used by the compiler
 @vasm
@@ -954,7 +1020,7 @@ def _LDI(d):
         LDI(d)
     elif args.cpu == 6 and is_zeropage(-d):
         LDNI(d)
-    elif args.cpu >= 99 and is_zeropage(-d-1): # FIXME
+    elif args.cpu >= 6 and is_zeropage(-d-1):
         LDNI(d)
     else:
         LDWI(d)
@@ -975,19 +1041,19 @@ def _LD(d):
     else:
         LDWI(d); PEEK()
 @vasm
-def _PEEKV(d):
-    '''Compile as PEEKV(d) on cpu>=6, LDW(d);PEEK() otherwise'''
-    if args.cpu >= 99:  # FIXME
-        PEEKV(d)
-    else:
-        LDW(d); PEEK()
-@vasm
 def _DEEKV(d):
     '''Compile as DEEKV(d) on cpu>=6, LDW(d);DEEK() otherwise'''
-    if args.cpu >= 99:  # FIXME
+    if args.cpu >= 6:
         DEEKV(d)
     else:
         LDW(d); DEEK()
+@vasm
+def _PEEKV(d):
+    '''Compile as PEEKV(d) on cpu>=6, LDW(d);PEEK() otherwise'''
+    if args.cpu >= 6:
+        PEEKV(d)
+    else:
+        LDW(d); PEEK()
 @vasm
 def _SHLI(imm):
     '''Shift vAC left by imm positions'''
@@ -1116,7 +1182,7 @@ def _MOVW(s,d): # was _MOV
             _SP(s[1]); s = [vAC]
         elif type(d) == list and len(d) == 2 and d[0] == SP:
             _SP(d[1]); d = [vAC]
-        if args.cpu >= 99 and is_zeropage(s) and d == [vAC]:  #FIXME
+        if args.cpu >= 6 and is_zeropage(s) and d == [vAC]:
             DOKEA(s)
         elif d == [vAC] and s == vAC:
             error("Cannot _MOVW from vAC to [vAC] or [SP, offset]")
@@ -1178,7 +1244,9 @@ def _BGE(d):
 @vasm
 def _CMPIS(d):
     '''Compare vAC (signed) with immediate in range 0..255'''
-    if args.cpu >= 5:
+    if args.cpu >= 7:
+        CMPIS(d)
+    elif args.cpu >= 5:
         CMPHS(0); SUBI(d)
     else:
         lbl = genlabel()
@@ -1189,7 +1257,9 @@ def _CMPIS(d):
 @vasm
 def _CMPIU(d):
     '''Compare vAC (unsigned) with immediate in range 0..255'''
-    if args.cpu >= 5:
+    if args.cpu >= 7:
+        CMPIU(d)
+    elif args.cpu >= 5:
         CMPHU(0); SUBI(d)
     else:
         lbl = genlabel()
@@ -1201,9 +1271,11 @@ def _CMPIU(d):
 @vasm
 def _CMPWS(d):
     '''Compare vAC (signed) with register.'''
-    if args.cpu >= 5:
+    if args.cpu >= 7:
+        CMPWS(d)                # 36 cycles
+    elif args.cpu >= 5:
         d = v(d)
-        CMPHS(d+1); SUBW(d)
+        CMPHS(d+1); SUBW(d)     # 28+28 cycles
     else:
         lbl1 = genlabel()
         lbl2 = genlabel()
@@ -1217,9 +1289,11 @@ def _CMPWS(d):
 @vasm
 def _CMPWU(d):
     '''Compare vAC (unsigned) with register.'''
-    if args.cpu >= 5:
+    if args.cpu >= 7:
+        CMPWU(d)                # 36 cycles
+    elif args.cpu >= 5:
         d = v(d)
-        CMPHU(d+1); SUBW(d)
+        CMPHU(d+1); SUBW(d)     # 28+28 cycles
     else:
         lbl1 = genlabel()
         lbl2 = genlabel()

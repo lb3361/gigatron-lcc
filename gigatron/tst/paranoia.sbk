@@ -3798,9 +3798,9 @@ def code34():
 	_BRA('.932');
 	label('.931');
 	LDWI('.934');STW(R8);
-	LDW(R7);STW(R22);
-	LDI(2);ADDV(R7);
-	DEEKV(R22);STW(R9);
+	LDW(R7);
+	ADDIV(2,R7);
+	DEEK();STW(R9);
 	_MOVW(R9,[SP,4]);
 	CALLI('printf');
 	label('.932');
@@ -3984,8 +3984,8 @@ def code43():
 	_MOVF(F5,FAC);_SP(-11+44);_FMUL();_MOVF(FAC,[SP,-11+44]);
 	_SP(-6+44);DEEK();ADDV(R1);
 	label('.1021');
-	_SP(-4+44);_MOVL([vAC],LAC);LDI(1);_LSHRS();
-	_MOVL(LAC,[SP,-4+44]);
+	_SP(-4+44);_MOVL([vAC],LAC);LDI(1);_LSHRS();_MOVL(LAC,[SP,-4+44]);
+	_MOVL([SP,-4+44],LAC);
 	LDWI('.1016');_LCMPX();_BNE('.1024');
 	_BRA('.1019');
 	label('.1024');
@@ -4001,7 +4001,7 @@ def code43():
 	label('.1014');
 	_SP(-14+44);DEEK();_BEQ('.1030');
 	_MOVF('.8',FAC);_SP(-11+44);_FDIV();_MOVF(FAC,[SP,-11+44]);
-	LDI(0);SUBW(R1);STW(R1);
+	NEGV(R1);
 	label('.1030');
 	_MOVF([SP,-11+44],F8);
 	_MOVF(F8,[SP,2]);

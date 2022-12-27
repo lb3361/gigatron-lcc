@@ -440,13 +440,6 @@ def emit_op(*args):
     tryhop(len(bytes))
     emit(*bytes)
 
-def cpu6_fixme(opcode, stop=True):
-    msg = f"Check the cpu6 encoding for opcode {opcode} in glink.py."
-    if stop:
-        error(msg, dedup=True)
-    else:
-        warning(msg, dedup=True)
-
 
 # ------------- map of page zero
 
@@ -829,16 +822,14 @@ def CALLI(d):
     d=int(v(d)); emit_op("CALLI_v5", lo(d), hi(d))
 @vasm
 def CMPHS(d):
-    if args.cpu == 6:
+    if args.cpu == 6 or "has_altCmpOps" in rominfo:
         tryhop(3); emit(0x2f, check_zp(d), 0x37)
-        cpu6_fixme("CMPHS_v5", stop=False)
     else:
         emit_op("CMPHS_v5", check_zp(d))
 @vasm
 def CMPHU(d):
-    if args.cpu == 6:
+    if args.cpu == 6 or "has_altCmpOps" in rominfo:
         tryhop(3); emit(0x2f, check_zp(d), 0x3a)
-        cpu6_fixme("CMPHU_v5", stop=False)
     else:
         emit_op("CMPHU_v5", check_zp(d))
 @vasm
@@ -846,13 +837,13 @@ def MOVQB(imm,d):
     if args.cpu == 6:
         tryhop(3);emit(0x16, check_zp(imm), check_zp(d))
     else:
-        emit_op("MOVQB_v7", check_zp(imm), check_zp(d))
+        emit_op("MOVQB_v7", check_zp(d), check_zp(imm))
 @vasm
 def MOVQW(imm,d):
     if args.cpu == 6:
         tryhop(3);emit(0x4d, check_zp(imm), check_zp(d))
     else:
-        emit_op("MOVQW_v7", check_zp(imm), check_zp(d))
+        emit_op("MOVQW_v7", check_zp(d), check_zp(imm))
 @vasm
 def POKEQ(d):
     if args.cpu == 6:
@@ -978,11 +969,11 @@ def NCOPY(n):
     check_cpu(99) # FIXME
     emit_prefx2(0xcd, check_zp(n))
 @vasm
-def NEGW():
+def NEGV(d):
     if args.cpu == 6:
-        tryhop(3);emit(0x2f,vAC,0x17)
+        tryhop(3);emit(0x2f,check_zp(d),0x17)
     else:
-        emit_op("NEGW_v7")
+        emit_op("NEGV_v7", check_zp(d))
 @vasm
 def MULW(d):
     emit_op("MULW_v7", check_zp(d))
@@ -995,6 +986,12 @@ def ADDV(d):
 @vasm
 def SUBV(d):
     emit_op("SUBV_v7", check_zp(d))
+@vasm
+def ADDIV(i,d):
+    emit_op("ADDIV_v7", check_zp(i), check_zp(d))
+@vasm
+def SUBIV(i,d):
+    emit_op("SUBIV_v7", check_zp(i), check_zp(d))
 
     
 # pseudo instructions used by the compiler

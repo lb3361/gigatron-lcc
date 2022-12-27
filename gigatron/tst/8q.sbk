@@ -10,14 +10,14 @@ def code0():
 	LDWI('down');ADDW(R22);DOKEQ(1);
 	LDWI('up');ADDW(R22);DOKEQ(1);
 	label('.3');
-	LDI(1);ADDV(R7);
+	ADDIV(1,R7);
 	LDI(15);_CMPWS(R7);_BGT('.2');
 	MOVQW(0,R7)
 	label('.6');
 	LDWI('rows');STW(R22);
 	LDW(R7);LSLW();ADDW(R22);DOKEQ(1);
 	label('.7');
-	LDI(1);ADDV(R7);
+	ADDIV(1,R7);
 	LDI(8);_CMPWS(R7);_BGT('.6');
 	LDI(0);STW(R8);
 	_MOVW(R8,[SP,2]);
@@ -61,7 +61,7 @@ def code1():
 	LDW(R6);LSLW();ADDW(R22);DOKEQ(1);
 	label('.15');
 	label('.12');
-	LDI(1);ADDV(R6);
+	ADDIV(1,R6);
 	LDI(8);_CMPWS(R6);_BGT('.11');
 	LDI(0);
 	label('.10');
@@ -79,7 +79,7 @@ def code2():
 	_MOVW(R9,[SP,4]);
 	CALLI('printf');
 	label('.24');
-	LDI(1);ADDV(R7);
+	ADDIV(1,R7);
 	LDI(8);_CMPWS(R7);_BGT('.23');
 	LDWI('.28');STW(R8);
 	_MOVW(R8,[SP,2]);

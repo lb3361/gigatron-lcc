@@ -1,4 +1,3 @@
-# /*
 %{
 
 /*
@@ -59,6 +58,7 @@ static void emitfmt1(const char*, Node, int, Node*, short*);
 static void export(Symbol);
 static void clobber(Node);
 static void preralloc(Node);
+static Node pregen(Node);
 static void function(Symbol, Symbol [], Symbol [], int);
 static void global(Symbol);
 static void import(Symbol);
@@ -87,6 +87,7 @@ static int  if_zpconst(Node);
 static int  if_zpglobal(Node);
 static int  if_incr(Node,int,int);
 static int  if_rmw(Node,int);
+static int  if_rmw_incr(Node,int,int);
 static int  if_not_asgn_tmp(Node,int);
 static int  if_cv_from(Node,int,int);
 static int  if_arg_reg_only(Node);
@@ -95,6 +96,7 @@ static int  if_arg_stk(Node);
 #define mincpu5(cost) ((cpu<5)?LBURG_MAX:(cost))
 #define mincpu6(cost) ((cpu<6)?LBURG_MAX:(cost))
 #define mincpu7(cost) ((cpu<7)?LBURG_MAX:(cost))
+#define ifcpu7(c1,c2) ((cpu<7)?(c2):(c1))
 #define if_spill(cost) ((spilling)?cost:LBURG_MAX)
 
 /* Registers */
@@ -456,12 +458,12 @@ ac: ADDP2(ac,iarg)  "%0%[1b]ADDW(%1);" 28
 ac: ADDI2(iarg,ac)  "%1%[0b]ADDW(%0);" 28
 ac: ADDU2(iarg,ac)  "%1%[0b]ADDW(%0);" 28
 ac: ADDP2(iarg,ac)  "%1%[0b]ADDW(%0);" 28
-ac: ADDI2(ac,conB)  "%0ADDI(%1);"      if_incr(a,17,27)
-ac: ADDU2(ac,conB)  "%0ADDI(%1);"      if_incr(a,17,27)
-ac: ADDP2(ac,conB)  "%0ADDI(%1);"      if_incr(a,17,27)
-ac: ADDI2(ac,conBn) "%0SUBI(-(%1));"   if_incr(a,17,27)
-ac: ADDU2(ac,conBn) "%0SUBI(-(%1));"   if_incr(a,17,27)
-ac: ADDP2(ac,conBn) "%0SUBI(-(%1));"   if_incr(a,17,27)
+ac: ADDI2(ac,conB)  "%0ADDI(%1);"      if_incr(a,27,10)
+ac: ADDU2(ac,conB)  "%0ADDI(%1);"      if_incr(a,27,10)
+ac: ADDP2(ac,conB)  "%0ADDI(%1);"      if_incr(a,27,10)
+ac: ADDI2(ac,conBn) "%0SUBI(-(%1));"   if_incr(a,27,10)
+ac: ADDU2(ac,conBn) "%0SUBI(-(%1));"   if_incr(a,27,10)
+ac: ADDP2(ac,conBn) "%0SUBI(-(%1));"   if_incr(a,27,10)
 ac: SUBI2(ac,iarg)  "%0%[1b]SUBW(%1);" 28
 ac: SUBU2(ac,iarg)  "%0%[1b]SUBW(%1);" 28
 ac: SUBP2(ac,iarg)  "%0%[1b]SUBW(%1);" 28
@@ -588,30 +590,30 @@ stmt: GTI2(ac,con0) "\t%0_BGT(%a)%{!4};\n" 28
 stmt: GEI2(ac,con0) "\t%0_BGE(%a)%{!4};\n" 28
 stmt: GTU2(ac,con0) "\t%0_BNE(%a)%{!4};\n" 28
 stmt: LEU2(ac,con0) "\t%0_BEQ(%a)%{!4};\n" 28
-stmt: LTI2(ac,conB) "\t%0_CMPIS(%1);_BLT(%a)%{!A};\n" (cpu>=7?56:36)
-stmt: LEI2(ac,conB) "\t%0_CMPIS(%1);_BLE(%a)%{!A};\n" (cpu>=7?56:36)
-stmt: GTI2(ac,conB) "\t%0_CMPIS(%1);_BGT(%a)%{!A};\n" (cpu>=7?56:36)
-stmt: GEI2(ac,conB) "\t%0_CMPIS(%1);_BGE(%a)%{!A};\n" (cpu>=7?56:36)
-stmt: LTU2(ac,conB) "\t%0_CMPIU(%1);_BLT(%a)%{!A};\n" (cpu>=7?56:36)
-stmt: LEU2(ac,conB) "\t%0_CMPIU(%1);_BLE(%a)%{!A};\n" (cpu>=7?56:36)
-stmt: GTU2(ac,conB) "\t%0_CMPIU(%1);_BGT(%a)%{!A};\n" (cpu>=7?56:36)
-stmt: GEU2(ac,conB) "\t%0_CMPIU(%1);_BGE(%a)%{!A};\n" (cpu>=7?56:36)
-stmt: LTI2(ac,iarg) "\t%0%[1b]_CMPWS(%1);_BLT(%a)%{!A};\n" 56
-stmt: LEI2(ac,iarg) "\t%0%[1b]_CMPWS(%1);_BLE(%a)%{!A};\n" 56
-stmt: GTI2(ac,iarg) "\t%0%[1b]_CMPWS(%1);_BGT(%a)%{!A};\n" 56
-stmt: GEI2(ac,iarg) "\t%0%[1b]_CMPWS(%1);_BGE(%a)%{!A};\n" 56
-stmt: LTU2(ac,iarg) "\t%0%[1b]_CMPWU(%1);_BLT(%a)%{!A};\n" 56
-stmt: LEU2(ac,iarg) "\t%0%[1b]_CMPWU(%1);_BLE(%a)%{!A};\n" 56
-stmt: GTU2(ac,iarg) "\t%0%[1b]_CMPWU(%1);_BGT(%a)%{!A};\n" 56
-stmt: GEU2(ac,iarg) "\t%0%[1b]_CMPWU(%1);_BGE(%a)%{!A};\n" 56
-stmt: LTI2(iarg,ac) "\t%1%[0b]_CMPWS(%0);_BGT(%a)%{!A};\n" 56
-stmt: LEI2(iarg,ac) "\t%1%[0b]_CMPWS(%0);_BGE(%a)%{!A};\n" 56
-stmt: GTI2(iarg,ac) "\t%1%[0b]_CMPWS(%0);_BLT(%a)%{!A};\n" 56
-stmt: GEI2(iarg,ac) "\t%1%[0b]_CMPWS(%0);_BLE(%a)%{!A};\n" 56
-stmt: LTU2(iarg,ac) "\t%1%[0b]_CMPWU(%0);_BGT(%a)%{!A};\n" 56
-stmt: LEU2(iarg,ac) "\t%1%[0b]_CMPWU(%0);_BGE(%a)%{!A};\n" 56
-stmt: GTU2(iarg,ac) "\t%1%[0b]_CMPWU(%0);_BLT(%a)%{!A};\n" 56
-stmt: GEU2(iarg,ac) "\t%1%[0b]_CMPWU(%0);_BLE(%a)%{!A};\n" 56
+stmt: LTI2(ac,conB) "\t%0_CMPIS(%1);_BLT(%a)%{!A};\n" ifcpu7(56,64)
+stmt: LEI2(ac,conB) "\t%0_CMPIS(%1);_BLE(%a)%{!A};\n" ifcpu7(56,64)
+stmt: GTI2(ac,conB) "\t%0_CMPIS(%1);_BGT(%a)%{!A};\n" ifcpu7(56,64)
+stmt: GEI2(ac,conB) "\t%0_CMPIS(%1);_BGE(%a)%{!A};\n" ifcpu7(56,64)
+stmt: LTU2(ac,conB) "\t%0_CMPIU(%1);_BLT(%a)%{!A};\n" ifcpu7(56,64)
+stmt: LEU2(ac,conB) "\t%0_CMPIU(%1);_BLE(%a)%{!A};\n" ifcpu7(56,64)
+stmt: GTU2(ac,conB) "\t%0_CMPIU(%1);_BGT(%a)%{!A};\n" ifcpu7(56,64)
+stmt: GEU2(ac,conB) "\t%0_CMPIU(%1);_BGE(%a)%{!A};\n" ifcpu7(56,64)
+stmt: LTI2(ac,iarg) "\t%0%[1b]_CMPWS(%1);_BLT(%a)%{!A};\n" ifcpu7(56,84)
+stmt: LEI2(ac,iarg) "\t%0%[1b]_CMPWS(%1);_BLE(%a)%{!A};\n" ifcpu7(56,84)
+stmt: GTI2(ac,iarg) "\t%0%[1b]_CMPWS(%1);_BGT(%a)%{!A};\n" ifcpu7(56,84)
+stmt: GEI2(ac,iarg) "\t%0%[1b]_CMPWS(%1);_BGE(%a)%{!A};\n" ifcpu7(56,84)
+stmt: LTU2(ac,iarg) "\t%0%[1b]_CMPWU(%1);_BLT(%a)%{!A};\n" ifcpu7(56,84)
+stmt: LEU2(ac,iarg) "\t%0%[1b]_CMPWU(%1);_BLE(%a)%{!A};\n" ifcpu7(56,84)
+stmt: GTU2(ac,iarg) "\t%0%[1b]_CMPWU(%1);_BGT(%a)%{!A};\n" ifcpu7(56,84)
+stmt: GEU2(ac,iarg) "\t%0%[1b]_CMPWU(%1);_BGE(%a)%{!A};\n" ifcpu7(56,84)
+stmt: LTI2(iarg,ac) "\t%1%[0b]_CMPWS(%0);_BGT(%a)%{!A};\n" ifcpu7(56,84)
+stmt: LEI2(iarg,ac) "\t%1%[0b]_CMPWS(%0);_BGE(%a)%{!A};\n" ifcpu7(56,84)
+stmt: GTI2(iarg,ac) "\t%1%[0b]_CMPWS(%0);_BLT(%a)%{!A};\n" ifcpu7(56,84)
+stmt: GEI2(iarg,ac) "\t%1%[0b]_CMPWS(%0);_BLE(%a)%{!A};\n" ifcpu7(56,84)
+stmt: LTU2(iarg,ac) "\t%1%[0b]_CMPWU(%0);_BGT(%a)%{!A};\n" ifcpu7(56,84)
+stmt: LEU2(iarg,ac) "\t%1%[0b]_CMPWU(%0);_BGE(%a)%{!A};\n" ifcpu7(56,84)
+stmt: GTU2(iarg,ac) "\t%1%[0b]_CMPWU(%0);_BLT(%a)%{!A};\n" ifcpu7(56,84)
+stmt: GEU2(iarg,ac) "\t%1%[0b]_CMPWU(%0);_BLE(%a)%{!A};\n" ifcpu7(56,84)
 
 # Nonterminals for assignments with MOVM/MOVL/MOVF:
 #   stmt: ASGNx(vdst,xAC) "\t%1%[0b]_xMOV(xAC,%0);\n"
@@ -909,19 +911,29 @@ regx: LOADU1(conB)       "\tMOVQB(%0,%c)\n" mincpu6(27)
 regx: LOADI2(conB)       "\tMOVQW(%0,%c)\n" mincpu6(29)
 regx: LOADU2(conB)       "\tMOVQW(%0,%c)\n" mincpu6(29)
 regx: LOADP2(conB)       "\tMOVQW(%0,%c)\n" mincpu6(29)
+ac: NEGI2(ac)         "%0NEGV(vAC);" mincpu6(30)
 
 # Read-modify-write
 rmw: VREGP "%a"
 rmw: zddr "%0"
 stmt: ASGNU1(rmw, LOADU1(ADDI2(CVUI2(INDIRU1(rmw)), con1))) "\tINC(%0);\n" if_rmw(a,16)
 stmt: ASGNI1(rmw, LOADI1(ADDI2(CVII2(INDIRI1(rmw)), con1))) "\tINC(%0);\n" if_rmw(a,16)
-stmt: ASGNI2(rmw, ADDI2(INDIRI2(rmw), ac)) "\t%2ADDV(%0);\n" mincpu6(if_rmw(a, 30))
-stmt: ASGNU2(rmw, ADDU2(INDIRU2(rmw), ac)) "\t%2ADDV(%0);\n" mincpu6(if_rmw(a, 30))
-stmt: ASGNP2(rmw, ADDP2(INDIRP2(rmw), ac)) "\t%2ADDV(%0);\n" mincpu6(if_rmw(a, 30))
-stmt: ASGNI2(rmw, SUBI2(INDIRI2(rmw), ac)) "\t%2SUBV(%0);\n" mincpu6(if_rmw(a, 30))
-stmt: ASGNU2(rmw, SUBU2(INDIRU2(rmw), ac)) "\t%2SUBV(%0);\n" mincpu6(if_rmw(a, 30))
-stmt: ASGNP2(rmw, SUBP2(INDIRP2(rmw), ac)) "\t%2SUBV(%0);\n" mincpu6(if_rmw(a, 30))
-
+stmt: ASGNI2(rmw, NEGI2(INDIRI2(rmw))) "\tNEGV(%0);\n" mincpu6(if_rmw(a, 48))
+stmt: ASGNI2(rmw, ADDI2(INDIRI2(rmw), ac)) "\t%2ADDV(%0);\n" mincpu7(if_rmw(a, 30))
+stmt: ASGNU2(rmw, ADDU2(INDIRU2(rmw), ac)) "\t%2ADDV(%0);\n" mincpu7(if_rmw(a, 30))
+stmt: ASGNP2(rmw, ADDP2(INDIRP2(rmw), ac)) "\t%2ADDV(%0);\n" mincpu7(if_rmw(a, 30))
+stmt: ASGNI2(rmw, SUBI2(INDIRI2(rmw), ac)) "\t%2SUBV(%0);\n" mincpu7(if_rmw(a, 30))
+stmt: ASGNU2(rmw, SUBU2(INDIRU2(rmw), ac)) "\t%2SUBV(%0);\n" mincpu7(if_rmw(a, 30))
+stmt: ASGNP2(rmw, SUBP2(INDIRP2(rmw), ac)) "\t%2SUBV(%0);\n" mincpu7(if_rmw(a, 30))
+stmt: ASGNP2(rmw, ADDP2(INDIRP2(rmw), conB)) "\tADDIV(%2,%0);\n" mincpu7(if_rmw_incr(a, 40, 10))
+stmt: ASGNU2(rmw, ADDU2(INDIRU2(rmw), conB)) "\tADDIV(%2,%0);\n" mincpu7(if_rmw_incr(a, 40, 10))
+stmt: ASGNI2(rmw, ADDI2(INDIRI2(rmw), conB)) "\tADDIV(%2,%0);\n" mincpu7(if_rmw_incr(a, 40, 10))
+stmt: ASGNP2(rmw, ADDP2(INDIRP2(rmw), conBn)) "\tSUBIV(-(%2),%0);\n" mincpu7(if_rmw_incr(a, 40, 10))
+stmt: ASGNU2(rmw, ADDU2(INDIRU2(rmw), conBn)) "\tSUBIV(-(%2),%0);\n" mincpu7(if_rmw_incr(a, 40, 10))
+stmt: ASGNI2(rmw, ADDI2(INDIRI2(rmw), conBn)) "\tSUBIV(-(%2),%0);\n" mincpu7(if_rmw_incr(a, 40, 10))
+stmt: ASGNP2(rmw, SUBP2(INDIRP2(rmw), conB)) "\tSUBIV(%2,%0);\n" mincpu7(if_rmw_incr(a, 40, 10))
+stmt: ASGNU2(rmw, SUBU2(INDIRU2(rmw), conB)) "\tSUBIV(%2,%0);\n" mincpu7(if_rmw_incr(a, 40, 10))
+stmt: ASGNI2(rmw, SUBI2(INDIRI2(rmw), conB)) "\tSUBIV(%2,%0);\n" mincpu7(if_rmw_incr(a, 40, 10))
 
 
 # /*-- END RULES --/
@@ -1022,37 +1034,33 @@ static int if_zpglobal(Node p)
   return LBURG_MAX;
 }
 
-static int if_incr(Node a, int c1, int c2)
+static int if_incr(Node a, int cost, int bonus)
 {
-  /* Avoid using the more efficient LDI(c);ADDW(r) over LDW(r);ADDI(c)
-     when value r is likely to be in a freshly assigned vAC. */
+  /* This assigns a lower cost to an increment/decrement operation
+     when there is evidence that the previous value was preserved in a
+     temporary. This is used to prefer dialect LDW(r);ADDW(i);STW(r)
+     or ADDIV(i,r) over the potentially more efficient LDI(i);ADDW(r);STW(r)
+     or LDI(i);ADDV(r). */
   extern Node head; /* declared in gen.c */
-  Node k = a->kids[0];
-  if (generic(a->op) == ADD &&
-      k && generic(k->op) == INDIR &&
-      k->kids[0] && specific(k->kids[0]->op) == VREG+P)
+  Node k;
+  Symbol syma;
+  if (a && (generic(a->op)==ADD || generic(a->op)==SUB) &&
+      (k = a->kids[0]) && generic(k->op) == INDIR &&
+      k->kids[0] && specific(k->kids[0]->op) == VREG+P &&
+      (syma = k->kids[0]->syms[0]) && syma->temporary )
     {
       Node h;
-      int cost = c2;
-      Symbol syma = k->kids[0]->syms[0];
-      if (syma->temporary)
-        for(h = head; h; h = h->link) {
-          if (h->kids[0] == a || h->kids[1] == a)
-            return cost;
-          else if (h->kids[0] == a && generic(h->op) == ARG)
-            return cost;
-          else if (generic(h->op) == ASGN && h->kids[0] &&
-                   h->kids[0]->syms[0] == syma)
-            cost = c1;
-          else if (generic(h->op) == ASGN &&
-                   h->kids[0] && specific(h->kids[0]->op) == VREG+P &&
-                   h->kids[0]->syms[0]->temporary )
-            /* cse temporary might go away */;
-          else
-            cost = c2;
-        }
+      int c = cost;
+      for(h = head; h; h = h->link) {
+        if (h->kids[0] == a || h->kids[1] == a)
+          return c;
+        if (generic(h->op) == ASGN &&
+            h->kids[0] && specific(h->kids[0]->op) == VREG+P &&
+            h->kids[0]->syms[0] == syma && syma->u.t.cse == h->kids[1]) 
+          c = cost - bonus;
+      }
     }
-  return c2;
+  return cost;
 }
 
 static int sametree(Node p, Node q) {
@@ -1088,6 +1096,15 @@ static int if_rmw(Node a, int cost)
         return cost;
     }
   return LBURG_MAX;
+}
+
+static int if_rmw_incr(Node a, int cost, int bonus)
+{
+  cost = if_rmw(a, cost);
+  if (cost < LBURG_MAX && (a = a->kids[1]))
+    if (generic(a->op) == ADD || generic(a->op) == SUB)
+      return if_incr(a, cost, bonus);
+  return cost;
 }
 
 static int if_not_asgn_tmp(Node p, int cost)
@@ -1429,6 +1446,46 @@ static void preralloc(Node p)
           }
         }
     }
+}
+
+
+static Node pregen(Node forest)
+{
+  Node p;
+  /* Reorganize to make rmw instruction more obvious */
+  for(p=forest; p; p=p->link) {
+    Node q = p->link;
+    if (generic(p->op) == ASGN && p->kids[0] &&
+        q && generic(q->op) == ASGN && q->kids[0] ) 
+      {
+        /* Change ASGN(v,...(u,...));ASGN(u,v)
+           into ASGN(u,...(u,...));ASGN(v,u)   */
+        Node v = p->kids[0];
+        Node u = p->kids[1];
+        while(u && !isaddrop(u->op))
+          u = u->kids[0];
+        if (generic(v->op) == ADDRL &&
+            v->syms[0] && v->syms[0]->temporary &&
+            sametree(u, q->kids[0]) )
+          {
+            Node w = q->kids[1];
+            if (w && generic(w->op) == LOAD)
+              w = w->kids[0];
+            if (w && generic(w->op) == INDIR &&
+                (w = w->kids[0]) && sametree(v,w) )
+              {
+                /* Match! */
+                q->kids[0]->op = v->op;
+                q->kids[0]->syms[0] = v->syms[0];
+                q->kids[0]->syms[0]->u.t.cse = q->kids[1];
+                v->op = w->op = u->op;
+                v->syms[0] = w->syms[0] = u->syms[0];
+              }
+          }
+      }
+  }
+  /* Continue with gen */
+  return gen(forest);
 }
 
 static void emitfmt2(const char *template, int len,
@@ -1988,7 +2045,7 @@ Interface gigatronIR = {
         emit,
         export,
         function,
-        gen,
+        pregen,
         global,
         import,
         local,

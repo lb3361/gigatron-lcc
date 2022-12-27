@@ -18,7 +18,7 @@ def code0():
 	MOVQW(0,R5)
 	label('.6');
 	LDW(R5);STW(R22);
-	LDI(1);ADDV(R5);
+	ADDIV(1,R5);
 	LDWI('f');STW(R21);
 	LDW(R22);LSLW();LSLW();ADDW(R22);ADDW(R21);STW(T2);_MOVF('.4',[T2]);
 	label('.7');
@@ -29,7 +29,7 @@ def code0():
 	LDWI('f');STW(R22);
 	LDW(R3);LSLW();LSLW();ADDW(R3);ADDW(R22);STW(R22);
 	_MOVF('.13',FAC);LDW(R22);_FADD();LDW(R22);_MOVF(FAC,[vAC]);
-	LDI(1);ADDV(R4);
+	ADDIV(1,R4);
 	label('.11');
 	CALLI('getchar');STW(R22);
 	STW(R3);
@@ -67,7 +67,7 @@ def code0():
 	CALLI('printf');
 	label('.19');
 	label('.16');
-	LDI(1);ADDV(R5);
+	ADDIV(1,R5);
 	LDI(127);_CMPWS(R5);_BGE('.15');
 	LDI(0);
 	label('.1');

@@ -36,7 +36,8 @@
     "vx0"   : { "cpu" : 6,
 		"inherits" : "dev6",
 		"romType" : "0x80",
-		"maxTicks" : 15
+		"maxTicks" : 15,
+		"has_altCmpOps" : 1
 	      },
     
     "dev7"  : { "cpu" : 7,

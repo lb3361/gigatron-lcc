@@ -55,7 +55,7 @@ def code3():
 	_SP(-8+32);DOKEQ(0);
 	LDW(R6);STW(R22);
 	STW(T3);_MOVW(R22,[SP,-12+32]);LDW(T3) #genspill
-	LDI(2);ADDV(R6);
+	ADDIV(2,R6);
 	LDW(R7);_BEQ('.9');
 	CALLI('f');STW(R21);
 	_SP(-10+32);DOKEA(R21);

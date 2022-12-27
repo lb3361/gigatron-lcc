@@ -60,7 +60,7 @@ def code2():
 	_BRA('.15');
 	label('.12');
 	LDW(R5);STW(R22);
-	LDI(1);ADDV(R5);
+	ADDIV(1,R5);
 	LD(R6);POKE(R22);
 	label('.13');
 	CALLI('getchar');
@@ -85,7 +85,7 @@ def code3():
 	PUSH();
 	LDI(65);_CMPWS(R8);_BGT('.19');
 	LDI(90);_CMPWS(R8);_BLT('.19');
-	LDI(32);ADDV(R8);
+	ADDIV(32,R8);
 	label('.19');
 	LDI(97);_CMPWS(R8);_BGT('.21');
 	LDI(122);_CMPWS(R8);_BLT('.21');
@@ -190,13 +190,13 @@ def code6():
 	PUSH();
 	_BRA('.47');
 	label('.46');
-	LDW(R8);STW(R22);
-	LDI(1);ADDV(R8);
-	LDW(R22);PEEK();_BNE('.49');
+	LDW(R8);
+	ADDIV(1,R8);
+	PEEK();_BNE('.49');
 	LDI(0);
 	_BRA('.45');
 	label('.49');
-	LDI(1);ADDV(R9);
+	ADDIV(1,R9);
 	label('.47');
 	LDW(R9);PEEK();STW(R22);
 	LDW(R8);PEEK();XORW(R22);_BEQ('.46');

@@ -467,10 +467,13 @@ def zpage_alloc(sz, label):
 def create_zpage_map():
     zpage_reserve(range(0xd0,0x100), "STACK")
     zpage_reserve(range(0,0x30), "V4")
+    zpage_reserve(range(0x80,0x81), "V4")
+    if args.cpu == 4:
+        zpage_reserve(range(0x81,0x82), "V4")
     if args.cpu >= 5:
         zpage_reserve(range(0x30,0x36), "V5")
     if args.cpu == 6:
-        zpage_reserve(range(0x80,0xd0), "VX0?")
+        zpage_reserve(range(0x81,0xd0), "VX0")
     if args.cpu >= 7:
         zpage_reserve(range(0x36,0x40), "V7")
 
@@ -2351,6 +2354,25 @@ def save_gt1(fname, start):
     with open(fname,"wb") as fd:
         seglist = segment_list.copy()
         seglist.sort(key = lambda x : x.saddr)
+        # collapse zeropage segments
+        zpseg = None
+        for s in seglist:
+            if not s.buffer:
+                continue
+            elif s.saddr & 0xff00:
+                break
+            elif not zpseg:
+                zpseg = s
+            else:
+                pc = zpseg.saddr + len(zpseg.buffer)
+                assert s.saddr >= pc
+                zpseg.buffer += builtins.bytes(s.saddr - pc)
+                if pc < 0x80 and s.saddr > 0x80:
+                    zpseg.buffer[0x80 - zpseg.saddr] = 1
+                zpseg.buffer += s.buffer
+                zpseg.eaddr = s.eaddr
+                s.buffer = None
+        # save segments
         for s in seglist:
             if not s.buffer:
                 continue

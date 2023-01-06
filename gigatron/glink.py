@@ -1797,6 +1797,8 @@ def read_rominfo(rom):
         args.cpu = romcpu
     if romcpu and args.cpu and args.cpu > romcpu:
         print(f"glink: warning: rom '{args.rom}' does not implement cpu{args.cpu}", file=sys.stderr)
+    if 'warning' in rominfo:
+        warning(rominfo['warning'])
     
 
 
@@ -2481,8 +2483,11 @@ def glink(argv):
                 print(f" No information found on rom '{args.rom}'")
             print()
             print('================= CPU INFO')
-            if args.cpu == 6:
-                print('  vCPU 6 is an experimental cpu with numerous additional opcodes')
+            if args.cpu == 7:
+                print('  vCPU 7 comes with the DEV7 roms and contains some new opcodes.')
+            elif args.cpu == 6:
+                print('  vCPU 6 comes with at67'"'"'s ROMvX0 and contains many new opcodes'
+                      ' whose encoding might change from release to release.')
             elif args.cpu == 5:
                 print('  vCPU 5 was introduced in ROMv5a with opcodes CALLI, CMPHU, CMPHS.')
             elif args.cpu == 4:

@@ -37,13 +37,16 @@
 		"inherits" : "dev6",
 		"romType" : "0x80",
 		"maxTicks" : 15,
-		"has_altCmpOps" : 1
+		"has_altCmpOps" : 1,
+		"warning" : "ROMvX0 opcodes may change often!"
+
 	      },
     
     "dev7"  : { "cpu" : 7,
 		"inherits" : "v6",
 		"romType" : "0xf8",
 		"maxTicks" : 15,
+		"may_work_with_map128k" : 1,
 		"has_SYS_Multiply_s16" :        { "addr" : "0x9e", "cycs" : 34  },
 		"has_SYS_Divide_u16" :          { "addr" : "0xa1", "cycs" : 34  }
 	      }

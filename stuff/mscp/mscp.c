@@ -36,7 +36,12 @@ char mscp_c_rcsid[] = "@(#)$Id: mscp.c,v 1.18 2003/12/14 15:12:12 marcelk Exp $"
 #include <string.h>
 #include <time.h>
 
+#ifdef __gigatron
+#include <gigatron/sys.h>
+#else
 typedef unsigned char byte;
+#endif
+
 #define INF 32000
 #define MAX(a,b) ((a)>(b) ? (a) : (b))
 #define MIN(a,b) ((a)<(b) ? (a) : (b))
@@ -114,7 +119,11 @@ static signed char undo_stack[6*1024]; /* Move undo administration */
 static unsigned long hash_stack[1024]; /* History of hashes, for repetition */
 static signed char * near undo_sp;
 
+#ifdef __gigatron
+static int maxdepth = 3;                /* Maximum search depth */
+#else
 static int maxdepth = 4;                /* Maximum search depth */
+#endif
 
 /* Constants for static move ordering (pre-scores) */
 #define PRESCORE_EQUAL       (10U<<9)
@@ -2023,6 +2032,23 @@ static void catch_sigint(int s)
         signal(s, catch_sigint);
 }
 
+
+#ifdef __gigatron
+static char startup_message[] =
+        "\n"
+        "This is MSCP 1.4 (Marcel's"
+	" Simple Chess Program)\n"
+        "\n"
+        "Copyright (C)1998-2003\n"
+	"Marcel van Kervinck\n"
+        "Distributed under the GNU\n"
+	"General Public License.\n"
+        "(See file COPYING.)\n"
+        "\n"
+	"Wait for the prompt\n"
+	"then type 'help' for\n"
+	"a list of commands\n";
+#else
 static char startup_message[] =
         "\n"
         "This is MSCP 1.4 (Marcel's Simple Chess Program)\n"
@@ -2032,6 +2058,7 @@ static char startup_message[] =
         "(See file COPYING or http://combinational.com/mscp/ for details.)\n"
         "\n"
         "Type 'help' for a list of commands\n";
+#endif
 
 int main(void)
 {
@@ -2044,6 +2071,10 @@ int main(void)
         puts(startup_message);
         signal(SIGINT, catch_sigint);
 
+#ifdef __gigatron
+	SYS_SetMode(3);
+#endif
+	
         for (i=0; i<sizeof(zobrist); i++) {
                 ( (byte*)zobrist )[i] = rnd() & 0xff;
         }
@@ -2080,6 +2111,9 @@ int main(void)
                         fputs("mscp> ", stdout);
                 }
                 fflush(stdout);
+#ifdef __gigatron
+		SYS_SetMode(1);
+#endif
                 if (readline(line, sizeof(line), stdin) < 0) {
                         break;
                 }
@@ -2095,6 +2129,9 @@ int main(void)
                         }
                 }
                 mscp_commands[cmd].cmd(line);
+#ifdef __gigatron
+		SYS_SetMode(3);
+#endif
 
                 while (computer[!WTM]) {
                         move = book_move();

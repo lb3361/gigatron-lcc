@@ -514,31 +514,38 @@ def create_register_names(base):
           "vLR":  0x001a, "vSP":  0x001c,
           "FAC":  0xFACFACFAC }
     # GLCC registers
-    if base < 0 or base + 0x30 > 0x100:
+    if base == None and 'registerBase' in rominfo:
+        base = int(str(rominfo['registerBase']))
+    if base == None:
+        base = zpage_alloc(0x30, "REGS:R0-23")
+    elif base < 0 or base + 0x30 > 0x100:
         fatal(f"Illegal register location {hex(base)}-{hex(base+0x2f)}.")
-    zpage_reserve(range(base,base+0x30), "REGISTERS")
+    else:
+        zpage_reserve(range(base,base+0x30), "REGS:R0-23")
     for i in range(0,24): d[f'R{i}'] = base + i + i
     for i in range(0,22): d[f'L{i}'] = d[f'R{i}']
     for i in range(0,21): d[f'F{i}'] = d[f'R{i}']
     d['SP'] = d['R23']
     # ROM-dependent registers
     t0t1 = t2t3 = b0lac = None
-    if 'TOT1' in rominfo:
-        t0t1 = int(str(rominfo['T0T1']),0)
+    if 'registerTOT1' in rominfo:
+        t0t1 = int(str(rominfo['registerT0T1']),0)
     else:
         t0t1 = symdefs['sysArgs0']
-    if 'T2T3' in rominfo:
-        t2t3 = int(str(rominfo['T2T3']),0)
+    if 'registerT2T3' in rominfo:
+        t2t3 = int(str(rominfo['registerT2T3']),0)
     elif args.cpu >= 7:
         t2t3 = symdefs['vT2_v7']
     else:
-        t2t3 = zpage_alloc(4,"T2T3")
-    if 'B0LAC' in rominfo:
-        b0lac = int(str(rominfo['B0LAC']),0)
+        t2t3 = zpage_alloc(4,"REGS:T2,T3")
+    if 'registerB0B1LAX' in rominfo:
+        b0lac = int(str(rominfo['registerB0B1LAX']),0)
     elif args.cpu >= 7:
         b0lac = symdefs['vB0_v7']
     else:
-        b0lac = zpage_alloc(7,"B0LAC")
+        b0lac = zpage_alloc(7,"REGS:B0-3,LAC")
+    debug(f"Registers: base:{hex(base)} T01:{hex(t0t1)} T23:{hex(t2t3)}")
+    debug(f"Registers: B012:{hex(b0lac)} LAX:{hex(b0lac+2)} LAC:{hex(b0lac+3)}")
     d.update({'T0':t0t1, 'T1':t0t1+2, 'T2':t2t3, 'T3':t2t3+2,
               'B0':b0lac, 'B1':b0lac+1, 'B2':b0lac+2, 'LAC':b0lac+3})
     # Publish register names
@@ -2510,7 +2517,7 @@ def glink(argv):
                             metavar='LBLCHG', type=int, action='store', default=200,
                             help='restart a pass whenever the label change counter reach this threshold')
         parser.add_argument('--register-base', dest='regbase', metavar='ADDR',
-                            type=lambda x: int(x,0), action='store', default=0x50,
+                            type=lambda x: int(x,0), action='store', default=None,
                             help='set base address of register block')
         parser.add_argument("--mapdir", type=str, action='append', metavar='MAPDIR',
                             help='add directories to search linker maps')

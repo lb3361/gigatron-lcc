@@ -18,15 +18,6 @@
 
 char mscp_c_rcsid[] = "@(#)$Id: mscp.c,v 1.18 2003/12/14 15:12:12 marcelk Exp $";
 
-#ifdef __gigatron
-# if _GLCC_VER >= 105040
-#  define near __near
-# endif
-#endif
-#ifndef near
-# define near /**/
-#endif
-
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
@@ -36,10 +27,30 @@ char mscp_c_rcsid[] = "@(#)$Id: mscp.c,v 1.18 2003/12/14 15:12:12 marcelk Exp $"
 #include <string.h>
 #include <time.h>
 
-#ifdef __gigatron
-#include <gigatron/sys.h>
-#else
+#ifndef __gigatron
+/* !GIGATRON */
+# include <stdint.h>
+# define near /**/
 typedef unsigned char byte;
+
+#else
+/* GIGATRON */
+# include <gigatron/sys.h>
+# define SUBTRACTIVE_RND 1
+# define AVOID_SCANF 1
+# define MAXDEPTH 3
+# define CORE (256)
+# if _GLCC_VER >= 105040
+#  define near __near
+# else
+#  define near /**/
+# endif
+typedef unsigned long uint32_t;
+typedef unsigned int uint16_t;
+typedef unsigned char uint8_t;
+typedef long int32_t;
+typedef int int16_t;
+typedef signed char int8_t;
 #endif
 
 #define INF 32000
@@ -49,8 +60,7 @@ typedef unsigned char byte;
 #define xisspace(c) isspace((int)(c)) /* Prevent warnings on crappy Solaris */
 #define xisalpha(c) isalpha((int)(c))
 
-
-#ifdef AVOID_SCANF
+#if AVOID_SCANF
 /* scanf avoidance functions */
 static void get_word(char *s, char *n) {
 	register int c = *s;
@@ -103,7 +113,7 @@ static byte castle[64]; /* Which pieces may participate in castling */
 static int computer[2]; /* Which side is played by the computer */
 static int xboard_mode; /* XBoard protocol, surpresses prompt */
 
-static unsigned long nodes; /* Node counter */
+static uint32_t nodes; /* Node counter */
 
 struct side {           /* Attacks */
         byte attack[64];
@@ -113,17 +123,16 @@ struct side {           /* Attacks */
 static struct side white, black;
 static struct side * near friend, * near enemy;
 
-static unsigned short history[64*64]; /* History-move heuristic counters */
+static uint16_t history[64*64]; /* History-move heuristic counters */
 
-static signed char undo_stack[6*1024]; /* Move undo administration */
-static unsigned long hash_stack[1024]; /* History of hashes, for repetition */
-static signed char * near undo_sp;
+static int8_t   undo_stack[6*1024]; /* Move undo administration */
+static uint32_t hash_stack[1024]; /* History of hashes, for repetition */
+static int8_t  * near undo_sp;
 
-#ifdef __gigatron
-static int maxdepth = 3;                /* Maximum search depth */
-#else
-static int maxdepth = 4;                /* Maximum search depth */
+#ifndef MAXDEPTH
+# define MAXDEPTH 4
 #endif
+static int maxdepth = MAXDEPTH;         /* Maximum search depth */
 
 /* Constants for static move ordering (pre-scores) */
 #define PRESCORE_EQUAL       (10U<<9)
@@ -138,15 +147,15 @@ static const int prescore_piece_value[] = {
 };
 
 struct move {
-        short move;
-        unsigned short prescore;
+        int16_t  move;
+        uint16_t prescore;
 };
 
 static struct move move_stack[1024];    /* History of moves */
 static struct move * near move_sp;
 
 static int piece_square[12][64];        /* Position evaluation tables */
-static unsigned long zobrist[12][64];   /* Hash-key construction */
+static uint32_t zobrist[12][64];        /* Hash-key construction */
 
 /*
  *  CORE is the number of entries in the opening book or transposition table.
@@ -154,27 +163,24 @@ static unsigned long zobrist[12][64];   /* Hash-key construction */
  *  so I don't want to waste space on a large table. This also makes MSCP
  *  fit well on 8bit machines.
  */
-#ifdef __gigatron__
-#define CORE (256)
-static near int booksize;                   /* Number of opening book entries */
-#else
-#define CORE (2048)
-static long booksize;                   /* Number of opening book entries */
+#ifndef CORE
+#define CORE 2048
 #endif
+static near int booksize;               /* Number of opening book entries */
 
 /* Transposition table and opening book share the same memory */
 static union {
         struct tt {                     /* Transposition table entry */
-                unsigned short hash;    /* - Identifies position */ 
-                short move;             /* - Best recorded move */
-                short score;            /* - Score */
+                uint16_t hash;          /* - Identifies position */ 
+                int16_t move;           /* - Best recorded move */
+                int16_t score;          /* - Score */
                 char flag;              /* - How to interpret score */
                 char depth;             /* - Remaining search depth */
         } tt[CORE];
         struct bk {                     /* Opening book entry */
-                unsigned long hash;     /* - Identifies position */
-                short move;             /* - Move for this position */
-                unsigned short count;   /* - Frequency */
+                uint32_t hash;          /* - Identifies position */
+                int16_t move;           /* - Move for this position */
+                uint16_t count;         /* - Frequency */
         } bk[CORE];
 } core;
 
@@ -277,18 +283,18 @@ static const byte knight_dirs[64] = {
  |      simple random generator                                         |
  +----------------------------------------------------------------------*/
 
-#ifdef __gigatron__
-static long rnd_seed = 1;
-static long rnd(void)
+static int32_t rnd_seed = 1;
+#if SUBTRACTIVE_RND
+static int32_t rnd(void)
 {
 	/* Subtractive rnd avoids costly multiplications */
-	static long state[55];
+	static int32_t state[55], x;
 	static int si=0, sj=0;
-	if (si == sj) {
+	if (si == sj || rnd_seed != x) {
 		/* Initialization */
 		int i,j;
-		long p1 = rnd_seed;
-		long p2 = 1;
+		int32_t p1 = rnd_seed;
+		int32_t p2 = 1;
 		for (i = 1, j = 21; i != 55; i++, j += 21) {
 			if (j >= 55)
 				j -= 55;
@@ -299,21 +305,21 @@ static long rnd(void)
 		}
 		si = 0;
 		sj = 24;
+		x = rnd_seed;
 		for (i=0; i != 165; i++)
 			rnd();
 	}
 	/* Subtrative business here */
 	if (si) si--; else si=54;
 	if (sj) sj--; else sj=54;
-	if ((rnd_seed = state[si] - state[sj]) < 0)
-		rnd_seed += 1000000000L;
-	return state[si] = rnd_seed;
+	if ((x = state[si] - state[sj]) < 0)
+		x += 1000000000L;
+	return state[si] = rnd_seed = x;
 }
 #else
-static long rnd_seed = 1;
-static long rnd(void)
+static int32_t rnd(void)
 {
-        long r = rnd_seed;
+        int32_t r = rnd_seed;
         r = 16807 * (r % 127773L) - 2836 * (r / 127773L);
         if (r < 0) r += 0x7fffffffL;
         return rnd_seed = r;
@@ -397,9 +403,9 @@ static int readline(char *line, int size, FILE *fp)
 
 /* Compute 32-bit Zobrist hash key. Normally 32 bits this is too small,
    but for MSCP's small searches it is OK */
-static unsigned long compute_hash(void)
+static uint32_t compute_hash(void)
 {
-        unsigned long hash = 0;
+        uint32_t hash = 0;
         int sq;
 
         for (sq=0; sq<64; sq++) {
@@ -735,11 +741,11 @@ static void make_move(int move)
 
 /* XXX Dirty hack. Used to signal normal move generation or
    generation of good captures only */
-static near unsigned short caps;
+static near uint16_t caps;
 
 static int push_move(int fr, int to)
 {
-        unsigned short prescore = PRESCORE_EQUAL;
+        uint16_t prescore = PRESCORE_EQUAL;
         int move;
 
         /* what do we capture */
@@ -1286,11 +1292,7 @@ static int cmp_bk(const void *ap, const void *bp)
 
 static void compact_book(void)
 {
-#ifdef __gigatron__
         int b = 0, c = 0;
-#else
-        long b = 0, c = 0;
-#endif
         qsort(BOOK, booksize, sizeof(BOOK[0]), cmp_bk);
         while (b<booksize) {
                 BOOK[c] = BOOK[b];
@@ -1301,9 +1303,6 @@ static void compact_book(void)
                 }
                 c++;
         }
-#ifdef __gigatron__
-	printf("Compacted book %d -> %d\n", booksize, c);
-#endif
         booksize = c;
 }
 
@@ -1314,11 +1313,21 @@ static void load_book(char *filename)
         int                     num, move;
 
         booksize = 0;
-
+#ifdef LOAD_BOOK_BIN
+	fp = fopen("book.bin", "rb");
+	if (fp) {
+		booksize = fread(&core, sizeof(struct bk), CORE, fp);
+		fclose(fp);
+		if (booksize > 0) {
+			printf("Loading opening book of size %d from 'book.bin'\n", booksize);
+			return;
+		}
+	}
+#endif
         fp = fopen(filename, "r");
         if (!fp) {
                 printf("no opening book: %s\n", filename);
-#ifndef __gigatron__
+#if NO_MERCY
                 exit(EXIT_FAILURE);     /* no mercy */
 #endif
 		return;
@@ -1338,25 +1347,26 @@ static void load_book(char *filename)
                                 if (booksize >= CORE) compact_book();
                         }
                         make_move(move);
-#ifdef __gigatron__
 			if (booksize >= CORE) break;
-#endif
                 }
                 while (ply>0) unmake_move(); /* @@@ wrong */
-#ifdef __gigatron__
 		if (booksize >= CORE) break;
-#endif
         }
         fclose(fp);
         compact_book();
+#ifdef SAVE_BOOK_BIN
+	fp = fopen("book.bin","wb");
+	fwrite(&core, sizeof(struct bk), booksize, fp);
+	fclose(fp);
+#endif
 }
 
 static int book_move(void)
 {
         int move = 0, sum = 0;
-        long x = 0, y, m;
+        int32_t x = 0, y, m;
         char *seperator = "book:";
-        unsigned long hash;
+        uint32_t hash;
 
         if (!booksize) return 0;
         y = booksize;
@@ -1757,14 +1767,12 @@ static int search(int depth, int alpha, int beta)
 }
 
 /* squeeze: compacts a long into a short */
-static unsigned short squeeze(unsigned long n)
+static uint16_t squeeze(uint32_t n)
 {
-        const unsigned long mask = ~0U<<11;
-        unsigned short s;
-
+        const uint32_t mask = ~0U<<11;
+        uint16_t s;
         for (s=0; n&mask; n>>=1, s-=mask)
                 /* SKIP */;
-
         return s | n;
 }
 
@@ -1774,7 +1782,7 @@ static int root_search(int maxdepth)
         int             score, best_score;
         int             move = 0;
         int             alpha, beta;
-        unsigned long   node;
+        uint32_t        node;
         struct move     *m;
 
         nodes = 0;
@@ -1836,7 +1844,7 @@ static int root_search(int maxdepth)
                         break; /* just one move to play */
                 }
 
-                printf(" %5lu %3d %+1.2f ", nodes, depth, best_score / 100.0);
+                printf(" %5lu %3d %+1.2f ", (long)nodes, depth, best_score / 100.0);
                 print_move_san(move);
                 puts("");
 
@@ -1861,9 +1869,7 @@ static void cmd_bd(char *dummy /* @unused */)
 static void cmd_book(char *dummy)
 {
         int move;
-
-        printf("%ld moves in book\n", booksize);
-
+        printf("%ld moves in book\n", (long)booksize);
         move = book_move();
         if (move) {
                 print_move_san(move);
@@ -1955,7 +1961,7 @@ static void cmd_go(char *dummy)
 static void cmd_test(char *s)
 {
         int d = maxdepth;
-#ifdef AVOID_SCANF
+#if AVOID_SCANF
 	skip_word_get_int(s, &d);
 #else
         sscanf(s, "%*s%d", &d);
@@ -1965,7 +1971,7 @@ static void cmd_test(char *s)
 
 static void cmd_set_depth(char *s)
 {
-#ifdef AVOID_SCANF
+#if AVOID_SCANF
 	skip_word_get_int(s, &maxdepth);
 #else
         if (1==sscanf(s, "%*s%d", &maxdepth))
@@ -2131,7 +2137,7 @@ int main(void)
                 if (readline(line, sizeof(line), stdin) < 0) {
                         break;
                 }
-#ifdef AVOID_SCANF
+#if AVOID_SCANF
 		get_word(line, name); if (! name[0]) continue;
 #else
                 if (1 != sscanf(line, "%s", name)) continue;

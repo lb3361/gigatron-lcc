@@ -40,6 +40,7 @@
 		"has_altCmpOps" : 1,
 		"registerT2T3" : "0xcc",
 		"registerB0B1LAX": "0xc1",
+		"registerBase": "0x50",
 		"warning" : "ROMvX0 opcodes may change often!"
 	      },
     

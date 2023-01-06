@@ -458,8 +458,8 @@ def zpage_reserve(rng, lbl, error_on_conflict=True):
         else:
             zpage_map[i] = lbl
 
-def zpage_alloc(sz, label):
-    for i in range(0,256-sz):
+def zpage_alloc(sz, label, fromAddr=0):
+    for i in range(fromAddr, 256):
         if zpage_map[i:i+sz].count(None) == sz:
             zpage_reserve(range(i, i+sz), label)
             return i
@@ -475,7 +475,7 @@ def create_zpage_map():
     if args.cpu == 6:
         zpage_reserve(range(0x81,0xd0), "VX0")
     if args.cpu >= 7:
-        zpage_reserve(range(0x36,0x40), "V7")
+        zpage_reserve(range(0x81,0x8c), "V7")
 
 def create_zpage_segments():
     segs = []
@@ -513,21 +513,14 @@ def create_register_names(base):
           "vACL": 0x0018, "vACH": 0x0019,
           "vLR":  0x001a, "vSP":  0x001c,
           "FAC":  0xFACFACFAC }
-    # GLCC registers
-    if base == None and 'registerBase' in rominfo:
-        base = int(str(rominfo['registerBase']))
-    if base == None:
-        base = zpage_alloc(0x30, "REGS:R0-23")
-    elif base < 0 or base + 0x30 > 0x100:
-        fatal(f"Illegal register location {hex(base)}-{hex(base+0x2f)}.")
-    else:
-        zpage_reserve(range(base,base+0x30), "REGS:R0-23")
-    for i in range(0,24): d[f'R{i}'] = base + i + i
-    for i in range(0,22): d[f'L{i}'] = d[f'R{i}']
-    for i in range(0,21): d[f'F{i}'] = d[f'R{i}']
-    d['SP'] = d['R23']
     # ROM-dependent registers
     t0t1 = t2t3 = b0lac = None
+    if 'registerB0B1LAX' in rominfo:
+        b0lac = int(str(rominfo['registerB0B1LAX']),0)
+    elif args.cpu >= 7:
+        b0lac = symdefs['vB0_v7']
+    else:
+        b0lac = zpage_alloc(7,"REGS:B0-3,LAC", 0x80)
     if 'registerTOT1' in rominfo:
         t0t1 = int(str(rominfo['registerT0T1']),0)
     else:
@@ -537,13 +530,20 @@ def create_register_names(base):
     elif args.cpu >= 7:
         t2t3 = symdefs['vT2_v7']
     else:
-        t2t3 = zpage_alloc(4,"REGS:T2,T3")
-    if 'registerB0B1LAX' in rominfo:
-        b0lac = int(str(rominfo['registerB0B1LAX']),0)
-    elif args.cpu >= 7:
-        b0lac = symdefs['vB0_v7']
+        t2t3 = zpage_alloc(4,"REGS:T2,T3", 0x80)
+    # GLCC registers
+    if base == None and 'registerBase' in rominfo:
+        base = int(str(rominfo['registerBase']),0)
+    if base == None:
+        base = zpage_alloc(0x30, "REGS:R0-23", 0x90)
+    elif base < 0 or base + 0x30 > 0x100:
+        fatal(f"Illegal register location {hex(base)}-{hex(base+0x2f)}.")
     else:
-        b0lac = zpage_alloc(7,"REGS:B0-3,LAC")
+        zpage_reserve(range(base,base+0x30), "REGS:R0-23")
+    for i in range(0,24): d[f'R{i}'] = base + i + i
+    for i in range(0,22): d[f'L{i}'] = d[f'R{i}']
+    for i in range(0,21): d[f'F{i}'] = d[f'R{i}']
+    d['SP'] = d['R23']
     debug(f"Registers: base:{hex(base)} T01:{hex(t0t1)} T23:{hex(t2t3)}")
     debug(f"Registers: B012:{hex(b0lac)} LAX:{hex(b0lac+2)} LAC:{hex(b0lac+3)}")
     d.update({'T0':t0t1, 'T1':t0t1+2, 'T2':t2t3, 'T3':t2t3+2,

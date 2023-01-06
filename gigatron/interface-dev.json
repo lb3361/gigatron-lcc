@@ -2,11 +2,12 @@
     "SYS_Multiply_s16_v7_34"      : "0x009e",
     "SYS_Divide_s16_v7_34"        : "0x00a1",
 
-    "vBC_v7"               : "0x0036",
-    "vDE_v7"               : "0x0038",
-    "vLAX_v7"              : "0x003a",
-    "vLAC_v7"              : "0x003b",
-    "vFLG_v7"              : "0x003f",
+    "vB0_v7"               : "0x0035",
+    "vB1_v7"               : "0x0036",
+    "vB2_v7"               : "0x0037",
+    "vLAC_v7"              : "0x0038",
+    "vT2_v7"               : "0x003c",
+    "vT3_v7"               : "0x003e",
     "userVars_v7"          : "0x0040",
 
     "POKEA_v7"         : "0x0339",
@@ -44,5 +45,7 @@
     "DOKEI_v7"         : "0x3562",
     "BNE"              : "0x3572",
     "ADDIV_v7"         : "0x357d",
-    "SUBIV_v7"         : "0x359c"
+    "SUBIV_v7"         : "0x359c",
+    "LDT2_v7"          : "0x35b5",
+    "LDT3_v7"          : "0x35c0"
 }

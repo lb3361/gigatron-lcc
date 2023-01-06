@@ -18,7 +18,7 @@ typedef void (*sig_handler_t)(int);
 #define SIGFPE  4                 /*  runtime */
 #define SIGINT  5                 /*  n/a     */
 #define SIGTERM 6                 /*  n/a     */
-#define SIGVIRQ ((int)_sigvirq)   /*  VIRQ=7  */
+#define SIGVIRQ SIGVIRQ_is_deprecated
 
 #define FPE_INTDIV      1       /* integer divide by zero */
 #define FPE_FLTOVF      2       /* floating point overflow */
@@ -30,8 +30,5 @@ typedef void (*sig_handler_t)(int);
 
 sig_handler_t signal(int, sig_handler_t);
 int raise(int);
-
-/* A reference to this constant will import SIGVIRQ support */
-extern const char _sigvirq;
 
 #endif /* __SIGNAL */

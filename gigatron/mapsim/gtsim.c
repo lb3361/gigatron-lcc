@@ -275,12 +275,14 @@ double feek(word a) {
   return 0;
 }
 
-/* Register base. Default is now 0x40.  
-   Code that does not advertise regbase with
-   SYS_regbase is assumed to use the old value 0x80.
+/* Register base.
+   Code that does not advertise register bases assume old values.
 */
 
-unsigned int regbase = 0x80;
+unsigned int regbase = 0x90;
+unsigned int b0base = 0x81;
+unsigned int t0base = 0x88;
+unsigned int t2base = 0x8c;
 
 #define vPC       (0x16)
 #define vAC       (0x18)
@@ -288,9 +290,10 @@ unsigned int regbase = 0x80;
 #define vSP       (0x1c)
 #define sysFn     (0x22)
 #define sysArgs0  (0x24+0)
-#define B0        (0xc1)
-#define LAC       (0xc4)
-#define T0        (0xc8)
+#define B0        (b0base)
+#define LAC       (b0base+3)
+#define T0        (t0base)
+#define T2        (t2base)
 #define R0        (regbase+0)
 #define R8        (regbase+16)
 #define R9        (regbase+18)
@@ -421,6 +424,9 @@ word loadGt1(const char *gt1)
 void sys_regbase(void)
 {
   regbase = deek(vAC);
+  b0base = peek(sysArgs0);
+  t0base = peek(sysArgs0+1);
+  t2base = peek(sysArgs0+2);
 }
 
 void sys_exit(void)
@@ -840,8 +846,8 @@ int disassemble(word addr, char **pm, char *operand)
         *pm = (b > 0) ? "S??" : "HALT";
       return 2;
     }
-    case 0x39:  *pm = "MOVQB"; goto oper8x2;  /* v7 */
-    case 0x3b:  *pm = "MOVQW"; goto oper8x2;  /* v7 */
+    case 0x39:  *pm = "MOVQB"; goto oper8x2r; /* v7 */
+    case 0x3b:  *pm = "MOVQW"; goto oper8x2r; /* v7 */
     case 0x3d:  *pm = "DEEKA"; goto oper8;    /* v7 */
     case 0x3f:  *pm = "JEQ"; goto oper16p2;   /* v7 */
     case 0x41:  *pm = "DEEKV"; goto oper8;    /* v7 */
@@ -886,6 +892,9 @@ int disassemble(word addr, char **pm, char *operand)
     oper8x2:
       sprintf(operand, "$%02x,$%02x", peek(addlo(addr,1)), peek(addlo(addr,2)));
       return 3;
+    oper8x2r:
+      sprintf(operand, "$%02x,$%02x", peek(addlo(addr,2)), peek(addlo(addr,1)));
+      return 3;
     }
 }
 
@@ -908,7 +917,7 @@ void print_trace(CpuState *S)
             peek(B0), peek(B0+1), peek(B0+2), leek(LAC));
   if (strchr(trace, 't'))
     fprintf(stderr, " T[0-3]=%04x %04x %04x %04x",
-            deek(T0), deek(T0+2), deek(T0+4), deek(T0+6));
+            deek(T0), deek(T0+2), deek(T2), deek(T2+2));
   if (strchr(trace, 'f')) {
     int as = peek(B0);
     int ae = peek(B0+1);

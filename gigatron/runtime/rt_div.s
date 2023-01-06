@@ -81,6 +81,7 @@ def scope():
             LD(YV+1);ANDI(0x40);_BEQ('.divu2')      # - but y is small enough
             label('.bigy')                          # y large
             LDI(0);STW(MV)                          # - repeated subtractions
+            assert MV != T3
             LDW(T3);STW(XV)
             BRA('.loop1')
             label('.loop0')                         #   (loops at most 3 times)

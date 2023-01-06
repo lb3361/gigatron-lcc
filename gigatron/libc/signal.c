@@ -2,7 +2,6 @@
 #include <gigatron/libc.h>
 #include <gigatron/sys.h>
 
-extern void __glink_weak__setsigvirq(sig_handler_t);
 static sig_handler_t sigvec[8];
 
 sig_handler_t signal(int signo, sig_handler_t h)
@@ -16,8 +15,6 @@ sig_handler_t signal(int signo, sig_handler_t h)
 	sigvec[signo] = h;
 	/* activate */
 	_raise_disposition = RAISE_EMITS_SIGNAL;
-	if (__glink_weak__setsigvirq && signo == 7 /* sigvirq */)
-		__glink_weak__setsigvirq(h);
 	return old;
 }
 

@@ -455,15 +455,21 @@ def zpage_reserve(rng, lbl, error_on_conflict=True):
         else:
             zpage_map[i] = lbl
 
+def zpage_alloc(sz, label):
+    for i in range(0,256-sz):
+        if zpage_map[i:i+sz].count(None) == sz:
+            zpage_reserve(range(i, i+sz), label)
+            return i
+
 def create_zpage_map():
-    zpage_reserve(range(0,0x30), "ROMVAR")
-    zpage_reserve(range(0x80,0x81), "ROMVAR")
-    zpage_reserve(range(0xc0,0xd0), "RUNTIME")
     zpage_reserve(range(0xd0,0x100), "STACK")
-    if 'has_vIRQ' in rominfo:
-        zpage_reserve(range(0x30,0x36), "VIRQ") # saving vCpuSelect
-    if romtype == 0x38:                         # ctrlBits in ROMv4
-        zpage_reserve(range(0x81,0x82), "ROMVAR")
+    zpage_reserve(range(0,0x30), "V4")
+    if args.cpu >= 5:
+        zpage_reserve(range(0x30,0x36), "V5")
+    if args.cpu == 6:
+        zpage_reserve(range(0x80,0xd0), "VX0?")
+    if args.cpu >= 7:
+        zpage_reserve(range(0x36,0x40), "V7")
 
 def create_zpage_segments():
     segs = []
@@ -497,24 +503,39 @@ for s in module_builtins_okay.split():
         module_builtins[s] = getattr(__builtins__, s)
 
 def create_register_names(base):
-    if base < 0 or base + 0x30 > 0x100:
-        fatal(f"Illegal register location {hex(base)}-{hex(base+0x2f)}.")
-    d = { # Traditional
-          "vPC":  0x0016, "vAC":  0x0018,
+    d = { "vPC":  0x0016, "vAC":  0x0018,
           "vACL": 0x0018, "vACH": 0x0019,
           "vLR":  0x001a, "vSP":  0x001c,
-          # ROMvX0 names
-          "vLAC": 0xc4, "vDST": 0xcc,
-          # GLCC names
-          "B0": 0xc1, "B1": 0xc2, "B2": 0xc3, "LAC": 0xc4,
-          "T0": 0xc8, "T1": 0xca, "T2": 0xcc, "T3": 0xce,
           "FAC":  0xFACFACFAC }
     # GLCC registers
+    if base < 0 or base + 0x30 > 0x100:
+        fatal(f"Illegal register location {hex(base)}-{hex(base+0x2f)}.")
     zpage_reserve(range(base,base+0x30), "REGISTERS")
     for i in range(0,24): d[f'R{i}'] = base + i + i
     for i in range(0,22): d[f'L{i}'] = d[f'R{i}']
     for i in range(0,21): d[f'F{i}'] = d[f'R{i}']
     d['SP'] = d['R23']
+    # ROM-dependent registers
+    t0t1 = t2t3 = b0lac = None
+    if 'TOT1' in rominfo:
+        t0t1 = int(str(rominfo['T0T1']),0)
+    else:
+        t0t1 = symdefs['sysArgs0']
+    if 'T2T3' in rominfo:
+        t2t3 = int(str(rominfo['T2T3']),0)
+    elif args.cpu >= 7:
+        t2t3 = symdefs['vT2_v7']
+    else:
+        t2t3 = zpage_alloc(4,"T2T3")
+    if 'B0LAC' in rominfo:
+        b0lac = int(str(rominfo['B0LAC']),0)
+    elif args.cpu >= 7:
+        b0lac = symdefs['vB0_v7']
+    else:
+        b0lac = zpage_alloc(7,"B0LAC")
+    d.update({'T0':t0t1, 'T1':t0t1+2, 'T2':t2t3, 'T3':t2t3+2,
+              'B0':b0lac, 'B1':b0lac+1, 'B2':b0lac+2, 'LAC':b0lac+3})
+    # Publish register names
     for (k,v) in d.items():
         module_dict[k] = v
         globals()[k] = v
@@ -950,6 +971,14 @@ def JGE(d):
         emit(0xc5, lo(d-2), hi(d))
     else:
         emit_op("JGE_v7", lo(d-2), hi(d))
+@vasm
+def LDT2(d):
+    d=int(v(d))
+    emit_op('LDT2_v7', lo(d), hi(d))
+@vasm
+def LDT3(d):
+    d=int(v(d))
+    emit_op('LDT3_v7', lo(d), hi(d))
 @vasm
 def MOVB(s,d):
     check_cpu(99) # FIXME
@@ -1646,7 +1675,7 @@ def _FSCALB():
 def _CALLI(d):
     '''Call subroutine at far location d.
        - For cpu >= 5. this function just emits a CALLI instruction
-       - For cpu < 5, this function trashes 'sysArgs6', 'sysArgs7' and [SP-2].'''
+       - For cpu < 5, this function can trash sysArgs[67].'''
     if args.cpu >= 5:
         CALLI(d)
     else:
@@ -2455,8 +2484,6 @@ def glink(argv):
         read_interface()
         create_zpage_map()
         create_register_names(args.regbase)
-        symdefs['_runbase'] = 0xc0
-        symdefs['_regbase'] = args.regbase
         args.map = args.map or '32k'
         sm = args.map.split(',')
         args.map = sm[0]

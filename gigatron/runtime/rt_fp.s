@@ -553,7 +553,7 @@ def scope():
         # subtraction branch
         label('.fsubx1')
         LD(AS);XORI(0x80);ST(AS)         # - assume farg sign
-        LD(AM+4);STW(T3+1)
+        LD(AM+4);ST(T3+1)
         _CALLJ('__@amneg')               # - negate fac
         _CALLJ('__@amaddbm')
         LDW(AM+3);ANDW(T3)

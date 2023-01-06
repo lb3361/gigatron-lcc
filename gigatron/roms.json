@@ -38,8 +38,9 @@
 		"romType" : "0x80",
 		"maxTicks" : 15,
 		"has_altCmpOps" : 1,
+		"T2T3" : "0xcc",
+		"B0LAC": "0xc1",
 		"warning" : "ROMvX0 opcodes may change often!"
-
 	      },
     
     "dev7"  : { "cpu" : 7,

@@ -47,5 +47,9 @@
     "ADDIV_v7"         : "0x357d",
     "SUBIV_v7"         : "0x359c",
     "LDT2_v7"          : "0x35b5",
-    "LDT3_v7"          : "0x35c0"
+    "LDT3_v7"          : "0x35c0",
+    "COPY_v7"          : "0x35cb",
+    "COPYN_v7"         : "0x35cf",         
+    "MOVL_v7"          : "0x35dd",
+    "MOVF_v7"          : "0x35df"
 }

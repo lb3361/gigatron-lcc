@@ -1,28 +1,24 @@
 
-# This variant uses only the NCOPY opcode. Requires cpu6.
-def scope_ncopy():
+# This variant uses only the COPY/COPYN opcodes. Requires cpu7.
+def scope_copy_op():
     def code0():
         nohop()
         label('memcpy');                            # R8=d, R9=s, R10=l
-        PUSH()
-        LDW(R8);STW(vDST)
-        label('.memcpy1')
-        LDW(R10);_BEQ('.memcpy3')
-        LD(R10+1);_BEQ('.memcpy2')
-        LDW(R9);NCOPY(0);STW(R9)
-        DEC(R10+1);_BRA('.memcpy1')
-        label('.memcpy2')
-        LDWI(v('.ncopy')+1);POKEA(R10)
-        LDW(R9);label('.ncopy');NCOPY(1)
-        label('.memcpy3')
-        LDW(R8);tryhop(2);POP();RET()
+        LDW(R8);STW(T2)
+        LDW(R9);STW(T3)
+        LDW(R10);BRA('memcpy2')
+        label('memcpy1')
+        COPY()
+        label('memcpy2')
+        BNE('memcpy1')
+        RET()
 
     module(name='memcpy.s',
            code=[('EXPORT', 'memcpy'),
                  ('CODE', 'memcpy', code0) ])
     
 
-# This longer variant uses SYS_CopyMemory.
+# This longer but often faster variant uses SYS_CopyMemory.
 def scope_syscopymemory():
     info = rominfo['has_SYS_CopyMemory']
     addr = int(str(info['addr']),0)
@@ -118,8 +114,9 @@ def scope_vcpu():
                  ('CODE', '_memcpy0', code0),
                  ('CODE', 'memcpy', code1) ])
 
-
-if 'has_SYS_CopyMemory' in rominfo:
+if args.cpu >= 7:
+    scope_copy_op()
+elif 'has_SYS_CopyMemory' in rominfo:
     scope_syscopymemory()
 else:
     scope_vcpu()

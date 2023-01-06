@@ -178,8 +178,11 @@ def check_br(x):
 
 def check_cpu(v):
     if args.cpu < v and final_pass:
-        stb = traceback.extract_stack(limit=2)
-        error(f"opcode {stb[0].name} not implemented by cpu={args.cpu}", dedup=True)
+        stb = traceback.extract_stack(limit=3)
+        name = stb[1].name
+        if name != name.upper():
+            name = stb[0].name
+        error(f"opcode {name} not implemented by cpu={args.cpu}", dedup=True)
 
 def resolve(s, ignore=None):
     '''Resolve a global symbol and return its value or None.
@@ -433,7 +436,7 @@ def emit_op(*args):
             op = symdefs[arg]
             oq = op >> 8
             if oq == 0x35:
-                bytes.append(0x35)
+                bytes.append(oq)
             elif oq != 0x3:
                 error(f"emit_op: cannot emit opcode {arg} defined as {hex(op)}")
             bytes.append(op & 0xff)
@@ -974,29 +977,47 @@ def JGE(d):
 @vasm
 def LDT2(d):
     d=int(v(d))
-    emit_op('LDT2_v7', lo(d), hi(d))
+    check_cpu(6); 
+    if is_zeropage(d):
+        MOVQW(check_zp(d), T2)
+    elif args.cpu == 6:
+        MOVQB(lo(d),T2)
+        MOVQB(hi(d),T2+1)
+    else:
+        emit_op('LDT2_v7', lo(d), hi(d))
 @vasm
 def LDT3(d):
     d=int(v(d))
-    emit_op('LDT3_v7', lo(d), hi(d))
-@vasm
-def MOVB(s,d):
-    check_cpu(99) # FIXME
-@vasm
-def MOVW(s,d):
-    check_cpu(99) # FIXME
+    check_cpu(6);
+    if is_zeropage(d):
+        MOVQW(check_zp(d), T3)
+    elif args.cpu == 6:
+        MOVQB(lo(d),T3)
+        MOVQB(hi(d),T3+1)
+    else:
+        emit_op('LDT3_v7', lo(d), hi(d))
 @vasm
 def MOVL(s,d):
-    check_cpu(99) # FIXME
-    emit_prefx3(0xcd, check_zp(s), check_zp(d))
+    if args.cpu == 6:
+        tryhop(4);emit(0xc7, check_zp(d), 0xcd, check_zp(s))
+    else:
+        emit_op("MOVL_v7", check_zp(d), check_zp(s))
 @vasm
 def MOVF(s,d):
-    check_cpu(99) # FIXME
-    emit_prefx3(0xd0, check_zp(s), check_zp(d))
+    if args.cpu == 6:
+        tryhop(4);emit(0xc7, check_zp(d), 0xd0, check_zp(s))
+    else:
+        emit_op("MOVF_v7", check_zp(d), check_zp(s))
 @vasm
-def NCOPY(n):
-    check_cpu(99) # FIXME
-    emit_prefx2(0xcd, check_zp(n))
+def COPY():
+    emit_op("COPY_v7")
+@vasm
+def COPYN(n):
+    n = check_zp(n)
+    if args.cpu == 6:
+        LDW(T3);tryhop(3);emit(0x2f,n,0xcd);STW(T3)
+    else:
+        emit_op("COPYN_v7", n)
 @vasm
 def NEGV(d):
     if args.cpu == 6:
@@ -1210,24 +1231,29 @@ def _MOVW(s,d): # was _MOV
             _SP(d[1]); d = [vAC]
         if args.cpu >= 6 and is_zeropage(s) and d == [vAC]:
             DOKEA(s)
-        elif d == [vAC] and s == vAC:
-            error("Cannot _MOVW from vAC to [vAC] or [SP, offset]")
+        elif args.cpu >= 6 and is_zeropage(d) and s == [vAC]:
+            DEEKA(d)
         elif d == [vAC]:
-            STW(T2); _LDW(s); DOKE(T2)
-        elif is_zeropage(d):
+            if s == vAC:
+                error("Cannot _MOVW from vAC to [vAC] or [SP, offset]")
+            STW(T2);_LDW(s);DOKE(T2)
+        elif is_zeropage(d) or args.cpu >= 6:
             if s == [vAC]:
                 DEEK()
             elif s != vAC:
                 _LDW(s)
-            if d != vAC:
+            if is_zeropage(d):
                 STW(d)
-        elif s == vAC or s == [vAC]:
-            if s == [vAC]:
-                DEEK()
-            STW(T3); _LDI(d); STW(T2);
-            LDW(T3); DOKE(T2)
+            else:
+                LDT2(d); DOKE(T2)
         else:
-            _LDI(d); STW(T2); _LDW(s); DOKE(T2)
+            if s != vAC and s != [vAC]:
+                _LDI(d); STW(T2); _LDW(s); DOKE(T2)
+            else:
+                if s == [vAC]:
+                    DEEK()
+                STW(T3); _LDI(d); STW(T2);
+                LDW(T3); DOKE(T2)
 @vasm
 def _BRA(d):
     emitjump(v(d))
@@ -1344,22 +1370,20 @@ def _MOVM(s,d,n,align=1): # was _BMOV
             _SP(s[1]); s = [vAC]
         elif type(d) == list and len(d) == 2 and d[0] == SP:
             _SP(d[1]); d = [vAC]
-        if args.cpu >= 99: # FIXME
+        if args.cpu >= 6:
             if d == [vAC]:
                 STW(T2)
-            elif d != [T2] and s != [vAC]:
-                _LDI(d);STW(T2)
             elif d != [T2]:
-                MOVQW(lo(d),T2)
-                if not is_zeropage(d):
-                    MOVQB(hi(d),T2+1)
-            if s != [vAC]:
-                _LDI(s)
+                LDT2(d)
+            if s == [vAC]:
+                STW(T3)
+            else:
+                LDT3(s)
             while n >= 256:
                 n = n -256
-                NCOPY(0)
+                COPYN(0)
             if n > 0:
-                NCOPY(n)
+                COPYN(n)
         else:
             if d == [vAC]:
                 STW(T2)
@@ -1392,43 +1416,41 @@ def _MOVL(s,d): # was _LMOV
             _SP(d[1]); d = [vAC]
         if is_zeropage(d, 3):
             if is_zeropage(s, 3):
-                if args.cpu >= 99: # FIXME
-                    MOVL(s,d)                        # z->z :  4 bytes (cpu6)
+                if args.cpu >= 6:
+                    MOVL(s,d)                        # z->z :  4 bytes (cpu7)
                 elif args.cpu >= 5:
                     LDWI(((d & 0xff) << 8) | (s & 0xff))
                     extern('_@_lcopyz_')
-                    _CALLI('_@_lcopyz_')              # z->z :  6 bytes
+                    _CALLI('_@_lcopyz_')             # z->z :  6 bytes
                 else:
                     LDW(s);STW(d);LDW(s+2);STW(d+2)
-            elif args.cpu >= 99: # FIXME
+            elif args.cpu >= 6:
                 if s != [vAC]:
-                    _LDI(s)
-                LEEKA(d)                             # a|l->z: 4,6,7 bytes (cpu6)
+                    _LDI(s)                          # l->z : 9 bytes (cpu7)
+                DEEKA(d);ADDI(2);DEEKA(d+2)          # a->z : 6 bytes (cpu7)
             elif s != [vAC]:
                 _LDW(s); STW(d);
-                _LDW(s+2); STW(d+2)                  # l->z:   12 bytes
+                _LDW(s+2); STW(d+2)                  # l->z : 12 bytes
             else:
                 STW(T0); LDI(d); STW(T2);
                 extern('_@_lcopy_')
-                _CALLI('_@_lcopy_')                   # a->l:   9 bytes
-        elif is_zeropage(s, 3) and args.cpu >= 99: #FIXME
+                _CALLI('_@_lcopy_')                  # a->l : 9 bytes
+        elif is_zeropage(s, 3) and args.cpu >= 6:
             if d == [T2]:
-                LDW(T2)
+                LDW(T2)                              # z->t : 8 bytes (cpu7)
             elif d != [vAC]:
-                _LDI(d)
-            LOKEA(s)                                 # z->a|l: 4,6,7 bytes (cpu6)
-        elif args.cpu >= 99: #FIXME
+                _LDI(d)                              # z->l : 9 bytes (cpu7)
+            DOKEA(s);ADDI(2);DOKEA(s+2)              # z->a : 6 bytes (cpu7)
+        elif args.cpu >= 6:
             if d == [vAC]:
                 STW(T2)
-            elif d != [T2] and s != [vAC]:
-                _LDI(d);STW(T2)
             elif d != [T2]:
-                MOVQW(lo(d),T2)
-                if not is_zeropage(d):
-                    MOVQB(hi(d),T2+1)
-            if s != [vAC]:
-                _LDI(s)                              # generic NCOPY
-            NCOPY(4)                                 # is 3-11 bytes long (cpu6)
+                LDT2(d)
+            if s == [vAC]:
+                STW(T3)
+            else:
+                LDT3(s)
+            COPYN(4)                                 # generic: 5-9 bytes (cpu7)
         else:
             if d == [vAC]:
                 STW(T2)
@@ -1436,8 +1458,8 @@ def _MOVL(s,d): # was _LMOV
                 STW(T0)
             if d != [vAC] and d != [T2]:
                 _LDI(d); STW(T2)
-            if s != [vAC]:                            # generic call sequence
-                _LDI(s); STW(T0)                      # is 5-13 bytes long
+            if s != [vAC]:                           # generic: 5-13 bytes
+                _LDI(s); STW(T0)
             extern('_@_lcopy_')
             _CALLJ('_@_lcopy_')  # [T0..T0+4) --> [T2..T2+4)
 @vasm
@@ -1577,7 +1599,7 @@ def _MOVF(s,d): # was _FMOV
             extern('_@_fstfac')
             _CALLI('_@_fstfac')   # FAC --> [vAC..vAC+5)
         elif is_zeropage(d, 4) and is_zeropage(s, 4):
-            if args.cpu >= 99: #FIXME
+            if args.cpu >= 6:
                 MOVF(s,d)
             elif args.cpu >= 5:
                 LDWI(((d & 0xff) << 8) | (s & 0xff))
@@ -1586,18 +1608,16 @@ def _MOVF(s,d): # was _FMOV
             else:
                 LDW(s);STW(d);LDW(s+2);STW(d+2)
                 LD(s+4);ST(d+4)
-        elif args.cpu >= 99: #FIXME
+        elif args.cpu >= 6:
             if d == [vAC]:
                 STW(T2)
-            elif d != [T2] and s != [vAC]:
-                _LDI(d);STW(T2)
             elif d != [T2]:
-                MOVQW(lo(d),T2)
-                if not is_zeropage(d):
-                    MOVQB(hi(d),T2+1)
-            if s != [vAC]:
-                _LDI(s)
-            NCOPY(5)
+                LDT2(d)
+            if s == [vAC]:
+                STW(T3)
+            else:
+                LDT3(s)
+            COPYN(5)
         else:
             maycross=False
             if d == [vAC]:

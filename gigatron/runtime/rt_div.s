@@ -90,7 +90,7 @@ def scope():
             label('.loop1')
             _CMPWU(YV);_BGE('.loop0')
             LDW(XV);STW(RV)                         # - for modu
-            LDW(MV)
+            LD(MV)
             tryhop(2);POP();RET()
 
     module(name='rt_divu.s',

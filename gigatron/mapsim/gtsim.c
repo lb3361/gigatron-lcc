@@ -74,10 +74,11 @@ struct cpustate_s { // TTL state that the CPU controls
   uint8_t IR, D, AC, X, Y, OUT, undef;
 };
 
-uint8_t ROM[1<<16][2], RAM[1<<16], IN=0xff;
+uint8_t ROM[1<<16][2], RAM[1<<17], IN=0xff;
+uint8_t CTRL;
+uint32_t bank;
 uint16_t opc;
 uint8_t  pfx;
-uint8_t  cpuselect;
 long long ot, vt;
 long long t;
 
@@ -109,16 +110,23 @@ CpuState cpuCycle(const CpuState S)
       case 7: to=E(&T.OUT); lo=S.X; hi=S.Y; incX=1; break;
     }
   uint16_t addr = (hi << 8) | lo;
+  uint32_t xaddr = (addr & 0x8000) ? (addr & 0x7fff) | bank : addr;
 
   int B = S.undef; // Data Bus
   switch (bus) {
     case 0: B=S.D;                        break;
-    case 1: if (!W) B = RAM[addr];        break;
+    case 1: if (!W) B = RAM[xaddr];       break;
     case 2: B=S.AC;                       break;
     case 3: B=IN;                         break;
   }
 
-  if (W) RAM[addr] = B; // Random Access Memory
+  if (W) {
+    if (bus == 1) {
+      CTRL = lo;
+      bank = (CTRL & 0xc0) << 9;
+    } else
+      RAM[xaddr] = B; // Random Access Memory
+  }
 
   uint8_t ALU = 0; // Arithmetic and Logic Unit
   switch (ins) {

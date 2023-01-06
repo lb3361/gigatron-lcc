@@ -281,26 +281,41 @@ static const byte knight_dirs[64] = {
 static long rnd_seed = 1;
 static long rnd(void)
 {
-	long r = rnd_seed;
-#if 0
-	ldiv_t d = ldiv(r, 127773L);
-	r = 16807 * d.rem - 2836 * d.quot;
-        if (r < 0) r += 0x7fffffffL;
-#else
-	r = (r * 0xa13fc965L + 1013904223L) & 0x7ffffffL;
-#endif
-        return rnd_seed = r;
+	/* Subtractive rnd avoids costly multiplications */
+	static long state[55];
+	static int si=0, sj=0;
+	if (si == sj) {
+		/* Initialization */
+		int i,j;
+		long p1 = rnd_seed;
+		long p2 = 1;
+		for (i = 1, j = 21; i != 55; i++, j += 21) {
+			if (j >= 55)
+				j -= 55;
+			state[j] = p2;
+			if ((p2 = p1 - p2) < 0)
+				p2 += 1000000000L;
+			p1 = state[j];
+		}
+		si = 0;
+		sj = 24;
+		for (i=0; i != 165; i++)
+			rnd();
+	}
+	/* Subtrative business here */
+	if (si) si--; else si=54;
+	if (sj) sj--; else sj=54;
+	if ((rnd_seed = state[si] - state[sj]) < 0)
+		rnd_seed += 1000000000L;
+	return state[si] = rnd_seed;
 }
 #else
 static long rnd_seed = 1;
-
 static long rnd(void)
 {
         long r = rnd_seed;
-
         r = 16807 * (r % 127773L) - 2836 * (r / 127773L);
         if (r < 0) r += 0x7fffffffL;
-
         return rnd_seed = r;
 }
 #endif
@@ -2045,9 +2060,8 @@ static char startup_message[] =
 	"General Public License.\n"
         "(See file COPYING.)\n"
         "\n"
-	"Wait for the prompt\n"
-	"then type 'help' for\n"
-	"a list of commands\n";
+	"Type 'help' at the prompt\n"
+	"for a list of commands\n";
 #else
 static char startup_message[] =
         "\n"

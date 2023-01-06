@@ -6,6 +6,8 @@ def scope():
 
     def code1():
         nohop()
+        if args.cpu >= 6:
+            warning("cpu6: use COPYN instead of calling _@_lcopy_")
         label('_@_lcopy_')
         LDW(T0);DEEK();DOKE(T2)
         LDI(2);ADDW(T2);STW(T2)
@@ -21,6 +23,8 @@ def scope():
     # FCOPYNC: Float copy when no page crossings
     def code2():
         nohop()
+        if args.cpu >= 6:
+            warning("cpu6: use MOVL/MOVF instead of _@_fcopyz/_@_lcopyz")
         label('_@_fcopyz_')
         ST(T0);LD(vACH);STW(T2)
         LD(T0);STW(T0);
@@ -50,6 +54,8 @@ def scope():
     # When we can rely on nothing.
     def code3():
         nohop()
+        if args.cpu >= 6:
+            warning("cpu6: use COPYN instead of _@_fcopy/_@_bcopy")
         label('_@_fcopy_')
         LDI(5);ADDW(T0);STW(T1)
         label('_@_bcopy_')
@@ -91,19 +97,6 @@ def scope():
     module(name='rt_lexts.s',
            code=[ ('EXPORT', '_@_lexts'),
                   ('CODE', '_@_lexts', code5) ])
-
-    # LCVI: AC to LAC with sign extension
-    def code6():
-        nohop()
-        label('_@_lcvi')
-        STW(LAC);
-        LD(vACH);XORI(128);SUBI(128)
-        LD(vACH);ST(LAC+2);ST(LAC+3)
-        RET()
-
-    module(name='rt_lcvi.s',
-           code=[ ('EXPORT', '_@_lcvi'),
-                  ('CODE', '_@_lcvi', code6) ])
 
     # The following are merely markers indicating that _MOVL or _MOVF
     # is used somewhere. These are useful to decide whether to import

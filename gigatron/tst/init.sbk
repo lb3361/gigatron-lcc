@@ -108,7 +108,7 @@ def code5():
 def code6():
 	label('f');
 	_PROLOGUE(8,6,0x80); # save=R7
-	LDWI('.16');STW(R7);
+	LDVI(R7,'.16')
 	_BRA('.24');
 	label('.21');
 	LDWI('.25');STW(R8);

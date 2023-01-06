@@ -547,7 +547,8 @@ def create_register_names(base):
     debug(f"Registers: base:{hex(base)} T01:{hex(t0t1)} T23:{hex(t2t3)}")
     debug(f"Registers: B012:{hex(b0lac)} LAX:{hex(b0lac+2)} LAC:{hex(b0lac+3)}")
     d.update({'T0':t0t1, 'T1':t0t1+2, 'T2':t2t3, 'T3':t2t3+2,
-              'B0':b0lac, 'B1':b0lac+1, 'B2':b0lac+2, 'LAC':b0lac+3})
+              'B0':b0lac, 'B1':b0lac+1, 'B2':b0lac+2,
+              'LAX':b0lac+2, 'LAC':b0lac+3})
     # Publish register names
     for (k,v) in d.items():
         module_dict[k] = v
@@ -985,27 +986,9 @@ def JGE(d):
     else:
         emit_op("JGE_v7", lo(d-2), hi(d))
 @vasm
-def LDT2(d):
+def LDVI(x,d):
     d=int(v(d))
-    check_cpu(6); 
-    if is_zeropage(d):
-        MOVQW(check_zp(d), T2)
-    elif args.cpu == 6:
-        MOVQB(lo(d),T2)
-        MOVQB(hi(d),T2+1)
-    else:
-        emit_op('LDT2_v7', lo(d), hi(d))
-@vasm
-def LDT3(d):
-    d=int(v(d))
-    check_cpu(6);
-    if is_zeropage(d):
-        MOVQW(check_zp(d), T3)
-    elif args.cpu == 6:
-        MOVQB(lo(d),T3)
-        MOVQB(hi(d),T3+1)
-    else:
-        emit_op('LDT3_v7', lo(d), hi(d))
+    emit_op('LDVI_v7', check_zp(x), hi(d), lo(d))
 @vasm
 def MOVL(s,d):
     if args.cpu == 6:
@@ -1041,6 +1024,9 @@ def MULW(d):
 def RDIVU(d):
     emit_op("RDIVU_v7", check_zp(d))
 @vasm
+def RDIVS(d):
+    emit_op("RDIVS_v7", check_zp(d))
+@vasm
 def ADDV(d):
     emit_op("ADDV_v7", check_zp(d))
 @vasm
@@ -1052,7 +1038,82 @@ def ADDIV(i,d):
 @vasm
 def SUBIV(i,d):
     emit_op("SUBIV_v7", check_zp(i), check_zp(d))
-
+@vasm
+def ADDL():
+    if args.cpu == 6:
+        tryhop(2); emit(0xb1, 0x1a)
+    else:
+        emit_op("ADDL_v7")
+@vasm
+def ADDX():
+    emit_op("ADDX_v7")
+@vasm
+def SUBL():
+    if args.cpu == 6:
+        tryhop(2); emit(0xb1, 0x1d)
+    else:
+        emit_op("SUBL_v7")
+@vasm
+def ANDL():
+    if args.cpu == 6:
+        tryhop(2); emit(0xb1, 0x20)
+    else:
+        emit_op("ANDL_v7")
+@vasm
+def ORL():
+    if args.cpu == 6:
+        tryhop(2); emit(0xb1, 0x23)
+    else:
+        emit_op("ORL_v7")
+@vasm
+def XORL():
+    if args.cpu == 6:
+        tryhop(2); emit(0xb1, 0x26)
+    else:
+        emit_op("XORL_v7")
+@vasm
+def NEGVL(d):
+    if args.cpu == 6:
+        tryhop(3); emit(0x2f, check_zp(d), 0xd8)
+    else:
+        emit_op("NEGVL_v7", check_zp(d))
+@vasm
+def NEGX():
+    emit_op("NEGX_v7")
+@vasm
+def LSLVL(d):
+    if args.cpu == 6:
+        LDI(0);tryhop(4);emit(0xc7, check_zp(d), 0xd3, check_zp(d)+4)
+    else:
+        emit_op('LSLVL_v7', check_zp(d))
+@vasm
+def LSLXA():
+    emit_op('LSLXA_v7')
+@vasm
+def CMPLS():
+    if args.cpu == 6:
+        tryhop(2); emit(0xb1, 0x2c)
+    else:
+        emit_op('CMPLS_v7')
+@vasm
+def CMPLU():
+    if args.cpu == 6:
+        tryhop(2); emit(0xb1, 0x29)
+    else:
+        emit_op('CMPLU_v7')
+@vasm
+def LSRXA():
+    emit_op('LSRXA_v7')
+@vasm
+def RORX(cpu6exact=True):
+    if args.cpu == 6:
+        if cpu6exact:           # Move vAC-LSB to vAC-MSB
+            ADDI(127);ANDI(128);ST(vACH)
+        tryhop(4);emit(0xc7, LAX+5, 0xd6, LAX)
+        if cpu6exact:           # Move vAC-MSB to vAC-LSB
+            LD(vACH);PEEK()
+    else:
+        emit_op('RORX_v7')
     
 # pseudo instructions used by the compiler
 @vasm
@@ -1067,7 +1128,7 @@ def _SP(n):
         _LDI(n); ADDW(SP)
 @vasm
 def _LDI(d):
-    '''Emit LDI or LDWI depending on the size of d.'''
+    '''Emit LDI, LDNI or LDWI.'''
     # Warning. In rare cases, using _LDI instead of LDWI can lead to
     # infinite relaxation loops when the argument d is an expression
     # than can construct a small address that depends on a yet unknown
@@ -1082,8 +1143,19 @@ def _LDI(d):
     else:
         LDWI(d)
 @vasm
+def _LDVI(x,d):
+    '''Emits LDVI, MOVQW or 2*MOVQB (cpu>=6)'''
+    d = int(v(d))
+    if is_zeropage(d):
+        MOVQW(d, check_zp(x))
+    elif args.cpu == 6:
+        MOVQB(lo(d), check_zp(x))
+        MOVQB(hi(d), check_zp(x)+1)
+    else:
+        LDVI(check_zp(x),d)
+@vasm
 def _LDW(d):
-    '''Emit LDW or LDWI+DEEK depending on the size of d.'''
+    '''Emit LDW or LDWI+DEEK.'''
     d = v(d)
     if is_zeropage(d):
         LDW(d)
@@ -1091,7 +1163,7 @@ def _LDW(d):
         LDWI(d); DEEK()
 @vasm
 def _LD(d):
-    '''Emit LD or LDWI+PEEK depending on the size of d.'''
+    '''Emit LD or LDWI+PEEK.'''
     d = v(d)
     if is_zeropage(d):
         LD(d)
@@ -1099,14 +1171,14 @@ def _LD(d):
         LDWI(d); PEEK()
 @vasm
 def _DEEKV(d):
-    '''Compile as DEEKV(d) on cpu>=6, LDW(d);DEEK() otherwise'''
+    '''DEEKV(d) on cpu>=6, LDW(d);DEEK() otherwise'''
     if args.cpu >= 6:
         DEEKV(d)
     else:
         LDW(d); DEEK()
 @vasm
 def _PEEKV(d):
-    '''Compile as PEEKV(d) on cpu>=6, LDW(d);PEEK() otherwise'''
+    '''PEEKV(d) on cpu>=6, LDW(d);PEEK() otherwise'''
     if args.cpu >= 6:
         PEEKV(d)
     else:
@@ -1208,14 +1280,24 @@ def _MODU(d):
     _CALLI('_@_modu')           # T3 % vAC --> vAC
 @vasm
 def _DIVIS(d):
-    STW(T3);_LDI(d)
-    extern('_@_divs')
-    _CALLI('_@_divs')           # T3 / AC --> vAC
+    d = int(v(d))
+    ld = d.bit_length() - 1
+    if d > 0 and ld > 0 and d == (1 << ld):
+        _SHRIS(ld)
+    else:
+        STW(T3);_LDI(d)
+        extern('_@_divs')
+        _CALLI('_@_divs')       # T3 / AC --> vAC
 @vasm
 def _DIVIU(d):
-    STW(T3);_LDI(d)
-    extern('_@_divu')
-    _CALLI('_@_divu')           # T3 / AC --> vAC
+    d = int(v(d))
+    ld = d.bit_length() - 1
+    if d > 0 and ld > 0 and d == (1 << ld):
+        _SHRIU(ld)
+    else:
+        STW(T3);_LDI(d)
+        extern('_@_divu')
+        _CALLI('_@_divu')       # T3 / AC --> vAC
 @vasm
 def _MODIS(d):
     STW(T3);_LDI(d)
@@ -1255,7 +1337,7 @@ def _MOVW(s,d): # was _MOV
             if is_zeropage(d):
                 STW(d)
             else:
-                LDT2(d); DOKE(T2)
+                _LDVI(T2,d); DOKE(T2)
         else:
             if s != vAC and s != [vAC]:
                 _LDI(d); STW(T2); _LDW(s); DOKE(T2)
@@ -1384,11 +1466,13 @@ def _MOVM(s,d,n,align=1): # was _BMOV
             if d == [vAC]:
                 STW(T2)
             elif d != [T2]:
-                LDT2(d)
+                _LDVI(T2,d)
             if s == [vAC]:
                 STW(T3)
+            elif args.cpu >= 7:
+                LDVI(T3,s)
             else:
-                LDT3(s)
+                LDWI(s);STW(T3)
             while n >= 256:
                 n = n -256
                 COPYN(0)
@@ -1455,11 +1539,13 @@ def _MOVL(s,d): # was _LMOV
             if d == [vAC]:
                 STW(T2)
             elif d != [T2]:
-                LDT2(d)
+                _LDVI(T2, d)
             if s == [vAC]:
                 STW(T3)
+            elif args.cpu >= 7:
+                LDVI(T3, s)
             else:
-                LDT3(s)
+                LDWI(s);STW(T3)
             COPYN(4)                                 # generic: 5-9 bytes (cpu7)
         else:
             if d == [vAC]:
@@ -1474,15 +1560,15 @@ def _MOVL(s,d): # was _LMOV
             _CALLJ('_@_lcopy_')  # [T0..T0+4) --> [T2..T2+4)
 @vasm
 def _LADD():
-    if args.cpu >= 99: #FIXME
-        ADDLA()
+    if args.cpu >= 6:
+        ADDL()
     else:
         extern('_@_ladd')
         _CALLI('_@_ladd')       # LAC+[vAC] --> LAC
 @vasm
 def _LSUB():
-    if args.cpu >= 99: #FIXME
-        SUBLA()
+    if args.cpu >= 6:
+        SUBL()
     else:
         extern('_@_lsub')
         _CALLI('_@_lsub')       # LAC-[vAC] --> LAC
@@ -1508,82 +1594,82 @@ def _LMODU():
     _CALLI('_@_lmodu')          # LAC%[vAC] --> LAC
 @vasm
 def _LSHL():
-    extern('_@_lshl')
-    _CALLI('_@_lshl')           # LAC<<vAC --> LAC
+    if args.cpu >= 7:
+        MOVQB(0,LAX);LSLXA()
+    else:
+        extern('_@_lshl')
+        _CALLI('_@_lshl')       # LAC<<vAC --> LAC
 @vasm
 def _LSHRS():
     extern('_@_lshrs')
     _CALLI('_@_lshrs')          # LAC>>vAC --> LAC
 @vasm
 def _LSHRU():
-    extern('_@_lshru')
-    _CALLI('_@_lshru')          # LAC>>vAC --> LAC
+    if args.cpu >= 7:
+        LSRXA()
+    else:
+        extern('_@_lshru')
+        _CALLI('_@_lshru')      # LAC>>vAC --> LAC
 @vasm
 def _LNEG():
-    extern('_@_lneg')
-    _CALLJ('_@_lneg')       # -LAC --> LAC
+    if args.cpu >= 6:
+        NEGVL(LAC)
+    else:
+        extern('_@_lneg')
+        _CALLJ('_@_lneg')       # -LAC --> LAC
 @vasm
 def _LCOM():
     extern('_@_lcom')
-    _CALLJ('_@_lcom')       # ~LAC --> LAC
+    _CALLJ('_@_lcom')           # ~LAC --> LAC
 @vasm
 def _LAND():
-    if args.cpu >= 99: #FIXME
-        ANDLA()
+    if args.cpu >= 6:
+        ANDL()
     else:
         extern('_@_land')
         _CALLI('_@_land')       # LAC&[vAC] --> LAC
 @vasm
 def _LOR():
-    if args.cpu >= 99: #FIXME
-        ORLA()
+    if args.cpu >= 6:
+        ORL()
     else:
         extern('_@_lor')
         _CALLI('_@_lor')        # LAC|[vAC] --> LAC
 @vasm
 def _LXOR():
-    if args.cpu >= 99: #FIXME
-        XORLA()
+    if args.cpu >= 6:
+        XORL()
     else:
         extern('_@_lxor')
         _CALLI('_@_lxor')       # LAC^[vAC] --> LAC
 @vasm
 def _LCMPS():
-    if args.cpu >= 99: #FIXME
-        CMPLAS()
+    if args.cpu >= 6:
+        CMPLS()
     else:
         extern('_@_lcmps')
         _CALLI('_@_lcmps')      # SGN(LAC-[vAC]) --> vAC
 @vasm
 def _LCMPU():
-    if args.cpu >= 99: #FIXME
-        CMPLAU()
+    if args.cpu >= 6:
+        CMPLU()
     else:
         extern('_@_lcmpu')
         _CALLI('_@_lcmpu')      # SGN(LAC-[vAC]) --> vAC
 @vasm
 def _LCMPX():
-    if args.cpu >= 99: #FIXME
-        CMPLAU() 
+    if args.cpu >= 6:
+        CMPLS() 
     else:
         extern('_@_lcmpx')
         _CALLI('_@_lcmpx')      # TST(LAC-[vAC]) --> vAC
 @vasm
 def _STLU(d):
-    if args.cpu >= 99: #FIXME
-        STLU(d)
-    else:
-        STW(d);LDI(0);STW(d+2);
+    STW(d);LDI(0);STW(d+2);
 @vasm
 def _STLS(d):
-    if args.cpu >= 99: #FIXME
-        STLS(d)
-    elif d == vAC:
-        extern('_@_lcvi')       # vAC --> LAC
-        _CALLI('_@_lcvi')
-    else:
-        extern('_@_lexts')      # (vAC<0) ? -1 : 0 --> vAC
-        STW(d);_CALLI('_@_lexts');STW(d+2)
+    extern('_@_lexts')      # (vAC<0) ? -1 : 0 --> vAC
+    STW(d);_CALLI('_@_lexts');STW(d+2)
 @vasm
 def _MOVF(s,d): # was _FMOV
     '''Move float from reg s to d with special cases when s or d is FAC.
@@ -1622,11 +1708,13 @@ def _MOVF(s,d): # was _FMOV
             if d == [vAC]:
                 STW(T2)
             elif d != [T2]:
-                LDT2(d)
+                _LDVI(T2, d)
             if s == [vAC]:
                 STW(T3)
+            elif args.cpu >= 7:
+                LDVI(T3, s)
             else:
-                LDT3(s)
+                LDWI(s);STW(T3)
             COPYN(5)
         else:
             maycross=False

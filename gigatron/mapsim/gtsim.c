@@ -210,10 +210,12 @@ void sim(void)
         pfx = 2;
         opc = *(uint16_t*)(RAM+0x16);
         ot = t - 6;
-      } else if (S.IR == 0xe1 && S.D == 0x1e) { // jmp(Y,[vReturn])
+      } else if (pfx == 2 && (S.PC & 0xff) == 1 && (S.PC >> 8) == (RAM[5]+1)) {
+        vt = t;
+      } else if (pfx == 2 && S.IR == 0xe1 && S.D == 0x1e) { // jmp(Y,[vReturn])
         pfx = 1;
-        vt = t - 7;
-      } else if (pfx == 1 && (S.PC & 0xff) == 1 && (S.PC >> 8) == (RAM[5] + 1)) {
+        vt = t - 8;
+      } else if (pfx == 1 && S.IR == 0xe0 && S.D == 0xff && S.Y == RAM[5]) {
         ot += t - vt;
         pfx = 2;
       }
@@ -713,7 +715,9 @@ void sys_0x3b4(CpuState *S)
         case 0xff04: sys_io_lseek(); break;
         case 0xff05: sys_io_close(); break;
         case 0xff06: sys_io_openf(); break;
-        default: fprintf(stderr,"(gtsim) unimplemented SysFn=%#x\n", sysFn); break;
+        default:
+          fprintf(stderr,"(gtsim) unimplemented SysFn=%#x\n", deek(sysFn));
+          break;
         }
       /* Return with no action and proper timing */
       S->IR = 0x00; S->D = 0xfa; /* LD(-12/2) */
@@ -816,6 +820,23 @@ int disassemble(word addr, char **pm, char *operand)
     case 0x35: {
       switch(peek(addlo(addr,1)))
         {
+        case 0x00:  *pm = "ADDL";  return 2;
+        case 0x02:  *pm = "ADDX";  return 2;
+        case 0x04:  *pm = "SUBL";  return 2;
+        case 0x06:  *pm = "ANDL";  return 2;
+        case 0x08:  *pm = "ORL";   return 2;
+        case 0x0a:  *pm = "XORL";  return 2;
+        case 0x0c:  *pm = "NEGVL"; goto operx8;
+        case 0x0e:  *pm = "NEGX";  return 2;
+        case 0x10:  *pm = "LSLVL"; goto operx8;
+        case 0x12:  *pm = "LSLX";  return 2;
+        case 0x14:  *pm = "CMPLS"; return 2;
+        case 0x16:  *pm = "CMPLU"; return 2;
+        case 0x18:  *pm = "LSRXA"; return 2;
+        case 0x1a:  *pm = "RORX";  return 2;
+        case 0x1c:  *pm = "LSLX4"; return 2;
+        case 0x1e:  *pm = "LSLX8"; return 2;
+        case 0x39:  *pm = "RDIVS"; goto operx8;    /* v7 */
         case 0x3b:  *pm = "RDIVU"; goto operx8;    /* v7 */
         case 0x3d:  *pm = "MULW";  goto operx8;    /* v7 */
         case 0x3f:  *pm = "BEQ";   goto operxbr;
@@ -828,13 +849,12 @@ int disassemble(word addr, char **pm, char *operand)
         case 0x72:  *pm = "BNE";   goto operxbr;
         case 0x7d:  *pm = "ADDIV"; goto operx8x2;  /* v7 */
         case 0x9c:  *pm = "SUBIV"; goto operx8x2;  /* v7 */
-        case 0xb5:  *pm = "LDT2";  goto operx16;   /* v7 */
-        case 0xc0:  *pm = "LDT3";  goto operx16;   /* v7 */
+        case 0xb5:  *pm = "NEGV";  goto operx8;    /* v7 */
         case 0xcb:  *pm = "COPY";  return 2;       /* v7 */
         case 0xcf:  *pm = "COPYN"; goto operx8;    /* v7 */
-        case 0xdd: *pm = "MOVL";   goto operx8x2r; /* v7 */
-        case 0xdf: *pm = "MOVF";   goto operx8x2r; /* v7 */
-        default:    *pm = "P35?";  goto oper8;
+        case 0xdb:  *pm = "MOVL";  goto operx8x2r; /* v7 */
+        case 0xdd:  *pm = "MOVF";  goto operx8x2r; /* v7 */
+        default:    *pm = "???";   goto unknown;
         operx8:
           sprintf(operand, "$%02x", peek(addlo(addr,2)));
           return 3;
@@ -866,28 +886,27 @@ int disassemble(word addr, char **pm, char *operand)
     case 0x39:  *pm = "POKEA"; goto oper8;    /* v7 */
     case 0x3b:  *pm = "DOKEA"; goto oper8;    /* v7 */
     case 0x3d:  *pm = "DEEKA"; goto oper8;    /* v7 */
-    case 0x3f:  *pm = "JEQ"; goto oper16p2;   /* v7 */
+    case 0x3f:  *pm = "JEQ";   goto oper16p2; /* v7 */
     case 0x41:  *pm = "DEEKV"; goto oper8;    /* v7 */
     case 0x44:  *pm = "DOKEQ"; goto oper8;    /* v7 */
     case 0x46:  *pm = "POKEQ"; goto oper8;    /* v7 */
     case 0x48:  *pm = "MOVQB"; goto oper8x2r; /* v7 */
     case 0x4a:  *pm = "MOVQW"; goto oper8x2r; /* v7 */
-    case 0x4d:  *pm = "JGT"; goto oper16p2;   /* v7 */
-    case 0x50:  *pm = "JLT"; goto oper16p2;   /* v7 */
-    case 0x53:  *pm = "JGE"; goto oper16p2;   /* v7 */
-    case 0x56:  *pm = "JLE"; goto oper16p2;   /* v7 */
-    case 0x66:  *pm = "ADDV"; goto oper8;     /* v7 */
-    case 0x68:  *pm = "SUBV"; goto oper8;     /* v7 */
-    case 0x72:  *pm = "JNE"; goto oper16p2;   /* v7 */
-    case 0x78:  *pm = "LDNI"; goto oper8n;    /* v7 */
+    case 0x4d:  *pm = "JGT";   goto oper16p2; /* v7 */
+    case 0x50:  *pm = "JLT";   goto oper16p2; /* v7 */
+    case 0x53:  *pm = "JGE";   goto oper16p2; /* v7 */
+    case 0x56:  *pm = "JLE";   goto oper16p2; /* v7 */
+    case 0x66:  *pm = "ADDV";  goto oper8;    /* v7 */
+    case 0x68:  *pm = "SUBV";  goto oper8;    /* v7 */
+    case 0x72:  *pm = "JNE";   goto oper16p2; /* v7 */
+    case 0x78:  *pm = "LDNI";  goto oper8n;   /* v7 */
+    case 0xb1:  *pm = "LDVI";  goto oper8r16; /* v7 */
     case 0xd3:  *pm = "CMPWS"; goto oper8;    /* v7 */
     case 0xd6:  *pm = "CMPWU"; goto oper8;    /* v7 */
     case 0xd9:  *pm = "CMPIS"; goto oper8;    /* v7 */
     case 0xdb:  *pm = "CMPIU"; goto oper8;    /* v7 */
     case 0xdd:  *pm = "PEEKV"; goto oper8;    /* v7 */
-    case 0xe1:  *pm = "NEGV"; goto oper8;     /* v7 */
-    default:
-      return 2;
+    default:    *pm = "???";   goto unknown;
     oper8:
       sprintf(operand, "$%02x", peek(addlo(addr,1)));
       return 2;
@@ -912,6 +931,14 @@ int disassemble(word addr, char **pm, char *operand)
     oper8x2r:
       sprintf(operand, "$%02x,$%02x", peek(addlo(addr,2)), peek(addlo(addr,1)));
       return 3;
+    oper8r16:
+      sprintf(operand, "$%02x,$%02x%02x", peek(addlo(addr,1)),
+              peek(addlo(addr,2)), peek(addlo(addr,3)));
+      return 4;
+    unknown:
+      sprintf(operand, "%02x%02x%02x%02x", peek(addlo(addr,0)), peek(addlo(addr,1)),
+              peek(addlo(addr,2)), peek(addlo(addr,3)));
+      return 2;
     }
 }
 
@@ -924,7 +951,8 @@ void print_trace(CpuState *S)
   disassemble(addr, &mnemonic, operand);
   fprintf(stderr, "%04x: [", addr);
   if (strchr(trace, 'n')) {
-    fprintf(stderr, "  AC=%02x YX=%02x%02x vTicks=%d t=%+06ld\n\t", S->AC, S->Y, S->X, (int)(char)peek(0x15), (long)((t-ot) % 1000000));
+    fprintf(stderr, "  AC=%02x YX=%02x%02x vTicks=%d t=%+06ld\n\t",
+            S->AC, S->Y, S->X, (int)(char)peek(0x15), (long)((t-ot) % 1000000));
   }
   fprintf(stderr, " vAC=%04x vLR=%04x", deek(vAC), deek(vLR));
   if (strchr(trace, 's'))
@@ -939,7 +967,7 @@ void print_trace(CpuState *S)
     int as = peek(B0);
     int ae = peek(B0+1);
     int64_t am = leek(LAC-1) + ((int64_t)peek(LAC+3) << 32);
-    int be = peek(T0+5);
+    int be = peek(T2+1);
     int64_t bm = leek(T0) + ((int64_t)peek(T0+4) << 32);
     fprintf(stderr, "\n\t AS=%02x AE=%02x AM=%010llx BE=%02x BM=%010llx\n\t FAC=%.8g FARG=%.8g",
             as, ae, (long long)am, be, (long long)bm,

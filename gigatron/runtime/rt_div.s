@@ -120,38 +120,45 @@ def scope():
     def code2():
         label('_@_divs')
         PUSH()
-        if args.cpu >= 6:
-            MOVQB(0,B2)
-            _BGT('.divs1');_BNE('.divs0')
-            _CALLJ('_@_raise_zdiv')
-            label('.divs0')
-            NEGV(vAC);INC(B2)
-            label('.divs1')
-            STW(YV)
-            LDW(T3);STW(XV);_BGE('.divs2')
-            NEGV(XV)
-        else:
-            STW(YV);
-            LDI(0);ST(B2)
-            LDW(YV);_BGT('.divs1');_BNE('.divs0')
-            _CALLJ('_@_raise_zdiv')
-            label('.divs0')
-            LDI(0);SUBW(YV);STW(YV);INC(B2)
-            label('.divs1')
-            LDW(T3);STW(XV);_BGE('.divs2')
-            LDI(0);SUBW(T3);STW(XV)
-        LD(B2);XORI(3);ST(B2)
-        label('.divs2')
-        CallWorker()
-        LD(B2);ANDI(1);_BEQ('.divs4')
-        if args.cpu >= 6:
-            NEGV(XV)
-        else:
-            LDI(0);SUBW(XV)
+        _BNE('.divs0')
+        _CALLJ('_@_raise_zdiv') # divide by zero error (no return)
+        label('.divs0')
+        if args.cpu >= 7:
+            RDIVS(T3)
             tryhop(2);POP();RET()
-        label('.divs4')
-        LDW(XV)
-        tryhop(2);POP();RET()
+        else:
+            STW(YV)
+            if args.cpu >= 6:
+                MOVQB(0,B2)
+                _BGT('.divs1')
+                NEGV(YV);INC(B2)
+                label('.divs1')
+                LDW(T3);STW(XV);_BGE('.divs2')
+                NEGV(XV)
+            else:
+                LDI(0);ST(B2)
+                LDW(YV);_BGT('.divs1')
+                LDI(0);SUBW(YV);STW(YV);INC(B2)
+                label('.divs1')
+                LDW(T3);STW(XV);_BGE('.divs2')
+                LDI(0);SUBW(T3);STW(XV)
+            LD(B2);XORI(3);ST(B2)
+            label('.divs2')
+            CallWorker()
+            LD(B2);ANDI(2);_BEQ('.divs3')
+            if args.cpu >= 6:
+                NEGV(RV)
+            else:
+                LDI(0);SUBW(RV);STW(RV)
+            label('.divs3')
+            LD(B2);ANDI(1);_BEQ('.divs4')
+            if args.cpu >= 6:
+                NEGV(XV)
+            else:
+                LDI(0);SUBW(XV);STW(XV)
+            label('.divs4')
+            LDW(XV)
+            tryhop(2);POP();RET()
 
     module(name='rt_divs.s',
            code=[ ('CODE', '_@_divs', code2),
@@ -167,10 +174,6 @@ def scope():
         PUSH()
         _CALLI('_@_divs')
         STW(T1)               # quotient
-        LD(B2);ANDI(2);_BEQ('.mods1')
-        LDI(0);SUBW(RV)
-        tryhop(2);POP();RET()
-        label('.mods1')
         LDW(RV)               # remainder
         tryhop(2);POP();RET()
 

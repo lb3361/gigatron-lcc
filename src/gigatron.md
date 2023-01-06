@@ -680,14 +680,14 @@ lac: RSHI4(lac,conB) "%0LDI(%1);_LSHRS()%{!A};" 200
 lac: RSHU4(lac,reg)  "%0LDW(%1);_LSHRU()%{!A};" 200
 lac: RSHU4(lac,conB) "%0LDI(%1);_LSHRU()%{!A};" 200
 lac: NEGI4(lac)       "%0_LNEG()%{!5};"   200
-lac: BCOMU4(lac)      "%0_LCOM()%{!5};"   200
+lac: BCOMU4(lac)      "%0_LCOM()%{!A};"   200
 lac: BANDU4(lac,larg) "%0%1_LAND()%{!A};" 200
 lac: BANDU4(larg,lac) "%1%0_LAND()%{!A};" 200
 lac: BORU4(lac,larg)  "%0%1_LOR()%{!A};"  200
 lac: BORU4(larg,lac)  "%1%0_LOR()%{!A};"  200
 lac: BXORU4(lac,larg) "%0%1_LXOR()%{!A};" 200
 lac: BXORU4(larg,lac) "%1%0_LXOR()%{!A};" 200
-lac: BCOMI4(lac)      "%0_LCOM()%{!5};"   200
+lac: BCOMI4(lac)      "%0_LCOM()%{!A};"   200
 lac: BANDI4(lac,larg) "%0%1_LAND()%{!A};" 200
 lac: BANDI4(larg,lac) "%1%0_LAND()%{!A};" 200
 lac: BORI4(lac,larg) "%0%1_LOR()%{!A};"   200
@@ -901,24 +901,33 @@ ac: INDIRU1(reg)     "%{?0=~vAC:PEEK():PEEKV(%0)};" mincpu6(28)
 reg: INDIRI2(ac)     "\t%0%{?c==vAC:DEEK():DEEKA(%c)};\n" mincpu6(30)
 reg: INDIRU2(ac)     "\t%0%{?c==vAC:DEEK():DEEKA(%c)};\n" mincpu6(30)
 reg: INDIRP2(ac)     "\t%0%{?c==vAC:DEEK():DEEKA(%c)};\n" mincpu6(30)
+stmt: ASGNI1(rmw, conBs) "\tMOVQB(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,27))
+stmt: ASGNU1(rmw, conB)  "\tMOVQB(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,27))
 stmt: ASGNI2(rmw, conB)  "\tMOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
 stmt: ASGNU2(rmw, conB)  "\tMOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
 stmt: ASGNP2(rmw, conB)  "\tMOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
-stmt: ASGNI1(rmw, conBs) "\tMOVQB(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,27))
-stmt: ASGNU1(rmw, conB)  "\tMOVQB(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,27))
+stmt: ASGNI2(rmw, con)   "\tLDVI(%0,%1)\n"  mincpu7(if_not_asgn_tmp(a,31))
+stmt: ASGNU2(rmw, con)   "\tLDVI(%0,%1)\n"  mincpu7(if_not_asgn_tmp(a,31))
+stmt: ASGNP2(rmw, con)   "\tLDVI(%0,%1)\n"  mincpu7(if_not_asgn_tmp(a,31))
 regx: LOADI1(conBs)      "\tMOVQB(%0,%c)\n" mincpu6(27)
 regx: LOADU1(conB)       "\tMOVQB(%0,%c)\n" mincpu6(27)
 regx: LOADI2(conB)       "\tMOVQW(%0,%c)\n" mincpu6(29)
 regx: LOADU2(conB)       "\tMOVQW(%0,%c)\n" mincpu6(29)
 regx: LOADP2(conB)       "\tMOVQW(%0,%c)\n" mincpu6(29)
-ac: NEGI2(ac)         "%0NEGV(vAC);" mincpu6(30)
+regx: LOADI2(con)        "\tLDVI(%c,%0)\n" mincpu7(31)
+regx: LOADU2(con)        "\tLDVI(%c,%0)\n" mincpu7(31)
+regx: LOADP2(con)        "\tLDVI(%c,%0)\n" mincpu7(31)
+ac: NEGI2(ac)      "%0NEGV(vAC);" mincpu6(30)
+lac: NEGI4(lac)    "%0NEGVL(LAC);" mincpu6(58)
+
 
 # Read-modify-write
 rmw: VREGP "%a"
 rmw: zddr "%0"
 stmt: ASGNU1(rmw, LOADU1(ADDI2(CVUI2(INDIRU1(rmw)), con1))) "\tINC(%0);\n" if_rmw(a,16)
 stmt: ASGNI1(rmw, LOADI1(ADDI2(CVII2(INDIRI1(rmw)), con1))) "\tINC(%0);\n" if_rmw(a,16)
-stmt: ASGNI2(rmw, NEGI2(INDIRI2(rmw))) "\tNEGV(%0);\n" mincpu6(if_rmw(a, 48))
+stmt: ASGNI2(rmw, NEGI2(INDIRI2(rmw))) "\tNEGV(%0);\n" mincpu6(if_rmw(a, 30))
+stmt: ASGNI4(rmw, NEGI4(INDIRI4(rmw))) "\tNEGVL(%0);\n" mincpu6(if_rmw(a, 58))
 stmt: ASGNI2(rmw, ADDI2(INDIRI2(rmw), ac)) "\t%2ADDV(%0);\n" mincpu7(if_rmw(a, 30))
 stmt: ASGNU2(rmw, ADDU2(INDIRU2(rmw), ac)) "\t%2ADDV(%0);\n" mincpu7(if_rmw(a, 30))
 stmt: ASGNP2(rmw, ADDP2(INDIRP2(rmw), ac)) "\t%2ADDV(%0);\n" mincpu7(if_rmw(a, 30))

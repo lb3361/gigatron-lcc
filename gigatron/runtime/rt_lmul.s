@@ -7,10 +7,17 @@ def code1():
    LDI(1);STW(T3);
    label('.mac2')
    ANDW(T2);_BEQ('.mac3')
-   _CALLJ('__@ladd_t0t1')
+   if args.cpu >= 6:
+      LDI(T0);ADDL()
+   else:
+      _CALLJ('__@ladd_t0t1')
    label('.mac3')
-   _CALLJ('__@lshl1_t0t1')
-   LDW(T3);LSLW();STW(T3);_BNE('.mac2')
+   if args.cpu >= 6:
+      LSLVL(T0)
+   else:
+      _CALLJ('__@lshl1_t0t1')
+   LDW(T3);LSLW();STW(T3)
+   _BNE('.mac2')
    tryhop(2);POP();RET()
    
 # LMUL:   LAC <-- LAC * [vAC]  (clobbers B0,B1, T0,T1,T2,T3)
@@ -28,8 +35,8 @@ def code2():
 
 
 code= [ ('EXPORT', '_@_lmul'),
-        ('IMPORT', '__@ladd_t0t1'),
-        ('IMPORT', '__@lshl1_t0t1'),
+        ('IMPORT', '__@ladd_t0t1') if args.cpu < 6 else ('NOP',),
+        ('IMPORT', '__@lshl1_t0t1') if args.cpu < 6 else ('NOP',),
         ('CODE', '__@mac32x16', code1),
         ('CODE', '_@_lmul', code2) ]
 

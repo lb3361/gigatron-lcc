@@ -422,27 +422,27 @@ But it plays!
 
 ## 4. Internals
 
-The code generator uses two block of respectively 16 and 48 bytes in page zero.
+The code generator uses several blocks of page zero variables.
+The linker knows the page zero usage of each rom and keeps 
+track of all free and used page zero locations.
 
-  *  The first block is dedicated to runtime routines that implement
-	 long and float arithmetic. It is located at fixed addresses `0xc0-0xcf`
-	 because it is expected that runtime support will be progressively
-	 supported by ROM features. The long accumulator `LAC` occupies
-	 addresses `0xc4-0xc7`. The float accumulator `FAC` overlaps `LAC` and
-	 uses locations `0xc0-0xc7`. The remaining eight bytes at `0xc8-0xcf`
-     are working space for these runtime routines. They are also known as
-     registers `T0` to `T3` and are occasionally used as scratch
-     registers by the code generator.
-     
-  *  The second block contains 24 general purpose word registers named
-     `R0` to `R23`. This block is by default located at addresses
-     `0x50-0x7f` but can be displaced using the command line option
-     `--register-base=0x90` for instance. Register pairs named `L0` to
-     `L22` can hold longs.  Register triplets named `F0` to `F21` can
-     hold floats. Registers `R0` to `R7` are callee-saved and are
-     often used for local variables. Registers `R8` to `R15` are used
-     to pass arguments to functions. Registers `R15` to `R22` are used
-     for temporaries. Register `R23` or `SP` is the stack pointer.
+  *  The most important block of page zero variables contains 24
+     general purpose word registers named `R0` to `R23`. This block is
+     by default located at addresses `0x50-0x7f` but can be displaced
+     using the command line option `--register-base=0x90` for
+     instance. Register pairs named `L0` to `L22` can hold longs.
+     Register triplets named `F0` to `F21` can hold floats. Registers
+     `R0` to `R7` are callee-saved and are often used for local
+     variables. Registers `R8` to `R15` are used to pass arguments to
+     functions. Registers `R15` to `R22` are used for
+     temporaries. Register `R23` or `SP` is the stack pointer.
+
+  *  Additional registers include: four word registers named `T0` to
+	 `T3`, a long word accumulator named `LAC`, and three byte
+	 registers named `B0` to `B2` that augment `LAC` to support
+	 floating point operations. ROMs that provide suitable native
+	 support may dictate the location some of these registers. 
+	 Otherwise they are allocated by the linker.
 
 The function prologue first saves `vLR` and constructs a stack frame
 by adjusting `SP`. It then saves the callee-saved registers onto the

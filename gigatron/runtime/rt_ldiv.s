@@ -100,24 +100,24 @@ def scope():
                   ('CODE',   '_@_lmodu', code_lmodu) ] + morecode )
 
     def code_ldivsign():
-        # B2 bit 7 : quotient sign
-        # B2 bit 1 : remainder sign
+        # B0 bit 7 : quotient sign
+        # B0 bit 1 : remainder sign
         label('__@ldivsign')
         PUSH()
-        LDI(0);ST(B2)
+        LDI(0);ST(B0)
         LDW(LAC+2);_BGE('.lds1')
         if args.cpu >= 6:
             NEGVL(LAC)
         else:
             _CALLJ('_@_lneg')
-        LD(B2);XORI(0x81);ST(B2)
+        LD(B0);XORI(0x81);ST(B0)
         label('.lds1')
         LDW(T0+2);_BGE('.lds2')
         if args.cpu >= 6:
             NEGVL(T0)
         else:
             _CALLJ('__@lneg_t0t1')
-        LD(B2);XORI(0x80);ST(B2)
+        LD(B0);XORI(0x80);ST(B0)
         label('.lds2')
         tryhop(2);POP();RET()
 
@@ -135,7 +135,7 @@ def scope():
         _CALLJ('__@ldivsign')
         CallWorker()
         LDW(T2);STW(LAC);LDW(T2+2);STW(LAC+2)
-        LD(B2);ANDI(0x80);_BEQ('.ret')
+        LD(B0);ANDI(0x80);_BEQ('.ret')
         if args.cpu >= 6:
             NEGVL(LAC)
         else:
@@ -159,13 +159,13 @@ def scope():
         _CALLJ('__@ldivsign')
         CallWorker()
         LDW(T2);STW(T0);LDW(T2+2);STW(T0+2)
-        LD(B2);ANDI(0x80);_BEQ('.lms1')
+        LD(B0);ANDI(0x80);_BEQ('.lms1')
         if args.cpu >= 6:
             NEGVL(T0)
         else:
             _CALLJ('__@lneg_t0t1')
         label('.lms1')
-        LD(B2);ANDI(0x01);_BEQ('.lms2')
+        LD(B0);ANDI(0x01);_BEQ('.lms2')
         if args.cpu >= 6:
             NEGVL(LAC)
         else:

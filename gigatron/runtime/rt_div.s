@@ -115,7 +115,7 @@ def scope():
                   ('IMPORT', '_@_divu') ] )
 
     # DIVS:  T3/vAC -> vAC
-    # clobbers B2
+    # clobbers B0
     assert YV != T3
     def code2():
         label('_@_divs')
@@ -129,29 +129,29 @@ def scope():
         else:
             STW(YV)
             if args.cpu >= 6:
-                MOVQB(0,B2)
+                MOVQB(0,B0)
                 _BGT('.divs1')
-                NEGV(YV);INC(B2)
+                NEGV(YV);INC(B0)
                 label('.divs1')
                 LDW(T3);STW(XV);_BGE('.divs2')
                 NEGV(XV)
             else:
-                LDI(0);ST(B2)
+                LDI(0);ST(B0)
                 LDW(YV);_BGT('.divs1')
-                LDI(0);SUBW(YV);STW(YV);INC(B2)
+                LDI(0);SUBW(YV);STW(YV);INC(B0)
                 label('.divs1')
                 LDW(T3);STW(XV);_BGE('.divs2')
                 LDI(0);SUBW(T3);STW(XV)
-            LD(B2);XORI(3);ST(B2)
+            LD(B0);XORI(3);ST(B0)
             label('.divs2')
             CallWorker()
-            LD(B2);ANDI(2);_BEQ('.divs3')
+            LD(B0);ANDI(2);_BEQ('.divs3')
             if args.cpu >= 6:
                 NEGV(RV)
             else:
                 LDI(0);SUBW(RV);STW(RV)
             label('.divs3')
-            LD(B2);ANDI(1);_BEQ('.divs4')
+            LD(B0);ANDI(1);_BEQ('.divs4')
             if args.cpu >= 6:
                 NEGV(XV)
             else:
@@ -167,7 +167,7 @@ def scope():
 
     # MODS: T3 % T2 -> AC
     #  saves T3 / T2 in T1
-    #  clobbers B2
+    #  clobbers B0
     assert RV != T1
     def code2():
         label('_@_mods')

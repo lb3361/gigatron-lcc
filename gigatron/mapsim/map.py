@@ -56,10 +56,12 @@ def map_modules(romtype):
         label(args.gt1exec)
         # call SYS_regbase to inform gtsim about register locations
         LDWI(0xffff);STW('sysFn')
-        LDI(B0);ST('sysArgs0')
-        LDI(T0);ST('sysArgs1')
-        LDI(T2);ST('sysArgs2')
-        LDI(R0);SYS(40)
+        LDI(FAS);ST('sysArgs0')
+        LDI(T0); ST('sysArgs1')
+        LDI(T2); ST('sysArgs2')
+        LDI(B0); ST('sysArgs3')
+        LDI(SP); ST('sysArgs4')
+        LDI(R0); SYS(40)
         # init stack pointer
         LDWI(initsp);STW(SP)
         # rom test;

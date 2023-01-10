@@ -6,19 +6,13 @@
 #  = 0 when EEEEEEEE is zero
 #
 # The floating point routines operate on a floating point accumulator
-# FAC that occupies the same locations [0x81-0x87] as B0,B1,B2 and
-# LAC. Register FAC is composed of a 8 bits exponent AE and a 40 bits
-# mantissa AM whose high four bits overlap LAC. The routines
-# internally use a second register FARG whose exponent BE and mantissa
-# BM overlap the temporary registers T0, T1, and T2. Bit 7 of byte
-# SIGN indicates whether FAC is negative. Bit 1 of SIGN indicates
+# FAC whose mantissa overlaps the extended and long accumulator LAC/LAC
+# Register FAC is composed of a sign byte AS, an exponent byte AE and
+# and a 40 bits mantissa AM. The routines internally use a second register
+# FARG whose exponent BE and mantissa BM overlap T0/T1/sysArgs[0-4].
+# Bit 7 of AS indicates whether FAC is negative. Bit 1 indicates
 # whether FAC and FARG have different signs. The exponent AE (resp BE)
 # is 0 when FAC (resp FARG) is zero and and equal to EEEEEEEE otherwise.
-#
-# These routines therefore make use of all the area 0x81-0x8f.  Some
-# of these calls might eventually use SYS calls in the future, meaning
-# that none of the memory locations 'sysFn' and 'sysArgs[0-7]' should
-# be assumed preserved.
 
 def scope():
 
@@ -26,11 +20,10 @@ def scope():
     T2H = T2+1
     T3L = T3
     T3H = T3+1
-
-    AS = B0       # FACsign (bit7) FARGsign^FACsign (bit0).
-    AE = B1       # FAC exponent
-    AM = B2       # 40 bits FAC mantissa (one extra low byte)
-    BM = T0       # 40 bits FARG mantissa (high byte overlaps T2L and CM)
+    AS = FAS      # FAC sign (bit7) FARG sign (bit7^bit1)
+    AE = FAE      # FAC exponent
+    AM = LAX      # 40 bits FAC mantissa (one extra low byte)
+    BM = T0       # 40 bits FARG mantissa (overlaps T0high byte overlaps T2L and CM)
     BE = T2H      # FARG exponent (overlaps T2H and CM)
     CM = T2       # extra 32 bits register
    

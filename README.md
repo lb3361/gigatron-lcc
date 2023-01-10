@@ -267,68 +267,7 @@ $ ./build/gtsim -rom gigatron/roms/dev.rom a.gt1
 ...
 ```
 
-### 3.2. Capturing signals:
-```
-$ cat gigatron/libc/tst/TSTsignal.c 
-#include <string.h>
-#include <stdio.h>
-#include <signal.h>
-
-int a = 3;
-long b = 323421L;
-volatile int vblcount = 0;
-extern char frameCount;
-
-int handler(int signo, int fpeinfo)
-{
-	printf("handle %d %d\n", signo, fpeinfo);
-	return 1234;
-}
-
-long lhandler(int signo, int fpeinfo)
-{
-	printf("handle %d %d\n", signo, fpeinfo);
-	return 1234L;
-}
-
-void vhandler(int signo)
-{
-	printf("SIGVIRQ(%d): count=%d\n", signo, vblcount++);
-	frameCount=255;
-	signal(SIGVIRQ, vhandler);
-}
-
-int main()
-{
-	signal(SIGFPE, (sig_handler_t)handler);
-	printf("%d/0 = %d\n", a, a / 0);
-	signal(SIGFPE, (sig_handler_t)lhandler);
-	printf("%ld/0 = %ld\n", b , b / 0);
-	signal(SIGVIRQ, vhandler);
-	while (vblcount < 10) { 
-		b = b * b;
-	}
-	return 0;
-}
-$ ./build/glcc -map=sim  gigatron/libc/tst/TSTsignal.c 
-$ ./build/gtsim  -rom gigatron/roms/dev.rom a.gt1 
-handle 4 1
-3/0 = 1234
-handle 4 1
-323421/0 = 1234
-SIGVIRQ(7): count=0
-SIGVIRQ(7): count=1
-SIGVIRQ(7): count=2
-SIGVIRQ(7): count=3
-SIGVIRQ(7): count=4
-SIGVIRQ(7): count=5
-SIGVIRQ(7): count=6
-SIGVIRQ(7): count=7
-SIGVIRQ(7): count=8
-SIGVIRQ(7): count=9
-```
-
-### 3.3. Running Marcel's simple chess program:
+### 3.2. Running Marcel's simple chess program:
 
 I found this program when studying the previous incarnation 
 of LCC for the Gigatron, with old forums posts where Marcel
@@ -375,24 +314,6 @@ Type 'help' for a list of commands
 1  R N B Q K B N R
    a b c d e f g h
 1. White to move. KQkq 
-Compacted book 256 -> 57
-Compacted book 256 -> 94
-Compacted book 256 -> 131
-Compacted book 256 -> 155
-Compacted book 256 -> 171
-Compacted book 256 -> 182
-Compacted book 256 -> 194
-Compacted book 256 -> 204
-Compacted book 256 -> 216
-Compacted book 256 -> 231
-Compacted book 256 -> 231
-Compacted book 256 -> 242
-Compacted book 256 -> 247
-Compacted book 256 -> 251
-Compacted book 256 -> 253
-Compacted book 256 -> 253
-Compacted book 256 -> 256
-Compacted book 256 -> 256
 mscp> 
 ```
 
@@ -435,14 +356,15 @@ track of all free and used page zero locations.
      `R0` to `R7` are callee-saved and are often used for local
      variables. Registers `R8` to `R15` are used to pass arguments to
      functions. Registers `R15` to `R22` are used for
-     temporaries. Register `R23` or `SP` is the stack pointer.
+     temporaries.
 
-  *  Additional registers include: four word registers named `T0` to
-	 `T3`, a long word accumulator named `LAC`, and three byte
-	 registers named `B0` to `B2` that augment `LAC` to support
-	 floating point operations. ROMs that provide suitable native
-	 support may dictate the location some of these registers. 
-	 Otherwise they are allocated by the linker.
+  *  Additional registers include: word registers named `T0` to `T3`,
+	 scratch bytes `B0` and `B1`, long accumulator `LAC`, long
+	 accumulator extension byte `LAX`, floating point sign and
+	 exponent bytes `FAS` and `FAE`, and a stack pointer `SP`. ROMs
+	 that provide suitable native support may dictate the location
+	 some of these registers. Otherwise they are allocated by the
+	 linker in the upper half ot page zero.
 
 The function prologue first saves `vLR` and constructs a stack frame
 by adjusting `SP`. It then saves the callee-saved registers onto the

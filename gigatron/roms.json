@@ -38,9 +38,11 @@
 		"romType" : "0x80",
 		"maxTicks" : 15,
 		"has_altCmpOps" : 1,
+		"registerBase" : "0x50",
+		"registerFLAC" : "0xc1",
+		"registerSP"   : "0x48",
+		"registerB0B1" : "0xca",
 		"registerT2T3" : "0xcc",
-		"registerB0B1LAX": "0xc1",
-		"registerBase": "0x50",
 		"warning" : "ROMvX0 opcodes may change often!"
 	      },
     

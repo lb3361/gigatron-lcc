@@ -473,7 +473,7 @@ def create_zpage_map():
     if args.cpu >= 5:
         zpage_reserve(range(0x30,0x36), "V5")
     if args.cpu == 6:
-        zpage_reserve(range(0x81,0xd0), "VX0")
+        zpage_reserve(range(0xc0,0xd0), "VX0")
     if args.cpu >= 7:
         zpage_reserve(range(0x81,0x8c), "V7")
 
@@ -514,41 +514,48 @@ def create_register_names(base):
           "vLR":  0x001a, "vSP":  0x001c,
           "FAC":  0xFACFACFAC }
     # ROM-dependent registers
-    t0t1 = t2t3 = b0lac = None
-    if 'registerB0B1LAX' in rominfo:
-        b0lac = int(str(rominfo['registerB0B1LAX']),0)
+    t0t1 = t2t3 = b0b1 = flac = rsp = None
+    if 'registerFLAC' in rominfo:
+        flac = int(str(rominfo['registerFLAC']),0)
+        zpReserve(flac,flac+6,"REGS:FLAC")
     elif args.cpu >= 7:
-        b0lac = symdefs['vB0_v7']
-    else:
-        b0lac = zpage_alloc(7,"REGS:B0-3,LAC", 0x80)
-    if 'registerTOT1' in rominfo:
-        t0t1 = int(str(rominfo['registerT0T1']),0)
-    else:
-        t0t1 = symdefs['sysArgs0']
+        flac = symdefs['vFAS_v7']
     if 'registerT2T3' in rominfo:
         t2t3 = int(str(rominfo['registerT2T3']),0)
+        zpReserve(t2t3,t2t3+3,"REGS:T2T3")
     elif args.cpu >= 7:
         t2t3 = symdefs['vT2_v7']
-    else:
-        t2t3 = zpage_alloc(4,"REGS:T2,T3", 0x80)
+    if 'registerB0B1' in rominfo:
+        b0b1 = int(str(rominfo['registerB0B1']),0)
+        zpReserve(b0b1,b0b1+1,"REGS:B0B1")
+    if 'registerTOT1' in rominfo:
+        t0t1 = int(str(rominfo['registerT0T1']),0)
+        zpReserve(t0t1,t0t1+3,"REGS:T0T1")
+    if 'registerSP' in rominfo:
+        rsp  = int(str(rominfo['registerSP']),0)
+    flac = flac or zpage_alloc(7,"REGS:FLAC", 0x80)
+    t0t1 = t0t1 or symdefs['sysArgs0']
+    t2t3 = t2t3 or zpage_alloc(4,"REGS:T2T3", 0x80)
+    b0b1 = b0b1 or zpage_alloc(2,"REGS:B0B1", 0x80)
+    rsp  = rsp or zpage_alloc(2,"REGS:SP", 0x80)
     # GLCC registers
     if base == None and 'registerBase' in rominfo:
         base = int(str(rominfo['registerBase']),0)
     if base == None:
-        base = zpage_alloc(0x30, "REGS:R0-23", 0x90)
+        base = zpage_alloc(0x30, "REGS:R0-23", 0x80)
     elif base < 0 or base + 0x30 > 0x100:
         fatal(f"Illegal register location {hex(base)}-{hex(base+0x2f)}.")
     else:
         zpage_reserve(range(base,base+0x30), "REGS:R0-23")
     for i in range(0,24): d[f'R{i}'] = base + i + i
-    for i in range(0,22): d[f'L{i}'] = d[f'R{i}']
-    for i in range(0,21): d[f'F{i}'] = d[f'R{i}']
-    d['SP'] = d['R23']
+    for i in range(0,23): d[f'L{i}'] = d[f'R{i}']
+    for i in range(0,22): d[f'F{i}'] = d[f'R{i}']
+    rsp = rsp or d['R23']
     debug(f"Registers: base:{hex(base)} T01:{hex(t0t1)} T23:{hex(t2t3)}")
-    debug(f"Registers: B012:{hex(b0lac)} LAX:{hex(b0lac+2)} LAC:{hex(b0lac+3)}")
+    debug(f"Registers: LAC:{hex(flac+3)} B012:{hex(b0b1)} SP:{hex(rsp)}")
     d.update({'T0':t0t1, 'T1':t0t1+2, 'T2':t2t3, 'T3':t2t3+2,
-              'B0':b0lac, 'B1':b0lac+1, 'B2':b0lac+2,
-              'LAX':b0lac+2, 'LAC':b0lac+3})
+              'B0':b0b1, 'B1':b0b1+1, 'LAX':flac+2, 'LAC':flac+3,
+              'FAS':flac, 'FAE':flac+1, 'SP':rsp })
     # Publish register names
     for (k,v) in d.items():
         module_dict[k] = v
@@ -623,7 +630,8 @@ def genlabel():
 @vasm
 def zpReserve(addr0,addr1,lbl):
     if the_pass == 0:
-        zpage_reserve(range(addr0,addr1+1),lbl)
+        rng = range(addr0, addr1+1)
+        zpage_reserve(rng, lbl, error_on_conflict=False)
 @vasm
 def pc():
     return the_pc

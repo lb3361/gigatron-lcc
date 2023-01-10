@@ -106,7 +106,7 @@ static Symbol iregw, lregw, fregw;
 #define REGMASK_SAVED           0x000000ff
 #define REGMASK_ARGS            0x0000ff00
 #define REGMASK_MOREVARS        0x000fffff
-#define REGMASK_TEMPS           0x007fff00
+#define REGMASK_TEMPS           0x00ffff00
 
 /* Misc */
 static int codenum = 0;
@@ -1239,17 +1239,17 @@ static void progbeg(int argc, char *argv[])
   /* Print header */
   print("#VCPUv%d\n\n",cpu);
   /* Prepare registers */
-  ireg[23] = mkreg("SP", 23, 1, IREG);
-  for (i=0; i<23; i++)
+  for (i=0; i<24; i++)
     ireg[i] = mkreg("R%d", i, 1, IREG);
-  for (i=0; i+1<23; i++)
+  for (i=0; i+1<24; i++)
     lreg[i] = mkreg("L%d", i, 3, IREG);
-  for (i=0; i+2<23; i++)
+  for (i=0; i+2<24; i++)
     freg[i] = mkreg("F%d", i, 7, IREG);
   /* vAC/LAC/FAC */
-  ireg[31] = mkreg("vAC", 24, 1, IREG);
-  lreg[31] = mkreg("LAC", 26, 3, IREG);
-  freg[31] = mkreg("FAC", 25, 7, IREG);
+  ireg[30] = mkreg("SP",  26, 1, IREG);
+  ireg[31] = mkreg("vAC", 27, 1, IREG);
+  freg[31] = mkreg("FAC", 28, 7, IREG);
+  lreg[31] = mkreg("LAC", 29, 3, IREG);
   /* Prepare wildcards */
   iregw = mkwildcard(ireg);
   lregw = mkwildcard(lreg);

@@ -284,12 +284,15 @@ double feek(word a) {
 
 /* Register base.
    Code that does not advertise register bases assume old values.
+   New versions of the compiler always advertise bases.
 */
 
 unsigned int regbase = 0x90;
-unsigned int b0base = 0x81;
-unsigned int t0base = 0x88;
-unsigned int t2base = 0x8c;
+unsigned int flbase  = 0x81;
+unsigned int t0base  = 0x88;
+unsigned int t2base  = 0x8c;
+unsigned int b0base  = 0x81;
+unsigned int spbase  = 0xbe;
 
 #define vPC       (0x16)
 #define vAC       (0x18)
@@ -297,9 +300,9 @@ unsigned int t2base = 0x8c;
 #define vSP       (0x1c)
 #define sysFn     (0x22)
 #define sysArgs0  (0x24+0)
-#define B0        (b0base)
-#define LAC       (b0base+3)
+#define LAC       (flbase+3)
 #define T0        (t0base)
+#define B0        (b0base)
 #define T2        (t2base)
 #define R0        (regbase+0)
 #define R8        (regbase+16)
@@ -307,7 +310,7 @@ unsigned int t2base = 0x8c;
 #define R10       (regbase+20)
 #define R11       (regbase+22)
 #define R12       (regbase+24)
-#define SP        (regbase+46)
+#define SP        (spbase)
 
 #define addlo(a,i)  (((a)&0xff00)|(((a)+i)&0xff))
 
@@ -431,9 +434,11 @@ word loadGt1(const char *gt1)
 void sys_regbase(void)
 {
   regbase = deek(vAC);
-  b0base = peek(sysArgs0);
+  flbase = peek(sysArgs0);
   t0base = peek(sysArgs0+1);
   t2base = peek(sysArgs0+2);
+  b0base = peek(sysArgs0+3);
+  spbase = peek(sysArgs0+4);
 }
 
 void sys_exit(void)
@@ -766,18 +771,6 @@ void sys_0x3b4(CpuState *S)
 
 
 
-int oper8(word addr, int i, char *operand)
-{
-  sprintf(operand, "$%02x", peek(addlo(addr,i)));
-  return i+1;
-}
-
-int oper16(word addr, int i, char *operand)
-{
-  sprintf(operand, "$%04x", deek(addlo(addr,i)));
-  return i+2;
-}
-
 int disassemble(word addr, char **pm, char *operand)
 {
   switch(peek(addr))
@@ -954,26 +947,28 @@ void print_trace(CpuState *S)
     fprintf(stderr, "  AC=%02x YX=%02x%02x vTicks=%d t=%+06ld\n\t",
             S->AC, S->Y, S->X, (int)(char)peek(0x15), (long)((t-ot) % 1000000));
   }
-  fprintf(stderr, " vAC=%04x vLR=%04x", deek(vAC), deek(vLR));
+  fprintf(stderr, " vAC=%04x vLR=%04x SP=%04x", deek(vAC), deek(vLR), deek(SP));
   if (strchr(trace, 's'))
     fprintf(stderr, " vSP=%02x", peek(vSP));
-  if (strchr(trace, 'l'))
-    fprintf(stderr, " B[0-2]=%02x %02x %02x LAC=%08x",
-            peek(B0), peek(B0+1), peek(B0+2), leek(LAC));
   if (strchr(trace, 't'))
-    fprintf(stderr, " T[0-3]=%04x %04x %04x %04x",
-            deek(T0), deek(T0+2), deek(T2), deek(T2+2));
+    fprintf(stderr, " T[0-3]=%04x %04x %04x %04x B[0-1]=%02x %02x",
+            deek(T0), deek(T0+2), deek(T2), deek(T2+2),
+            peek(B0), peek(B0+1));
   if (strchr(trace, 'f')) {
-    int as = peek(B0);
-    int ae = peek(B0+1);
+    int as = peek(LAC-3);
+    int ae = peek(LAC-2);
     int64_t am = leek(LAC-1) + ((int64_t)peek(LAC+3) << 32);
     int be = peek(T2+1);
     int64_t bm = leek(T0) + ((int64_t)peek(T0+4) << 32);
-    fprintf(stderr, "\n\t AS=%02x AE=%02x AM=%010llx BE=%02x BM=%010llx\n\t FAC=%.8g FARG=%.8g",
-            as, ae, (long long)am, be, (long long)bm,
+    fprintf(stderr,
+            "\n\t FAC=%02x/%02x/%010llx (%.8g) FARG=%02x/%010llx (%.8g)",
+            as, ae, (long long)am, 
             ((as&0x80) ? -1.0 : +1.0) * ((ae) ? ldexp((double)am, ae-168) : 0.0),
+            be, (long long)bm,
             ((as&0x80)^((as&1)<<7) ? -1.0 : +1.0) * ((be) ? ldexp((double)bm, be-168) : 0.0) );
-  }
+  } else if (strchr(trace, 'l'))
+    fprintf(stderr, "\n\t LAC=%08x LAX=%08x%02x",
+            leek(LAC), leek(LAC), peek(LAC-1));
   if (strchr(trace, 'S')) {
     int i;
     fprintf(stderr, "\n\t sysFn=%04x sysArgs=%02x", deek(sysFn), peek(sysArgs0));

@@ -26,8 +26,8 @@ def code1():
 	MOVQW(0,R7)
 	_BRA('.5');
 	label('.2');
-	LDWI('in');STW(R22);
-	LDW(R7);LSLW();ADDW(R22);DEEKA(R8);
+	LDWI('in');STW(R23);
+	LDW(R7);LSLW();ADDW(R23);DEEKA(R8);
 	_MOVW(R8,[SP,2]);
 	CALLI('putd');
 	LDI(10);STW(R8);
@@ -159,15 +159,15 @@ def code6():
 	LDW(R9);STW(R6);
 	LDWI('.28');STW(R8);
 	_MOVW(R8,[SP,2]);
-	LDWI('xx');DEEKA(R22);
-	LDI(2);STW(R21);
-	LDW(R7);SUBW(R22);_DIVS(R21);STW(R9);
+	LDWI('xx');DEEKA(R23);
+	LDI(2);STW(R22);
+	LDW(R7);SUBW(R23);_DIVS(R22);STW(R9);
 	_MOVW(R9,[SP,4]);
-	LDW(R6);SUBW(R22);_DIVS(R21);STW(R10);
+	LDW(R6);SUBW(R23);_DIVS(R22);STW(R10);
 	_MOVW(R10,[SP,6]);
 	CALLI('printf');
-	_SP(-2+16);STW(R22);
-	DEEKV(R7);DOKE(R22);
+	_SP(-2+16);STW(R23);
+	DEEKV(R7);DOKE(R23);
 	DEEKV(R6);DOKE(R7);
 	_SP(-2+16);DEEK();DOKE(R6);
 	LDI(0);

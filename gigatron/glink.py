@@ -1122,6 +1122,9 @@ def RORX(cpu6exact=True):
             LD(vACH);PEEK()
     else:
         emit_op('RORX_v7')
+@vasm
+def MACX():
+    emit_op('MACX_v7')
     
 # pseudo instructions used by the compiler
 @vasm

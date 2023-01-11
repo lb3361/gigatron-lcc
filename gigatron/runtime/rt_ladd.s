@@ -3,13 +3,14 @@ def scope():
     # LAC + [vAC] --> LAC
     def code0():
         nohop()
-        label('_@_ladd')
         if args.cpu >= 6:
-            ADDL();RET()
             label('__@ladd_t0t1')
-            LDI(T0);ADDL();RET()
+            LDI(T0)
+            label('_@_ladd')
+            ADDL();RET()
             warning("Cpu6: should ADDL instead of calling _@_ladd")
         else:
+            label('_@_ladd')
             # load arg into T0/T1
             STW(T3);DEEK();STW(T0)
             LDI(2);ADDW(T3);DEEK();STW(T1)
@@ -32,13 +33,14 @@ def scope():
     # LAC - [vAC] --> LAC
     def code0():
         nohop()
-        label('_@_lsub')
         if args.cpu >= 6:
-            SUBL();RET()
             label('__@lsub_t0t1')
-            LDI(T0);SUBL();RET()
+            LDI(T0)
+            label('_@_lsub')
+            SUBL();RET()
             warning("Cpu6: should SUBL instead of calling _@_lsub")
         else:
+            label('_@_lsub')
             # load arg into T0/T1
             STW(T3);DEEK();STW(T0)
             LDI(2);ADDW(T3);DEEK();STW(T1)

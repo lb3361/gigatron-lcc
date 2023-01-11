@@ -52,6 +52,7 @@
     "CMPLU_v7"         : "0x3516",
     "LSRXA_v7"         : "0x3518",
     "RORX_v7"          : "0x351a",
+    "MACX_v7"          : "0x351c",
     
     "NEGV_v7"          : "0x3537",
     "RDIVS_v7"         : "0x3539",

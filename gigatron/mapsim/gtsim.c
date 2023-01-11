@@ -36,7 +36,7 @@ int nogt1 = 0;
 const char *trace = 0;
 int verbose = 0;
 int okopen = 0;
-int vmode = 1975;
+int vmode = 3;
 const char *prof = 0;
 long long *pc2cycs = 0;
 const int alignlong = 4;
@@ -759,7 +759,7 @@ void sys_0x3b4(CpuState *S)
     {
       debug("vPC=%04x SYS(%d) [SETMODE] vAC=%04x\n", deek(vPC), S->AC, deek(vAC));
       if (vmode >= 0 && !nogt1)
-        poke(vAC, vmode);
+        doke(vAC, vmode);
     }
 }
 
@@ -822,13 +822,12 @@ int disassemble(word addr, char **pm, char *operand)
         case 0x0c:  *pm = "NEGVL"; goto operx8;
         case 0x0e:  *pm = "NEGX";  return 2;
         case 0x10:  *pm = "LSLVL"; goto operx8;
-        case 0x12:  *pm = "LSLX";  return 2;
+        case 0x12:  *pm = "LSLXA"; return 2;
         case 0x14:  *pm = "CMPLS"; return 2;
         case 0x16:  *pm = "CMPLU"; return 2;
         case 0x18:  *pm = "LSRXA"; return 2;
         case 0x1a:  *pm = "RORX";  return 2;
-        case 0x1c:  *pm = "LSLX4"; return 2;
-        case 0x1e:  *pm = "LSLX8"; return 2;
+        case 0x1c:  *pm = "MACX";  return 2;
         case 0x39:  *pm = "RDIVS"; goto operx8;    /* v7 */
         case 0x3b:  *pm = "RDIVU"; goto operx8;    /* v7 */
         case 0x3d:  *pm = "MULW";  goto operx8;    /* v7 */
@@ -958,7 +957,7 @@ void print_trace(CpuState *S)
     int as = peek(LAC-3);
     int ae = peek(LAC-2);
     int64_t am = leek(LAC-1) + ((int64_t)peek(LAC+3) << 32);
-    int be = peek(T2+1);
+    int be = peek(T2);
     int64_t bm = leek(T0) + ((int64_t)peek(T0+4) << 32);
     fprintf(stderr,
             "\n\t FAC=%02x/%02x/%010llx (%.8g) FARG=%02x/%010llx (%.8g)",
@@ -986,7 +985,6 @@ void print_trace(CpuState *S)
     fprintf(stderr, "\n\t R[16-23]=%04x", deek(R0+32));
     for (i=17; i<24; i++)
       fprintf(stderr, " %04x", deek(R0+i+i));
-    fprintf(stderr, "=SP");
   }
   fprintf(stderr, " ]  %-5s %-18s\n",  mnemonic, operand);
 }

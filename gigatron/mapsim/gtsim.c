@@ -28,7 +28,7 @@
 typedef struct cpustate_s CpuState;
 
 void sys_0x3b4(CpuState*);
-void next_0x301(CpuState*);
+void next_0x307(CpuState*);
 
 char *rom = 0;
 char *gt1 = 0;
@@ -77,10 +77,12 @@ struct cpustate_s { // TTL state that the CPU controls
 uint8_t ROM[1<<16][2], RAM[1<<17], IN=0xff;
 uint8_t CTRL;
 uint32_t bank;
-uint16_t opc;
-uint8_t  pfx;
-long long ot, vt;
 long long t;
+
+uint8_t pfx;
+long long dt, rt, st;
+long long vt[2];
+
 
 CpuState cpuCycle(const CpuState S)
 {
@@ -205,19 +207,19 @@ void sim(void)
           exit(10);
         }
       } else if (S.PC == 0x301) {
-        next_0x301(&T);
+        rt = t + 6;             /* instruction return time (adjusted for 0x307) */
+        pfx = 0;
       } else if (S.PC == 0x307) {
-        pfx = 2;
-        opc = *(uint16_t*)(RAM+0x16);
-        ot = t - 6;
-      } else if (pfx == 2 && (S.PC & 0xff) == 1 && (S.PC >> 8) == (RAM[5]+1)) {
-        vt = t;
-      } else if (pfx == 2 && S.IR == 0xe1 && S.D == 0x1e) { // jmp(Y,[vReturn])
-        pfx = 1;
-        vt = t - 8;
-      } else if (pfx == 1 && S.IR == 0xe0 && S.D == 0xff && S.Y == RAM[5]) {
-        ot += t - vt;
-        pfx = 2;
+        next_0x307(&T);         /* t-dt = (rt-dt-vt[0]) + (t-rt-vt[1]) + (vt[0]+vt[1])  */
+        pfx = 2;                /* cpu prefix */
+        dt = t;                 /* instruction dispatch time */
+        vt[0] = vt[1] = 0;      /* video time (inside and outside instruction) */
+      } else if (pfx && (S.PC & 0xff) == 1 && (S.PC >> 8) == (RAM[5]+1)) {
+        pfx = RAM[5];
+      } else if (S.IR == 0xe1 && S.D == 0x1e) { // jmp(Y,[vReturn])
+        vt[!pfx] -= t;
+      } else if (S.IR == 0xe0 && S.D == 0xff && S.Y == RAM[5]) {
+        vt[!pfx] += t - 3;
       }
       // commit
       S = T;
@@ -445,6 +447,8 @@ void sys_exit(void)
 {
   if (deek(R9))
     printf("%s\n", &RAM[deek(R9)]);
+  if (pc2cycs)
+    printf("\ntotal %lld cycles (with video & overhead)\n", (t-10)-(st-6));
   exit((sword)deek(R8));
 }
 
@@ -736,7 +740,7 @@ void sys_0x3b4(CpuState *S)
       debug("vPC=%#x SYS(%d) [EXEC] ", pc, S->AC); debugSysFn(); debug("\n");
       if (exec_count==0 && pc>=0x1f0 && pc<0x1f8)
         {
-          debug("Execing Reset.gt1\n");
+          debug("Going into Reset.gt1\n");
         }
       else if (++exec_count == 1 && gt1)
         {
@@ -750,8 +754,8 @@ void sys_0x3b4(CpuState *S)
           // And return from SYS_Exec
           S->IR = 0x00; S->D = 0xf8; /* LD(-16/2) */
           S->PC = 0x3cb;             /* REENTER */
-          ot = t+3;
           nogt1 = 1;
+          st = dt = rt = t + 9;
         }
     }
 
@@ -939,13 +943,14 @@ void print_trace(CpuState *S)
 {
   char operand[32];
   char *mnemonic = "???";
-  word addr = addlo(deek(vPC),2);
+  word addr = deek(vPC);
   operand[0] = 0;
   disassemble(addr, &mnemonic, operand);
   fprintf(stderr, "%04x: [", addr);
   if (strchr(trace, 'n')) {
-    fprintf(stderr, "  AC=%02x YX=%02x%02x vTicks=%d t=%+06ld\n\t",
-            S->AC, S->Y, S->X, (int)(char)peek(0x15), (long)((t-ot) % 1000000));
+    fprintf(stderr, "  AC=%02x YX=%02x%02x vTicks=%d t=%+06ld%+06ld%+06ld\n\t",
+            S->AC, S->Y, S->X, (int)(char)peek(0x15),
+            (long)(rt-dt-vt[0]), (long)(t-rt-vt[1]), (long)(vt[0]+vt[1]));
   }
   fprintf(stderr, " vAC=%04x vLR=%04x SP=%04x", deek(vAC), deek(vLR), deek(SP));
   if (strchr(trace, 's'))
@@ -990,13 +995,13 @@ void print_trace(CpuState *S)
   fprintf(stderr, " ]  %-5s %-18s\n",  mnemonic, operand);
 }
 
-void next_0x301(CpuState *S)
+void next_0x307(CpuState *S)
 {
   if (nogt1) {
     if (trace)
       print_trace(S);
     if (pc2cycs)
-      pc2cycs[opc] += t - ot;
+      pc2cycs[deek(vPC)] += t - dt - vt[0] - vt[1];
   }
 }
 

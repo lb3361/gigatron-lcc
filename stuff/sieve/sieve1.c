@@ -1,13 +1,20 @@
 #include <stdio.h>
+#include <string.h>
 #include <gigatron/sys.h>
 #include <gigatron/libc.h>
 #include <time.h>
 
-#define TIMER 1
+#ifndef TIMER
+# define TIMER 1
+#endif
+#ifndef MEMSET
+# define MEMSET 1
+#endif
 
-
-/** This is a minor modification of the genuine C program of the sieve benchmark.
-    Loop conditions and certain expressions have been made optimizer friendly. **/
+/** This is a minor modification of the pristine C program of the
+    sieve benchmark. Loop conditions and certain expressions have
+    been made Gigatron friendly. Table clearing is conditionally done
+    with memset (which is proper ANSI C 1989). */
 
 #define true 1
 #define false 0
@@ -23,16 +30,16 @@ main() {
 #endif
     printf("10 iterations\n");
 #ifdef MODE
-# if MODE == 4
-    videoTop_v5 = 238;
-# else
     SYS_SetMode(MODE);
-# endif
 #endif
     for (iter = 1; iter <= 10; iter ++) {
-        count=0 ; 
-	for (i = 0; i != sizepl; i++)
-	    flags[i] = true; 
+        count = 0;
+#if MEMSET
+        memset(flags, true, sizepl); /* This is ANSI C 1989 */
+#else
+        for(i = 0; i != sizepl; i++) /* This is one line longer */
+            flags[i] = true;
+#endif
         for (i = 0; i != sizepl; i++) { 
 	    if (flags[i]) {
                 prime = i + i + 3; 
@@ -46,11 +53,7 @@ main() {
         }
     }
 #ifdef MODE
-# if MODE == 4
-    videoTop_v5 = 0;
-# else
     SYS_SetMode(-1);
-# endif
 #endif
     printf("\n%d primes", count);
 #if TIMER

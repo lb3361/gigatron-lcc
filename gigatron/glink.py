@@ -345,7 +345,7 @@ def emit_long_jump(d):
         CALLI(d)          # 3 bytes
     else:
         STLW(-2); LDWI(d); STW(vLR);
-        LDLW(-2); RET()   # 10 bytes
+        LDLW(-2); RET()   # <10 bytes
 
 def hop(sz, jump):
     '''Ensure, possibly with a hop, that there are at 
@@ -1447,7 +1447,7 @@ def _CMPIS(d):
     '''Compare vAC (signed) with immediate in range 0..255'''
     if args.cpu >= 7:
         CMPIS(d)
-    elif args.cpu >= 5:
+    elif args.cpu > 5 or args.cpu == 5 and not "has_altCmpOps" in rominfo:
         CMPHS(0); SUBI(d)
     else:
         lbl = genlabel()
@@ -1460,7 +1460,7 @@ def _CMPIU(d):
     '''Compare vAC (unsigned) with immediate in range 0..255'''
     if args.cpu >= 7:
         CMPIU(d)
-    elif args.cpu >= 5:
+    elif args.cpu > 5 or args.cpu == 5 and not "has_altCmpOps" in rominfo:
         CMPHU(0); SUBI(d)
     else:
         lbl = genlabel()
@@ -1474,36 +1474,35 @@ def _CMPWS(d):
     '''Compare vAC (signed) with register.'''
     if args.cpu >= 7:
         CMPWS(d)                # 36 cycles
-    elif args.cpu >= 5:
+    elif args.cpu > 5 or args.cpu == 5 and not "has_altCmpOps" in rominfo:
         d = v(d)
         CMPHS(d+1); SUBW(d)     # 28+28 cycles
     else:
         lbl1 = genlabel()
         lbl2 = genlabel()
-        # no hops because cpu4 long jumps also use -2(vSP)
-        tryhop(18)
-        STLW(-2); XORW(d); BGE(lbl1)
-        LDLW(-2); ORI(1); BRA(lbl2)
+        tryhop(16)
+        XORW(d); BGE(lbl1)
+        XORW(d); ORI(1); BRA(lbl2)
         label(lbl1, hop=0)
-        LDLW(-2); SUBW(d)
+        XORW(d); SUBW(d)
         label(lbl2, hop=0)
 @vasm
 def _CMPWU(d):
     '''Compare vAC (unsigned) with register.'''
     if args.cpu >= 7:
         CMPWU(d)                # 36 cycles
-    elif args.cpu >= 5:
+    elif args.cpu > 5 or args.cpu == 5 and not "has_altCmpOps" in rominfo:
         d = v(d)
         CMPHU(d+1); SUBW(d)     # 28+28 cycles
     else:
         lbl1 = genlabel()
         lbl2 = genlabel()
         # no hops because cpu4 long jumps also use -2(vSP)
-        tryhop(18)
-        STLW(-2); XORW(d); BGE(lbl1)
+        tryhop(16)
+        XORW(d); BGE(lbl1)
         LDW(d); ORI(1); BRA(lbl2)
         label(lbl1, hop=0)
-        LDLW(-2); SUBW(d)
+        XORW(d); SUBW(d)
         label(lbl2, hop=0)
 @vasm
 def _MOVM(s,d,n,align=1): # was _BMOV
@@ -2706,10 +2705,16 @@ def glink(argv):
             print()
             print('================= CPU INFO')
             if args.cpu == 7:
-                print('  vCPU 7 comes with the DEV7 roms and contains some new opcodes.')
+                print('  vCPU 7 comes with the DEV7 roms and adds new opcodes to vCPU 5.')
             elif args.cpu == 6:
-                print('  vCPU 6 comes with at67'"'"'s ROMvX0 and contains many new opcodes'
-                      ' whose encoding might change from release to release.')
+                print('  vCPU 6 comes with at67'"'"'s ROMvX0 and contains many new opcodes\n'
+                      ' whose encoding might change from release to release. vCPU 6 is not\n'
+                      ' backward compatible with vCPU 5 because it gives different encoding\n'
+                      ' to the CMPHU and CMPHS opcodes. Program compiled for vCPU 5 do not\n'
+                      ' run reliably on ROMvX0 and programs compiled for vCPU 6 only run\n'
+                      ' on ROMvX0. Programs compiled with -rom=vx0 -cpu=5 try to navigate\n'
+                      ' these constraints and might run on the dev6 rom (proposed v6)\n'
+                      ' and later if one disables the rom check. Your mileage can vary.')
             elif args.cpu == 5:
                 print('  vCPU 5 was introduced in ROMv5a with opcodes CALLI, CMPHU, CMPHS.')
             elif args.cpu == 4:

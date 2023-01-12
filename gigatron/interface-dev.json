@@ -31,6 +31,7 @@
     "SUBV_v7"          : "0x0368",
     "JNE_v7"           : "0x0372",
     "LDNI_v7"          : "0x0378",
+    "MULQ_v7"          : "0x037d",
     "LDVI_v7"          : "0x03b1",
     "CMPWS_v7"         : "0x03d3",
     "CMPWU_v7"         : "0x03d6",

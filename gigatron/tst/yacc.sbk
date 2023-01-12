@@ -597,9 +597,9 @@ def code14():
 	LDW(R3);LSLW();ADDW(R2);STW(R5);
 	LDWI('yytop');DEEK();_CMPWU(R5);_BLT('.65');
 	LDWI('yysvec');STW(R23);
-	LDW(R5);PEEK();STW(T3);LSLW();ADDW(T3);LSLW();ADDW(R23);XORW(R7);_BNE('.65');
+	LDW(R5);PEEK();_MULI(6);ADDW(R23);XORW(R7);_BNE('.65');
 	LDWI('yysvec');STW(R23);
-	LDI(1);ADDW(R5);PEEK();STW(T3);LSLW();ADDW(T3);LSLW();ADDW(R23);XORW(R23);_BNE('.68');
+	LDI(1);ADDW(R5);PEEK();_MULI(6);ADDW(R23);XORW(R23);_BNE('.68');
 	SUBIV(-(-1),R4);
 	LDW(R4);STW(R23);
 	LDWI('yytchar');STW(R22);
@@ -617,7 +617,7 @@ def code14():
 	LDW(R6);STW(R23);
 	ADDIV(2,R6);
 	LDWI('yysvec');STW(R22);
-	LDI(1);ADDW(R5);PEEK();STW(T3);LSLW();ADDW(T3);LSLW();ADDW(R22);
+	LDI(1);ADDW(R5);PEEK();_MULI(6);ADDW(R22);
 	STW(R7);
 	DOKE(R23);
 	_BRA('.42');
@@ -630,9 +630,9 @@ def code14():
 	LDW(R3);LSLW();ADDW(R5);STW(R5);
 	LDWI('yytop');DEEK();_CMPWU(R5);_BLT('.75');
 	LDWI('yysvec');STW(R23);
-	LDW(R5);PEEK();STW(T3);LSLW();ADDW(T3);LSLW();ADDW(R23);XORW(R7);_BNE('.75');
+	LDW(R5);PEEK();_MULI(6);ADDW(R23);XORW(R7);_BNE('.75');
 	LDWI('yysvec');STW(R23);
-	LDI(1);ADDW(R5);PEEK();STW(T3);LSLW();ADDW(T3);LSLW();ADDW(R23);XORW(R23);_BNE('.77');
+	LDI(1);ADDW(R5);PEEK();_MULI(6);ADDW(R23);XORW(R23);_BNE('.77');
 	SUBIV(-(-1),R4);
 	LDW(R4);STW(R23);
 	LDWI('yytchar');STW(R22);
@@ -650,7 +650,7 @@ def code14():
 	LDW(R6);STW(R23);
 	ADDIV(2,R6);
 	LDWI('yysvec');STW(R22);
-	LDI(1);ADDW(R5);PEEK();STW(T3);LSLW();ADDW(T3);LSLW();ADDW(R22);
+	LDI(1);ADDW(R5);PEEK();_MULI(6);ADDW(R22);
 	STW(R7);
 	DOKE(R23);
 	_BRA('.42');
@@ -658,9 +658,9 @@ def code14():
 	LDWI('yymatch');ADDW(R3);PEEK();LSLW();ADDW(R2);STW(R5);
 	LDWI('yytop');DEEK();_CMPWU(R5);_BLT('.81');
 	LDWI('yysvec');STW(R23);
-	LDW(R5);PEEK();STW(T3);LSLW();ADDW(T3);LSLW();ADDW(R23);XORW(R7);_BNE('.81');
+	LDW(R5);PEEK();_MULI(6);ADDW(R23);XORW(R7);_BNE('.81');
 	LDWI('yysvec');STW(R23);
-	LDI(1);ADDW(R5);PEEK();STW(T3);LSLW();ADDW(T3);LSLW();ADDW(R23);XORW(R23);_BNE('.83');
+	LDI(1);ADDW(R5);PEEK();_MULI(6);ADDW(R23);XORW(R23);_BNE('.83');
 	SUBIV(-(-1),R4);
 	LDW(R4);STW(R23);
 	LDWI('yytchar');STW(R22);
@@ -678,7 +678,7 @@ def code14():
 	LDW(R6);STW(R23);
 	ADDIV(2,R6);
 	LDWI('yysvec');STW(R22);
-	LDI(1);ADDW(R5);PEEK();STW(T3);LSLW();ADDW(T3);LSLW();ADDW(R22);
+	LDI(1);ADDW(R5);PEEK();_MULI(6);ADDW(R22);
 	STW(R7);
 	DOKE(R23);
 	_BRA('.42');

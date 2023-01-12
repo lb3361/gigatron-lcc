@@ -444,6 +444,33 @@ def emit_op(*args):
     emit(*bytes)
 
 
+# ------------- mulq
+
+mulq_map = {}
+
+def create_mulq_map():
+    global mulq_map
+    if args.cpu >= 7:
+        mulq_n = {}
+        for kk in range(256):
+            p = c = 2
+            k = kk
+            while k != 0:
+                if k & 0x80 == 0x80:
+                    p = p << 1; c += 1; k <<= 1; k &= 0xff
+                elif k & 0xc0 == 0x40:
+                    p += 1; c += 1; k <<= 2; k &= 0xff
+                else:
+                    p -= 1; c += 1; k <<= 3; k &= 0xff
+            if not p in mulq_n or mulq_n[p] >= c:
+                mulq_n[p] = c
+                mulq_map[p] = kk
+    mulq_map[0] = lambda: LDI(0)
+    mulq_map[1] = lambda: None
+    mulq_map[2] = lambda: LSLW()
+    mulq_map[4] = lambda: LSLW(repeat=2)
+
+
 # ------------- map of page zero
 
 zpage_map = [ None for i in range(0,256) ]
@@ -766,8 +793,8 @@ def ADDI(d):
 def SUBI(d):
     emit_op("SUBI", check_imm8(d))
 @vasm
-def LSLW():
-    emit_op("LSLW")
+def LSLW(repeat = 1):
+    for _ in range(repeat): emit_op("LSLW")
 @vasm
 def INC(d):
     emit_op("INC", check_zp(d))
@@ -997,6 +1024,9 @@ def JGE(d):
 def LDVI(x,d):
     d=int(v(d))
     emit_op('LDVI_v7', check_zp(x), hi(d), lo(d))
+@vasm
+def MULQ(kod):
+    emit_op('MULQ_v7', check_zp(kod))
 @vasm
 def MOVL(s,d):
     if args.cpu == 6:
@@ -1263,12 +1293,28 @@ def _MUL(d):
         _CALLI('_@_mul')        # T3 * AC --> vAC
 @vasm
 def _MULI(d):
-    STW(T3);_LDI(d);
-    if args.cpu >= 7:
-        MULW(T3)
-    else:
-        extern('_@_mul')
-        _CALLI('_@_mul')        # T3 * AC --> vAC
+    d = int(v(d))
+    if abs(d) in mulq_map:
+        if d < 0:
+            d = -d
+            if args.cpu >= 6:
+                NEGV(vAC)
+            else:
+                STW(T3);LDI(0);SUBW(T3)
+        c = mulq_map[abs(d)]
+        if callable(c):
+            c()
+        else:
+            MULQ(c)
+    elif d != 1:
+        STW(T3);_LDI(d);
+        if args.cpu >= 7:
+            MULW(T3)
+        else:
+            extern('_@_mul')
+            _CALLI('_@_mul')    # T3 * AC --> vAC
+        return
+    
 @vasm
 def _DIVS(d):
     STW(T3); LDW(d)
@@ -2631,6 +2677,7 @@ def glink(argv):
         args.files = args.files or []
         read_interface()
         create_zpage_map()
+        create_mulq_map()
         create_register_names(args.regbase)
         args.map = args.map or '32k'
         sm = args.map.split(',')

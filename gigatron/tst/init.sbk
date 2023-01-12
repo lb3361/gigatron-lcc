@@ -164,7 +164,7 @@ def code8():
 	label('.37');
 	LDWI('.41');STW(R8);
 	_MOVW(R8,[SP,2]);
-	LDW(R7);LSLW();ADDW(R7);LSLW();LSLW();STW(R23);
+	LDW(R7);_MULI(12);STW(R23);
 	LDWI('words');ADDW(R23);DEEKA(R9);
 	_MOVW(R9,[SP,4]);
 	LDWI(v('words')+2);ADDW(R23);DEEKA(R10);

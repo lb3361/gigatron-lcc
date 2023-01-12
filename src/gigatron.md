@@ -485,14 +485,14 @@ ac: LSHI2(ac, iarg) "%0%[1b]_SHL(%1);" 200
 ac: RSHI2(ac, iarg) "%0%[1b]_SHRS(%1);" 200
 ac: LSHU2(ac, iarg) "%0%[1b]_SHL(%1);" 200
 ac: RSHU2(ac, iarg) "%0%[1b]_SHRU(%1);" 200
-ac: MULI2(conB, ac)    "%1%{mul0}" 100
-ac: MULI2(conBn, ac)   "%1%{mul0}" 110
-ac: MULI2(conB, regx)  "%{mul0%1}" 100
-ac: MULI2(conBn, regx) "%{mul0%1}" 110
+ac: MULI2(conB, ac)    "%1%{mul0}" 150
+ac: MULI2(conBn, ac)   "%1%{mul0}" 160
+ac: MULI2(conB, regx)  "%{mul0%1}" 150
+ac: MULI2(conBn, regx) "%{mul0%1}" 160
 ac: MULI2(con, ac)     "%1_MULI(%0);" 200
 ac: MULI2(ac, iarg)    "%0%[1b]_MUL(%1);" 200
 ac: MULI2(iarg, ac)    "%1%[0b]_MUL(%0);" 200
-ac: MULU2(conB, ac)    "%1%{mul0}" 100
+ac: MULU2(conB, ac)    "%1%{mul0}" 150
 ac: MULU2(con, ac)     "%1_MULI(%0);" 200
 ac: MULU2(ac, iarg)    "%0%[1b]_MUL(%1);" 200
 ac: MULU2(iarg, ac)    "%1%[0b]_MUL(%0);" 200
@@ -542,8 +542,8 @@ eac: LSHI2(eac, con1) "%0LSLW();" 28
 eac: LSHU2(eac, con1) "%0LSLW();" 28
 eac: LSHI2(eac, conB) "%0_SHLI(%1);" 100
 eac: LSHU2(eac, conB) "%0_SHLI(%1);" 100
-eac: MULI2(conB, eac) "%1%{mul0}" 100
-eac: MULI2(conB, eac) "%1%{mul0}" 100
+eac: MULI2(conB, eac) "%1%{mul0}" 150
+eac: MULI2(conB, eac) "%1%{mul0}" 150
 # More eac variants involving iarg because iarg spills preserve T2
 eac: ADDI2(eac,iarg) "%0%[1b]ADDW(%1);" 28
 eac: ADDU2(eac,iarg) "%0%[1b]ADDW(%1);" 28
@@ -919,7 +919,8 @@ regx: LOADU2(con)        "\tLDVI(%c,%0)\n" mincpu7(31)
 regx: LOADP2(con)        "\tLDVI(%c,%0)\n" mincpu7(31)
 ac: NEGI2(ac)      "%0NEGV(vAC);" mincpu6(30)
 lac: NEGI4(lac)    "%0NEGVL(LAC);" mincpu6(58)
-
+ac: MULI2(con, ac) "%1_MULI(%0);" mincpu7(80)
+ac: MULU2(con, ac) "%1_MULI(%0);" mincpu7(80)
 
 # Read-modify-write
 rmw: VREGP "%a"

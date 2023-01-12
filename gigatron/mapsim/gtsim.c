@@ -36,7 +36,7 @@ int nogt1 = 0;
 const char *trace = 0;
 int verbose = 0;
 int okopen = 0;
-int vmode = 3;
+int vmode = 1975;
 const char *prof = 0;
 long long *pc2cycs = 0;
 const int alignlong = 4;
@@ -828,6 +828,7 @@ int disassemble(word addr, char **pm, char *operand)
         case 0x18:  *pm = "LSRXA"; return 2;
         case 0x1a:  *pm = "RORX";  return 2;
         case 0x1c:  *pm = "MACX";  return 2;
+        case 0x37:  *pm = "NEGV";  goto operx8;    /* v7 */
         case 0x39:  *pm = "RDIVS"; goto operx8;    /* v7 */
         case 0x3b:  *pm = "RDIVU"; goto operx8;    /* v7 */
         case 0x3d:  *pm = "MULW";  goto operx8;    /* v7 */
@@ -841,7 +842,6 @@ int disassemble(word addr, char **pm, char *operand)
         case 0x72:  *pm = "BNE";   goto operxbr;
         case 0x7d:  *pm = "ADDIV"; goto operx8x2;  /* v7 */
         case 0x9c:  *pm = "SUBIV"; goto operx8x2;  /* v7 */
-        case 0xb5:  *pm = "NEGV";  goto operx8;    /* v7 */
         case 0xcb:  *pm = "COPY";  return 2;       /* v7 */
         case 0xcf:  *pm = "COPYN"; goto operx8;    /* v7 */
         case 0xdb:  *pm = "MOVL";  goto operx8x2r; /* v7 */
@@ -892,6 +892,7 @@ int disassemble(word addr, char **pm, char *operand)
     case 0x68:  *pm = "SUBV";  goto oper8;    /* v7 */
     case 0x72:  *pm = "JNE";   goto oper16p2; /* v7 */
     case 0x78:  *pm = "LDNI";  goto oper8n;   /* v7 */
+    case 0x7d:  *pm = "MULQ";  goto oper8;    /* v7 */
     case 0xb1:  *pm = "LDVI";  goto oper8r16; /* v7 */
     case 0xd3:  *pm = "CMPWS"; goto oper8;    /* v7 */
     case 0xd6:  *pm = "CMPWU"; goto oper8;    /* v7 */

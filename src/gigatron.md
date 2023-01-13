@@ -906,17 +906,17 @@ stmt: ASGNU1(rmw, conB)  "\tMOVQB(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,27))
 stmt: ASGNI2(rmw, conB)  "\tMOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
 stmt: ASGNU2(rmw, conB)  "\tMOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
 stmt: ASGNP2(rmw, conB)  "\tMOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
-stmt: ASGNI2(rmw, con)   "\tLDVI(%0,%1)\n"  mincpu7(if_not_asgn_tmp(a,31))
-stmt: ASGNU2(rmw, con)   "\tLDVI(%0,%1)\n"  mincpu7(if_not_asgn_tmp(a,31))
-stmt: ASGNP2(rmw, con)   "\tLDVI(%0,%1)\n"  mincpu7(if_not_asgn_tmp(a,31))
+stmt: ASGNI2(rmw, con)   "\tSTWI(%0,%1)\n"  mincpu7(if_not_asgn_tmp(a,31))
+stmt: ASGNU2(rmw, con)   "\tSTWI(%0,%1)\n"  mincpu7(if_not_asgn_tmp(a,31))
+stmt: ASGNP2(rmw, con)   "\tSTWI(%0,%1)\n"  mincpu7(if_not_asgn_tmp(a,31))
 regx: LOADI1(conBs)      "\tMOVQB(%0,%c)\n" mincpu6(27)
 regx: LOADU1(conB)       "\tMOVQB(%0,%c)\n" mincpu6(27)
 regx: LOADI2(conB)       "\tMOVQW(%0,%c)\n" mincpu6(29)
 regx: LOADU2(conB)       "\tMOVQW(%0,%c)\n" mincpu6(29)
 regx: LOADP2(conB)       "\tMOVQW(%0,%c)\n" mincpu6(29)
-regx: LOADI2(con)        "\tLDVI(%c,%0)\n" mincpu7(31)
-regx: LOADU2(con)        "\tLDVI(%c,%0)\n" mincpu7(31)
-regx: LOADP2(con)        "\tLDVI(%c,%0)\n" mincpu7(31)
+regx: LOADI2(con)        "\tSTWI(%c,%0)\n" mincpu7(31)
+regx: LOADU2(con)        "\tSTWI(%c,%0)\n" mincpu7(31)
+regx: LOADP2(con)        "\tSTWI(%c,%0)\n" mincpu7(31)
 ac: NEGI2(ac)      "%0NEGV(vAC);" mincpu6(30)
 lac: NEGI4(lac)    "%0NEGVL(LAC);" mincpu6(58)
 ac: MULI2(con, ac) "%1_MULI(%0);" mincpu7(80)
@@ -1958,7 +1958,9 @@ static void import(Symbol p)
 
 static void export(Symbol p)
 {
-  if (p->u.seg != BSS)
+  int isnear = fnqual(p->type) == NEAR;
+  int iscommon = (p->u.seg == BSS && !isnear);
+  if (! iscommon)
     lprint("('EXPORT', %s)", p->x.name);
 }
 

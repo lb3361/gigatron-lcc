@@ -233,11 +233,20 @@ class Module:
         self.symrefs = {}
         self.symdefs = {}
         self.sympass = {}
-        # overlay can define map_place to insert placement directives
-        if map_place:
-            for tp in map_place(self.name) or []:
-                if tp[0] == 'PLACE':
-                    code.append(tp)
+        # inner function to process a placement fragment
+        def placement(tp):
+            matches = self.code
+            if tp[1] != '*':
+                matches = [f for f in self.code if f.name == tp[1]]
+            if len(matches) < 1:
+                error(f"Cannot locate fragment for {tp}")
+            for match in matches:
+                if match.amin != None:
+                    if tp[1] != '*':
+                        error(f"Conflicting placement constraints {tp}")
+                else:
+                    match.amax = tp[3] if len(tp) > 3 else None
+                    match.amin = tp[2]
         # process code list
         for tp in code:
             if tp[0] == 'EXPORT':
@@ -250,20 +259,18 @@ class Module:
                 self.code.append(Fragment(*tp))         # ('CODE', "name", func)
             elif tp[0] == 'DATA' or tp[0] == 'BSS' or tp[0] == 'COMMON':
                 self.code.append(Fragment(*tp))         # ('DATA|BSS|COMMON', "name", func, size, align)
-            elif tp[0] == 'ORG' or tp[0] == 'PLACE':
-                matches = self.code
-                if tp[1] != '*':
-                    matches = [f for f in self.code if f.name == tp[1]]
-                if len(matches) < 1:
-                    error(f"Cannot locate fragment for {tp}")
-                for match in matches:
-                    if match.amin:
-                        error(f"Conflicting placement constraints {tp}")
-                    else:                                # ('ORG', "name|*", addr)
-                        match.amin = tp[2]               # ('PLACE', "name|*", minaddr, maxaddr)
-                        match.amax = tp[3] if len(tp) > 3 else None
-            elif tp[0] != 'NOP':
+            elif tp[0] == 'ORG' or tp[0] == 'PLACE':    # ('PLACE', "name|*", minaddr, maxaddr)
+                placement(tp)                           # ('ORG', "name|*", addr) 
+            elif tp[0] != 'NOP':                        # ('NOP',)
                 error(f"Unrecognized fragment specification {tp}")
+        # placement overlay
+        if map_place:
+            fragnames = [f.name for f in self.code]
+            for tp in map_place(self.name, fragnames) or []:
+                if tp[0] == 'PLACE' and (tp[1] == '*' or tp[1] in fragnames):
+                    placement(tp)
+                elif tp[0] != 'NOP':
+                    error(f"Unrecognized map_place() specification {tp}")
     def __repr__(self):
         return f"Module('{self.fname or self.name}',...)"
     def label(self, sym, val):
@@ -1021,9 +1028,9 @@ def JGE(d):
     else:
         emit_op("JGE_v7", lo(d-2), hi(d))
 @vasm
-def LDVI(x,d):
+def STWI(x,d):
     d=int(v(d))
-    emit_op('LDVI_v7', check_zp(x), hi(d), lo(d))
+    emit_op('STWI_v7', check_zp(x), hi(d), lo(d))
 @vasm
 def MULQ(kod):
     emit_op('MULQ_v7', check_zp(kod))
@@ -1184,8 +1191,8 @@ def _LDI(d):
     else:
         LDWI(d)
 @vasm
-def _LDVI(x,d):
-    '''Emits LDVI, MOVQW or 2*MOVQB (cpu>=6)'''
+def _STWI(x,d):
+    '''Emits STWI, MOVQW or 2*MOVQB (cpu>=6)'''
     d = int(v(d))
     if is_zeropage(d):
         MOVQW(d, check_zp(x))
@@ -1193,7 +1200,7 @@ def _LDVI(x,d):
         MOVQB(lo(d), check_zp(x))
         MOVQB(hi(d), check_zp(x)+1)
     else:
-        LDVI(check_zp(x),d)
+        STWI(check_zp(x),d)
 @vasm
 def _LDW(d):
     '''Emit LDW or LDWI+DEEK.'''
@@ -1394,7 +1401,7 @@ def _MOVW(s,d): # was _MOV
             if is_zeropage(d):
                 STW(d)
             else:
-                _LDVI(T2,d); DOKE(T2)
+                _STWI(T2,d); DOKE(T2)
         else:
             if s != vAC and s != [vAC]:
                 _LDI(d); STW(T2); _LDW(s); DOKE(T2)
@@ -1522,11 +1529,11 @@ def _MOVM(s,d,n,align=1): # was _BMOV
             if d == [vAC]:
                 STW(T2)
             elif d != [T2]:
-                _LDVI(T2,d)
+                _STWI(T2,d)
             if s == [vAC]:
                 STW(T3)
             elif args.cpu >= 7:
-                LDVI(T3,s)
+                STWI(T3,s)
             else:
                 LDWI(s);STW(T3)
             while n >= 256:
@@ -1595,11 +1602,11 @@ def _MOVL(s,d): # was _LMOV
             if d == [vAC]:
                 STW(T2)
             elif d != [T2]:
-                _LDVI(T2, d)
+                _STWI(T2, d)
             if s == [vAC]:
                 STW(T3)
             elif args.cpu >= 7:
-                LDVI(T3, s)
+                STWI(T3, s)
             else:
                 LDWI(s);STW(T3)
             COPYN(4)                                 # generic: 5-9 bytes (cpu7)
@@ -1764,11 +1771,11 @@ def _MOVF(s,d): # was _FMOV
             if d == [vAC]:
                 STW(T2)
             elif d != [T2]:
-                _LDVI(T2, d)
+                _STWI(T2, d)
             if s == [vAC]:
                 STW(T3)
             elif args.cpu >= 7:
-                LDVI(T3, s)
+                STWI(T3, s)
             else:
                 LDWI(s);STW(T3)
             COPYN(5)

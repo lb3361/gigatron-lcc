@@ -13,16 +13,16 @@ def code0():
 	CALLI('printf');
 	LDWI('.3');STW(R8);
 	_MOVW(R8,[SP,2]);
-	LDVI(R9,0xffff)
+	STWI(R9,0xffff)
 	_MOVW(R9,[SP,4]);
-	LDVI(R10,0xffff)
+	STWI(R10,0xffff)
 	_MOVW(R10,[SP,6]);
 	CALLI('printf');
 	LDWI('.4');STW(R8);
 	_MOVW(R8,[SP,2]);
-	LDVI(R9,0xffff)
+	STWI(R9,0xffff)
 	_MOVW(R9,[SP,4]);
-	LDVI(R10,0xffff)
+	STWI(R10,0xffff)
 	_MOVW(R10,[SP,6]);
 	CALLI('printf');
 	LDWI('.5');STW(R8);
@@ -49,16 +49,16 @@ def code0():
 	CALLI('printf');
 	LDWI('.9');STW(R8);
 	_MOVW(R8,[SP,2]);
-	LDVI(R9,32767)
+	STWI(R9,32767)
 	_MOVW(R9,[SP,4]);
-	LDVI(R10,32767)
+	STWI(R10,32767)
 	_MOVW(R10,[SP,6]);
 	CALLI('printf');
 	LDWI('.10');STW(R8);
 	_MOVW(R8,[SP,2]);
-	LDVI(R9,32767)
+	STWI(R9,32767)
 	_MOVW(R9,[SP,4]);
-	LDVI(R10,32767)
+	STWI(R10,32767)
 	_MOVW(R10,[SP,6]);
 	CALLI('printf');
 	LDWI('.11');STW(R8);
@@ -78,23 +78,23 @@ def code0():
 	CALLI('printf');
 	LDWI('.14');STW(R8);
 	_MOVW(R8,[SP,2]);
-	LDVI(R9,-128)
+	STWI(R9,-128)
 	_MOVW(R9,[SP,4]);
-	LDVI(R10,-128)
+	STWI(R10,-128)
 	_MOVW(R10,[SP,6]);
 	CALLI('printf');
 	LDWI('.15');STW(R8);
 	_MOVW(R8,[SP,2]);
-	LDVI(R9,-32768)
+	STWI(R9,-32768)
 	_MOVW(R9,[SP,4]);
-	LDVI(R10,-32768)
+	STWI(R10,-32768)
 	_MOVW(R10,[SP,6]);
 	CALLI('printf');
 	LDWI('.16');STW(R8);
 	_MOVW(R8,[SP,2]);
-	LDVI(R9,-32768)
+	STWI(R9,-32768)
 	_MOVW(R9,[SP,4]);
-	LDVI(R10,-32768)
+	STWI(R10,-32768)
 	_MOVW(R10,[SP,6]);
 	CALLI('printf');
 	LDWI('.17');STW(R8);

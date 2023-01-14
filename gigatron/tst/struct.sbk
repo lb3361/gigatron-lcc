@@ -200,7 +200,7 @@ def code10():
 	_MOVW(R12,[SP,10]);
 	CALLI('printf');
 	label('.62');
-	ADDIV(1,R7);
+	INCV(R7);
 	label('.64');
 	LDI(4);_CMPWU(R7);_BGT('.61');
 	_SP(2);STW(T2);_MOVM('y',[T2],3,1);

@@ -45,7 +45,7 @@ def code3():
 	CALLI('printf');
 	label('.17');
 	label('.10');
-	ADDIV(1,R7);
+	INCV(R7);
 	label('.12');
 	LDI(1);_CMPWU(R7);_BGT('.9');
 	LDWI(v('.3')+34);DEEK();_BNE('.23');

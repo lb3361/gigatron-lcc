@@ -76,7 +76,8 @@ def scope():
         label('SYS_Exec')
         _LDI('SYS_Exec_88');STW('sysFn')
         LDW(R8);STW('sysArgs0')
-        LDW(R9);_BEQ('.se1');STW(vLR)
+        _LDI(-1);XORW(R9);_BEQ('.se1')
+        LDW(R9);STW(vLR)
         label('.se1')
         SYS(88);RET()
 
@@ -105,7 +106,14 @@ def scope():
         PUSH()
         _LDI('SYS_ReadRomDir_v5_80');STW('sysFn')
         LDW(R8);SYS(80);STW(R8)
-        LDW(R9);_MOVM('sysArgs0',[vAC],8,2)
+        LDW(R9);STW(T2)
+        LDI('sysArgs0');STW(T3)
+        label('.loop')
+        LDW(T3);DEEK();DOKE(T2)
+        LDI(2);ADDW(T2);STW(T2)
+        LDI(2);ADDW(T3);STW(T3)
+        XORI(v('sysArgs0')+8)
+        _BNE('.loop')
         POP();LDW(R8);RET()
 
     module(name='sys_readromdir.s',

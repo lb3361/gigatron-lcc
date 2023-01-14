@@ -13,6 +13,7 @@
     "vT2_v7"               : "0x0088",
     "vT3_v7"               : "0x008a",
     "userVars2_v7"         : "0x008c",
+    "ledTempo_v7"          : "0x01f5",
 
     "POKEA_v7"         : "0x0339",
     "DOKEA_v7"         : "0x033b",
@@ -29,6 +30,7 @@
     "JLE_v7"           : "0x0356",
     "ADDV_v7"          : "0x0366",
     "SUBV_v7"          : "0x0368",
+    "INCV_v7"          : "0x0370",
     "JNE_v7"           : "0x0372",
     "LDNI_v7"          : "0x0378",
     "MULQ_v7"          : "0x037d",

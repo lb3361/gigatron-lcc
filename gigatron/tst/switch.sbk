@@ -18,7 +18,7 @@ def code0():
 	_MOVW(R10,[SP,6]);
 	CALLI('printf');
 	label('.3');
-	ADDIV(1,R7);
+	INCV(R7);
 	label('.5');
 	LDW(R7);PEEK();_BNE('.2');
 	CALLI('f');
@@ -130,7 +130,7 @@ def code2():
 	_MOVW(R9,[SP,4]);
 	CALLI('printf');
 	label('.30');
-	ADDIV(1,R7);
+	INCV(R7);
 	LDI(20);_CMPWS(R7);_BGE('.29');
 	LDI(0);
 	label('.27');
@@ -224,7 +224,7 @@ def code4():
 	CALLI('printf');
 	label('.55');
 	label('.51');
-	ADDIV(1,R7);
+	INCV(R7);
 	LDI(10);_CMPWS(R7);_BGE('.50');
 	LDI(0);
 	label('.48');
@@ -307,7 +307,7 @@ def code8():
 	LDWI(312);XORW(R7);_BEQ('.95');
 	_BRA('.81');
 	label('.81');
-	ADDIV(1,R6);
+	INCV(R6);
 	_BRA('.78');
 	label('.83');
 	LDWI('.84');STW(R8);
@@ -394,7 +394,7 @@ def code8():
 	CALLI('printf');
 	label('.82');
 	label('.78');
-	ADDIV(1,R7);
+	INCV(R7);
 	LDWI(500);_CMPWS(R7);_BGE('.77');
 	LDWI('.107');STW(R8);
 	_MOVW(R8,[SP,2]);
@@ -495,7 +495,7 @@ def code10():
 	CALLI('printf');
 	label('.130');
 	label('.126');
-	ADDIV(1,R7);
+	INCV(R7);
 	LDWI(-32763);_CMPWS(R7);_BGE('.125');
 	STWI(R7,32767)
 	label('.143');

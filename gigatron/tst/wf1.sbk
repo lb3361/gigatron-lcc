@@ -60,7 +60,7 @@ def code2():
 	_BRA('.15');
 	label('.12');
 	LDW(R5);STW(R23);
-	ADDIV(1,R5);
+	INCV(R5);
 	LD(R6);POKE(R23);
 	label('.13');
 	CALLI('getchar');
@@ -191,12 +191,12 @@ def code6():
 	_BRA('.47');
 	label('.46');
 	LDW(R8);
-	ADDIV(1,R8);
+	INCV(R8);
 	PEEK();_BNE('.49');
 	LDI(0);
 	_BRA('.45');
 	label('.49');
-	ADDIV(1,R9);
+	INCV(R9);
 	label('.47');
 	LDW(R9);PEEK();STW(R23);
 	LDW(R8);PEEK();XORW(R23);_BEQ('.46');

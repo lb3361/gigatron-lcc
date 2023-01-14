@@ -1072,6 +1072,12 @@ def RDIVU(d):
 def RDIVS(d):
     emit_op("RDIVS_v7", check_zp(d))
 @vasm
+def INCV(d):
+    if args.cpu == 6:
+        tryhop(3);emit(0x2f, check_zp(d), 0x6a)
+    else:
+        emit_op("INCV_v7", check_zp(d))
+@vasm
 def ADDV(d):
     emit_op("ADDV_v7", check_zp(d))
 @vasm

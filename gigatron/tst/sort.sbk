@@ -34,7 +34,7 @@ def code1():
 	_MOVW(R8,[SP,2]);
 	CALLI('putchar');
 	label('.3');
-	ADDIV(1,R7);
+	INCV(R7);
 	label('.5');
 	LDI(10);_CMPWU(R7);_BGT('.2');
 	LDI(0);
@@ -117,15 +117,15 @@ def code5():
 	LDW(R8);STW(R7);
 	LDW(R9);STW(R6);
 	LDW(R10);STW(R5);
-	ADDIV(1,R5);
+	INCV(R5);
 	LDW(R6);STW(R3);
 	LSLW();ADDW(R7);DEEKA(R4);
 	_BRA('.17');
 	label('.16');
-	ADDIV(1,R6);
+	INCV(R6);
 	_BRA('.20');
 	label('.19');
-	ADDIV(1,R6);
+	INCV(R6);
 	label('.20');
 	LDW(R6);LSLW();ADDW(R7);DEEK();_CMPWS(R4);_BLT('.19');
 	SUBIV(1,R5);

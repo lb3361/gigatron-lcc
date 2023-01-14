@@ -66,9 +66,9 @@ def code3():
 	label('regchar');
 	PUSH();
 	LDW(R18);
-	ADDIV(1,R18);
+	INCV(R18);
 	PEEK();STW(R19);
-	ADDIV(1,R18);
+	INCV(R18);
 	LDW(R18);
 	PEEK();STW(R19);
 	LDW(R18);

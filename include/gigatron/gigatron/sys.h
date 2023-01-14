@@ -137,7 +137,8 @@ unsigned int SYS_Random(void);
 void SYS_VDrawBits(int fgbg, char bits, char *address);
 #define has_SYS_VDrawBits() 1
 
-/* -- SYS_Exec */
+/* -- SYS_Exec
+   Note: Returns if argument vlr is (void*)(-1). */
 void SYS_Exec(void *romptr, void *vlr);
 #define has_SYS_Exec() 1
 

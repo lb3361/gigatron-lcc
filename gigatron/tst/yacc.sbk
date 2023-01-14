@@ -542,7 +542,7 @@ def code14():
 	label('.46');
 	LDW(R4);STW(R23);
 	STW(T3);_MOVW(R23,[SP,-6+28]);LDW(T3) #genspill
-	ADDIV(1,R4);
+	INCV(R4);
 	LDWI('yysptr');DEEKA(R22);
 	LDWI('yysbuf');_CMPWU(R22);_BGE('.59');
 	LDWI('yysptr');STW(R22);

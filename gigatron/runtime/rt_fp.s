@@ -50,14 +50,18 @@ def scope():
         nohop()
         label('__@fsavevsp')
         if args.cpu >= 6:
-            LDWI('.vspfpe');POKEA(vSP);RET()
+            LDWI('.vspfpe');DOKEA(vSP);RET()
         else:
             LDWI('.vspfpe');STW(T2)
-            LD(vSP);POKE(T2);RET()
+            LDW(vSP);DOKE(T2);RET()
         label('__@frestorevsp')
         label('.vspfpe',pc()+1)        
-        LDI(0)  # this instruction is patched by fsavevsp.
-        ST(vSP);RET()        
+        LDWI(0)  # this instruction is patched by fsavevsp.
+        if SP == vSP:
+            STW(vSP)            # 16 bits vSP!
+        else:
+            ST(vSP)
+        RET()        
         
     module(name='rt_fexception.s',
            code=[ ('IMPORT', '_@_raise_ferr'),

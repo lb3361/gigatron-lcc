@@ -97,7 +97,7 @@ static int  if_arg_stk(Node);
 #define mincpu6(cost) ((cpu<6)?LBURG_MAX:(cost))
 #define mincpu7(cost) ((cpu<7)?LBURG_MAX:(cost))
 #define ifcpu7(c1,c2) ((cpu<7)?(c2):(c1))
-#define if_spill(cost) ((spilling)?cost:LBURG_MAX)
+#define if_spill()    ((spilling)?0:LBURG_MAX)
 
 /* Registers */
 static Symbol ireg[32], lreg[32], freg[32];
@@ -437,17 +437,17 @@ ac0:  INDIRU1(ac) "%0PEEK();" 17
 #    spiller needs to be able to reload a register from an auto
 #    variable without allocating a register. This is achieved by another
 #    branch which defines two fragments using the alternate expansion
-#    mechanism defined by emitfmt1. The two fragments are a register name (T3)
+#    mechanism defined by emitfmt1. The two fragments are a register name (T0)
 #    and an instruction sequence.
 iarg: regx "%0"
 iarg: INDIRI2(zddr) "%0"
 iarg: INDIRU2(zddr) "%0"
 iarg: INDIRP2(zddr) "%0"
 
-spill: ADDRLP2 "%a+%F" if_spill(20)
-iarg: INDIRU2(spill) "T3|STW(T1);_MOVW([SP,%0],T3);LDW(T1);" 0
-iarg: INDIRI2(spill) "T3|STW(T1);_MOVW([SP,%0],T3);LDW(T1);" 0
-iarg: INDIRP2(spill) "T3|STW(T1);_MOVW([SP,%0],T3);LDW(T1);" 0
+spill: ADDRLP2 "%a+%F" if_spill()
+iarg: INDIRU2(spill) "T0|STW(B0);_MOVW([SP,%0],T0);LDW(B0);" 20
+iarg: INDIRI2(spill) "T0|STW(B0);_MOVW([SP,%0],T0);LDW(B0);" 20
+iarg: INDIRP2(spill) "T0|STW(B0);_MOVW([SP,%0],T0);LDW(B0);" 20
 
 # Integer operations. This is verbose because there are variants for
 # types I2, U2, P2, variants for argument ordering, and variants for
@@ -872,12 +872,12 @@ stmt: JUMPV(ac)    "\t%0CALL(vAC)%{!ALF};\n" 14
 # More about spills: we want to save/restore vAC when genspill() inserts
 # instructions because preralloc might have decided to use vAC at this
 # precise point.
-stmt: ASGNI2(spill,reg) "\tSTW(T3);_MOVW(%1,[SP,%0]);LDW(T3) #genspill\n" 0
-stmt: ASGNU2(spill,reg) "\tSTW(T3);_MOVW(%1,[SP,%0]);LDW(T3) #genspill\n" 0
-stmt: ASGNP2(spill,reg) "\tSTW(T3);_MOVW(%1,[SP,%0]);LDW(T3) #genspill\n" 0
-stmt: ASGNI4(spill,reg) "\tSTW(T3);_MOVL(%1,[SP,%0]);LDW(T3) #genspill\n" 0
-stmt: ASGNU4(spill,reg) "\tSTW(T3);_MOVL(%1,[SP,%0]);LDW(T3) #genspill\n" 0
-stmt: ASGNF5(spill,reg) "\tSTW(T3);_MOVF(%1,[SP,%0]);LDW(T3) #genspill\n" 0
+stmt: ASGNI2(spill,reg) "\tSTW(B0);_MOVW(%1,[SP,%0]);LDW(B0) #genspill\n" 20
+stmt: ASGNU2(spill,reg) "\tSTW(B0);_MOVW(%1,[SP,%0]);LDW(B0) #genspill\n" 20
+stmt: ASGNP2(spill,reg) "\tSTW(B0);_MOVW(%1,[SP,%0]);LDW(B0) #genspill\n" 20
+stmt: ASGNI4(spill,reg) "\tSTW(B0);_MOVL(%1,[SP,%0]);LDW(B0) #genspill\n" 20
+stmt: ASGNU4(spill,reg) "\tSTW(B0);_MOVL(%1,[SP,%0]);LDW(B0) #genspill\n" 20
+stmt: ASGNF5(spill,reg) "\tSTW(B0);_MOVF(%1,[SP,%0]);LDW(B0) #genspill\n" 20
 
 # Some opcodes for cpu > 5
 stmt: ASGNP2(ac,iarg)  "\t%0%[1b]DOKEA(%1);\n" mincpu6(28)

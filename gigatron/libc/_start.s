@@ -4,8 +4,7 @@
 def code0():
     ### _start()
     label('_start');
-    # save vLR, vSP
-    PUSH();LDWI('_exitvsp');STW(T3);LD(vSP);POKE(T3)
+    PUSH()
     # create stack headroom for argc and argv
     LDWI(-4);ADDW(SP);STW(SP)
     # initialize bss
@@ -26,8 +25,6 @@ def code0():
     LDI(0); STW(R9)
     label('_exitm');
     LDW(R8);STW(R0)
-    label('_exitvsp', pc()+1)
-    LDI(0);ST(vSP)         # .exitvsp is LDI's argument!
     label('_exitm_msgfunc', pc()+1)
     LDWI(0);_BEQ('.halt')  # _exitm_msgfunc is LDWI's argument here
     CALL(vAC)              # arguments in R8 and R9 are already correct

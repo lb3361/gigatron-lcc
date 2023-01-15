@@ -1383,7 +1383,7 @@ def _MOVW(s,d): # was _MOV
     '''Move word from reg/addr s to d. 
        One of s or d can be [vAC] or [SP, offset].
        When this is the case, s cannot be vAC.
-       Can trash T2 and T3'''
+       Can trash vAC, T2 and T3'''
     s = v(s)
     d = v(d)
     if s != d:

@@ -257,7 +257,7 @@ def code10():
 	label('.69');
 	LDWI('.45');STW(R23);
 	LDW(R6);_SHLI(2);ADDW(R23);STW(R23);
-	STW(T3);_MOVW(R23,[SP,-472+492]);LDW(T3) #genspill
+	STW(B0);_MOVW(R23,[SP,-472+492]);LDW(B0) #genspill
 	_MOVL([vAC],L8);
 	_MOVL(L8,[SP,4]);
 	CALLI('pow2');
@@ -966,7 +966,7 @@ def code29():
 	LDW(R6);STW(R8);
 	_MOVW(R8,[SP,2]);
 	CALLI('svtest');STW(R23);
-	STW(T3);_MOVW(R23,[SP,-10+32]);LDW(T3) #genspill
+	STW(B0);_MOVW(R23,[SP,-10+32]);LDW(B0) #genspill
 	CALLI('zero');STW(R22);
 	_SP(-10+32);DEEK();XORW(R22);_BEQ('.478');
 	MOVQW(1,R1)
@@ -4095,7 +4095,7 @@ def code78():
 	LDI(0);STW(R10);
 	_MOVW(R10,[SP,6]);
 	CALLI('array');STW(R23);
-	STW(T3);_MOVW(R23,[SP,-132+156]);LDW(T3) #genspill
+	STW(B0);_MOVW(R23,[SP,-132+156]);LDW(B0) #genspill
 	LDWI('.1553');STW(R22);
 	LDW(R4);_MULI(70);ADDW(R22);STW(R8);
 	_MOVW(R8,[SP,2]);
@@ -4104,7 +4104,7 @@ def code78():
 	MOVQW(35,R10)
 	_MOVW(R10,[SP,6]);
 	CALLI('array');STW(R22);
-	STW(T3);_MOVW(R22,[SP,-134+156]);LDW(T3) #genspill
+	STW(B0);_MOVW(R22,[SP,-134+156]);LDW(B0) #genspill
 	LDWI('.1553');STW(R23);
 	LDW(R4);_MULI(70);ADDW(R23);STW(R23);
 	LDW(R5);_MULI(14);ADDW(R23);STW(R8);
@@ -4118,7 +4118,7 @@ def code78():
 	LDW(R4);_MULI(70);ADDW(R22);STW(R22);
 	LDW(R5);_MULI(14);ADDW(R22);STW(R22);
 	LDW(R6);LSLW();ADDW(R22);DEEKA(R22);
-	_SP(-132+156);DEEK();STW(T1);_MOVW([SP,-134+156],T3);LDW(T1);ADDW(T3);ADDW(R23);ADDW(R22);SUBI(52);_BEQ('.1592');
+	_SP(-132+156);DEEK();STW(B0);_MOVW([SP,-134+156],T0);LDW(B0);ADDW(T0);ADDW(R23);ADDW(R22);SUBI(52);_BEQ('.1592');
 	LDI(28);ADDW(R7);DEEK();_BEQ('.1594');
 	LDWI('.1554');STW(R8);
 	_MOVW(R8,[SP,2]);

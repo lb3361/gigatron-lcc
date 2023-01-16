@@ -4,7 +4,7 @@
 def code0():
 	label('main');
 	_PROLOGUE(12,8,0xc0); # save=R6-7
-	STWI(R7,'.6')
+	MOVIW('.6',R7)
 	_BRA('.5');
 	label('.2');
 	LDW(R7);PEEK();STW(R8);
@@ -456,7 +456,7 @@ def code9():
 def code10():
 	label('limit');
 	_PROLOGUE(8,4,0x80); # save=R7
-	STWI(R7,-32768)
+	MOVIW(-32768,R7)
 	label('.125');
 	LDWI(-32768);STW(R23);
 	LDW(R7);_CMPWS(R23);_BLT('.129');
@@ -497,7 +497,7 @@ def code10():
 	label('.126');
 	INCV(R7);
 	LDWI(-32763);_CMPWS(R7);_BGE('.125');
-	STWI(R7,32767)
+	MOVIW(32767,R7)
 	label('.143');
 	LDWI(32763);STW(R23);
 	LDW(R7);_CMPWS(R23);_BLT('.147');

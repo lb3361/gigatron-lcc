@@ -57,8 +57,8 @@ def scope():
         label('__@frestorevsp')
         label('.vspfpe',pc()+1)        
         LDWI(0)  # this instruction is patched by fsavevsp.
-        if SP == vSP:
-            STW(vSP)            # 16 bits vSP!
+        if args.cpu >= 7:
+            STW(vSP)
         else:
             ST(vSP)
         RET()        
@@ -80,8 +80,8 @@ def scope():
         label('_@_clrfac')
         LDI(0);STW(AE)        # [AE,AM]
         STW(AM+1);STW(AM+3)   # [AM+1,AM+2] [AM+3,AM+4]
-        LD(AS);ANDI(128);_BEQ('.ret')
-        ORI(1);XORW(AS);ST(AS)
+        LDW(AS-1);BGE('.ret')
+        LD(AS);XORI(129);ST(AS)
         label('.ret')
         RET()
         ## Round fac
@@ -184,26 +184,34 @@ def scope():
         PUSH();STW(T3)
         LD(AE);POKE(T3);_BNE('.fst1')
         STW(AM+1);STW(AM+3)
-        label('.fst1')
-        LD(T3);SUBI(0xfc);_BGE('.slow')
-        INC(T3);
-        LD(AS);ORI(0x7f);ANDW(AM+4);POKE(T3);INC(T3)
-        LD(AM+3);POKE(T3);INC(T3)
-        LD(AM+2);POKE(T3);INC(T3)
-        label('.fst2')
-        LD(AM+1);POKE(T3)
-        tryhop(2);POP();RET()
-        label('.slow')
-        LDWI('.inc');CALL(vAC);
-        LDWI('.poke');STW('sysArgs6')
-        LD(AS);ORI(0x7f);ANDW(AM+4);CALL('sysArgs6')
-        LD(AM+3);CALL('sysArgs6')
-        LD(AM+2);CALL('sysArgs6')
-        _BRA('.fst2')
-        label('.poke')
-        POKE(T3);
-        label('.inc')
-        LDI(1);ADDW(T3);STW(T3);RET()
+        if args.cpu >= 6:
+            label('.fst1')
+            LD(AS);ORI(0x7f);ANDW(AM+4);INCV(T3);POKE(T3)
+            LD(AM+3);INCV(T3);POKE(T3)
+            LD(AM+2);INCV(T3);POKE(T3)
+            LD(AM+1);INCV(T3);POKE(T3)
+            tryhop(2);POP();RET()
+        else:
+            label('.fst1')
+            LD(T3);SUBI(0xfc);_BGE('.slow')
+            INC(T3);
+            LD(AS);ORI(0x7f);ANDW(AM+4);POKE(T3);INC(T3)
+            LD(AM+3);POKE(T3);INC(T3)
+            LD(AM+2);POKE(T3);INC(T3)
+            label('.fst2')
+            LD(AM+1);POKE(T3)
+            tryhop(2);POP();RET()
+            label('.slow')
+            LDWI('.inc');CALL(vAC);
+            LDWI('.poke');STW('sysArgs6')
+            LD(AS);ORI(0x7f);ANDW(AM+4);CALL('sysArgs6')
+            LD(AM+3);CALL('sysArgs6')
+            LD(AM+2);CALL('sysArgs6')
+            _BRA('.fst2')
+            label('.poke')
+            POKE(T3);
+            label('.inc')
+            LDI(1);ADDW(T3);STW(T3);RET()
 
     module(name = 'rt_fstfac.s',
            code = [ ('EXPORT', '_@_fstfac'),

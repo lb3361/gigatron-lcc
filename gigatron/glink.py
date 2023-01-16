@@ -894,6 +894,8 @@ def HALT():
 @vasm
 def DEF(d):
     emit_op("DEF", check_br(d))
+
+# cpu 5 opcodes
 @vasm
 def CALLI(d):
     d=int(v(d)); emit_op("CALLI_v5", lo(d), hi(d))
@@ -909,6 +911,8 @@ def CMPHU(d):
         tryhop(3); emit(0x2f, check_zp(d), 0x3a)
     else:
         emit_op("CMPHU_v5", check_zp(d))
+
+# cpu 7 opcodes (with cpu 6 aliases when known)
 @vasm
 def MOVQB(imm,d):
     if args.cpu == 6:
@@ -1028,9 +1032,9 @@ def JGE(d):
     else:
         emit_op("JGE_v7", lo(d-2), hi(d))
 @vasm
-def STWI(x,d):
+def MOVIW(d,x):
     d=int(v(d))
-    emit_op('STWI_v7', check_zp(x), hi(d), lo(d))
+    emit_op('MOVIW_v7', check_zp(x), hi(d), lo(d))
 @vasm
 def MULQ(kod):
     emit_op('MULQ_v7', check_zp(kod))
@@ -1168,6 +1172,21 @@ def RORX(cpu6exact=True):
 @vasm
 def MACX():
     emit_op('MACX_v7')
+@vasm
+def PUSHV(d):
+    emit_op('PUSHV_v7', check_zp(d))
+@vasm
+def POPV(d):
+    emit_op('POPV_v7', check_zp(d))
+@vasm
+def LDXW(d,imm):
+    emit_op('LDXW_v7', check_zp(d), lo(imm), hi(imm))
+@vasm
+def STXW(d,imm):
+    emit_op('STXW_v7', check_zp(d), lo(imm), hi(imm))
+@vasm
+def LDSB(d):
+    emit_op('LDSB_v7', check_zp(d))
     
 # pseudo instructions used by the compiler
 @vasm
@@ -1196,17 +1215,6 @@ def _LDI(d):
         LDNI(d)
     else:
         LDWI(d)
-@vasm
-def _STWI(x,d):
-    '''Emits STWI, MOVQW or 2*MOVQB (cpu>=6)'''
-    d = int(v(d))
-    if is_zeropage(d):
-        MOVQW(d, check_zp(x))
-    elif args.cpu == 6:
-        MOVQB(lo(d), check_zp(x))
-        MOVQB(hi(d), check_zp(x)+1)
-    else:
-        STWI(check_zp(x),d)
 @vasm
 def _LDW(d):
     '''Emit LDW or LDWI+DEEK.'''
@@ -1238,26 +1246,70 @@ def _PEEKV(d):
     else:
         LDW(d); PEEK()
 @vasm
+def _MOVIW(d,x):
+    '''Emits MOVIW, MOVQW, _LDI or 2*MOVQB (cpu>=6)'''
+    d = int(v(d))
+    if x == vAC:
+        _LDI(d)
+    elif is_zeropage(d):
+        MOVQW(d, check_zp(x))
+    elif args.cpu == 6:
+        MOVQB(lo(d), check_zp(x))
+        MOVQB(hi(d), check_zp(x)+1)
+    else:
+        MOVIW(d, check_zp(x))
+@vasm
+def _LDLW(off):
+    '''Emits LDLW LDXW (cpu7) or a DEEK solution'''
+    off = int(v(off))
+    if args.cpu >= 7 and SP == vSP and is_zeropage(off):
+        LDLW(off)
+    elif args.cpu > 7:
+        LDXW(SP,off)
+    else:
+        _SP(off);DEEK()
+@vasm
+def _STLW(off):
+    '''Emits STLW STXW (cpu7) or a DOKE solution (which might clobber T2,T3)'''
+    off = int(v(off))
+    if args.cpu >= 7 and SP == vSP and is_zeropage(off):
+        STLW(off)
+    elif args.cpu >= 7:
+        STXW(SP,off)
+    elif args.cpu >= 6:
+        STW(T3);_SP(off);DOKEA(T3)
+    else:
+        STW(T3);_SP(off);STW(T2);LDW(T3);DOKE(T2)
+@vasm
 def _SHLI(imm):
     '''Shift vAC left by imm positions'''
     imm &= 0xf
-    if (imm & 0x8):
+    if imm & 0x8:
         ST('vACH');ORI(255);XORI(255)
         imm &= 0x7
-    # too much overhead calling SYS_LSLW4_46
-    if imm > 0:
-        for i in range(0, imm):
-            LSLW()
+    if args.cpu >= 7 and imm == 0x4:
+        MOVIW('SYS_LSLW4_46','sysFn');SYS(46)
+        imm -= 4
+    if args.cpu >= 7 and imm >= 3:
+        MULQ(0xff ^ (0xff >> (imm-1)))
+        imm = 0
+    while imm > 0:
+        LSLW()
+        imm -= 1
 @vasm
 def _SHRIS(imm):
     '''Shift vAC right (signed) by imm positions'''
     imm &= 0xf
-    if imm == 8:
-        LD(vACH);XORI(128);SUBI(128)
-    elif imm == 1:
+    if imm & 8:
+        if args.cpu >= 7:
+            LDSB(vACH)
+        else:
+            LD(vACH);XORI(128);SUBI(128)
+        imm &= 7
+    if imm == 1:
         extern("_@_shrs1")
         _CALLI("_@_shrs1")           # T3 >> 1 -> vAC
-    else:
+    elif imm > 0:
         STW(T3); LDI(imm)
         extern('_@_shrs')
         _CALLI('_@_shrs')            # T3 >> AC -> vAC
@@ -1265,12 +1317,20 @@ def _SHRIS(imm):
 def _SHRIU(imm):
     '''Shift vAC right (unsigned) by imm positions'''
     imm &= 0xf
-    if imm == 8:
+    if imm & 8:
         LD(vACH)
+        imm &= 7
+    if args.cpu >= 7 and imm > 0:
+        systable = (None,"SYS_LSRW1_48",
+                    "SYS_LSRW2_52","SYS_LSRW3_52",
+                    "SYS_LSRW4_50","SYS_LSRW5_50",
+                    "SYS_LSRW6_48","SYS_LSRW7_30")
+        MOVIW(systable[imm],'sysFn')
+        SYS(int(systable[imm][-2:]))
     elif imm == 1:
         extern("_@_shru1")
         _CALLI("_@_shru1")
-    else:
+    elif imm > 0:
         STW(T3); LDI(imm)
         extern('_@_shru')
         _CALLI('_@_shru')       # T3 >> AC -> vAC
@@ -1387,10 +1447,18 @@ def _MOVW(s,d): # was _MOV
     s = v(s)
     d = v(d)
     if s != d:
-        if type(s) == list and len(s) == 2 and s[0] == SP:
-            _SP(s[1]); s = [vAC]
-        elif type(d) == list and len(d) == 2 and d[0] == SP:
-            _SP(d[1]); d = [vAC]
+        if type(d) == list and len(d) == 2 and d[0] == SP:
+            if args.cpu >= 7 and type(s) != list:
+                if s != vAC: _LDW(s)
+                _STLW(d[1])
+                return
+            else:
+                _SP(d[1]); d = [vAC]
+        elif type(s) == list and len(s) == 2 and s[0] == SP:
+            if args.cpu >= 7 and d != [vAC]:
+                _LDLW(s[1]); s = vAC
+            else:
+                _SP(s[1]); s = [vAC]
         if args.cpu >= 6 and is_zeropage(s) and d == [vAC]:
             DOKEA(s)
         elif args.cpu >= 6 and is_zeropage(d) and s == [vAC]:
@@ -1407,7 +1475,7 @@ def _MOVW(s,d): # was _MOV
             if is_zeropage(d):
                 STW(d)
             else:
-                _STWI(T2,d); DOKE(T2)
+                _MOVIW(d,T2); DOKE(T2)
         else:
             if s != vAC and s != [vAC]:
                 _LDI(d); STW(T2); _LDW(s); DOKE(T2)
@@ -1535,18 +1603,19 @@ def _MOVM(s,d,n,align=1): # was _BMOV
             if d == [vAC]:
                 STW(T2)
             elif d != [T2]:
-                _STWI(T2,d)
+                _MOVIW(d,T2)
             if s == [vAC]:
                 STW(T3)
             elif args.cpu >= 7:
-                STWI(T3,s)
+                _MOVIW(s,T3)
             else:
                 LDWI(s);STW(T3)
-            while n >= 256:
-                n = n -256
-                COPYN(0)
-            if n > 0:
-                COPYN(n)
+            if n > 0 and n <= 256:
+                COPYN(n & 0xff)
+            elif n > 0:
+                _LDI(n)
+                lbl = genlabel(); label(lbl)
+                COPY();_BNE(lbl)
         else:
             if d == [vAC]:
                 STW(T2)
@@ -1608,11 +1677,11 @@ def _MOVL(s,d): # was _LMOV
             if d == [vAC]:
                 STW(T2)
             elif d != [T2]:
-                _STWI(T2, d)
+                _MOVIW(d, T2)
             if s == [vAC]:
                 STW(T3)
             elif args.cpu >= 7:
-                STWI(T3, s)
+                MOVIW(s, T3)
             else:
                 LDWI(s);STW(T3)
             COPYN(4)                                 # generic: 5-9 bytes (cpu7)
@@ -1737,8 +1806,11 @@ def _STLU(d):
     STW(d);LDI(0);STW(d+2);
 @vasm
 def _STLS(d):
-    extern('_@_lexts')      # (vAC<0) ? -1 : 0 --> vAC
-    STW(d);_CALLI('_@_lexts');STW(d+2)
+    if args.cpu >= 7:
+        STW(d);LDSB(vACH);LDSB(vACH);STW(d+2)
+    else:
+        extern('_@_lexts')      # (vAC<0) ? -1 : 0 --> vAC
+        STW(d);_CALLI('_@_lexts');STW(d+2)
 @vasm
 def _MOVF(s,d): # was _FMOV
     '''Move float from reg s to d with special cases when s or d is FAC.
@@ -1777,11 +1849,11 @@ def _MOVF(s,d): # was _FMOV
             if d == [vAC]:
                 STW(T2)
             elif d != [T2]:
-                _STWI(T2, d)
+                _MOVIW(d, T2)
             if s == [vAC]:
                 STW(T3)
             elif args.cpu >= 7:
-                STWI(T3, s)
+                MOVIW(s, T3)
             else:
                 LDWI(s);STW(T3)
             COPYN(5)

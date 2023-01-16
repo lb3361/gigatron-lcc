@@ -71,6 +71,7 @@ def map_modules(romtype):
         LDI(R0); SYS(40)
         # init stack pointer
         LDWI(initsp);STW(SP)
+        # LDWI(0xfe08);STW(vSP)
         # rom test;
         if romtype and romtype >= 0x80:
             LD('romType');ANDI(0xfc);XORI(romtype);BNE('.err')

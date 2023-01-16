@@ -568,28 +568,28 @@ stmt: ASGNU1(zddr,ac)  "\t%1ST(%0);\n" 20
 stmt: ASGNU1(iarg,ac)  "\t%1%[0b]POKE(%0);\n" 26
 
 # Conditional branches
-stmt: EQI2(ac,con0)  "\t%0_BEQ(%a)%{!4};\n" 28
+stmt: EQI2(ac,con0)  "\t%0_BEQ(%a);\n" 28
 stmt: EQI2(ac,conB)  "\t%0XORI(%1);_BEQ(%a)%{!A};\n" 42
 stmt: EQI2(ac,iarg)  "\t%0%[1b]XORW(%1);_BEQ(%a)%{!A};\n" 54
 stmt: EQI2(iarg,ac)  "\t%1%[0b]XORW(%0);_BEQ(%a)%{!A};\n" 54
-stmt: NEI2(ac,con0)  "\t%0_BNE(%a)%{!4};\n" 28
+stmt: NEI2(ac,con0)  "\t%0_BNE(%a);\n" 28
 stmt: NEI2(ac,conB)  "\t%0XORI(%1);_BNE(%a)%{!A};\n" 42
 stmt: NEI2(ac,iarg)  "\t%0%[1b]XORW(%1);_BNE(%a)%{!A};\n" 54
 stmt: NEI2(iarg,ac)  "\t%1%[0b]XORW(%0);_BNE(%a)%{!A};\n" 54
-stmt: EQU2(ac,con0)  "\t%0_BEQ(%a)%{!4};\n" 28
+stmt: EQU2(ac,con0)  "\t%0_BEQ(%a);\n" 28
 stmt: EQU2(ac,conB)  "\t%0XORI(%1);_BEQ(%a)%{!A};\n" 42
 stmt: EQU2(ac,iarg)  "\t%0%[1b]XORW(%1);_BEQ(%a)%{!A};\n" 54
 stmt: EQU2(iarg,ac)  "\t%1%[0b]XORW(%0);_BEQ(%a)%{!A};\n" 54
-stmt: NEU2(ac,con0)  "\t%0_BNE(%a)%{!4};\n" 28
+stmt: NEU2(ac,con0)  "\t%0_BNE(%a);\n" 28
 stmt: NEU2(ac,conB)  "\t%0XORI(%1);_BNE(%a)%{!A};\n" 42
 stmt: NEU2(ac,iarg)  "\t%0%[1b]XORW(%1);_BNE(%a)%{!A};\n" 54
 stmt: NEU2(iarg,ac)  "\t%1%[0b]XORW(%0);_BNE(%a)%{!A};\n" 54
-stmt: LTI2(ac,con0) "\t%0_BLT(%a)%{!4};\n" 28
-stmt: LEI2(ac,con0) "\t%0_BLE(%a)%{!4};\n" 28
-stmt: GTI2(ac,con0) "\t%0_BGT(%a)%{!4};\n" 28
-stmt: GEI2(ac,con0) "\t%0_BGE(%a)%{!4};\n" 28
-stmt: GTU2(ac,con0) "\t%0_BNE(%a)%{!4};\n" 28
-stmt: LEU2(ac,con0) "\t%0_BEQ(%a)%{!4};\n" 28
+stmt: LTI2(ac,con0) "\t%0_BLT(%a);\n" 28
+stmt: LEI2(ac,con0) "\t%0_BLE(%a);\n" 28
+stmt: GTI2(ac,con0) "\t%0_BGT(%a);\n" 28
+stmt: GEI2(ac,con0) "\t%0_BGE(%a);\n" 28
+stmt: GTU2(ac,con0) "\t%0_BNE(%a);\n" 28
+stmt: LEU2(ac,con0) "\t%0_BEQ(%a);\n" 28
 stmt: LTI2(ac,conB) "\t%0_CMPIS(%1);_BLT(%a)%{!A};\n" ifcpu7(56,64)
 stmt: LEI2(ac,conB) "\t%0_CMPIS(%1);_BLE(%a)%{!A};\n" ifcpu7(56,64)
 stmt: GTI2(ac,conB) "\t%0_CMPIS(%1);_BGT(%a)%{!A};\n" ifcpu7(56,64)
@@ -630,7 +630,7 @@ asrc: eac "[vAC]|%0"
 lsrc: addr "%0"
 
 # Structs
-stmt: ARGB(INDIRB(asrc))        "\t_SP(%c);STW(T2);%[0b]_MOVM(%0,[T2],%a,%b)%{!A};\n"  200
+stmt: ARGB(INDIRB(asrc))        "\t_SP(%c)%{!A};STW(T2);%[0b]_MOVM(%0,[T2],%a,%b)%{!A};\n"  200
 stmt: ASGNB(addr,INDIRB(asrc)) "\t%[1b]_MOVM(%1,%0,%a,%b)%{!A};\n" 200
 stmt: ASGNB(ac,  INDIRB(asrc)) "\t%0STW(T2);%[1b]_MOVM(%1,[T2],%a,%b)%{!A};\n" 200
 stmt: ASGNB(lddr,INDIRB(lsrc)) "\t_MOVM(%1,[SP,%0],%a,%b)%{!A};\n" 200
@@ -906,21 +906,23 @@ stmt: ASGNU1(rmw, conB)  "\tMOVQB(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,27))
 stmt: ASGNI2(rmw, conB)  "\tMOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
 stmt: ASGNU2(rmw, conB)  "\tMOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
 stmt: ASGNP2(rmw, conB)  "\tMOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
-stmt: ASGNI2(rmw, con)   "\tSTWI(%0,%1)\n"  mincpu7(if_not_asgn_tmp(a,31))
-stmt: ASGNU2(rmw, con)   "\tSTWI(%0,%1)\n"  mincpu7(if_not_asgn_tmp(a,31))
-stmt: ASGNP2(rmw, con)   "\tSTWI(%0,%1)\n"  mincpu7(if_not_asgn_tmp(a,31))
+stmt: ASGNI2(rmw, con)   "\tMOVIW(%1,%0)\n"  mincpu7(if_not_asgn_tmp(a,31))
+stmt: ASGNU2(rmw, con)   "\tMOVIW(%1,%0)\n"  mincpu7(if_not_asgn_tmp(a,31))
+stmt: ASGNP2(rmw, con)   "\tMOVIW(%1,%0)\n"  mincpu7(if_not_asgn_tmp(a,31))
 regx: LOADI1(conBs)      "\tMOVQB(%0,%c)\n" mincpu6(27)
 regx: LOADU1(conB)       "\tMOVQB(%0,%c)\n" mincpu6(27)
 regx: LOADI2(conB)       "\tMOVQW(%0,%c)\n" mincpu6(29)
 regx: LOADU2(conB)       "\tMOVQW(%0,%c)\n" mincpu6(29)
 regx: LOADP2(conB)       "\tMOVQW(%0,%c)\n" mincpu6(29)
-regx: LOADI2(con)        "\tSTWI(%c,%0)\n" mincpu7(31)
-regx: LOADU2(con)        "\tSTWI(%c,%0)\n" mincpu7(31)
-regx: LOADP2(con)        "\tSTWI(%c,%0)\n" mincpu7(31)
-ac: NEGI2(ac)      "%0NEGV(vAC);" mincpu6(30)
-lac: NEGI4(lac)    "%0NEGVL(LAC);" mincpu6(58)
-ac: MULI2(con, ac) "%1_MULI(%0);" mincpu7(80)
-ac: MULU2(con, ac) "%1_MULI(%0);" mincpu7(80)
+regx: LOADI2(con)        "\tMOVIW(%0,%c)\n" mincpu7(31)
+regx: LOADU2(con)        "\tMOVIW(%0,%c)\n" mincpu7(31)
+regx: LOADP2(con)        "\tMOVIW(%0,%c)\n" mincpu7(31)
+ac:  NEGI2(ac)      "%0NEGV(vAC);" mincpu6(30)
+lac: NEGI4(lac)     "%0NEGVL(LAC);" mincpu6(58)
+ac:  MULI2(con,ac)  "%1_MULI(%0);" mincpu7(80)
+ac:  MULU2(con,ac)  "%1_MULI(%0);" mincpu7(80)
+ac:  CVII2(reg)     "LDSB(%0);" mincpu7(if_cv_from(a,1,26))
+ac:  CVII2(ac)      "%0LDSB(vACL);" mincpu7(if_cv_from(a,1,26))
 
 # Read-modify-write
 rmw: VREGP "%a"

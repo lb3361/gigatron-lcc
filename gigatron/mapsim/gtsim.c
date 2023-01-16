@@ -879,6 +879,7 @@ int disassemble(word addr, char **pm, char *operand)
         *pm = (b > 0) ? "S??" : "HALT";
       return 2;
     }
+    case 0x1c:  *pm = "POPV";  goto oper8;    /* v7 */
     case 0x39:  *pm = "POKEA"; goto oper8;    /* v7 */
     case 0x3b:  *pm = "DOKEA"; goto oper8;    /* v7 */
     case 0x3d:  *pm = "DEEKA"; goto oper8;    /* v7 */
@@ -894,6 +895,10 @@ int disassemble(word addr, char **pm, char *operand)
     case 0x56:  *pm = "JLE";   goto oper16p2; /* v7 */
     case 0x66:  *pm = "ADDV";  goto oper8;    /* v7 */
     case 0x68:  *pm = "SUBV";  goto oper8;    /* v7 */
+    case 0x6a:  *pm = "LDXW";  goto oper816;  /* v7 */
+    case 0x6c:  *pm = "STXW";  goto oper816;  /* v7 */
+    case 0x6e:  *pm = "LDSB";  goto oper8;    /* v7 */
+    case 0x70:  *pm = "INCV";  goto oper8;    /* v7 */
     case 0x72:  *pm = "JNE";   goto oper16p2; /* v7 */
     case 0x78:  *pm = "LDNI";  goto oper8n;   /* v7 */
     case 0x7d:  *pm = "MULQ";  goto oper8;    /* v7 */
@@ -920,7 +925,7 @@ int disassemble(word addr, char **pm, char *operand)
       sprintf(operand, "$%04x", (addr&0xff00)|((peek(addlo(addr,1))+2)&0xff));
       return 2;
     oper16p2:
-      sprintf(operand, "$%04x", (addr&0xff00)|((peek(addlo(addr,1))+2)&0xff));
+      sprintf(operand, "$%02x%02x", peek(addlo(addr,2)), ((peek(addlo(addr,1))+2)&0xff));
       return 2;
     oper8x2:
       sprintf(operand, "$%02x,$%02x", peek(addlo(addr,1)), peek(addlo(addr,2)));
@@ -931,6 +936,10 @@ int disassemble(word addr, char **pm, char *operand)
     oper8r16:
       sprintf(operand, "$%02x,$%02x%02x", peek(addlo(addr,1)),
               peek(addlo(addr,2)), peek(addlo(addr,3)));
+      return 4;
+    oper816:
+      sprintf(operand, "$%02x,$%02x%02x", peek(addlo(addr,1)),
+              peek(addlo(addr,3)), peek(addlo(addr,2)));
       return 4;
     unknown:
       sprintf(operand, "%02x%02x%02x%02x", peek(addlo(addr,0)), peek(addlo(addr,1)),
@@ -954,7 +963,7 @@ void print_trace(CpuState *S)
   }
   fprintf(stderr, " vAC=%04x vLR=%04x SP=%04x", deek(vAC), deek(vLR), deek(SP));
   if (strchr(trace, 's'))
-    fprintf(stderr, " vSP=%02x", peek(vSP));
+    fprintf(stderr, " vSP=%04x", deek(vSP));
   if (strchr(trace, 't'))
     fprintf(stderr, " T[0-3]=%04x %04x %04x %04x B[0-1]=%02x %02x",
             deek(T0), deek(T0+2), deek(T2), deek(T2+2),

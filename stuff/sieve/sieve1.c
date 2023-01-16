@@ -29,16 +29,15 @@ main() {
     unsigned int ticks = _clock();
 #endif
     printf("10 iterations\n");
-#ifdef MODE
-    SYS_SetMode(MODE);
-#endif
     for (iter = 1; iter <= 10; iter ++) {
         count = 0;
 #if MEMSET
-        memset(flags, true, sizepl); /* This is ANSI C 1989 */
+        /* memset is a legit ANSI C 1989 function
+           and clears up to 32 bytes per scanline */
+        memset(flags, true, sizepl);
 #else
-        for(i = 0; i != sizepl; i++) /* This is one line longer */
-            flags[i] = true;
+        /* simple pointer loop */
+        { char *p = flags; while(p != flags+sizepl) *p++ = true; }
 #endif
         for (i = 0; i != sizepl; i++) { 
 	    if (flags[i]) {
@@ -52,9 +51,6 @@ main() {
             }
         }
     }
-#ifdef MODE
-    SYS_SetMode(-1);
-#endif
     printf("\n%d primes", count);
 #if TIMER
     ticks = _clock() - ticks;

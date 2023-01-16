@@ -142,8 +142,8 @@ def code10():
 	_MOVM('.59',[SP,-36+68],4,2);
 	_MOVM('.60',[SP,-16+68],16,2);
 	_SP(-40+68);STW(R8);
-	STWI(R9,-10)
-	STWI(R10,-10)
+	MOVIW(-10,R9)
+	MOVIW(-10,R10)
 	_MOVW(R10,[SP,6]);
 	CALLI('makepoint');
 	_SP(-44+68);STW(R8);

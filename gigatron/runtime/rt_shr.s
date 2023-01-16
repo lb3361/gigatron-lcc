@@ -71,7 +71,7 @@ def scope():
         nohop()
         label('_@_shru1')
         if args.cpu >= 6:
-            _STWI('sysFn', 'SYS_LSRW1_48')
+            _MOVIW('SYS_LSRW1_48','sysFn')
         else:
             STW(T3)
             LDWI('SYS_LSRW1_48'); STW('sysFn')
@@ -81,8 +81,8 @@ def scope():
         label('_@_shrs1')
         _BGE('_@_shru1')
         if args.cpu >= 6:
-            _STWI('sysFn', 'SYS_LSRW1_48')
-            _STWI(T2, 0x8000)
+            _MOVIW('SYS_LSRW1_48','sysFn')
+            _MOVIW(0x8000, T2)
         else:
             STW(T3)
             LDWI('SYS_LSRW1_48'); STW('sysFn')

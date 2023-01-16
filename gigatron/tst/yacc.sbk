@@ -513,7 +513,7 @@ def code14():
 	label('yylook');
 	_PROLOGUE(28,6,0xff); # save=R0-7
 	LDWI('yymorfg');DEEK();_BNE('.34');
-	STWI(R4,'yytext')
+	MOVIW('yytext',R4)
 	_BRA('.35');
 	label('.34');
 	LDWI('yymorfg');DOKEQ(0);
@@ -521,7 +521,7 @@ def code14():
 	LDWI('yytext');ADDW(R23);STW(R4);
 	label('.35');
 	label('.36');
-	STWI(R6,'yylstate')
+	MOVIW('yylstate',R6)
 	LDWI('yybgin');DEEKA(R23);
 	LDW(R23);STW(R7);
 	LDWI('yyestate');DOKEA(R23);
@@ -843,7 +843,7 @@ def code14():
 	LDWI('yyprevious');DEEK();POKE(R22);
 	label('.123');
 	label('.119');
-	STWI(R4,'yytext')
+	MOVIW('yytext',R4)
 	_BRA('.36');
 	label('.33');
 	_EPILOGUE(28,6,0xff,saveAC=True);
@@ -1396,7 +1396,7 @@ def code32():
 	LDWI('yynerrs');DOKEQ(0);
 	LDWI('yyerrflag');DOKEQ(0);
 	_SP(-302+324);STW(R5);
-	STWI(R3,v('yyv')-2)
+	MOVIW(v('yyv')-2,R3)
 	label('.158');
 	ADDIV(2,R5);
 	LDW(R5);STW(R23);
@@ -1456,7 +1456,7 @@ def code32():
 	LDWI('yychar');DOKEQ(0);
 	label('.182');
 	label('.180');
-	STWI(R2,'yyexca')
+	MOVIW('yyexca',R2)
 	_BRA('.187');
 	label('.184');
 	label('.185');

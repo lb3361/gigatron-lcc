@@ -24,7 +24,11 @@ def code1():
     LDW(R8);DEEK();STW(SP)
     LDI(2);ADDW(R8);DEEK();STW(R22);
     if vSP != SP:
-        LDI(4);ADDW(R8);DEEK();ST(vSP);
+        LDI(4);ADDW(R8);DEEK()
+        if args.cpu >= 7:
+            STW(vSP)
+        else:
+            ST(vSP);
     if args.cpu >= 6:
         MOVQW(R0,T2);LDI(6);ADDW(R8);STW(T3);COPYN(16)
     else:

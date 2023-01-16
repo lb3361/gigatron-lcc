@@ -10,17 +10,27 @@ def code0():
     nohop()
     label('_raise_emits_signal')
     ALLOC(-2);STLW(0)
-    # create a stack frame and save R8-R22
-    _SP(-38);STW(SP);ADDI(8);STW(T2)
-    LDI(R8);STW(T0);LDI(R23);STW(T1);_CALLJ('_@_wcopy_')
-    # call _sigcall(signo,fpeinfo)
-    LDLW(0);ST(R8);LD(vACH);STW(R9);ALLOC(2)
-    LDW(T3);STW(R10);_CALLJ('_sigcall');STW(T3)
-    # restore R8-R22 and SP
-    LDI(R8);STW(T2)
-    _SP(8);STW(T0);ADDI(30);STW(T1);STW(SP);_CALLJ('_@_wcopy_')
+    # create a stack frame and save R8-R23
+    _SP(-40);STW(SP);ADDI(8);STW(T2)
+    if args.cpu >= 99:
+        LDW(T3);STW(B0)
+        LDI(R8);STW(T3);COPYN(32)
+        # call _sigcall(signo,fpeinfo)
+        LDLW(0);ST(R8);LD(vACH);STW(R9);ALLOC(2)
+        LDW(B0);STW(R10);_CALLJ('_sigcall');STW(B0)
+        # restore R8-R22 and SP
+        LDI(R8);STW(T2);_SP(8)
+        STW(T3);ADDI(32);STW(SP);COPYN(32)
+    else:
+        LDI(R8);STW(T0);LDI(R8+32);STW(T1);_CALLJ('_@_wcopy_')
+        # call _sigcall(signo,fpeinfo)
+        LDLW(0);ST(R8);LD(vACH);STW(R9);ALLOC(2)
+        LDW(T3);STW(R10);_CALLJ('_sigcall');STW(B0)
+        # restore R8-R22 and SP
+        LDI(R8);STW(T2);_SP(8)
+        STW(T0);ADDI(32);STW(T1);STW(SP);_CALLJ('_@_wcopy_')
     # return to vLR saved by raise()
-    LDW(SP);DEEK();tryhop(5);STW(vLR);LDW(T3);RET()
+    LDW(SP);DEEK();tryhop(5);STW(vLR);LDW(B0);RET()
 
 module(name='_sigcall.s',
        code=[ ('IMPORT', '_sigcall'),

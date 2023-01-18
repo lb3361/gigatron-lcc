@@ -91,7 +91,7 @@ static int  if_rmw_incr(Node,int,int);
 static int  if_not_asgn_tmp(Node,int);
 static int  if_cv_from(Node,int,int);
 static int  if_arg_reg_only(Node);
-static int  if_arg_stk(Node);
+ static int  if_arg_stk(Node,int);
 
 #define mincpu5(cost) ((cpu<5)?LBURG_MAX:(cost))
 #define mincpu6(cost) ((cpu<6)?LBURG_MAX:(cost))
@@ -445,9 +445,9 @@ iarg: INDIRU2(zddr) "%0"
 iarg: INDIRP2(zddr) "%0"
 
 spill: ADDRLP2 "%a+%F" if_spill()
-iarg: INDIRU2(spill) "T0|STW(B0);_MOVW([SP,%0],T0);LDW(B0);" 20
-iarg: INDIRI2(spill) "T0|STW(B0);_MOVW([SP,%0],T0);LDW(B0);" 20
-iarg: INDIRP2(spill) "T0|STW(B0);_MOVW([SP,%0],T0);LDW(B0);" 20
+iarg: INDIRU2(spill) "T0|STW(B0);_LDLW(%0);STW(T0);LDW(B0);" 20
+iarg: INDIRI2(spill) "T0|STW(B0);_LDLW(%0);STW(T0);LDW(B0);" 20
+iarg: INDIRP2(spill) "T0|STW(B0);_LDLW(%0);STW(T0);LDW(B0);" 20
 
 # Integer operations. This is verbose because there are variants for
 # types I2, U2, P2, variants for argument ordering, and variants for
@@ -789,12 +789,12 @@ ac: CALLP2(ac)    "%0CALL(vAC)%{!ALF};" 26
 stmt: CALLV(addr) "\tCALLI(%0)%{!ALF};\n" mincpu5(28)
 stmt: CALLV(reg)  "\tCALL(%0)%{!ALF};\n" 26
 stmt: CALLV(ac)   "\t%0CALL(vAC)%{!ALF};\n" 26
-stmt: ARGF5(reg)  "\t_MOVF(%0,[SP,%c])%{!A};\n"  if_arg_stk(a)
-stmt: ARGI4(reg)  "\t_MOVL(%0,[SP,%c])%{!A};\n"  if_arg_stk(a)
-stmt: ARGU4(reg)  "\t_MOVL(%0,[SP,%c])%{!A};\n"  if_arg_stk(a)
-stmt: ARGI2(reg)  "\t_MOVW(%0,[SP,%c])%{!A};\n"  if_arg_stk(a)
-stmt: ARGU2(reg)  "\t_MOVW(%0,[SP,%c])%{!A};\n"  if_arg_stk(a)
-stmt: ARGP2(reg)  "\t_MOVW(%0,[SP,%c])%{!A};\n"  if_arg_stk(a)
+stmt: ARGF5(reg)  "\t_MOVF(%0,[SP,%c])%{!A};\n"  if_arg_stk(a,100)
+stmt: ARGI4(reg)  "\t_MOVL(%0,[SP,%c])%{!A};\n"  if_arg_stk(a,100)
+stmt: ARGU4(reg)  "\t_MOVL(%0,[SP,%c])%{!A};\n"  if_arg_stk(a,100)
+stmt: ARGI2(reg)  "\t_STLW(%c,src=%0)%{!A};\n"   if_arg_stk(a,100)
+stmt: ARGU2(reg)  "\t_STLW(%c,src=%0)%{!A};\n"   if_arg_stk(a,100)
+stmt: ARGP2(reg)  "\t_STLW(%c,src=%0)%{!A};\n"   if_arg_stk(a,100)
 stmt: ARGF5(reg)  "# arg\n"  if_arg_reg_only(a)
 stmt: ARGI4(reg)  "# arg\n"  if_arg_reg_only(a)
 stmt: ARGU4(reg)  "# arg\n"  if_arg_reg_only(a)
@@ -872,9 +872,9 @@ stmt: JUMPV(ac)    "\t%0CALL(vAC)%{!ALF};\n" 14
 # More about spills: we want to save/restore vAC when genspill() inserts
 # instructions because preralloc might have decided to use vAC at this
 # precise point.
-stmt: ASGNI2(spill,reg) "\tSTW(B0);_MOVW(%1,[SP,%0]);LDW(B0) #genspill\n" 20
-stmt: ASGNU2(spill,reg) "\tSTW(B0);_MOVW(%1,[SP,%0]);LDW(B0) #genspill\n" 20
-stmt: ASGNP2(spill,reg) "\tSTW(B0);_MOVW(%1,[SP,%0]);LDW(B0) #genspill\n" 20
+stmt: ASGNI2(spill,reg) "\tSTW(B0);_STLW(%0,src=%1);LDW(B0)  #genspill\n" 20
+stmt: ASGNU2(spill,reg) "\tSTW(B0);_STLW(%0,src=%1);LDW(B0)  #genspill\n" 20
+stmt: ASGNP2(spill,reg) "\tSTW(B0);_STLW(%0,src=%1);LDW(B0)  #genspill\n" 20
 stmt: ASGNI4(spill,reg) "\tSTW(B0);_MOVL(%1,[SP,%0]);LDW(B0) #genspill\n" 20
 stmt: ASGNU4(spill,reg) "\tSTW(B0);_MOVL(%1,[SP,%0]);LDW(B0) #genspill\n" 20
 stmt: ASGNF5(spill,reg) "\tSTW(B0);_MOVF(%1,[SP,%0]);LDW(B0) #genspill\n" 20
@@ -901,28 +901,42 @@ ac: INDIRU1(reg)     "%{?0=~vAC:PEEK():PEEKV(%0)};" mincpu6(28)
 reg: INDIRI2(ac)     "\t%0%{?c==vAC:DEEK():DEEKA(%c)};\n" mincpu6(30)
 reg: INDIRU2(ac)     "\t%0%{?c==vAC:DEEK():DEEKA(%c)};\n" mincpu6(30)
 reg: INDIRP2(ac)     "\t%0%{?c==vAC:DEEK():DEEKA(%c)};\n" mincpu6(30)
-stmt: ASGNI1(rmw, conBs) "\tMOVQB(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,27))
-stmt: ASGNU1(rmw, conB)  "\tMOVQB(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,27))
-stmt: ASGNI2(rmw, conB)  "\tMOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
-stmt: ASGNU2(rmw, conB)  "\tMOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
-stmt: ASGNP2(rmw, conB)  "\tMOVQW(%1,%0)\n" mincpu6(if_not_asgn_tmp(a,29))
-stmt: ASGNI2(rmw, con)   "\tMOVIW(%1,%0)\n"  mincpu7(if_not_asgn_tmp(a,31))
-stmt: ASGNU2(rmw, con)   "\tMOVIW(%1,%0)\n"  mincpu7(if_not_asgn_tmp(a,31))
-stmt: ASGNP2(rmw, con)   "\tMOVIW(%1,%0)\n"  mincpu7(if_not_asgn_tmp(a,31))
-regx: LOADI1(conBs)      "\tMOVQB(%0,%c)\n" mincpu6(27)
-regx: LOADU1(conB)       "\tMOVQB(%0,%c)\n" mincpu6(27)
-regx: LOADI2(conB)       "\tMOVQW(%0,%c)\n" mincpu6(29)
-regx: LOADU2(conB)       "\tMOVQW(%0,%c)\n" mincpu6(29)
-regx: LOADP2(conB)       "\tMOVQW(%0,%c)\n" mincpu6(29)
-regx: LOADI2(con)        "\tMOVIW(%0,%c)\n" mincpu7(31)
-regx: LOADU2(con)        "\tMOVIW(%0,%c)\n" mincpu7(31)
-regx: LOADP2(con)        "\tMOVIW(%0,%c)\n" mincpu7(31)
+stmt: ASGNI1(rmw, conBs) "\tMOVQB(%1,%0);\n" mincpu6(if_not_asgn_tmp(a,27))
+stmt: ASGNU1(rmw, conB)  "\tMOVQB(%1,%0);\n" mincpu6(if_not_asgn_tmp(a,27))
+stmt: ASGNI2(rmw, conB)  "\tMOVQW(%1,%0);\n" mincpu6(if_not_asgn_tmp(a,29))
+stmt: ASGNU2(rmw, conB)  "\tMOVQW(%1,%0);\n" mincpu6(if_not_asgn_tmp(a,29))
+stmt: ASGNP2(rmw, conB)  "\tMOVQW(%1,%0);\n" mincpu6(if_not_asgn_tmp(a,29))
+stmt: ASGNI2(rmw, con)   "\tMOVIW(%1,%0);\n"  mincpu7(if_not_asgn_tmp(a,31))
+stmt: ASGNU2(rmw, con)   "\tMOVIW(%1,%0);\n"  mincpu7(if_not_asgn_tmp(a,31))
+stmt: ASGNP2(rmw, con)   "\tMOVIW(%1,%0);\n"  mincpu7(if_not_asgn_tmp(a,31))
+regx: LOADI1(conBs)      "\tMOVQB(%0,%c);\n" mincpu6(27)
+regx: LOADU1(conB)       "\tMOVQB(%0,%c);\n" mincpu6(27)
+regx: LOADI2(conB)       "\tMOVQW(%0,%c);\n" mincpu6(29)
+regx: LOADU2(conB)       "\tMOVQW(%0,%c);\n" mincpu6(29)
+regx: LOADP2(conB)       "\tMOVQW(%0,%c);\n" mincpu6(29)
+regx: LOADI2(con)        "\tMOVIW(%0,%c);\n" mincpu7(31)
+regx: LOADU2(con)        "\tMOVIW(%0,%c);\n" mincpu7(31)
+regx: LOADP2(con)        "\tMOVIW(%0,%c);\n" mincpu7(31)
+ac: INDIRI2(ADDP2(reg,con)) "LDXW(%0,%1);" mincpu7(60)
+ac: INDIRU2(ADDP2(reg,con)) "LDXW(%0,%1);" mincpu7(60)
+ac: INDIRP2(ADDP2(reg,con)) "LDXW(%0,%1);" mincpu7(60)
+ac: INDIRI2(ADDP2(ac,con))  "%0LDXW(vAC,%1);" mincpu7(60)
+ac: INDIRU2(ADDP2(ac,con))  "%0LDXW(vAC,%1);" mincpu7(60)
+ac: INDIRP2(ADDP2(ac,con))  "%0LDXW(vAC,%1);" mincpu7(60)
+stmt: ASGNI2(ADDP2(reg,con),ac) "\t%2STXW(%0,%1);\n" mincpu7(60)
+stmt: ASGNU2(ADDP2(reg,con),ac) "\t%2STXW(%0,%1);\n" mincpu7(60)
+stmt: ASGNP2(ADDP2(reg,con),ac) "\t%2STXW(%0,%1);\n" mincpu7(60)
 ac:  NEGI2(ac)      "%0NEGV(vAC);" mincpu6(30)
 lac: NEGI4(lac)     "%0NEGVL(LAC);" mincpu6(58)
 ac:  MULI2(con,ac)  "%1_MULI(%0);" mincpu7(80)
 ac:  MULU2(con,ac)  "%1_MULI(%0);" mincpu7(80)
 ac:  CVII2(reg)     "LDSB(%0);" mincpu7(if_cv_from(a,1,26))
 ac:  CVII2(ac)      "%0LDSB(vACL);" mincpu7(if_cv_from(a,1,26))
+
+# Args for cpu7 
+stmt: ARGI2(reg) "\t%{?0=~vAC::LDW(%0);}_STLW(%c)%{!A};\n"  mincpu7(if_arg_stk(a,50))
+stmt: ARGU2(reg) "\t%{?0=~vAC::LDW(%0);}_STLW(%c)%{!A};\n"  mincpu7(if_arg_stk(a,50))
+stmt: ARGP2(reg) "\t%{?0=~vAC::LDW(%0);}_STLW(%c)%{!A};\n"  mincpu7(if_arg_stk(a,50))
 
 # Read-modify-write
 rmw: VREGP "%a"
@@ -1027,9 +1041,9 @@ static int if_arg_reg_only(Node p)
   return p->syms[2] ? LBURG_MAX : 1;
 }
 
-static int if_arg_stk(Node p)
+static int if_arg_stk(Node p, int c)
 {
-  return p->syms[2] ? 1 : LBURG_MAX;
+  return p->syms[2] ? c : LBURG_MAX;
 }
 
 static int if_zpconst(Node p)

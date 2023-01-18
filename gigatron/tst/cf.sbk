@@ -11,11 +11,11 @@ def code0():
 	_BRA('.3');
 	label('.2');
 	LDI(2);ADDW(R6);DEEKA(R8);
-	_MOVW(R8,[SP,2]);
+	LDW(R8);_STLW(2);
 	CALLI('atof');
 	LDWI('.5');_FDIV();_MOVF(FAC,[SP,-5+28]);
 	label('.3');
-	MOVQW(0,R5)
+	MOVQW(0,R5);
 	label('.6');
 	LDW(R5);STW(R23);
 	INCV(R5);
@@ -23,7 +23,7 @@ def code0():
 	LDW(R23);_MULI(5);ADDW(R22);STW(T2);_MOVF('.4',[T2]);
 	label('.7');
 	LDI(127);_CMPWS(R5);_BGE('.6');
-	MOVQW(0,R4)
+	MOVQW(0,R4);
 	_BRA('.11');
 	label('.10');
 	LDWI('f');STW(R23);
@@ -35,9 +35,9 @@ def code0():
 	STW(R3);
 	_LDI(-1);XORW(R23);_BNE('.10');
 	LDWI('.14');STW(R8);
-	_MOVW(R8,[SP,2]);
+	_STLW(2);
 	CALLI('printf');
-	MOVQW(0,R5)
+	MOVQW(0,R5);
 	label('.15');
 	LDWI('f');STW(R23);
 	LDW(R5);_MULI(5);ADDW(R23);_MOVF([vAC],F21);
@@ -46,20 +46,20 @@ def code0():
 	_MOVF(F21,FAC);LDI(F18);_FDIV();_SP(-5+28);_FCMP();_BLT('.19');
 	LDI(32);_CMPWS(R5);_BLT('.21');
 	LDWI('.23');STW(R8);
-	_MOVW(R8,[SP,2]);
+	_STLW(2);
 	LDW(R5);STW(R9);
-	_MOVW(R9,[SP,4]);
+	LDW(R9);_STLW(4);
 	CALLI('printf');
 	_BRA('.22');
 	label('.21');
 	LDWI('.24');STW(R8);
-	_MOVW(R8,[SP,2]);
+	_STLW(2);
 	LDW(R5);STW(R9);
-	_MOVW(R9,[SP,4]);
+	LDW(R9);_STLW(4);
 	CALLI('printf');
 	label('.22');
 	LDWI('.25');STW(R8);
-	_MOVW(R8,[SP,2]);
+	_STLW(2);
 	LDW(R5);_MULI(5);STW(R23);
 	LDW(R4);_STLS(LAC);_FCVI();_MOVF(FAC,F20);
 	_MOVF('.5',FAC);LDWI('f');ADDW(R23);_FMUL();LDI(F20);_FDIV();_MOVF(FAC,F9);

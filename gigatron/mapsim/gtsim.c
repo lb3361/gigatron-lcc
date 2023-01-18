@@ -817,21 +817,22 @@ int disassemble(word addr, char **pm, char *operand)
     case 0x35: {
       switch(peek(addlo(addr,1)))
         {
-        case 0x00:  *pm = "ADDL";  return 2;
-        case 0x02:  *pm = "ADDX";  return 2;
-        case 0x04:  *pm = "SUBL";  return 2;
-        case 0x06:  *pm = "ANDL";  return 2;
-        case 0x08:  *pm = "ORL";   return 2;
-        case 0x0a:  *pm = "XORL";  return 2;
-        case 0x0c:  *pm = "NEGVL"; goto operx8;
-        case 0x0e:  *pm = "NEGX";  return 2;
-        case 0x10:  *pm = "LSLVL"; goto operx8;
-        case 0x12:  *pm = "LSLXA"; return 2;
-        case 0x14:  *pm = "CMPLS"; return 2;
-        case 0x16:  *pm = "CMPLU"; return 2;
-        case 0x18:  *pm = "LSRXA"; return 2;
-        case 0x1a:  *pm = "RORX";  return 2;
-        case 0x1c:  *pm = "MACX";  return 2;
+        case 0x00:  *pm = "ADDL";  return 2;       /* v7 */
+        case 0x02:  *pm = "ADDX";  return 2;       /* v7 */
+        case 0x04:  *pm = "SUBL";  return 2;       /* v7 */
+        case 0x06:  *pm = "ANDL";  return 2;       /* v7 */
+        case 0x08:  *pm = "ORL";   return 2;       /* v7 */
+        case 0x0a:  *pm = "XORL";  return 2;       /* v7 */
+        case 0x0c:  *pm = "NEGVL"; goto operx8;    /* v7 */
+        case 0x0e:  *pm = "NEGX";  return 2;       /* v7 */
+        case 0x10:  *pm = "LSLVL"; goto operx8;    /* v7 */
+        case 0x12:  *pm = "LSLXA"; return 2;       /* v7 */
+        case 0x14:  *pm = "CMPLS"; return 2;       /* v7 */
+        case 0x16:  *pm = "CMPLU"; return 2;       /* v7 */
+        case 0x18:  *pm = "LSRXA"; return 2;       /* v7 */
+        case 0x1a:  *pm = "RORX";  return 2;       /* v7 */
+        case 0x1c:  *pm = "MACX";  return 2;       /* v7 */
+        case 0x1f:  *pm = "INCVL"; goto operx8;    /* v7 */
         case 0x37:  *pm = "NEGV";  goto operx8;    /* v7 */
         case 0x39:  *pm = "RDIVS"; goto operx8;    /* v7 */
         case 0x3b:  *pm = "RDIVU"; goto operx8;    /* v7 */
@@ -902,7 +903,7 @@ int disassemble(word addr, char **pm, char *operand)
     case 0x72:  *pm = "JNE";   goto oper16p2; /* v7 */
     case 0x78:  *pm = "LDNI";  goto oper8n;   /* v7 */
     case 0x7d:  *pm = "MULQ";  goto oper8;    /* v7 */
-    case 0xb1:  *pm = "LDVI";  goto oper8r16; /* v7 */
+    case 0xb1:  *pm = "MOVIW"; goto oper16r8; /* v7 */
     case 0xd3:  *pm = "CMPWS"; goto oper8;    /* v7 */
     case 0xd6:  *pm = "CMPWU"; goto oper8;    /* v7 */
     case 0xd9:  *pm = "CMPIS"; goto oper8;    /* v7 */
@@ -933,9 +934,9 @@ int disassemble(word addr, char **pm, char *operand)
     oper8x2r:
       sprintf(operand, "$%02x,$%02x", peek(addlo(addr,2)), peek(addlo(addr,1)));
       return 3;
-    oper8r16:
-      sprintf(operand, "$%02x,$%02x%02x", peek(addlo(addr,1)),
-              peek(addlo(addr,2)), peek(addlo(addr,3)));
+    oper16r8:
+      sprintf(operand, "$$%02x%02x,$%02x", 
+              peek(addlo(addr,2)), peek(addlo(addr,3)), peek(addlo(addr,1)) );
       return 4;
     oper816:
       sprintf(operand, "$%02x,$%02x%02x", peek(addlo(addr,1)),

@@ -5,7 +5,7 @@ def code0():
 	label('main');
 	_PROLOGUE(4,4,0x0); # save=None
 	LDI(0);STW(R8);
-	_MOVW(R8,[SP,2]);
+	_STLW(2);
 	CALLI('exit');
 	LDI(0);
 	label('.1');

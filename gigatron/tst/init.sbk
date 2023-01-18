@@ -61,36 +61,33 @@ def code3():
 def code4():
 	label('main');
 	_PROLOGUE(12,6,0xc0); # save=R6-7
-	MOVQW(0,R6)
+	MOVQW(0,R6);
 	_BRA('.8');
 	label('.5');
-	MOVQW(0,R7)
+	MOVQW(0,R7);
 	_BRA('.12');
 	label('.9');
 	LDWI('.13');STW(R8);
-	_MOVW(R8,[SP,2]);
-	LDWI('y');STW(R23);
-	LDW(R6);LSLW();ADDW(R23);DEEKA(R23);
+	_STLW(2);
+	LDW(R6);LSLW();LDXW(vAC,'y');STW(R23);
 	LDW(R7);LSLW();ADDW(R23);DEEKA(R9);
-	_MOVW(R9,[SP,4]);
+	LDW(R9);_STLW(4);
 	CALLI('printf');
 	label('.10');
 	INCV(R7);
 	label('.12');
-	LDWI('y');STW(R23);
-	LDW(R6);LSLW();ADDW(R23);DEEKA(R23);
+	LDW(R6);LSLW();LDXW(vAC,'y');STW(R23);
 	LDW(R7);LSLW();ADDW(R23);DEEK();_BNE('.9');
 	LDWI('.14');STW(R8);
-	_MOVW(R8,[SP,2]);
+	_STLW(2);
 	CALLI('printf');
 	label('.6');
 	INCV(R6);
 	label('.8');
-	LDWI('y');STW(R23);
-	LDW(R6);LSLW();ADDW(R23);DEEK();_BNE('.5');
+	LDW(R6);LSLW();LDXW(vAC,'y');_BNE('.5');
 	CALLI('f');
 	LDWI('wordlist');DEEKA(R8);
-	_MOVW(R8,[SP,2]);
+	LDW(R8);_STLW(2);
 	CALLI('g');
 	LDI(0);
 	label('.4');
@@ -108,13 +105,13 @@ def code5():
 def code6():
 	label('f');
 	_PROLOGUE(8,6,0x80); # save=R7
-	MOVIW('.16',R7)
+	MOVIW('.16',R7);
 	_BRA('.24');
 	label('.21');
 	LDWI('.25');STW(R8);
-	_MOVW(R8,[SP,2]);
+	_STLW(2);
 	DEEKV(R7);STW(R9);
-	_MOVW(R9,[SP,4]);
+	LDW(R9);_STLW(4);
 	CALLI('printf');
 	label('.22');
 	ADDIV(2,R7);
@@ -130,22 +127,22 @@ def code7():
 	LDW(R8);STW(R7);
 	_BRA('.30');
 	label('.27');
-	MOVQW(0,R6)
+	MOVQW(0,R6);
 	_BRA('.34');
 	label('.31');
 	LDWI('.35');STW(R8);
-	_MOVW(R8,[SP,2]);
+	_STLW(2);
 	LDW(R6);LSLW();ADDW(R7);DEEKA(R9);
-	_MOVW(R9,[SP,4]);
+	LDW(R9);_STLW(4);
 	CALLI('printf');
 	label('.32');
 	INCV(R6);
 	label('.34');
 	LDI(3);_CMPWU(R6);_BGT('.31');
 	LDWI('.25');STW(R8);
-	_MOVW(R8,[SP,2]);
+	_STLW(2);
 	LDI(6);ADDW(R7);STW(R9);
-	_MOVW(R9,[SP,4]);
+	LDW(R9);_STLW(4);
 	CALLI('printf');
 	label('.28');
 	ADDIV(12,R7);
@@ -159,20 +156,20 @@ def code7():
 def code8():
 	label('h');
 	_PROLOGUE(16,12,0x80); # save=R7
-	MOVQW(0,R7)
+	MOVQW(0,R7);
 	_BRA('.40');
 	label('.37');
 	LDWI('.41');STW(R8);
-	_MOVW(R8,[SP,2]);
+	_STLW(2);
 	LDW(R7);_MULI(12);STW(R23);
 	LDWI('words');ADDW(R23);DEEKA(R9);
-	_MOVW(R9,[SP,4]);
+	LDW(R9);_STLW(4);
 	LDWI(v('words')+2);ADDW(R23);DEEKA(R10);
-	_MOVW(R10,[SP,6]);
+	LDW(R10);_STLW(6);
 	LDWI(v('words')+4);ADDW(R23);DEEKA(R11);
-	_MOVW(R11,[SP,8]);
+	LDW(R11);_STLW(8);
 	LDWI(v('words')+6);ADDW(R23);STW(R12);
-	_MOVW(R12,[SP,10]);
+	LDW(R12);_STLW(10);
 	CALLI('printf');
 	label('.38');
 	INCV(R7);

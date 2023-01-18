@@ -1173,6 +1173,12 @@ def RORX(cpu6exact=True):
 def MACX():
     emit_op('MACX_v7')
 @vasm
+def INCVL(d):
+    if args.cpu == 6:
+        tryhop(3);emit(0x2f, check_zp(d), 0x4e)
+    else:
+        emit_op('INCVL_v7', check_zp(d))
+@vasm
 def PUSHV(d):
     emit_op('PUSHV_v7', check_zp(d))
 @vasm
@@ -1269,17 +1275,23 @@ def _LDLW(off):
     else:
         _SP(off);DEEK()
 @vasm
-def _STLW(off):
-    '''Emits STLW STXW (cpu7) or a DOKE solution (which might clobber T2,T3)'''
+def _STLW(off, src=None):
+    '''Emits STLW STXW (cpu7) or a DOKE solution (which might clobber T2,T3).
+       Optional argument src can specify a source register other than vAC,
+       allowing better DOKE solutions during spills.'''
     off = int(v(off))
     if args.cpu >= 7 and SP == vSP and is_zeropage(off):
+        if src != None and src != vAC: LDW(src)
         STLW(off)
     elif args.cpu >= 7:
+        if src != None and src != vAC: LDW(src)
         STXW(SP,off)
     elif args.cpu >= 6:
-        STW(T3);_SP(off);DOKEA(T3)
+        if src == None or src == vAC: STW(T3); src=T3
+        _SP(off);DOKEA(src)
     else:
-        STW(T3);_SP(off);STW(T2);LDW(T3);DOKE(T2)
+        if src == None or src == vAC: STW(T3); src=T3
+        _SP(off);STW(T2);LDW(src);DOKE(T2)
 @vasm
 def _SHLI(imm):
     '''Shift vAC left by imm positions'''
@@ -1438,52 +1450,6 @@ def _MODIU(d):
     STW(T3);_LDI(d)
     extern('_@_modu')
     _CALLI('_@_modu')           # T3 % vAC --> vAC
-@vasm
-def _MOVW(s,d): # was _MOV
-    '''Move word from reg/addr s to d. 
-       One of s or d can be [vAC] or [SP, offset].
-       When this is the case, s cannot be vAC.
-       Can trash vAC, T2 and T3'''
-    s = v(s)
-    d = v(d)
-    if s != d:
-        if type(d) == list and len(d) == 2 and d[0] == SP:
-            if args.cpu >= 7 and type(s) != list:
-                if s != vAC: _LDW(s)
-                _STLW(d[1])
-                return
-            else:
-                _SP(d[1]); d = [vAC]
-        elif type(s) == list and len(s) == 2 and s[0] == SP:
-            if args.cpu >= 7 and d != [vAC]:
-                _LDLW(s[1]); s = vAC
-            else:
-                _SP(s[1]); s = [vAC]
-        if args.cpu >= 6 and is_zeropage(s) and d == [vAC]:
-            DOKEA(s)
-        elif args.cpu >= 6 and is_zeropage(d) and s == [vAC]:
-            DEEKA(d)
-        elif d == [vAC]:
-            if s == vAC:
-                error("Cannot _MOVW from vAC to [vAC] or [SP, offset]")
-            STW(T2);_LDW(s);DOKE(T2)
-        elif is_zeropage(d) or args.cpu >= 6:
-            if s == [vAC]:
-                DEEK()
-            elif s != vAC:
-                _LDW(s)
-            if is_zeropage(d):
-                STW(d)
-            else:
-                _MOVIW(d,T2); DOKE(T2)
-        else:
-            if s != vAC and s != [vAC]:
-                _LDI(d); STW(T2); _LDW(s); DOKE(T2)
-            else:
-                if s == [vAC]:
-                    DEEK()
-                STW(T3); _LDI(d); STW(T2);
-                LDW(T3); DOKE(T2)
 @vasm
 def _BRA(d):
     emitjump(v(d))
@@ -1655,7 +1621,8 @@ def _MOVL(s,d): # was _LMOV
                     extern('_@_lcopyz_')
                     _CALLI('_@_lcopyz_')             # z->z :  6 bytes
                 else:
-                    LDW(s);STW(d);LDW(s+2);STW(d+2)
+                    LDW(s);STW(d)
+                    LDW(s+2);STW(d+2)
             elif args.cpu >= 6:
                 if s != [vAC]:
                     _LDI(s)                          # l->z : 9 bytes (cpu7)
@@ -1977,11 +1944,6 @@ def _EPILOGUE(framesize,maxargoffset,mask,saveAC=False):
     else:
         STW(T3); _CALLJ('_@_rtrn_%02x' % mask)
         
-# compat
-module_dict['_MOV'] = _MOVW
-module_dict['_LMOV'] = _MOVL
-module_dict['_FMOV'] = _MOVF
-module_dict['_BMOV'] = _MOVM
 
 # ------------- reading .s/.o/.a files
               

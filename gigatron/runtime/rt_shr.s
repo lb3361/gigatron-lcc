@@ -55,7 +55,7 @@ def scope():
        _LDI(0xffff);XORW(T3);STW(T3)
        _CALLJ('__@shru_t2')
        STW(T3);_LDI(0xffff);XORW(T3)
-       _BRA('.shrs2')
+       tryhop(2);POP();RET()
        label('.shrs1')
        _CALLJ('__@shru_t2')
        label('.shrs2')

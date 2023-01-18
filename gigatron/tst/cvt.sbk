@@ -5,21 +5,21 @@ def code0():
 	label('print');
 	_PROLOGUE(44,44,0x0); # save=None
 	LDWI('.2');STW(R8);
-	_MOVW(R8,[SP,2]);
+	_STLW(2);
 	LDWI('c');PEEK();LDSB(vACL);STW(R9);
-	_MOVW(R9,[SP,4]);
+	LDW(R9);_STLW(4);
 	LDWI('s');DEEKA(R10);
-	_MOVW(R10,[SP,6]);
+	LDW(R10);_STLW(6);
 	LDWI('i');DEEKA(R11);
-	_MOVW(R11,[SP,8]);
+	LDW(R11);_STLW(8);
 	_MOVL('l',L12);
 	_MOVL(L12,[SP,12]);
 	LDWI('C');PEEK();STW(R14);
-	_MOVW(R14,[SP,16]);
+	LDW(R14);_STLW(16);
 	LDWI('S');DEEKA(R15);
-	_MOVW(R15,[SP,18]);
+	LDW(R15);_STLW(18);
 	LDWI('I');DEEKA(R23);
-	_MOVW(R23,[SP,20]);
+	LDW(R23);_STLW(20);
 	_MOVL('L',L22);
 	_MOVL(L22,[SP,24]);
 	_MOVF('f',F21);

@@ -88,13 +88,19 @@ def scope():
         label('_@_rndfac')
         LD(AE);_BEQ('_@_clrfac')
         LD(AM);ANDI(128);_BEQ('.rnd0')
-        LDI(1);ADDW(AM+1);STW(AM+1);_BNE('.rnd0')
-        LDI(1);ADDW(AM+3);STW(AM+3);_BNE('.rnd0')
+        if args.cpu >= 6:
+            INCVL(AM+1);LDW(AM+3);_BNE('.rnd0')
+        else:
+            LDI(1);ADDW(AM+1);STW(AM+1);_BNE('.rnd0')
+            LDI(1);ADDW(AM+3);STW(AM+3);_BNE('.rnd0')
         LDI(128);ST(AM+4);INC(AE);LD(AE);_BNE('.rnd0')
         # overflow during rounding: just revert.
         _LDI(0xffff);STW(AM+1);STW(AM+3);ST(AE)
         label('.rnd0')
-        LD(0);ST(AM)
+        if args.cpu >= 6:
+            MOVQB(0,AM)
+        else:
+            LDI(0);ST(AM)
         RET()
 
     module(name='rt_rndfac.s',
@@ -181,33 +187,31 @@ def scope():
         '''_@_fstfac: Store FAC at address vAC: FAC->[vAC]'''
         nohop()
         label('_@_fstfac')
-        PUSH();STW(T3)
-        LD(AE);POKE(T3);_BNE('.fst1')
+        STW(T3);LD(AE);POKE(T3);_BNE('.fst1')
         STW(AM+1);STW(AM+3)
+        label('.fst1')
         if args.cpu >= 6:
-            label('.fst1')
             LD(AS);ORI(0x7f);ANDW(AM+4);INCV(T3);POKE(T3)
             LD(AM+3);INCV(T3);POKE(T3)
             LD(AM+2);INCV(T3);POKE(T3)
             LD(AM+1);INCV(T3);POKE(T3)
-            tryhop(2);POP();RET()
+            RET()
         else:
-            label('.fst1')
-            LD(T3);SUBI(0xfc);_BGE('.slow')
-            INC(T3);
+            LD(T3);SUBI(0xfc);_BGE('.slow');INC(T3);
             LD(AS);ORI(0x7f);ANDW(AM+4);POKE(T3);INC(T3)
             LD(AM+3);POKE(T3);INC(T3)
             LD(AM+2);POKE(T3);INC(T3)
             label('.fst2')
             LD(AM+1);POKE(T3)
-            tryhop(2);POP();RET()
+            RET()
             label('.slow')
+            PUSH()
             LDWI('.inc');CALL(vAC);
             LDWI('.poke');STW('sysArgs6')
             LD(AS);ORI(0x7f);ANDW(AM+4);CALL('sysArgs6')
             LD(AM+3);CALL('sysArgs6')
             LD(AM+2);CALL('sysArgs6')
-            _BRA('.fst2')
+            POP();_BRA('.fst2')
             label('.poke')
             POKE(T3);
             label('.inc')
@@ -580,9 +584,8 @@ def scope():
             ADDX()
         elif args.cpu == 6:
             LD(BM);_BEQ('.a0')
-            ADDW(AM);ST(AM)
-            LD(vACH);SUBW(AM+1);LD(vACL);_BEQ('.a0')
-            DEF('.a1');words(1,0);label('.a1');ADDL()
+            ADDW(AM);ST(AM);XORW(AM);_BEQ('.a0') # :-)
+            INCVL(LAC)
             label('.a0')
             LDI(BM+1);ADDL()
         else:
@@ -795,38 +798,41 @@ def scope():
                   ('IMPORT', '__@amaddbm') if args.cpu < 7 else ('NOP',),
                   ('IMPORT', '__@bmshl1') if args.cpu < 6 else ('NOP',),
                   ('CODE', '__@macx', code_macx) ] )
+
+    def code_fmuld():
+        label('__@fmuld')
+        space(4)
     
-    def code_fmulmac():
+    def code_fmulm():
         nohop()
-        label('__@fmulmac')
+        label('__@fmulm')
         PUSH();
         LDW(BM+1);STW(BM)
         LDW(BM+3);STW(BM+2)
-        ALLOC(-4)
-        LDW(AM+3);STLW(2)
-        LDW(AM+1);STLW(0)
+        LDW(AM+3);STW(v('__@fmuld')+2)
+        LDW(AM+1);STW(v('__@fmuld')+0)
         LDI(0);ST(AM);STW(AM+1);STW(AM+3)
-        LDLW(0)
+        LD(v('__@fmuld')+0)
         if args.cpu >= 7:
             MACX();LDI(8);LSRXA()
         else:
             ST(B0);_CALLJ('__@macx_b0');_CALLJ('__@amshr8')
-        LDLW(0);LD(vACH)
+        LD(v('__@fmuld')+1)
         if args.cpu >= 7:
             MACX();LDI(8);LSRXA()
         else:
             ST(B0);_CALLJ('__@macx_b0');_CALLJ('__@amshr8')
-        LDLW(2)
+        LD(v('__@fmuld')+2)
         if args.cpu >= 7:
             MACX();LDI(8);LSRXA()
         else:
             ST(B0);_CALLJ('__@macx_b0');_CALLJ('__@amshr8')
-        LDLW(2);LD(vACH)
+        LD(v('__@fmuld')+3)
         if args.cpu >= 7:
             MACX()
         else:
             ST(B0);_CALLJ('__@macx_b0')
-        tryhop(4);ALLOC(4);POP();RET()
+        tryhop(2);POP();RET()
 
     def code_fmul():
         '''_@_fmul: Multiply FAC by the float at address vAC.'''
@@ -843,7 +849,7 @@ def scope():
             ADDV(BE)                    # result exponent (+128)
         else:
             ADDW(BE);STW(BE)
-        _CALLJ('__@fmulmac')            # multiply!
+        _CALLJ('__@fmulm')            # multiply!
         LDI(64);ST(AE);
         _CALLJ('__@fnorm')              # normalize with dummy exponent
         LD(AE);ADDW(BE);SUBI(128+64)    # real exponent on 16 bits
@@ -869,7 +875,9 @@ def scope():
                   ('IMPORT', '_@_clrfac'),
                   ('IMPORT', '_@_rndfac'),
                   ('IMPORT', '__@macx') if args.cpu < 7 else ('NOP',),
-                  ('CODE', '__@fmulmac', code_fmulmac),
+                  ('BSS', '__@fmuld', code_fmuld, 4, 1),
+                  ('PLACE', '__@fmuld', 0x0000, 0x00ff),
+                  ('CODE', '__@fmulm', code_fmulm),
                   ('CODE', '_@_fmul', code_fmul) ] )
 
     # ==== division

@@ -84,10 +84,10 @@ def code4():
 	_SP(4+0);DEEK();_CMPWS(R23);_BLT('.53');
 	_SP(12+0);DEEKA(R23);
 	_SP(4+0);DEEK();_CMPWS(R23);_BGE('.53');
-	MOVQW(1,R19)
+	MOVQW(1,R19);
 	_BRA('.54');
 	label('.53');
-	MOVQW(0,R19)
+	MOVQW(0,R19);
 	label('.54');
 	LDW(R19);
 	label('.45');
@@ -103,9 +103,9 @@ def code6():
 	_PROLOGUE(12,6,0x0); # save=None
 	_SP(-3+12);STW(T2);_MOVM([SP,2+12],[T2],3,1);
 	LDWI('.56');STW(R8);
-	_MOVW(R8,[SP,2]);
+	_STLW(2);
 	_SP(-3+12);STW(R9);
-	_MOVW(R9,[SP,4]);
+	_STLW(4);
 	CALLI('printf');
 	LDI(0);
 	label('.55');
@@ -142,18 +142,18 @@ def code10():
 	_MOVM('.59',[SP,-36+68],4,2);
 	_MOVM('.60',[SP,-16+68],16,2);
 	_SP(-40+68);STW(R8);
-	MOVIW(-10,R9)
-	MOVIW(-10,R10)
-	_MOVW(R10,[SP,6]);
+	MOVIW(-10,R9);
+	MOVIW(-10,R10);
+	LDW(R10);_STLW(6);
 	CALLI('makepoint');
 	_SP(-44+68);STW(R8);
 	_SP(4);STW(T2);_MOVM([SP,-36+68],[T2],4,2);
 	_SP(8);STW(T2);_MOVM([SP,-40+68],[T2],4,2);
 	CALLI('addpoint');
 	_SP(-48+68);STW(R8);
-	MOVQW(10,R9)
-	MOVQW(10,R10)
-	_MOVW(R10,[SP,6]);
+	MOVQW(10,R9);
+	MOVQW(10,R10);
+	LDW(R10);_STLW(6);
 	CALLI('makepoint');
 	_SP(-52+68);STW(R8);
 	_SP(4);STW(T2);_MOVM([SP,-32+68],[T2],4,2);
@@ -163,41 +163,41 @@ def code10():
 	_SP(4);STW(T2);_MOVM([SP,-44+68],[T2],4,2);
 	_SP(8);STW(T2);_MOVM([SP,-52+68],[T2],4,2);
 	CALLI('makerect');
-	MOVQW(0,R7)
+	MOVQW(0,R7);
 	_BRA('.64');
 	label('.61');
 	_SP(-28+68);STW(R8);
 	LDW(R7);_SHLI(2);STW(R23);
 	_SP(-16+68);ADDW(R23);DEEKA(R9);
 	_SP(-14+68);ADDW(R23);DEEKA(R10);
-	_MOVW(R10,[SP,6]);
+	LDW(R10);_STLW(6);
 	CALLI('makepoint');
 	LDWI('.65');STW(R8);
-	_MOVW(R8,[SP,2]);
+	_STLW(2);
 	_SP(-16+68);STW(R23);
 	LDW(R7);_SHLI(2);ADDW(R23);DEEKA(R9);
-	_MOVW(R9,[SP,4]);
+	LDW(R9);_STLW(4);
 	_SP(-26+68);DEEKA(R10);
-	_MOVW(R10,[SP,6]);
+	LDW(R10);_STLW(6);
 	CALLI('printf');
 	_SP(2);STW(T2);_MOVM([SP,-28+68],[T2],4,2);
 	_SP(6);STW(T2);_MOVM([SP,-24+68],[T2],8,2);
 	CALLI('ptinrect');
 	_BNE('.68');
 	LDWI('.70');STW(R8);
-	_MOVW(R8,[SP,2]);
+	_STLW(2);
 	CALLI('printf');
 	label('.68');
 	LDWI('.71');STW(R8);
-	_MOVW(R8,[SP,2]);
+	_STLW(2);
 	_SP(-24+68);DEEKA(R9);
-	_MOVW(R9,[SP,4]);
+	LDW(R9);_STLW(4);
 	_SP(-22+68);DEEKA(R10);
-	_MOVW(R10,[SP,6]);
+	LDW(R10);_STLW(6);
 	_SP(-20+68);DEEKA(R11);
-	_MOVW(R11,[SP,8]);
+	LDW(R11);_STLW(8);
 	_SP(-18+68);DEEKA(R12);
-	_MOVW(R12,[SP,10]);
+	LDW(R12);_STLW(10);
 	CALLI('printf');
 	label('.62');
 	INCV(R7);
@@ -206,7 +206,7 @@ def code10():
 	_SP(2);STW(T2);_MOVM('y',[T2],3,1);
 	CALLI('odd');
 	LDI(0);STW(R8);
-	_MOVW(R8,[SP,2]);
+	_STLW(2);
 	CALLI('exit');
 	LDI(0);
 	label('.57');

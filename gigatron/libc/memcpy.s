@@ -1,12 +1,13 @@
 
 # This variant uses only the COPY/COPYN opcodes. Requires cpu7.
+# Peak rate is 10 bytes/scanline with little setup time.
 def scope_copy_op():
     def code0():
         nohop()
         label('memcpy');                            # R8=d, R9=s, R10=l
         LDW(R8);STW(T2)
         LDW(R9);STW(T3)
-        LDW(R10);BRA('memcpy2')
+        LDW(R10)
         label('memcpy1')
         COPY()
         label('memcpy2')
@@ -18,7 +19,8 @@ def scope_copy_op():
                  ('CODE', 'memcpy', code0) ])
     
 
-# This longer but often faster variant uses SYS_CopyMemory.
+# This longer but slightly faster variant uses SYS_CopyMemory.
+# Peak rate is 12 bytes/scanline with substantial setup time.
 def scope_syscopymemory():
     info = rominfo['has_SYS_CopyMemory']
     addr = int(str(info['addr']),0)
@@ -57,6 +59,7 @@ def scope_syscopymemory():
            
 
 # This variant uses vCPU only
+# Peak rate slightly above 1 byte/scanline.
 def scope_vcpu():
            
     def code0():

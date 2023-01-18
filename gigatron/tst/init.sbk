@@ -60,7 +60,7 @@ def code3():
 # ======== ('CODE', 'main', code4)
 def code4():
 	label('main');
-	_PROLOGUE(12,6,0xc0); # save=R6-7
+	_PROLOGUE(12,4,0xc0); # save=R6-7
 	MOVQW(0,R6);
 	_BRA('.8');
 	label('.5');
@@ -68,10 +68,10 @@ def code4():
 	_BRA('.12');
 	label('.9');
 	LDWI('.13');STW(R8);
-	_STLW(2);
+	_STLW(0);
 	LDW(R6);LSLW();LDXW(vAC,'y');STW(R23);
 	LDW(R7);LSLW();ADDW(R23);DEEKA(R9);
-	LDW(R9);_STLW(4);
+	LDW(R9);_STLW(2);
 	CALLI('printf');
 	label('.10');
 	INCV(R7);
@@ -79,7 +79,7 @@ def code4():
 	LDW(R6);LSLW();LDXW(vAC,'y');STW(R23);
 	LDW(R7);LSLW();ADDW(R23);DEEK();_BNE('.9');
 	LDWI('.14');STW(R8);
-	_STLW(2);
+	_STLW(0);
 	CALLI('printf');
 	label('.6');
 	INCV(R6);
@@ -87,11 +87,11 @@ def code4():
 	LDW(R6);LSLW();LDXW(vAC,'y');_BNE('.5');
 	CALLI('f');
 	LDWI('wordlist');DEEKA(R8);
-	LDW(R8);_STLW(2);
+	LDW(R8);_STLW(0);
 	CALLI('g');
 	LDI(0);
 	label('.4');
-	_EPILOGUE(12,6,0xc0,saveAC=True);
+	_EPILOGUE(12,4,0xc0,saveAC=True);
 # ======== ('DATA', '.16', code5, 0, 2)
 def code5():
 	align(2);
@@ -104,14 +104,14 @@ def code5():
 # ======== ('CODE', 'f', code6)
 def code6():
 	label('f');
-	_PROLOGUE(8,6,0x80); # save=R7
+	_PROLOGUE(8,4,0x80); # save=R7
 	MOVIW('.16',R7);
 	_BRA('.24');
 	label('.21');
 	LDWI('.25');STW(R8);
-	_STLW(2);
+	_STLW(0);
 	DEEKV(R7);STW(R9);
-	LDW(R9);_STLW(4);
+	LDW(R9);_STLW(2);
 	CALLI('printf');
 	label('.22');
 	ADDIV(2,R7);
@@ -119,11 +119,11 @@ def code6():
 	DEEKV(R7);_BNE('.21');
 	LDI(0);
 	label('.15');
-	_EPILOGUE(8,6,0x80,saveAC=True);
+	_EPILOGUE(8,4,0x80,saveAC=True);
 # ======== ('CODE', 'g', code7)
 def code7():
 	label('g');
-	_PROLOGUE(12,6,0xc0); # save=R6-7
+	_PROLOGUE(12,4,0xc0); # save=R6-7
 	LDW(R8);STW(R7);
 	_BRA('.30');
 	label('.27');
@@ -131,18 +131,18 @@ def code7():
 	_BRA('.34');
 	label('.31');
 	LDWI('.35');STW(R8);
-	_STLW(2);
+	_STLW(0);
 	LDW(R6);LSLW();ADDW(R7);DEEKA(R9);
-	LDW(R9);_STLW(4);
+	LDW(R9);_STLW(2);
 	CALLI('printf');
 	label('.32');
 	INCV(R6);
 	label('.34');
 	LDI(3);_CMPWU(R6);_BGT('.31');
 	LDWI('.25');STW(R8);
-	_STLW(2);
+	_STLW(0);
 	LDI(6);ADDW(R7);STW(R9);
-	LDW(R9);_STLW(4);
+	LDW(R9);_STLW(2);
 	CALLI('printf');
 	label('.28');
 	ADDIV(12,R7);
@@ -151,25 +151,25 @@ def code7():
 	CALLI('h');
 	LDI(0);
 	label('.26');
-	_EPILOGUE(12,6,0xc0,saveAC=True);
+	_EPILOGUE(12,4,0xc0,saveAC=True);
 # ======== ('CODE', 'h', code8)
 def code8():
 	label('h');
-	_PROLOGUE(16,12,0x80); # save=R7
+	_PROLOGUE(16,10,0x80); # save=R7
 	MOVQW(0,R7);
 	_BRA('.40');
 	label('.37');
 	LDWI('.41');STW(R8);
-	_STLW(2);
+	_STLW(0);
 	LDW(R7);_MULI(12);STW(R23);
 	LDWI('words');ADDW(R23);DEEKA(R9);
-	LDW(R9);_STLW(4);
+	LDW(R9);_STLW(2);
 	LDWI(v('words')+2);ADDW(R23);DEEKA(R10);
-	LDW(R10);_STLW(6);
+	LDW(R10);_STLW(4);
 	LDWI(v('words')+4);ADDW(R23);DEEKA(R11);
-	LDW(R11);_STLW(8);
+	LDW(R11);_STLW(6);
 	LDWI(v('words')+6);ADDW(R23);STW(R12);
-	LDW(R12);_STLW(10);
+	LDW(R12);_STLW(8);
 	CALLI('printf');
 	label('.38');
 	INCV(R7);
@@ -177,7 +177,7 @@ def code8():
 	LDI(5);_CMPWU(R7);_BGT('.37');
 	LDI(0);
 	label('.36');
-	_EPILOGUE(16,12,0x80,saveAC=True);
+	_EPILOGUE(16,10,0x80,saveAC=True);
 # ======== ('DATA', '.41', code9, 0, 1)
 def code9():
 	label('.41');

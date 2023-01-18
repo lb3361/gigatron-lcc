@@ -41,7 +41,6 @@
 		"registerBase" : "0x50",
 		"registerFLAC" : "0xc1",
 		"registerSP"   : "0x48",
-		"registerB0B1" : "0xca",
 		"registerT2T3" : "0xcc",
 		"warning" : "ROMvX0 opcodes may change often!"
 	      },

@@ -349,14 +349,13 @@ track of all free and used page zero locations.
 
   *  The most important block of page zero variables contains 24
      general purpose word registers named `R0` to `R23`. This block is
-     by default located at addresses `0x50-0x7f` but can be displaced
-     using the command line option `--register-base=0x90` for
-     instance. Register pairs named `L0` to `L22` can hold longs.
-     Register triplets named `F0` to `F21` can hold floats. Registers
-     `R0` to `R7` are callee-saved and are often used for local
-     variables. Registers `R8` to `R15` are used to pass arguments to
-     functions. Registers `R15` to `R22` are used for
-     temporaries.
+     can be manually displaced using the command line option
+     `--register-base=0x90` for instance. Register pairs named `L0` to
+     `L22` can hold longs.  Register triplets named `F0` to `F21` can
+     hold floats. Registers `R0` to `R7` are callee-saved and are
+     often used for local variables. Registers `R8` to `R15` are used
+     to pass arguments to functions. Registers `R15` to `R22` are used
+     for temporaries.
 
   *  Additional registers include: word registers named `T0` to `T3`,
 	 scratch bytes `B0` and `B1`, long accumulator `LAC`, long
@@ -364,7 +363,10 @@ track of all free and used page zero locations.
 	 exponent bytes `FAS` and `FAE`, and a stack pointer `SP`. ROMs
 	 that provide suitable native support may dictate the location
 	 some of these registers. Otherwise they are allocated by the
-	 linker in the upper half ot page zero.
+	 linker in the upper half ot page zero. In general, these
+	 locations, as well as `sysArgs[0..7]`, can be used by the 
+     compiler or the runtime, and therefore are not safe to use
+	 from C programs. 
 
 The function prologue first saves `vLR` and constructs a stack frame
 by adjusting `SP`. It then saves the callee-saved registers onto the

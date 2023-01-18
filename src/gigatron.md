@@ -86,12 +86,13 @@ static void xprint_finish(void);
 static int  if_zpconst(Node);
 static int  if_zpglobal(Node);
 static int  if_incr(Node,int,int);
+static int  if_zoffset(Node,int,int);
 static int  if_rmw(Node,int);
 static int  if_rmw_incr(Node,int,int);
 static int  if_not_asgn_tmp(Node,int);
 static int  if_cv_from(Node,int,int);
 static int  if_arg_reg_only(Node);
- static int  if_arg_stk(Node,int);
+static int  if_arg_stk(Node,int);
 
 #define mincpu5(cost) ((cpu<5)?LBURG_MAX:(cost))
 #define mincpu6(cost) ((cpu<6)?LBURG_MAX:(cost))
@@ -879,7 +880,7 @@ stmt: ASGNI4(spill,reg) "\tSTW(B0);_MOVL(%1,[SP,%0]);LDW(B0) #genspill\n" 20
 stmt: ASGNU4(spill,reg) "\tSTW(B0);_MOVL(%1,[SP,%0]);LDW(B0) #genspill\n" 20
 stmt: ASGNF5(spill,reg) "\tSTW(B0);_MOVF(%1,[SP,%0]);LDW(B0) #genspill\n" 20
 
-# Some opcodes for cpu > 5
+# Additional opcodes for cpu > 5
 stmt: ASGNP2(ac,iarg)  "\t%0%[1b]DOKEA(%1);\n" mincpu6(28)
 stmt: ASGNI2(ac,iarg)  "\t%0%[1b]DOKEA(%1);\n" mincpu6(28)
 stmt: ASGNU2(ac,iarg)  "\t%0%[1b]DOKEA(%1);\n" mincpu6(28)
@@ -901,6 +902,7 @@ ac: INDIRU1(reg)     "%{?0=~vAC:PEEK():PEEKV(%0)};" mincpu6(28)
 reg: INDIRI2(ac)     "\t%0%{?c==vAC:DEEK():DEEKA(%c)};\n" mincpu6(30)
 reg: INDIRU2(ac)     "\t%0%{?c==vAC:DEEK():DEEKA(%c)};\n" mincpu6(30)
 reg: INDIRP2(ac)     "\t%0%{?c==vAC:DEEK():DEEKA(%c)};\n" mincpu6(30)
+
 stmt: ASGNI1(rmw, conBs) "\tMOVQB(%1,%0);\n" mincpu6(if_not_asgn_tmp(a,27))
 stmt: ASGNU1(rmw, conB)  "\tMOVQB(%1,%0);\n" mincpu6(if_not_asgn_tmp(a,27))
 stmt: ASGNI2(rmw, conB)  "\tMOVQW(%1,%0);\n" mincpu6(if_not_asgn_tmp(a,29))
@@ -917,26 +919,36 @@ regx: LOADP2(conB)       "\tMOVQW(%0,%c);\n" mincpu6(29)
 regx: LOADI2(con)        "\tMOVIW(%0,%c);\n" mincpu7(31)
 regx: LOADU2(con)        "\tMOVIW(%0,%c);\n" mincpu7(31)
 regx: LOADP2(con)        "\tMOVIW(%0,%c);\n" mincpu7(31)
+
 ac: INDIRI2(ADDP2(reg,con)) "LDXW(%0,%1);" mincpu7(60)
 ac: INDIRU2(ADDP2(reg,con)) "LDXW(%0,%1);" mincpu7(60)
 ac: INDIRP2(ADDP2(reg,con)) "LDXW(%0,%1);" mincpu7(60)
 ac: INDIRI2(ADDP2(ac,con))  "%0LDXW(vAC,%1);" mincpu7(60)
 ac: INDIRU2(ADDP2(ac,con))  "%0LDXW(vAC,%1);" mincpu7(60)
 ac: INDIRP2(ADDP2(ac,con))  "%0LDXW(vAC,%1);" mincpu7(60)
-stmt: ASGNI2(ADDP2(reg,con),ac) "\t%2STXW(%0,%1);\n" mincpu7(60)
-stmt: ASGNU2(ADDP2(reg,con),ac) "\t%2STXW(%0,%1);\n" mincpu7(60)
-stmt: ASGNP2(ADDP2(reg,con),ac) "\t%2STXW(%0,%1);\n" mincpu7(60)
-ac:  NEGI2(ac)      "%0NEGV(vAC);" mincpu6(30)
-lac: NEGI4(lac)     "%0NEGVL(LAC);" mincpu6(58)
-ac:  MULI2(con,ac)  "%1_MULI(%0);" mincpu7(80)
-ac:  MULU2(con,ac)  "%1_MULI(%0);" mincpu7(80)
-ac:  CVII2(reg)     "LDSB(%0);" mincpu7(if_cv_from(a,1,26))
-ac:  CVII2(ac)      "%0LDSB(vACL);" mincpu7(if_cv_from(a,1,26))
+stmt: ASGNI2(ADDP2(reg,con),ac) "\t%2STXW(%0,%1);\n" mincpu7(58)
+stmt: ASGNU2(ADDP2(reg,con),ac) "\t%2STXW(%0,%1);\n" mincpu7(58)
+stmt: ASGNP2(ADDP2(reg,con),ac) "\t%2STXW(%0,%1);\n" mincpu7(58)
+ac: INDIRI2(lddr)     "_LDLW(%0);"        mincpu7(if_zoffset(a,38,60))
+ac: INDIRU2(lddr)     "_LDLW(%0);"        mincpu7(if_zoffset(a,38,60))
+ac: INDIRP2(lddr)     "_LDLW(%0);"        mincpu7(if_zoffset(a,38,60))
+stmt: ASGNI2(lddr,ac) "\t%1_STLW(%0);\n"  mincpu7(if_zoffset(a,38,60))
+stmt: ASGNU2(lddr,ac) "\t%1_STLW(%0);\n"  mincpu7(if_zoffset(a,38,60))
+stmt: ASGNP2(lddr,ac) "\t%1_STLW(%0);\n"  mincpu7(if_zoffset(a,38,60))
 
-# Args for cpu7 
+ac:  MULI2(con,ac)  "%1_MULI(%0);"  mincpu7(80)
+ac:  MULU2(con,ac)  "%1_MULI(%0);"  mincpu7(80)
+ac:  NEGI2(ac)      "%0NEGV(vAC);"  mincpu6(30)
+ac:  CVII2(reg)     "LDSB(%0);"     mincpu7(if_cv_from(a,1,26))
+ac:  CVII2(ac)      "%0LDSB(vACL);" mincpu7(if_cv_from(a,1,26))
+lac: NEGI4(lac)     "%0NEGVL(LAC);" mincpu6(58)
+
 stmt: ARGI2(reg) "\t%{?0=~vAC::LDW(%0);}_STLW(%c)%{!A};\n"  mincpu7(if_arg_stk(a,50))
 stmt: ARGU2(reg) "\t%{?0=~vAC::LDW(%0);}_STLW(%c)%{!A};\n"  mincpu7(if_arg_stk(a,50))
 stmt: ARGP2(reg) "\t%{?0=~vAC::LDW(%0);}_STLW(%c)%{!A};\n"  mincpu7(if_arg_stk(a,50))
+
+
+
 
 # Read-modify-write
 rmw: VREGP "%a"
@@ -1090,6 +1102,26 @@ static int if_incr(Node a, int cost, int bonus)
       }
     }
   return cost;
+}
+
+static int if_zoffset(Node a, int c1, int c2)
+{
+  /* Because framesize is not known until much later, we guess it on
+     the basis of current offsets in order to give a cost to _LDLW and
+     _STLW which can use an actual LDLW and STLW or use the more
+     expensive LDXW and STXW. */
+  int op;
+  Symbol s;
+  if (a && a->kids[0] && (op = a->kids[0]->op)
+      && (generic(op) == ADDRL || generic(op) == ADDRF)
+      && (s = a->kids[0]->syms[0]) )
+    {
+      int mao = (argoffset > maxargoffset) ? argoffset : maxargoffset;
+      int mo = (offset > maxoffset) ? offset : maxoffset;
+      int guess = s->x.offset + (mo|3) + (mao|3) + 18;
+      return (guess >= 0 && guess < 256) ? c1 : c2;
+    }
+  return LBURG_MAX;
 }
 
 static int sametree(Node p, Node q) {
@@ -1760,7 +1792,6 @@ static void doarg(Node p)
   if (argoffset == 0) {
     argno = 0;
     argmaxno = 0;
-    argoffset = 2;
     for (c=p; c; c=c->link)
       if (generic(c->op) == CALL ||
           (generic(c->op) == ASGN && generic(c->kids[1]->op) == CALL &&
@@ -1810,22 +1841,24 @@ static void printregmask(unsigned mask) {
 
 static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
 {
-  /* stack frame:
-  |                    n bytes                   : arguments
-  |    SP+Framesize -> 2 bytes                   : saved vLR
-  |                    maxoffset bytes           : local variables
-  |                    sizesave bytes            : saved registers
-  |                    maxargoffset bytes        : argument building area
-  |              SP -> 2 bytes                   : buffer where callees can save vLR
-  **/
+  /* Stack frame: 
+   |
+   |   SP+Framesize--> n bytes                   : arguments
+   |                   maxoffset bytes           : local variables
+   |                   0 to 2 bytes              : alignment pad
+   |                   2 bytes                   : saved vLR
+   |                   sizesave bytes            : saved registers
+   |             SP--> maxargoffset bytes        : argument building area
+   */
 
   int i, roffset, sizesave, ty;
   unsigned savemask;
+  char frameless;
   Symbol r;
   usedmask[0] = usedmask[1] = 0;
   freemask[0] = freemask[1] = ~(unsigned)0;
   offset = maxoffset = 0;
-  maxargoffset = 2;
+  maxargoffset = 0;
   assert(f->type && f->type->type);
   ty = ttob(f->type->type);
   if (ncalls) {
@@ -1836,7 +1869,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
     vmask[IREG] = REGMASK_MOREVARS;
   }
   /* locate incoming arguments */
-  offset = 2;
+  offset = 0;
   roffset = 0;
   for (i = 0; callee[i]; i++) {
     Symbol p = callee[i];
@@ -1878,16 +1911,19 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   sizesave = 2 * bitcount(savemask);
   maxargoffset = (maxargoffset + 1) & ~0x1;
   maxoffset = (maxoffset + 1) & ~0x1;
-  framesize = maxargoffset + sizesave + maxoffset;
+  framesize = maxargoffset + sizesave + maxoffset + 2;
   assert(framesize >= 2);
   if (framesize > 32768)
     error("%s() framesize (%d) too large for a gigatron\n",
           f->name, framesize);
   /* can we make a frameless leaf function */
-  if (ncalls == 0 && framesize == 2 && (tmask[IREG] & ~usedmask[IREG]))
-    framesize = 0;
-  if (IR->longmetric.align == 4)
+  if (ncalls == 0 && framesize == 2 && (tmask[IREG] & ~usedmask[IREG])) {
+    framesize = (cpu < 7) ? 0 : 2;  /* are SP and vSP the same? */
+    frameless = 1;
+  } else if (IR->longmetric.align == 4) {
     framesize = (framesize + 3) & ~0x3;
+    frameless = 0;
+  }
   /* prologue */
   xprint_init();
   segment(CODE);
@@ -1895,7 +1931,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   print("# ======== %s\n", lhead.prev->s);
   print("def code%d():\n", codenum++);
   print("\tlabel(%s);\n", f->x.name);
-  if (framesize == 0) {
+  if (frameless) {
     print("\tPUSH();\n");
   } else {
     print("\t_PROLOGUE(%d,%d,0x%x); # save=", framesize, maxargoffset, savemask);
@@ -1907,7 +1943,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   vac_equiv = lac_equiv = fac_equiv = 0;
   emitcode();
   /* Epilogue */
-  if (framesize == 0) {
+  if (frameless) {
     print("\ttryhop(2);POP();RET()\n");
   } else {
     const char *saveac = "";

@@ -10,19 +10,19 @@ def code0():
 # ======== ('CODE', 'f', code1)
 def code1():
 	label('f');
-	_PROLOGUE(8,2,0x80); # save=R7
+	_PROLOGUE(8,0,0x80); # save=R7
 	LDW(R8);STW(R7);
 	CALLI('f');STW(R23);
 	STW(B0);_STLW(-2+8,src=R23);LDW(B0)  #genspill
 	CALLI('f');STW(R22);
-	_SP(-2+8);DEEK();ADDW(R22);STW(R7);
+	_LDLW(-2+8);ADDW(R22);STW(R7);
 	LDI(0);
 	label('.2');
-	_EPILOGUE(8,2,0x80,saveAC=True);
+	_EPILOGUE(8,0,0x80,saveAC=True);
 # ======== ('CODE', 'f2', code2)
 def code2():
 	label('f2');
-	_PROLOGUE(8,2,0xc0); # save=R6-7
+	_PROLOGUE(8,0,0xc0); # save=R6-7
 	LDW(R8);STW(R7);
 	CALLI('f');STW(R23);
 	STW(B0);_STLW(-2+8,src=R23);LDW(B0)  #genspill
@@ -33,14 +33,14 @@ def code2():
 	label('.5');
 	MOVQW(1,R6);
 	label('.6');
-	_SP(-2+8);DEEK();ADDW(R6);STW(R7);
+	_LDLW(-2+8);ADDW(R6);STW(R7);
 	LDI(0);
 	label('.3');
-	_EPILOGUE(8,2,0xc0,saveAC=True);
+	_EPILOGUE(8,0,0xc0,saveAC=True);
 # ======== ('CODE', 'f3', code3)
 def code3():
 	label('f3');
-	_PROLOGUE(32,2,0xff); # save=R0-7
+	_PROLOGUE(32,0,0xff); # save=R0-7
 	LDW(R8);STW(R7);
 	LDW(R9);STW(R6);
 	MOVQW(0,R5);
@@ -49,28 +49,28 @@ def code3():
 	MOVQW(0,R2);
 	MOVQW(0,R1);
 	MOVQW(0,R0);
-	_SP(-2+32);DOKEQ(0);
-	_SP(-4+32);DOKEQ(0);
-	_SP(-6+32);DOKEQ(0);
-	_SP(-8+32);DOKEQ(0);
+	LDI(0);_STLW(-2+32);
+	_STLW(-4+32);
+	_STLW(-6+32);
+	_STLW(-8+32);
 	LDW(R6);STW(R23);
 	STW(B0);_STLW(-12+32,src=R23);LDW(B0)  #genspill
 	ADDIV(2,R6);
 	LDW(R7);_BEQ('.9');
-	CALLI('f');STW(R22);
-	_SP(-10+32);DOKEA(R22);
+	CALLI('f');
+	_STLW(-10+32);
 	_BRA('.10');
 	label('.9');
-	_SP(-10+32);DOKEQ(0);
+	LDI(0);_STLW(-10+32);
 	label('.10');
-	_SP(-10+32);DEEK();STW(B0);_LDLW(-12+32);STW(T0);LDW(B0);DOKE(T0);
+	_LDLW(-10+32);STW(B0);_LDLW(-12+32);STW(T0);LDW(B0);DOKE(T0);
 	LDI(0);
 	label('.7');
-	_EPILOGUE(32,2,0xff,saveAC=True);
+	_EPILOGUE(32,0,0xff,saveAC=True);
 # ======== ('CODE', 'f4', code4)
 def code4():
 	label('f4');
-	_PROLOGUE(8,2,0x0); # save=None
+	_PROLOGUE(8,0,0x0); # save=None
 	MOVQW(0,R19);
 	MOVQW(0,R18);
 	MOVQW(0,R17);
@@ -94,7 +94,7 @@ def code4():
 	LDWI('i');DOKEA(R13);
 	LDI(0);
 	label('.11');
-	_EPILOGUE(8,2,0x0,saveAC=True);
+	_EPILOGUE(8,0,0x0,saveAC=True);
 # ======== ('CODE', 'f5', code5)
 def code5():
 	label('f5');

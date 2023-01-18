@@ -10,57 +10,45 @@ def code0():
 # ======== ('CODE', 'memchar', code1)
 def code1():
 	label('memchar');
-	_PROLOGUE(8,2,0x0); # save=None
-	_SP(-4+8);DEEKA(R23);
-	STW(R22);
-	LDW(R23);ADDI(1);DOKE(R22);
+	_PROLOGUE(8,0,0x0); # save=None
+	_LDLW(-4+8);STW(R23);
+	ADDI(1);_STLW(-4+8);
 	_SP(-1+8);STW(R22);
 	PEEKV(R23);POKE(R22);
-	_SP(-4+8);STW(R23);
-	DEEK();ADDI(1);DOKE(R23);
-	_SP(-4+8);DEEKA(R23);
+	_LDLW(-4+8);ADDI(1);_STLW(-4+8);
+	_LDLW(-4+8);STW(R23);
 	_SP(-1+8);STW(R22);
 	PEEKV(R23);POKE(R22);
-	_SP(-4+8);DEEKA(R23);
-	STW(R22);
-	LDW(R23);SUBI(-(-1));DOKE(R22);
+	_LDLW(-4+8);STW(R23);
+	SUBI(-(-1));_STLW(-4+8);
 	_SP(-1+8);STW(R22);
 	PEEKV(R23);POKE(R22);
-	_SP(-4+8);STW(R23);
-	DEEK();SUBI(-(-1));DOKE(R23);
-	_SP(-4+8);DEEKA(R23);
+	_LDLW(-4+8);SUBI(-(-1));_STLW(-4+8);
+	_LDLW(-4+8);STW(R23);
 	_SP(-1+8);STW(R22);
 	PEEKV(R23);POKE(R22);
 	LDI(0);
 	label('.2');
-	_EPILOGUE(8,2,0x0,saveAC=True);
+	_EPILOGUE(8,0,0x0,saveAC=True);
 # ======== ('CODE', 'memint', code2)
 def code2():
 	label('memint');
-	_PROLOGUE(8,2,0x0); # save=None
-	_SP(-4+8);DEEKA(R23);
-	STW(R22);
-	LDW(R23);ADDI(2);DOKE(R22);
-	_SP(-2+8);STW(R22);
-	DEEKV(R23);DOKE(R22);
-	_SP(-4+8);STW(R23);
-	DEEK();ADDI(2);DOKE(R23);
-	_SP(-4+8);DEEKA(R23);
-	_SP(-2+8);STW(R22);
-	DEEKV(R23);DOKE(R22);
-	_SP(-4+8);DEEKA(R23);
-	STW(R22);
-	LDW(R23);SUBI(-(-2));DOKE(R22);
-	_SP(-2+8);STW(R22);
-	DEEKV(R23);DOKE(R22);
-	_SP(-4+8);STW(R23);
-	DEEK();SUBI(-(-2));DOKE(R23);
-	_SP(-4+8);DEEKA(R23);
-	_SP(-2+8);STW(R22);
-	DEEKV(R23);DOKE(R22);
+	_PROLOGUE(8,0,0x0); # save=None
+	_LDLW(-4+8);STW(R23);
+	ADDI(2);_STLW(-4+8);
+	DEEKV(R23);_STLW(-2+8);
+	_LDLW(-4+8);ADDI(2);_STLW(-4+8);
+	_LDLW(-4+8);
+	DEEK();_STLW(-2+8);
+	_LDLW(-4+8);STW(R23);
+	SUBI(-(-2));_STLW(-4+8);
+	DEEKV(R23);_STLW(-2+8);
+	_LDLW(-4+8);SUBI(-(-2));_STLW(-4+8);
+	_LDLW(-4+8);
+	DEEK();_STLW(-2+8);
 	LDI(0);
 	label('.3');
-	_EPILOGUE(8,2,0x0,saveAC=True);
+	_EPILOGUE(8,0,0x0,saveAC=True);
 # ======== ('CODE', 'regchar', code3)
 def code3():
 	label('regchar');

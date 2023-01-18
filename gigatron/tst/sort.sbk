@@ -17,20 +17,20 @@ def code0():
 # ======== ('CODE', 'main', code1)
 def code1():
 	label('main');
-	_PROLOGUE(8,6,0x80); # save=R7
+	_PROLOGUE(8,4,0x80); # save=R7
 	LDWI('in');STW(R8);
-	_STLW(2);
+	_STLW(0);
 	LDI(10);STW(R9);
-	_STLW(4);
+	_STLW(2);
 	CALLI('sort');
 	MOVQW(0,R7);
 	_BRA('.5');
 	label('.2');
 	LDW(R7);LSLW();LDXW(vAC,'in');STW(R8);
-	LDW(R8);_STLW(2);
+	LDW(R8);_STLW(0);
 	CALLI('putd');
 	LDI(10);STW(R8);
-	_STLW(2);
+	_STLW(0);
 	CALLI('putchar');
 	label('.3');
 	INCV(R7);
@@ -38,15 +38,15 @@ def code1():
 	LDI(10);_CMPWU(R7);_BGT('.2');
 	LDI(0);
 	label('.1');
-	_EPILOGUE(8,6,0x80,saveAC=True);
+	_EPILOGUE(8,4,0x80,saveAC=True);
 # ======== ('CODE', 'putd', code2)
 def code2():
 	label('putd');
-	_PROLOGUE(8,4,0x80); # save=R7
+	_PROLOGUE(8,2,0x80); # save=R7
 	LDW(R8);STW(R7);
 	_BGE('.7');
 	LDI(45);STW(R8);
-	_STLW(2);
+	_STLW(0);
 	CALLI('putchar');
 	NEGV(R7);
 	label('.7');
@@ -55,34 +55,34 @@ def code2():
 	CALLI('putd');
 	label('.9');
 	LDW(R7);_MODIS(10);ADDI(48);STW(R8);
-	LDW(R8);_STLW(2);
+	LDW(R8);_STLW(0);
 	CALLI('putchar');
 	LDI(0);
 	label('.6');
-	_EPILOGUE(8,4,0x80,saveAC=True);
+	_EPILOGUE(8,2,0x80,saveAC=True);
 # ======== ('CODE', 'sort', code3)
 def code3():
 	label('sort');
-	_PROLOGUE(12,8,0xc0); # save=R6-7
+	_PROLOGUE(12,6,0xc0); # save=R6-7
 	LDW(R8);STW(R7);
 	LDW(R9);STW(R6);
 	LDWI('xx');DOKEA(R7);
 	LDW(R7);STW(R8);
-	LDW(R8);_STLW(2);
+	LDW(R8);_STLW(0);
 	LDI(0);STW(R9);
-	_STLW(4);
+	_STLW(2);
 	SUBIV(1,R6);
 	LDW(R6);
 	STW(R10);
-	LDW(R10);_STLW(6);
+	LDW(R10);_STLW(4);
 	CALLI('quick');
 	LDI(0);
 	label('.11');
-	_EPILOGUE(12,8,0xc0,saveAC=True);
+	_EPILOGUE(12,6,0xc0,saveAC=True);
 # ======== ('CODE', 'quick', code4)
 def code4():
 	label('quick');
-	_PROLOGUE(16,8,0xf0); # save=R4-7
+	_PROLOGUE(16,6,0xf0); # save=R4-7
 	LDW(R8);STW(R7);
 	LDW(R9);STW(R6);
 	LDW(R10);STW(R5);
@@ -91,11 +91,11 @@ def code4():
 	_BRA('.12');
 	label('.13');
 	LDW(R7);STW(R8);
-	LDW(R8);_STLW(2);
+	LDW(R8);_STLW(0);
 	LDW(R6);STW(R9);
-	LDW(R9);_STLW(4);
+	LDW(R9);_STLW(2);
 	LDW(R5);STW(R10);
-	LDW(R10);_STLW(6);
+	LDW(R10);_STLW(4);
 	CALLI('partition');
 	STW(R4);
 	LDW(R7);STW(R8);
@@ -108,11 +108,11 @@ def code4():
 	CALLI('quick');
 	LDI(0);
 	label('.12');
-	_EPILOGUE(16,8,0xf0,saveAC=True);
+	_EPILOGUE(16,6,0xf0,saveAC=True);
 # ======== ('CODE', 'partition', code5)
 def code5():
 	label('partition');
-	_PROLOGUE(16,6,0xf8); # save=R3-7
+	_PROLOGUE(16,4,0xf8); # save=R3-7
 	LDW(R8);STW(R7);
 	LDW(R9);STW(R6);
 	LDW(R10);STW(R5);
@@ -135,43 +135,42 @@ def code5():
 	LDW(R5);LSLW();ADDW(R7);DEEK();_CMPWS(R4);_BGT('.22');
 	LDW(R6);_CMPWS(R5);_BGE('.25');
 	LDW(R6);LSLW();ADDW(R7);STW(R8);
-	LDW(R8);_STLW(2);
+	LDW(R8);_STLW(0);
 	LDW(R5);LSLW();ADDW(R7);STW(R9);
-	LDW(R9);_STLW(4);
+	LDW(R9);_STLW(2);
 	CALLI('exchange');
 	label('.25');
 	label('.17');
 	LDW(R6);_CMPWS(R5);_BLT('.16');
 	LDW(R3);LSLW();ADDW(R7);STW(R8);
-	LDW(R8);_STLW(2);
+	LDW(R8);_STLW(0);
 	LDW(R5);LSLW();ADDW(R7);STW(R9);
-	LDW(R9);_STLW(4);
+	LDW(R9);_STLW(2);
 	CALLI('exchange');
 	LDW(R5);
 	label('.15');
-	_EPILOGUE(16,6,0xf8,saveAC=True);
+	_EPILOGUE(16,4,0xf8,saveAC=True);
 # ======== ('CODE', 'exchange', code6)
 def code6():
 	label('exchange');
-	_PROLOGUE(16,8,0xc0); # save=R6-7
+	_PROLOGUE(16,6,0xc0); # save=R6-7
 	LDW(R8);STW(R7);
 	LDW(R9);STW(R6);
 	LDWI('.28');STW(R8);
-	_STLW(2);
+	_STLW(0);
 	LDWI('xx');DEEKA(R23);
 	LDI(2);STW(R22);
 	LDW(R7);SUBW(R23);_DIVS(R22);STW(R9);
-	LDW(R9);_STLW(4);
+	LDW(R9);_STLW(2);
 	LDW(R6);SUBW(R23);_DIVS(R22);STW(R10);
-	LDW(R10);_STLW(6);
+	LDW(R10);_STLW(4);
 	CALLI('printf');
-	_SP(-2+16);STW(R23);
-	DEEKV(R7);DOKE(R23);
+	DEEKV(R7);_STLW(-2+16);
 	DEEKV(R6);DOKE(R7);
-	_SP(-2+16);DEEK();DOKE(R6);
+	_LDLW(-2+16);DOKE(R6);
 	LDI(0);
 	label('.27');
-	_EPILOGUE(16,8,0xc0,saveAC=True);
+	_EPILOGUE(16,6,0xc0,saveAC=True);
 # ======== ('COMMON', 'xx', code7, 2, 2)
 def code7():
 	align(2);

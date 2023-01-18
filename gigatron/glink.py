@@ -566,7 +566,11 @@ def create_register_names(base):
         t0t1 = int(str(rominfo['registerT0T1']),0)
         zpReserve(t0t1,t0t1+3,"REGS:T0T1")
     if 'registerSP' in rominfo:
+        assert args.cpu < 7
         rsp  = int(str(rominfo['registerSP']),0)
+        zpReserve(rsp,rsp+1,"REGS:SP")
+    elif args.cpu >= 7:
+        rsp = d['vSP'] ## USE 16BITS STACK
     flac = flac or zpage_alloc(7,"REGS:FLAC", 0x80)
     t0t1 = t0t1 or symdefs['sysArgs0']
     t2t3 = t2t3 or zpage_alloc(4,"REGS:T2T3", 0x80)
@@ -1265,8 +1269,27 @@ def _MOVIW(d,x):
     else:
         MOVIW(d, check_zp(x))
 @vasm
+def _ALLOC(d):
+    '''Adds positive of negative immediate d to SP (not vSP).
+       - Emits ALLOC, ADDIV, SUBIV or a _SP based solution.'''
+    d = int(v(d))
+    if d & 3:
+        warning("Unaligned stack can cause serious trouble")
+    if args.cpu >= 7:
+        if SP == vSP and d >= -128 and d < 128:
+            ALLOC(d)
+        elif d > 0 and d < 256:
+            ADDIV(d,SP)
+        elif d < 0 and d > -256:
+            SUBIV(-d,SP)
+        elif d != 0:
+            _LDI(d);ADDV(SP)
+    elif d != 0:
+        _SP(d);STW(SP)
+@vasm
 def _LDLW(off):
-    '''Emits LDLW LDXW (cpu7) or a DEEK solution'''
+    '''Load word at offset <off> from SP (not vSP).
+       - Emits LDLW LDXW (cpu7) or a DEEK solution'''
     off = int(v(off))
     if args.cpu >= 7 and SP == vSP and is_zeropage(off):
         LDLW(off)
@@ -1276,9 +1299,10 @@ def _LDLW(off):
         _SP(off);DEEK()
 @vasm
 def _STLW(off, src=None):
-    '''Emits STLW STXW (cpu7) or a DOKE solution (which might clobber T2,T3).
-       Optional argument src can specify a source register other than vAC,
-       allowing better DOKE solutions during spills.'''
+    '''Store word at offset <off> from SP (not vSP).
+       - Emits STLW STXW (cpu7) or a DOKE solution (which might
+       clobber T2,T3).  Optional argument src can specify a source
+       register other than vAC, allowing better DOKE solutions.'''
     off = int(v(off))
     if args.cpu >= 7 and SP == vSP and is_zeropage(off):
         if src != None and src != vAC: LDW(src)
@@ -1919,30 +1943,39 @@ def _CALLJ(d):
 @vasm
 def _PROLOGUE(framesize,maxargoffset,mask):
     '''Function prologue'''
-    tryhop(4);LDW(vLR);DOKE(SP);_SP(-framesize);STW(SP)
-    if mask:
-        ADDI(maxargoffset)
+    tryhop(2);LDW(vLR);STW(B0)
+    if args.cpu >= 7:
+        _ALLOC(-framesize);_LDI(maxargoffset);ADDW(SP)
+    else:
+        _SP(-framesize);STW(SP);ADDI(maxargoffset)
+    if mask == 0 and args.cpu >= 6:
+        DOKEA(B0)
+    elif args.cpu >= 5:
         extern('_@_save_%02x' % mask)
-        if args.cpu >= 5:
-            _CALLI('_@_save_%02x' % mask)
-        else:
-            STW(T3); _CALLJ('_@_save_%02x' % mask)
+        CALLI('_@_save_%02x' % mask)
+    else:
+        extern('_@_save_%02x' % mask)
+        STW(T2);LDWI('_@_save_%02x' % mask);CALL(vAC)
 @vasm
 def _EPILOGUE(framesize,maxargoffset,mask,saveAC=False):
     '''Function epilogue'''
     if saveAC:
-        STW(T2);
-    diff = framesize - maxargoffset;
-    _SP(framesize);STW(SP);
-    if diff >= 0 and diff < 256:
-        SUBI(diff)
+        STW(R8);
+    if args.cpu >= 7:
+        _ALLOC(framesize)
+        _SP(maxargoffset-framesize)
     else:
-        _SP(-diff);
-    extern('_@_rtrn_%02x' % mask)
+        _SP(framesize);STW(SP)
+        if framesize - maxargoffset < 256:
+            SUBI(framesize - maxargoffset)
+        else:
+            _SP(maxargoffset-framesize)
     if args.cpu >= 5:
-        _CALLI('_@_rtrn_%02x' % mask)
+        extern('_@_rtrn_%02x' % mask)
+        CALLI('_@_rtrn_%02x' % mask)
     else:
-        STW(T3); _CALLJ('_@_rtrn_%02x' % mask)
+        extern('_@_rtrn_%02x' % mask)
+        STW(T3);LDWI('_@_rtrn_%02x' % mask);CALL(vAC)
         
 
 # ------------- reading .s/.o/.a files
@@ -2353,16 +2386,19 @@ def assemble_code_fragments(m, placed=False, absolute=False):
             if args.rpth and labelchange_counter > args.rpth and not final_pass:
                 raise Stop(f"{labelchange_counter} changed labels already: restarting a new pass.")
 
-def assemble_data_fragments(m, cseg):
+def assemble_data_fragments(m, cseg, placed=False):
     global the_module, the_fragment, the_segment, hops_enabled, the_pc
     global labelchange_counter
     the_module = m
     for frag in m.code:
         the_fragment = frag
+        if bool(frag.amin) != bool(placed):
+            continue
         if frag.segment == cseg:
             hops_enabled = False
             the_segment = find_data_segment(frag.size, align=frag.align)
             if not the_segment:
+                print(frag, frag.amin, frag.amax)
                 raise Stop(f"cannot fit {cseg} fragment '{frag.name}'")
             elif args.d >= 2 or final_pass:
                 debug(f"assembling {cseg} fragment '{frag.name}' at {hex(the_segment.pc)} in {the_segment}")
@@ -2395,6 +2431,10 @@ def run_pass():
             assemble_code_fragments(m, placed=True, absolute=True)
         for m in module_list:
             assemble_code_fragments(m, placed=True, absolute=False)
+        for m in module_list:
+            assemble_data_fragments(m, 'DATA', placed=True)
+        for m in module_list:
+            assemble_data_fragments(m, 'BSS', placed=True)
         # remaining code segments
         for m in module_list:
             assemble_code_fragments(m, placed=False)

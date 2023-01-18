@@ -455,7 +455,7 @@ void sys_exit(void)
 void sys_printf(void)
 {
   const char *fmt = (char*)&RAM[deek(R8)];
-  word ap = deek(SP) + 4;
+  word ap = deek(SP) + 2;
   int n = 0;
   if (trace)
     fflush(NULL);

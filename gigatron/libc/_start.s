@@ -4,9 +4,9 @@
 def code0():
     ### _start()
     label('_start');
-    PUSH()
+    # ensure stack alignment
     # create stack headroom for argc and argv
-    LDWI(-4);ADDW(SP);STW(SP)
+    LDWI(0xfffc);ANDW(SP);SUBI(4);STW(SP)
     # initialize bss
     if not args.no_runtime_bss_initialization:
         _CALLJ('_init_bss')

@@ -3,38 +3,38 @@
 # ======== ('CODE', 'print', code0)
 def code0():
 	label('print');
-	_PROLOGUE(44,44,0x0); # save=None
+	_PROLOGUE(44,40,0x0); # save=None
 	LDWI('.2');STW(R8);
-	_STLW(2);
+	_STLW(0);
 	LDWI('c');PEEK();LDSB(vACL);STW(R9);
-	LDW(R9);_STLW(4);
+	LDW(R9);_STLW(2);
 	LDWI('s');DEEKA(R10);
-	LDW(R10);_STLW(6);
+	LDW(R10);_STLW(4);
 	LDWI('i');DEEKA(R11);
-	LDW(R11);_STLW(8);
+	LDW(R11);_STLW(6);
 	_MOVL('l',L12);
-	_MOVL(L12,[SP,12]);
+	_MOVL(L12,[SP,8]);
 	LDWI('C');PEEK();STW(R14);
-	LDW(R14);_STLW(16);
+	LDW(R14);_STLW(12);
 	LDWI('S');DEEKA(R15);
-	LDW(R15);_STLW(18);
+	LDW(R15);_STLW(14);
 	LDWI('I');DEEKA(R23);
-	LDW(R23);_STLW(20);
+	LDW(R23);_STLW(16);
 	_MOVL('L',L22);
-	_MOVL(L22,[SP,24]);
+	_MOVL(L22,[SP,20]);
 	_MOVF('f',F21);
-	_MOVF(F21,[SP,28]);
+	_MOVF(F21,[SP,24]);
 	_MOVF('d',F21);
-	_MOVF(F21,[SP,33]);
+	_MOVF(F21,[SP,29]);
 	_MOVF('D',F21);
-	_MOVF(F21,[SP,38]);
+	_MOVF(F21,[SP,34]);
 	CALLI('printf');
 	label('.1');
-	_EPILOGUE(44,44,0x0);
+	_EPILOGUE(44,40,0x0);
 # ======== ('CODE', 'main', code1)
 def code1():
 	label('main');
-	_PROLOGUE(4,2,0x0); # save=None
+	_PROLOGUE(4,0,0x0); # save=None
 	LDWI('c');STW(R23);
 	LDI(1);POKE(R23);
 	PEEKV(R23);LDSB(vACL);STW(R23);
@@ -243,7 +243,7 @@ def code1():
 	DEEKV(R23);DOKE(R22);
 	LDI(0);
 	label('.3');
-	_EPILOGUE(4,2,0x0,saveAC=True);
+	_EPILOGUE(4,0,0x0,saveAC=True);
 # ======== ('COMMON', 'P', code2, 2, 2)
 def code2():
 	align(2);

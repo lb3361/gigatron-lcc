@@ -18,7 +18,6 @@
     "userVars2_v7"         : "0x008c",
     "ledTempo_v7"          : "0x01f5",
 
-    "POPV_v7"          : "0x031c",
     "POKEA_v7"         : "0x0339",
     "DOKEA_v7"         : "0x033b",
     "DEEKA_v7"         : "0x033d",
@@ -47,7 +46,6 @@
     "CMPIS_v7"         : "0x03d9",
     "CMPIU_v7"         : "0x03db",
     "PEEKV_v7"         : "0x03dd",
-    "PUSHV_v7"         : "0x03e1",
 
     "ADDL_v7"          : "0x3500",
     "ADDX_v7"          : "0x3502",

@@ -114,7 +114,7 @@ static int codenum = 0;
 static int cseg = 0;
 static int cpu = 5;
 
-/* Clobber and ac tracking */
+/* Register equivalences for the emitter state machine */
 static int vac_clobbered;
 static int xac_clobbered;
 static Symbol vac_constval;
@@ -302,15 +302,15 @@ static unsigned vac_equiv, lac_equiv, fac_equiv;
 #   where x is 0..9 or a..c processes yyy if %x is equal to ...
 #   and otherwise processes no. Comparison with == are always literal.
 #   When the right hand side of a comparison with =~ is an accumulator,
-#   the yes branch is also processed if the accumulator is known
-#   to be equal to register or constant %x.
+#   the yes branch is also processed when a state machine in the emitter
+#   knows the accumulator to be equal to register or constant %x.
 # * Clobbering information is deduced from the nonterminal
 #   identity.  For instance rules for nonterminal ac are assumed to
 #   clobber vAC.  When this is the case, annotations ${=x} where x is
 #   %0..9 %a--b, or an accumulator, can be used to indicate the value
-#   taken by the clobbered register. This used to statically track
-#   which registers are equal to which accumulator, informing
-#   conditional constructs with =~.
+#   taken by the clobbered register. This drives a state machine in
+#   the emitter that conservatively knows when accumulator or registers
+#   contain the same value. This informs conditional constructs.
 # * Clobbering annotations %{!...} documents additional clobbered
 #   registers beyond those implied by the nonterminal.
 #   Inside the braces, letter A, L, and F indicate that vAC, LAC,
@@ -881,6 +881,12 @@ stmt: ASGNU4(spill,reg) "\tSTW(B0);_MOVL(%1,[SP,%0]);LDW(B0) #genspill\n" 20
 stmt: ASGNF5(spill,reg) "\tSTW(B0);_MOVF(%1,[SP,%0]);LDW(B0) #genspill\n" 20
 
 # Additional opcodes for cpu > 5
+ac:  MULI2(con,ac)  "%1_MULI(%0);"  mincpu7(80)
+ac:  MULU2(con,ac)  "%1_MULI(%0);"  mincpu7(80)
+ac:  CVII2(reg)     "LDSB(%0);"     mincpu7(if_cv_from(a,1,26))
+ac:  CVII2(ac)      "%0LDSB(vACL);" mincpu7(if_cv_from(a,1,26))
+ac:  NEGI2(ac)      "%0NEGV(vAC);"  mincpu6(30)
+lac: NEGI4(lac)     "%0NEGVL(LAC);" mincpu6(58)
 stmt: ASGNP2(ac,iarg)  "\t%0%[1b]DOKEA(%1);\n" mincpu6(28)
 stmt: ASGNI2(ac,iarg)  "\t%0%[1b]DOKEA(%1);\n" mincpu6(28)
 stmt: ASGNU2(ac,iarg)  "\t%0%[1b]DOKEA(%1);\n" mincpu6(28)
@@ -902,7 +908,6 @@ ac: INDIRU1(reg)     "%{?0=~vAC:PEEK():PEEKV(%0)};" mincpu6(28)
 reg: INDIRI2(ac)     "\t%0%{?c==vAC:DEEK():DEEKA(%c)};\n" mincpu6(30)
 reg: INDIRU2(ac)     "\t%0%{?c==vAC:DEEK():DEEKA(%c)};\n" mincpu6(30)
 reg: INDIRP2(ac)     "\t%0%{?c==vAC:DEEK():DEEKA(%c)};\n" mincpu6(30)
-
 stmt: ASGNI1(rmw, conBs) "\tMOVQB(%1,%0);\n" mincpu6(if_not_asgn_tmp(a,27))
 stmt: ASGNU1(rmw, conB)  "\tMOVQB(%1,%0);\n" mincpu6(if_not_asgn_tmp(a,27))
 stmt: ASGNI2(rmw, conB)  "\tMOVQW(%1,%0);\n" mincpu6(if_not_asgn_tmp(a,29))
@@ -919,7 +924,6 @@ regx: LOADP2(conB)       "\tMOVQW(%0,%c);\n" mincpu6(29)
 regx: LOADI2(con)        "\tMOVIW(%0,%c);\n" mincpu7(31)
 regx: LOADU2(con)        "\tMOVIW(%0,%c);\n" mincpu7(31)
 regx: LOADP2(con)        "\tMOVIW(%0,%c);\n" mincpu7(31)
-
 ac: INDIRI2(ADDP2(reg,con)) "LDXW(%0,%1);" mincpu7(60)
 ac: INDIRU2(ADDP2(reg,con)) "LDXW(%0,%1);" mincpu7(60)
 ac: INDIRP2(ADDP2(reg,con)) "LDXW(%0,%1);" mincpu7(60)
@@ -935,20 +939,9 @@ ac: INDIRP2(lddr)     "_LDLW(%0);"        mincpu7(if_zoffset(a,38,60))
 stmt: ASGNI2(lddr,ac) "\t%1_STLW(%0);\n"  mincpu7(if_zoffset(a,38,60))
 stmt: ASGNU2(lddr,ac) "\t%1_STLW(%0);\n"  mincpu7(if_zoffset(a,38,60))
 stmt: ASGNP2(lddr,ac) "\t%1_STLW(%0);\n"  mincpu7(if_zoffset(a,38,60))
-
-ac:  MULI2(con,ac)  "%1_MULI(%0);"  mincpu7(80)
-ac:  MULU2(con,ac)  "%1_MULI(%0);"  mincpu7(80)
-ac:  NEGI2(ac)      "%0NEGV(vAC);"  mincpu6(30)
-ac:  CVII2(reg)     "LDSB(%0);"     mincpu7(if_cv_from(a,1,26))
-ac:  CVII2(ac)      "%0LDSB(vACL);" mincpu7(if_cv_from(a,1,26))
-lac: NEGI4(lac)     "%0NEGVL(LAC);" mincpu6(58)
-
 stmt: ARGI2(reg) "\t%{?0=~vAC::LDW(%0);}_STLW(%c)%{!A};\n"  mincpu7(if_arg_stk(a,50))
 stmt: ARGU2(reg) "\t%{?0=~vAC::LDW(%0);}_STLW(%c)%{!A};\n"  mincpu7(if_arg_stk(a,50))
 stmt: ARGP2(reg) "\t%{?0=~vAC::LDW(%0);}_STLW(%c)%{!A};\n"  mincpu7(if_arg_stk(a,50))
-
-
-
 
 # Read-modify-write
 rmw: VREGP "%a"
@@ -990,6 +983,7 @@ static const char *segname() {
   return "?";
 }
 
+/* Collect lines for the module manifest */
 static void lprint(const char *fmt, ...) {
   char buf[1024];
   SList n;
@@ -1040,6 +1034,7 @@ static void xprint_finish(void)
   in_function = 0;
 }
 
+/* Count mask bits */
 static int bitcount(unsigned mask) {
   unsigned i, n = 0;
   for (i = 1; i; i <<= 1)
@@ -1048,6 +1043,7 @@ static int bitcount(unsigned mask) {
   return n;
 }
 
+/* Cost predicates */
 static int if_arg_reg_only(Node p)
 {
   return p->syms[2] ? LBURG_MAX : 1;
@@ -1190,6 +1186,9 @@ static int if_cv_from(Node p, int sz, int cost)
   return LBURG_MAX;
 }
 
+/* Utilities for the emitter state machine that conservatively tracks
+   which registers or accumulators are equal and to what. */
+
 static Symbol get_target_reg(Node p, int nt)
 {
   switch (nt) {
@@ -1253,6 +1252,7 @@ static Symbol get_source_sym(Node p, int nt, Node *kids, const short *nts, const
   return 0;
 }
 
+/* lcc callback: finalizer */
 static void progend(void)
 {
   extern char *firstfile; /* From input.c */
@@ -1272,6 +1272,7 @@ static void progend(void)
         "\n# End:\n");
 }
 
+/* lcc callback: initializer */
 static void progbeg(int argc, char *argv[])
 {
   int i;
@@ -1313,6 +1314,7 @@ static void progbeg(int argc, char *argv[])
   cseg = -1;
 }
 
+/* Return register set for op */
 static Symbol rmap(int opk)
 {
   switch(optype(opk)) {
@@ -1327,6 +1329,7 @@ static Symbol rmap(int opk)
   }
 }
 
+/* Return register for argument passing or zero. */
 static Symbol argreg(int argno, int ty, int sz, int *roffset)
 {
   Symbol r = 0;
@@ -1347,6 +1350,7 @@ static Symbol argreg(int argno, int ty, int sz, int *roffset)
   return r;
 }
 
+/* lcc callback: provide explicit register targets */
 static void target(Node p)
 {
   assert(p);
@@ -1368,6 +1372,7 @@ static int inst_contains_call(Node p)
   return 0;
 }
 
+/* lcc callback: mark caller-saved registers as clobbered. */
 static void clobber(Node p)
 {
   static unsigned argmask = 0;
@@ -1398,6 +1403,11 @@ static void clobber(Node p)
     argmask = 0;
   }
 }
+
+/* new lcc callback: preralloc is called before the normal register
+   allocation pass and tries to eliminate temporaries when the
+   instruction layout allows us to use an accumulator. This uses the
+   same annotations as the emitter state machine. */
 
 static void preralloc_scan(Node p, int nt, Symbol sym, int frag,
                            int *usecount, int *rclobbered)
@@ -1509,6 +1519,9 @@ static void preralloc(Node p)
     }
 }
 
+/* lcc-callback: before calling the lcc callback gen(), the pregen
+   pass rearraanges some trees in the forest to improve the code
+   generation. */
 
 static Node pregen(Node forest)
 {
@@ -1548,6 +1561,11 @@ static Node pregen(Node forest)
   /* Continue with gen */
   return gen(forest);
 }
+
+
+/* Enhanced emitter than understands additional %{..} template
+   constructs and contains a state machine that conservatively keeps
+   track of equality across registers. */
 
 static void emitfmt2(const char *template, int len,
                      Node p, int nt, Node *kids, short *nts)
@@ -1603,7 +1621,11 @@ static void emitfmt2(const char *template, int len,
       len -= i;
     } else
       (void)putchar(*fmt);
-  /* clobber information deduced from nonterminal */
+
+  /* This part of the state machine fires when on reaches the
+     end of the template and updates the equality tracking information
+     according to the nonterminal of the current rule and to the %{=...}
+     annotations found in the template. */
   if (!fmt[len]) {
     Symbol t = get_target_reg(p, nt);
     Symbol s = get_source_sym(p, nt, kids, nts, template);
@@ -1651,7 +1673,8 @@ static void emitfmt1(const char *fmt, Node p, int nt, Node *kids, short *nts)
 static void emit3(const char *fmt, int len, Node p, int nt, Node *kids, short *nts)
 {
   int i = 0;
-  /* Annotations %{!xxx} */
+  /* Annotations %{!xxx} update the register equivalence
+     information gleaned by the emitter state machine. */
   if (len > 0 && fmt[0] == '!')
     {
       for (int i=1; i<len; i++)
@@ -1769,6 +1792,8 @@ static void emit3(const char *fmt, int len, Node p, int nt, Node *kids, short *n
   assert(0);
 }
 
+
+/* lcc callback: annotates arg nodes with offset and register info. */
 static void doarg(Node p)
 {
   /* Important change in arg passing:
@@ -1810,6 +1835,7 @@ static void doarg(Node p)
     p->syms[1] = r;
 }
 
+/* lcc callback: place local variable. */
 static void local(Symbol p)
 {
   /* The size check restricts allocating registers for longs and
@@ -1823,6 +1849,7 @@ static void local(Symbol p)
     mkauto(p);
 }
 
+/* Utility for printing function prologues and epilogues. */
 static void printregmask(unsigned mask) {
   unsigned i, m;
   char *prefix = "R";
@@ -1839,6 +1866,7 @@ static void printregmask(unsigned mask) {
     print("None");
 }
 
+/* lcc callback: compile a function. */
 static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
 {
   /* Stack frame: 
@@ -1955,6 +1983,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   xprint_finish();
 }
 
+/* lcc callback. Emit a constant. */
 static void defconst(int suffix, int size, Value v)
 {
   if (suffix == F) {
@@ -1991,11 +2020,13 @@ static void defconst(int suffix, int size, Value v)
   }
 }
 
+/* lcc callback - emit an address constant. */
 static void defaddress(Symbol p)
 {
   xprint("\twords(%s);\n", p->x.name);
 }
 
+/* lcc callback - emit a string constant. */
 static void defstring(int n, char *str)
 {
   int i;
@@ -2005,12 +2036,14 @@ static void defstring(int n, char *str)
     xprint(");\n");
 }
 
+/* lcc callback - mark imported symbol. */
 static void import(Symbol p)
 {
   if (p->ref > 0 && strncmp(p->x.name, "'__glink_weak_", 14) != 0)
     lprint("('IMPORT', %s)", p->x.name);
 }
 
+/* lcc callback - mark exported symbol. */
 static void export(Symbol p)
 {
   int isnear = fnqual(p->type) == NEAR;
@@ -2019,6 +2052,7 @@ static void export(Symbol p)
     lprint("('EXPORT', %s)", p->x.name);
 }
 
+/* lcc callback: determine symbol names in assembly code. */
 static void defsymbol(Symbol p)
 {
   if (p->scope >= LOCAL && p->sclass == STATIC)
@@ -2031,6 +2065,7 @@ static void defsymbol(Symbol p)
     p->x.name = p->name;
 }
 
+/* lcc callback: construct address+offset symbols. */
 static void address(Symbol q, Symbol p, long n)
 {
   if (p->scope == GLOBAL || p->sclass == STATIC || p->sclass == EXTERN) {
@@ -2047,6 +2082,7 @@ static void address(Symbol q, Symbol p, long n)
   }
 }
 
+/* lcc callback: construct global variable. */
 static void global(Symbol p)
 {
   int isnear = fnqual(p->type) == NEAR;
@@ -2072,11 +2108,13 @@ static void global(Symbol p)
     xprint("\tspace(%d);\n", p->type->size);
 }
 
+/* lcc callback: define current segment. */
 static void segment(int n)
 {
   cseg = n;
 }
 
+/* lcc callback: emit assembly to skip space. */
 static void space(int n)
 {
   if (cseg != BSS)

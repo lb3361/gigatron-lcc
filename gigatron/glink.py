@@ -79,7 +79,7 @@ zpsize = 0
 def debug(s, level=1):
     if args.d and args.d >= level:
         print("(glink debug) " + s, file=sys.stderr)
-        
+
 def where(exc=False):
     '''Locate error in a .s/.o/.a file'''
     if exc:
@@ -111,7 +111,7 @@ class __metaUnk(type):
         for m in cls.wrapped.split():
             namespace[m] = wrap(getattr(int, m))
         return type(name, bases, namespace)
-    
+
 class Unk(int, metaclass=__metaUnk):
     '''Class to represent unknown symbol values'''
     __slots__= ()
@@ -216,7 +216,7 @@ class Fragment:
         self.amax = None           # max address range
     def __repr__(self):
         return f"Fragment({self.segment},'{self.name}',...)"
-        
+
 class Module:
     '''Class for assembly modules read from .s/.o/.a files.'''
     def __init__(self, name=None, cpu=None, code=None):
@@ -250,7 +250,7 @@ class Module:
         # process code list
         for tp in code:
             if tp[0] == 'EXPORT':
-                self.exports.append(tp[1])              # ('EXPORT', "symbolname") 
+                self.exports.append(tp[1])              # ('EXPORT', "symbolname")
             elif tp[0] == 'IMPORT' and len(tp) == 2:
                 self.imports.append(tp[1])              # ('IMPORT', "symbolname")
             elif tp[0] == 'IMPORT' and len(tp) > 3 and tp[2] == 'IF':
@@ -260,7 +260,7 @@ class Module:
             elif tp[0] == 'DATA' or tp[0] == 'BSS' or tp[0] == 'COMMON':
                 self.code.append(Fragment(*tp))         # ('DATA|BSS|COMMON', "name", func, size, align)
             elif tp[0] == 'ORG' or tp[0] == 'PLACE':    # ('PLACE', "name|*", minaddr, maxaddr)
-                placement(tp)                           # ('ORG', "name|*", addr) 
+                placement(tp)                           # ('ORG', "name|*", addr)
             elif tp[0] != 'NOP':                        # ('NOP',)
                 error(f"Unrecognized fragment specification {tp}")
         # placement overlay
@@ -302,7 +302,7 @@ class Segment:
     def __repr__(self):
         d = f",flags={hex(self.flags)}" if self.flags else ''
         return f"Segment({hex(self.saddr)},{hex(self.eaddr)}{d})"
-                
+
 def emit(*args):
     global final_pass, the_pc, the_segment
     if final_pass:
@@ -313,7 +313,7 @@ def emit(*args):
     the_pc += len(args)
 
 def extern(sym):
-    '''Adds a symbol to the import list of a module. 
+    '''Adds a symbol to the import list of a module.
        This happens when `measure_code_fragment' is called.
        Pseudo-instructons need this to make sure the linker
        inserts the appropriate runtime routines.'''
@@ -334,7 +334,7 @@ def record_fragment_address(addr):
         else:
             addrinfo[(finfo[1],addr)] = (finfo[0], the_fragment, the_module)
             fraginfo[fid] = (finfo[0],)
-            
+
 
 # ------------- jumps and hops
 
@@ -355,7 +355,7 @@ def emit_long_jump(d):
         LDLW(-2); RET()   # <10 bytes
 
 def hop(sz, jump):
-    '''Ensure, possibly with a hop, that there are at 
+    '''Ensure, possibly with a hop, that there are at
        least sz bytes left in the segment. '''
     if bytes_left() < sz:
         global hops_enabled
@@ -373,7 +373,7 @@ def hop(sz, jump):
                 fatal(f"map memory exhausted while fitting function `{the_fragment.name}'")
             if jump:
                 emit_long_jump(ns.pc)
-            hops_enabled = True            
+            hops_enabled = True
             the_segment.pc = the_pc
             if args.fragments and final_pass:
                 record_fragment_address(the_pc)
@@ -394,7 +394,7 @@ def emitjump(d):
         emit_long_jump(d)
     hops_enabled = save_hops_enabled
     tryhop(jump=False)
-    
+
 def emitjcc(BCC, BNCC, JCC, d):
     global hops_enabled, lbranch_counter
     save_hops_enabled = hops_enabled
@@ -532,7 +532,7 @@ def create_zpage_segments():
 
 module_builtins_okay = '''None True False abs all any ascii bin bool chr
 dict divmod enumerate filter float format frozenset getattr hasattr hash
-hex id int isinstance issubclass iter len list map max min next oct ord 
+hex id int isinstance issubclass iter len list map max min next oct ord
 pow print property range repr reversed set setattr slice sorted str sum
 tuple type zip'''
 module_builtins = {}
@@ -1177,6 +1177,18 @@ def RORX(cpu6exact=True):
 def MACX():
     emit_op('MACX_v7')
 @vasm
+def LDLAC():
+    if args.cpu == 6:
+        tryhop(3);emit(0x2f, LAC, 0x3d)
+    else:
+        emit_op('LDLAC_v7')
+@vasm
+def STLAC():
+    if args.cpu == 6:
+        tryhop(3);emit(0x2f, LAC, 0x3f)
+    else:
+        emit_op('STLAC_v7')
+@vasm
 def INCVL(d):
     if args.cpu == 6:
         tryhop(3);emit(0x2f, check_zp(d), 0x4e)
@@ -1197,7 +1209,7 @@ def STXW(d,imm):
 @vasm
 def LDSB(d):
     emit_op('LDSB_v7', check_zp(d))
-    
+
 # pseudo instructions used by the compiler
 @vasm
 def _SP(n):
@@ -1257,21 +1269,23 @@ def _PEEKV(d):
         LDW(d); PEEK()
 @vasm
 def _MOVIW(d,x):
-    '''Emits MOVIW, MOVQW, _LDI or 2*MOVQB (cpu>=6)'''
+    '''Moves immediate d into word var x.
+       - Emits MOVIW, MOVQW, or a _LDI solution.
+       - May trash vAC.'''
     d = int(v(d))
     if x == vAC:
         _LDI(d)
-    elif is_zeropage(d):
+    elif args.cpu >= 6 and is_zeropage(d):
         MOVQW(d, check_zp(x))
-    elif args.cpu == 6:
-        MOVQB(lo(d), check_zp(x))
-        MOVQB(hi(d), check_zp(x)+1)
-    else:
+    elif args.cpu >= 7:
         MOVIW(d, check_zp(x))
+    else:
+        _LDI(d);STW(x)
 @vasm
 def _ALLOC(d):
     '''Adds positive of negative immediate d to SP (not vSP).
-       - Emits ALLOC, ADDIV, SUBIV or a _SP based solution.'''
+       - Emits ALLOC, ADDIV, SUBIV or a _SP based solution.
+       - May trash vAC.'''
     d = int(v(d))
     if d & 3:
         warning("Unaligned stack can cause serious trouble")
@@ -1374,7 +1388,7 @@ def _SHRIU(imm):
 def _SHL(d):
     '''Shift vAC left by [d] positions'''
     STW(T3); LDW(d)
-    extern('_@_shl') 
+    extern('_@_shl')
     _CALLI('_@_shl')            # T3 << AC -> vAC
 @vasm
 def _SHRS(d):
@@ -1423,7 +1437,7 @@ def _MULI(d):
             extern('_@_mul')
             _CALLI('_@_mul')    # T3 * AC --> vAC
         return
-    
+
 @vasm
 def _DIVS(d):
     STW(T3); LDW(d)
@@ -1592,14 +1606,12 @@ def _MOVM(s,d,n,align=1): # was _BMOV
         if args.cpu >= 6:
             if d == [vAC]:
                 STW(T2)
-            elif d != [T2]:
-                _MOVIW(d,T2)
             if s == [vAC]:
                 STW(T3)
-            elif args.cpu >= 7:
+            if d != [vAC] and d != [T2]:
+                _MOVIW(d,T2)
+            if s != [vAC]:
                 _MOVIW(s,T3)
-            else:
-                LDWI(s);STW(T3)
             if n > 0 and n <= 256:
                 COPYN(n & 0xff)
             elif n > 0:
@@ -1636,57 +1648,55 @@ def _MOVL(s,d): # was _LMOV
             _SP(s[1]); s = [vAC]
         elif type(d) == list and len(d) == 2 and d[0] == SP:
             _SP(d[1]); d = [vAC]
-        if is_zeropage(d, 3):
-            if is_zeropage(s, 3):
-                if args.cpu >= 6:
-                    MOVL(s,d)                        # z->z :  4 bytes (cpu7)
-                elif args.cpu >= 5:
+        if args.cpu >= 6:
+            if is_zeropage(d,3) and is_zeropage(s,3):
+                MOVL(s,d)
+            elif is_zeropage(d,3):
+                if s != [vAC]:
+                    _LDI(s)
+                if d == LAC:
+                    LDLAC()
+                else:
+                    DEEKA(d);ADDI(2);DEEKA(d+2)
+            elif is_zeropage(s,3):
+                if d == [T2]:
+                    LDW(T2)
+                elif d != [vAC]:
+                    _LDI(d)
+                if s == LAC:
+                    STLAC()
+                else:
+                    DOKEA(s);ADDI(2);DOKEA(s+2)
+            else:
+                if d == [vAC]:
+                    STW(T2)
+                if s == [vAC]:
+                    STW(T3)
+                if d != [T2] and d != [vAC]:
+                    _MOVIW(d, T2)
+                if s != [vAC]:
+                    _MOVIW(s, T3)
+                COPYN(4)        # 5-9 bytes
+        else:
+            if is_zeropage(d,3) and is_zeropage(s,3):
+                if args.cpu >= 5:
                     LDWI(((d & 0xff) << 8) | (s & 0xff))
                     extern('_@_lcopyz_')
-                    _CALLI('_@_lcopyz_')             # z->z :  6 bytes
+                    _CALLI('_@_lcopyz_')  # 6 bytes
                 else:
                     LDW(s);STW(d)
-                    LDW(s+2);STW(d+2)
-            elif args.cpu >= 6:
-                if s != [vAC]:
-                    _LDI(s)                          # l->z : 9 bytes (cpu7)
-                DEEKA(d);ADDI(2);DEEKA(d+2)          # a->z : 6 bytes (cpu7)
-            elif s != [vAC]:
-                _LDW(s); STW(d);
-                _LDW(s+2); STW(d+2)                  # l->z : 12 bytes
+                    LDW(s+2);STW(d+2)     # 8 bytes
             else:
-                STW(T0); LDI(d); STW(T2);
+                if d == [vAC]:
+                    STW(T2)
+                if s == [vAC]:
+                    STW(T0)
+                if d != [vAC] and d != [T2]:
+                    _LDI(d); STW(T2)
+                if s != [vAC]:            # 5-13 bytes
+                    _LDI(s); STW(T0)
                 extern('_@_lcopy_')
-                _CALLI('_@_lcopy_')                  # a->l : 9 bytes
-        elif is_zeropage(s, 3) and args.cpu >= 6:
-            if d == [T2]:
-                LDW(T2)                              # z->t : 8 bytes (cpu7)
-            elif d != [vAC]:
-                _LDI(d)                              # z->l : 9 bytes (cpu7)
-            DOKEA(s);ADDI(2);DOKEA(s+2)              # z->a : 6 bytes (cpu7)
-        elif args.cpu >= 6:
-            if d == [vAC]:
-                STW(T2)
-            elif d != [T2]:
-                _MOVIW(d, T2)
-            if s == [vAC]:
-                STW(T3)
-            elif args.cpu >= 7:
-                MOVIW(s, T3)
-            else:
-                LDWI(s);STW(T3)
-            COPYN(4)                                 # generic: 5-9 bytes (cpu7)
-        else:
-            if d == [vAC]:
-                STW(T2)
-            if s == [vAC]:
-                STW(T0)
-            if d != [vAC] and d != [T2]:
-                _LDI(d); STW(T2)
-            if s != [vAC]:                           # generic: 5-13 bytes
-                _LDI(s); STW(T0)
-            extern('_@_lcopy_')
-            _CALLJ('_@_lcopy_')  # [T0..T0+4) --> [T2..T2+4)
+                _CALLJ('_@_lcopy_')
 @vasm
 def _LADD():
     if args.cpu >= 6:
@@ -1788,7 +1798,7 @@ def _LCMPU():
 @vasm
 def _LCMPX():
     if args.cpu >= 6:
-        CMPLS() 
+        CMPLS()
     else:
         extern('_@_lcmpx')
         _CALLI('_@_lcmpx')      # TST(LAC-[vAC]) --> vAC
@@ -1839,14 +1849,12 @@ def _MOVF(s,d): # was _FMOV
         elif args.cpu >= 6:
             if d == [vAC]:
                 STW(T2)
-            elif d != [T2]:
-                _MOVIW(d, T2)
             if s == [vAC]:
                 STW(T3)
-            elif args.cpu >= 7:
-                MOVIW(s, T3)
-            else:
-                LDWI(s);STW(T3)
+            if d != [vAC] and d != [T2]:
+                _MOVIW(d,T2)
+            if s != [vAC]:
+                _MOVIW(s,T3)
             COPYN(5)
         else:
             maycross=False
@@ -1933,7 +1941,7 @@ def _CALLI(d):
         tryhop(11);STLW(-2);LDWI(d);STW('sysArgs6');LDLW(-2);CALL('sysArgs6')
 @vasm
 def _CALLJ(d):
-    '''Call subroutine at far location d. 
+    '''Call subroutine at far location d.
        - For cpu >= 5. this function just emits a CALLI instruction
        - For cpu < 5, this function trashes vAC.'''
     if args.cpu >= 5:
@@ -1976,17 +1984,17 @@ def _EPILOGUE(framesize,maxargoffset,mask,saveAC=False):
     else:
         extern('_@_rtrn_%02x' % mask)
         STW(T3);LDWI('_@_rtrn_%02x' % mask);CALL(vAC)
-        
+
 
 # ------------- reading .s/.o/.a files
-              
+
 def read_file(f):
     '''Reads a .s/.o/.a file in a pristine environment'''
     global the_module, the_fragment, new_modules, module_list
     debug(f"reading '{f}'")
     with open(f, 'r') as fd:
         s = fd.read()
-        try: 
+        try:
             c = compile(s, f, 'exec')
         except SyntaxError as err:
             fatal(str(err))
@@ -2012,7 +2020,7 @@ def search_file(fn, path):
         if os.access(f, os.R_OK):
             return f
     return None
-        
+
 def read_lib(l):
     '''Search a library file along the library path and read it.'''
     f = search_file(f"lib{l}.a", args.L)
@@ -2064,7 +2072,7 @@ def get_rominfo(roms, rom):
                 ri.pop('inherits')
         return ri
     return None
-            
+
 def read_rominfo(rom):
     '''Read `rom.jsom' to translate rom names into romType byte and cpu version.'''
     global rominfo, romtype, romcpu
@@ -2082,7 +2090,7 @@ def read_rominfo(rom):
         print(f"glink: warning: rom '{args.rom}' does not implement cpu{args.cpu}", file=sys.stderr)
     if 'warning' in rominfo:
         warning(rominfo['warning'])
-    
+
 
 
 # ------------- compute code closure from import/export information
@@ -2165,7 +2173,7 @@ def compute_closure():
             e = None
             elist = find_exporters(sym)
             for m in elist:
-                if m.library:                      # rules for selecting one of many library 
+                if m.library:                      # rules for selecting one of many library
                     if e and not e.library:        # modules exporting a same required symbol:
                         pass                       # -- cannot override a non-library module
                     elif m.cpu > args.cpu:         # -- ignore exports when module targets too high a cpu.
@@ -2246,8 +2254,8 @@ class Stop(Exception):
         self.msg = msg
 
 def round_used_segments():
-    '''Split all segments containing code or data into 
-       a used segment and a free segment starting on 
+    '''Split all segments containing code or data into
+       a used segment and a free segment starting on
        a page boundary. Marks used segment as non-BSS.'''
     for (i,s) in enumerate(segment_list):
         epage = (s.pc + 0xff) & ~0xff
@@ -2263,7 +2271,7 @@ def aligned(addr, align):
     if align and align > 1:
         addr = align * ((addr + align - 1) // align)
     return addr
-    
+
 def find_data_segment(size, align=None):
     amin = the_fragment.amin
     amax = the_fragment.amax
@@ -2412,7 +2420,7 @@ def assemble_data_fragments(m, cseg, placed=False):
             the_segment.pc = the_pc
             if args.fragments and final_pass:
                 record_fragment_address(the_pc)
-            
+
 def run_pass():
     global the_pass, the_module, the_fragment
     global labelchange_counter, genlabel_counter
@@ -2453,7 +2461,7 @@ def run_pass():
     # cleanup
     the_module = None
     the_fragment = None
-    
+
 def run_passes():
     global final_pass
     final_pass = False
@@ -2547,7 +2555,7 @@ def process_magic_symbols():
      * '__glink_magic_init' is a list of finalization
        functions called by exit().
 
-    In addition, there are two magic lists whose records are 
+    In addition, there are two magic lists whose records are
     not found in modules but allocated by the linker.
      * '__glink_magic_bss' is a linked list of BSS segments
        that must be cleared at runtime. Each list record occupies
@@ -2623,7 +2631,7 @@ def save_gt1(fname, start):
                 fd.write(buffer)
                 a0 = a1
         fd.write(builtins.bytes((0, hi(start), lo(start))))
-        
+
 def print_symbols(allsymbols=False):
     syms = []
     for m in module_list:
@@ -2655,7 +2663,7 @@ def print_fragments():
             blen = f"({plen} byte{'s' if plen > 1 else ''})"
             print(f"\t{rng[0]:04x}-{rng[1]-1:04x} {blen:<14s} {cseg:<5s} {name:<28s} {m.fname:<22s}")
 
-    
+
 # ------------- main function
 
 
@@ -2673,24 +2681,24 @@ def glink(argv):
             conflict_handler='resolve',
             usage='glink [options] {<files.o>} -l<lib> -o <outfile.gt1>',
             description='Collects gigatron .{s,o,a} files into a .gt1 file.',
-            epilog=''' 
+            epilog='''
             	This program accepts the modules generated by
                 gigatron-lcc/rcc (suffix .s or .o). These files are
-                text files with a python syntax that construct functions 
+                text files with a python syntax that construct functions
                 and data structures that defines all the VCPU instructions,
                 labels and data for this module.  Glink also accepts
                 concatenation of such files forming a library (suffix
                 .a).  The -cpu, -rom, and -map options provide values
                 than handcrafted code inside a module can test to
-                select different implementations. 
-                * The -rom option informs the libraries about 
+                select different implementations.
+                * The -rom option informs the libraries about
                   the availability of natively implemented SYS functions.
-                * The -cpu option enables instructions that were added 
-                  in successive implementations of the Gigatron VCPU.  
+                * The -cpu option enables instructions that were added
+                  in successive implementations of the Gigatron VCPU.
                   Its default value depends on the -rom option.
-                * The -map option tells at which addresses the program, 
-                  the data, and the stack should be located. It also tells 
-                  which runtime libraries should be loaded by default. 
+                * The -map option tells at which addresses the program,
+                  the data, and the stack should be located. It also tells
+                  which runtime libraries should be loaded by default.
                   The map argument can be a map name followed by comma
                   separated overlay names. Overlays are python files
                   that tweak the map. These files are searched in
@@ -2711,9 +2719,9 @@ def glink(argv):
                             help='select the target rom version: v4, v5a (default: v5a).')
         parser.add_argument('-map', "--map", type=str, action='store',
                             help='select a linker map')
-        parser.add_argument('-info', "--info", action='store_true', 
+        parser.add_argument('-info', "--info", action='store_true',
                             help='describe the selected map, cpu, rom')
-        parser.add_argument('-V', "--version", action='store_true', 
+        parser.add_argument('-V', "--version", action='store_true',
                             help='report glcc/glink version')
         parser.add_argument('-l', type=str, action='append', metavar='LIB',
                             help='library files. -lxxx searches for libxxx.a')
@@ -2813,7 +2821,7 @@ def glink(argv):
             else:
                 print(f"  No information found on map '{args.map}'")
             return 0
-        
+
         # load all .s/.o/.a files
         if not args.files:
             fatal(f"no input files were specified")
@@ -2861,7 +2869,7 @@ def glink(argv):
         for s in segment_list:
             if s.pc > s.eaddr:
                 fatal(f"internal error: segment overflow in {s} (final pc={hex(s.pc)})")
-        
+
         # output
         save_gt1(args.o, args.gt1exec)
         if args.symbols:
@@ -2869,7 +2877,7 @@ def glink(argv):
         if args.fragments:
             print_fragments()
         return 0
-    
+
     except FileNotFoundError as err:
         fatal(str(err), exc=True)
     except Exception as err:

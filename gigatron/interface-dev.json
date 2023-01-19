@@ -62,7 +62,9 @@
     "LSRXA_v7"         : "0x3518",
     "RORX_v7"          : "0x351a",
     "MACX_v7"          : "0x351c",
-    "INCVL_v7"         : "0x351f",
+    "LDLAC_v7"         : "0x351e",
+    "STLAC_v7"         : "0x3520",
+    "INCVL_v7"         : "0x3523",
     
     "NEGV_v7"          : "0x3537",
     "RDIVS_v7"         : "0x3539",

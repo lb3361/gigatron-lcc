@@ -832,7 +832,9 @@ int disassemble(word addr, char **pm, char *operand)
         case 0x18:  *pm = "LSRXA"; return 2;       /* v7 */
         case 0x1a:  *pm = "RORX";  return 2;       /* v7 */
         case 0x1c:  *pm = "MACX";  return 2;       /* v7 */
-        case 0x1f:  *pm = "INCVL"; goto operx8;    /* v7 */
+        case 0x1e:  *pm = "LDLAC"; return 2;       /* v7 */
+        case 0x20:  *pm = "STLAC"; return 2;       /* v7 */
+        case 0x23:  *pm = "INCVL"; goto operx8;    /* v7 */
         case 0x37:  *pm = "NEGV";  goto operx8;    /* v7 */
         case 0x39:  *pm = "RDIVS"; goto operx8;    /* v7 */
         case 0x3b:  *pm = "RDIVU"; goto operx8;    /* v7 */

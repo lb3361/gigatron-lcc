@@ -70,23 +70,23 @@ def scope():
     def code0():
         nohop()
         label('_@_shru1')
-        if args.cpu >= 6:
-            _MOVIW('SYS_LSRW1_48','sysFn')
+        if args.cpu >= 7:
+            MOVIW('SYS_LSRW1_48','sysFn')
         else:
             STW(T3)
-            LDWI('SYS_LSRW1_48'); STW('sysFn')
+            _MOVIW('SYS_LSRW1_48','sysFn')
             LDW(T3)
         SYS(48)
         RET()
         label('_@_shrs1')
         _BGE('_@_shru1')
-        if args.cpu >= 6:
+        if args.cpu >= 7:
             _MOVIW('SYS_LSRW1_48','sysFn')
             _MOVIW(0x8000, T2)
         else:
             STW(T3)
-            LDWI('SYS_LSRW1_48'); STW('sysFn')
-            LDWI(0x8000); STW(T2)
+            _MOVIW('SYS_LSRW1_48','sysFn')
+            _MOVIW(0x8000, T2)
             LDW(T3)
         SYS(48); ORW(T2)
         RET()

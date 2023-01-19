@@ -1,4 +1,3 @@
-
 # compile c programs with GLCC
 CC=../../build/glcc
 

@@ -1049,7 +1049,7 @@ def code17():
 	label('.229');
 	LDWI('Done');STW(R23);
 	_LDLW(-32+132);DOKE(R23);
-	LDWI('Done');DEEK();_BNE('.231');
+	_BNE('.231');
 	_MOVF('Nine',FAC);LDWI('One');_FADD();_MOVF(FAC,'A1');
 	label('.231');
 	label('.222');
@@ -3250,7 +3250,7 @@ def code17():
 	label('.766');
 	label('.763');
 	_LDLW(-92+132);ADDI(1);_STLW(-92+132);
-	_LDLW(-92+132);_CMPIS(4);_BLT('.762');
+	_CMPIS(4);_BLT('.762');
 	LDWI('.44');STW(R8);
 	CALLI('printf');
 	LDWI(v('ErrCnt')+2);DEEKA(R23);
@@ -3468,7 +3468,7 @@ def code26():
 	_MOVF(F8,[SP,0]);
 	CALLI('sqrt');
 	LDI(F4);_FSUB();_SP(-5+36);_FSUB();LDWI('OneUlp');_FDIV();_MOVF(FAC,'SqEr');
-	_MOVF('SqEr',FAC);LDWI('Zero');_FCMP();_BEQ('.842');
+	LDWI('Zero');_FCMP();_BEQ('.842');
 	_MOVF('SqEr',FAC);LDWI('MinSqEr');_FCMP();_BGE('.844');
 	_MOVF('SqEr','MinSqEr');
 	label('.844');

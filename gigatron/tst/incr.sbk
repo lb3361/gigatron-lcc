@@ -16,7 +16,7 @@ def code1():
 	_SP(-1+8);STW(R22);
 	PEEKV(R23);POKE(R22);
 	_LDLW(-4+8);ADDI(1);_STLW(-4+8);
-	_LDLW(-4+8);STW(R23);
+	STW(R23);
 	_SP(-1+8);STW(R22);
 	PEEKV(R23);POKE(R22);
 	_LDLW(-4+8);STW(R23);
@@ -24,7 +24,7 @@ def code1():
 	_SP(-1+8);STW(R22);
 	PEEKV(R23);POKE(R22);
 	_LDLW(-4+8);SUBI(-(-1));_STLW(-4+8);
-	_LDLW(-4+8);STW(R23);
+	STW(R23);
 	_SP(-1+8);STW(R22);
 	PEEKV(R23);POKE(R22);
 	LDI(0);
@@ -38,13 +38,13 @@ def code2():
 	ADDI(2);_STLW(-4+8);
 	DEEKV(R23);_STLW(-2+8);
 	_LDLW(-4+8);ADDI(2);_STLW(-4+8);
-	_LDLW(-4+8);
+	
 	DEEK();_STLW(-2+8);
 	_LDLW(-4+8);STW(R23);
 	SUBI(-(-2));_STLW(-4+8);
 	DEEKV(R23);_STLW(-2+8);
 	_LDLW(-4+8);SUBI(-(-2));_STLW(-4+8);
-	_LDLW(-4+8);
+	
 	DEEK();_STLW(-2+8);
 	LDI(0);
 	label('.3');

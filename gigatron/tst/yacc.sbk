@@ -816,7 +816,7 @@ def code14():
 	LDWI('yytext');POKEA(R23);
 	LDWI('yyprevious');STW(R22);
 	LD(R23);DOKE(R22);
-	LDWI('yyprevious');DEEK();_BLE('.119');
+	_BLE('.119');
 	LDWI('yyout');DEEKA(R23);
 	DEEKV(R23);SUBI(1);
 	DOKE(R23);

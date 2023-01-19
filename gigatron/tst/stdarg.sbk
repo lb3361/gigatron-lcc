@@ -65,7 +65,7 @@ def code2():
 	label('.14');
 	_LDLW(0+24);PEEK();XORI(37);_BNE('.18');
 	_LDLW(0+24);ADDI(1);_STLW(0+24);
-	_LDLW(0+24);
+	
 	PEEK();STW(R6);
 	XORI(115);_BEQ('.42');
 	LDI(115);_CMPWS(R6);_BLT('.51');

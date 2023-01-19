@@ -108,7 +108,7 @@ def code4():
 	LDW(R9);_STLW(2);
 	CALLI('strcmp');
 	_STLW(-2+12);
-	_LDLW(-2+12);_BGE('.26');
+	_BGE('.26');
 	LDW(R7);STW(R8);
 	DEEKV(R6);ADDI(2);STW(R9);
 	CALLI('lookup');

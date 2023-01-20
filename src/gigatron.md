@@ -565,9 +565,9 @@ asgn: ASGNI2(zddr,ac)  "\t%{=vAC}%1STW(%0);\n"       20
 asgn: ASGNI2(iarg,ac)  "\t%{=vAC}%1%[0b]DOKE(%0);\n" 28
 asgn: ASGNU2(zddr,ac)  "\t%{=vAC}%1STW(%0);\n"       20
 asgn: ASGNU2(iarg,ac)  "\t%{=vAC}%1%[0b]DOKE(%0);\n" 28
-asgn: ASGNI1(zddr,ac)  "\t%1ST(%0);\n"        20
+asgn: ASGNI1(zddr,ac)  "\t%1ST(%0);\n"        16
 asgn: ASGNI1(iarg,ac)  "\t%1%[0b]POKE(%0);\n" 26
-asgn: ASGNU1(zddr,ac)  "\t%1ST(%0);\n"        20
+asgn: ASGNU1(zddr,ac)  "\t%1ST(%0);\n"        16
 asgn: ASGNU1(iarg,ac)  "\t%1%[0b]POKE(%0);\n" 26
 
 # Conditional branches
@@ -818,8 +818,8 @@ stmt: RETP2(ac)   "\t%0\n"  1
 #            /  | X |
 #         F5 - I4 - U4
 # 1) prelabel changes all truncations into LOADs
-ac0: LOADI1(reg) "LD(%0);" 18
-ac0: LOADU1(reg) "LD(%0);" 18
+ac0: LOADI1(reg) "LD(%0);" 22
+ac0: LOADU1(reg) "LD(%0);" 22
 ac: LOADI1(ac) "%{=%0}%0"
 ac: LOADU1(ac) "%{=%0}%0"
 ac: LOADI2(ac) "%{=%0}%0"
@@ -835,8 +835,10 @@ lac: LOADI4(lac) "%{=%0}%0"
 lac: LOADU4(lac) "%{=%0}%0"
 fac: LOADF5(fac) "%{=%0}%0"
 
-reg: LOADI1(reg)   "\t%{?0=~vAC::LD(%0);}ST(%c)%{!A};\n"   34
-reg: LOADU1(reg)   "\t%{?0=~vAC::LD(%0);}ST(%c)%{!A};\n"   34
+reg: LOADI1(reg)   "\t%{?0=~vAC::LD(%0);}{?c==vAC::ST(%c);}%{!A}\n"   38
+reg: LOADU1(reg)   "\t%{?0=~vAC::LD(%0);}{?c==vAC::ST(%c);}%{!A}\n"   38
+reg: LOADI1(ac)    "\t%0%{?c==vAC::ST(%c);}\n"   16
+reg: LOADU1(ac)    "\t%0%{?c==vAC::ST(%c);}\n"   16
 reg: LOADI4(reg)   "\t_MOVL(%0,%c)%{!5};\n" 120
 reg: LOADU4(reg)   "\t_MOVL(%0,%c)%{!5};\n" 120
 regx: LOADF5(regx) "\t_MOVF(%0,%c)%{!5};\n" 150
@@ -910,6 +912,8 @@ ac: INDIRU1(reg)     "%{?0=~vAC:PEEK():PEEKV(%0)};" mincpu6(28)
 reg: INDIRI2(ac)     "\t%{?*0=~vAC:STW(%c):%0%{?c==vAC:DEEK():DEEKA(%c)};}\n" mincpu6(30)
 reg: INDIRU2(ac)     "\t%{?*0=~vAC:STW(%c):%0%{?c==vAC:DEEK():DEEKA(%c)};}\n" mincpu6(30)
 reg: INDIRP2(ac)     "\t%{?*0=~vAC:STW(%c):%0%{?c==vAC:DEEK():DEEKA(%c)};}\n" mincpu6(30)
+reg: INDIRI1(ac)     "\t%0%{?c==vAC:PEEK():PEEKA(%c)};\n" mincpu6(24+5)
+reg: INDIRU1(ac)     "\t%0%{?c==vAC:PEEK():PEEKA(%c)};\n" mincpu6(24+5)
 asgn: ASGNI1(rmw, conBs) "\tMOVQB(%1,%0);\n" mincpu6(if_not_asgn_tmp(a,27))
 asgn: ASGNU1(rmw, conB)  "\tMOVQB(%1,%0);\n" mincpu6(if_not_asgn_tmp(a,27))
 asgn: ASGNI2(rmw, conB)  "\tMOVQW(%1,%0);\n" mincpu6(if_not_asgn_tmp(a,29))

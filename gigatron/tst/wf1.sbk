@@ -61,7 +61,7 @@ def code2():
 	label('.12');
 	LDW(R5);STW(R23);
 	INCV(R5);
-	LD(R6);POKE(R23);
+	LDW(R6);POKE(R23);
 	label('.13');
 	CALLI('getchar');
 	STW(R6);

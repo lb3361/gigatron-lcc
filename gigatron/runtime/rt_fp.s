@@ -840,7 +840,6 @@ def scope():
         label('_@_fmul')
         PUSH();STW(T3)
         _CALLJ('__@fsavevsp')
-        _CALLJ('_@_rndfac')
         _CALLJ('__@fldarg_t3')
         LD(AS);ANDI(1);XORI(0xff);INC(vAC);ANDI(128);ST(AS) # sign
         LD(BE);_BEQ('.zero')
@@ -856,7 +855,7 @@ def scope():
         _BLE('.zero')                   # -> underflow
         ST(AE);LD(vACH);_BNE('.ovf')    # -> overflow
         label('.fin')
-        _CALLJ('_@_rndfac')             # roundt
+        _CALLJ('_@_rndfac')             # round
         tryhop(2);POP();RET()
         label('.ovf')
         _CALLJ('__@foverflow')
@@ -866,7 +865,6 @@ def scope():
     
     module(name='rt_fmul.s',
            code=[ ('EXPORT', '_@_fmul'),
-                  ('IMPORT', '_@_rndfac'),
                   ('IMPORT', '__@fsavevsp'),
                   ('IMPORT', '__@fldarg_t3'),
                   ('IMPORT', '__@fnorm'),
@@ -978,7 +976,6 @@ def scope():
         label('_@_fdiv')
         PUSH();STW(T3)
         _CALLJ('__@fsavevsp')
-        _CALLJ('_@_rndfac')
         _CALLJ('__@fldarg_t3')
         label('__@fdivfa')
         LD(AS);ANDI(1);ADDI(127);ANDI(128);ST(AS) # sign
@@ -1007,7 +1004,6 @@ def scope():
            code=[ ('EXPORT', '_@_fdiv'),
                   ('EXPORT', '__@fdivfa'),
                   ('IMPORT', '__@fsavevsp'),
-                  ('IMPORT', '_@_rndfac'),
                   ('IMPORT', '__@fldarg_t3'),
                   ('IMPORT', '__@fexception'),
                   ('IMPORT', '__@fdivloop'),
@@ -1021,7 +1017,6 @@ def scope():
         label('_@_fdivr')
         PUSH();STW(T3)
         _CALLJ('__@fsavevsp')
-        _CALLJ('_@_rndfac')
         _CALLJ('__@fac2farg')
         _CALLJ('__@fldfac_t3')
         _CALLJ('__@fdivfa') # no return
@@ -1029,7 +1024,6 @@ def scope():
     module(name='rt_fdivr.s',
            code=[ ('EXPORT', '_@_fdivr'),
                   ('IMPORT', '__@fsavevsp'),
-                  ('IMPORT', '_@_rndfac'),
                   ('IMPORT', '__@fac2farg'),
                   ('IMPORT', '__@fldfac_t3'),
                   ('IMPORT', '__@fdivfa'),
@@ -1046,7 +1040,6 @@ def scope():
         label('_@_fmod')
         PUSH();STW(T3)
         _CALLJ('__@fsavevsp')
-        _CALLJ('_@_rndfac')
         _CALLJ('__@fldarg_t3')
         LD(BE);_BEQ('.zero')
         LD(AE);_BEQ('.zero')
@@ -1085,7 +1078,6 @@ def scope():
            other might underflow and return zero.'''
         label('_@_fcmp')
         PUSH();STW(T3)
-        _CALLJ('_@_rndfac')
         _CALLJ('__@fldarg_t3')
         LD(BE);_BNE('.fcmp0')
         LD(AE);_BEQ('.zero')
@@ -1098,8 +1090,8 @@ def scope():
         label('.fcmp0')     # comparing sign
         LD(AS);ANDI(1);_BNE('.plus')
         label('.fcmp1')     # comparing exponents
-        LD(BE);SUBW(AE)     # - [AE+1] = [AM] = 0 because of _@_rndfac above
-        _BLT('.plus');_BGT('.minus')
+        LD(AE);SUBW(BE)     # - [AE+1] = [AM] = 0 because of _@_rndfac above
+        _BGT('.plus');_BLT('.minus')
         label('.fcmp2')     # comparing mantissa
         LDW(AM+3);_CMPWU(BM+3);_BLT('.minus');_BGT('.plus')
         LDW(AM+1);_CMPWU(BM+1);_BLT('.minus');_BGT('.plus')

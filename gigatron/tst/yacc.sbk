@@ -584,7 +584,7 @@ def code14():
 	LDWI('yytchar');DEEKA(R0);
 	label('.56');
 	LDW(R0);STW(R3);
-	LD(R0);STW(B0);_LDLW(-6+28);STW(T0);LDW(B0);POKE(T0);
+	STW(B0);_LDLW(-6+28);STW(T0);LDW(B0);POKE(T0);
 	label('.63');
 	LDW(R5);STW(R2);
 	LDWI('yycrank');_CMPWU(R5);_BGE('.64');
@@ -812,7 +812,7 @@ def code14():
 	label('.111');
 	LDWI('yytchar');DEEKA(R0);
 	label('.112');
-	LD(R0);ST(R23);
+	LDW(R0);ST(R23);
 	LDWI('yytext');POKEA(R23);
 	LDWI('yyprevious');STW(R22);
 	LD(R23);DOKE(R22);
@@ -917,7 +917,7 @@ def code17():
 	LDWI('yyout');DEEK();ADDI(2);STW(R23);
 	DEEK();STW(R22);
 	ADDI(1);DOKE(R23);
-	LD(R7);POKE(R22);
+	LDW(R7);POKE(R22);
 	label('.147');
 	LDI(0);
 	label('.144');

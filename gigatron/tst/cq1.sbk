@@ -828,7 +828,7 @@ def code26():
 	MOVQB(1,R3);
 	_BRA('.445');
 	label('.444');
-	LD(R3);LSLW();STW(R3);
+	LD(R3);LSLW();ST(R3);
 	DEEKV(R7);ADDI(1);DOKE(R7);
 	label('.445');
 	LD(R3);STW(R23);
@@ -1194,7 +1194,7 @@ def code43():
 	_MOVL('.550',[SP,-16+48]);
 	_MOVL([SP,-16+48],LAC);
 	LDW(LAC);STW(R1);
-	LDW(LAC);STW(R0);
+	LDW(LAC);ST(R0);
 	LDW(R1);_STLS(LAC);_SP(-16+48);_LCMPX();_BEQ('.554');
 	LDW(R1);XORI(3);_BNE('.553');
 	label('.554');
@@ -1394,7 +1394,7 @@ def code46():
 	MOVQW(0,R6);
 	label('.664');
 	_SP(-28+104);ADDW(R6);PEEK();STW(R23);
-	LD(R2);ADDW(R23);STW(R2);
+	LD(R2);ADDW(R23);ST(R2);
 	label('.665');
 	INCV(R6);
 	LDI(28);_CMPWS(R6);_BGT('.664');
@@ -3317,9 +3317,9 @@ def code71():
 	MOVQW(0,R3);
 	label('.1394');
 	_LDLW(-2+40);STW(R23);
-	ST(R22);
-	LD(R22);ST(R6);
-	LD(R22);ST(R2);
+	
+	ST(R6);
+	ST(R2);
 	_SP(-2+40);STW(R5);
 	STW(R1);
 	LDW(R23);STW(R4);

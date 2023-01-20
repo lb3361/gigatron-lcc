@@ -976,6 +976,12 @@ def DEEKA(d):
     else:
         emit_op("DEEKA_v7", check_zp(d))
 @vasm
+def PEEKA(d):
+    if args.cpu == 6:
+        tryhop(2);emit(0x67, check_zp(d))
+    else:
+        emit_op("PEEKA_v7", check_zp(d))
+@vasm
 def LDNI(d):
     if args.cpu == 6:
         tryhop(2);emit(0x9c, check_zp(-d))

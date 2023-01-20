@@ -90,7 +90,7 @@ def code1():
 	CALLI('print');
 	_MOVL('.4','l');
 	_MOVL('l',LAC);
-	LD(LAC);ST(R23);
+	LDW(LAC);ST(R23);
 	LDWI('c');POKEA(R23);
 	LDW(LAC);STW(R23);
 	LDWI('s');DOKEA(R23);
@@ -132,7 +132,7 @@ def code1():
 	LDWI('s');DOKEA(R22);
 	LDWI('i');DOKEA(R22);
 	LDW(R23);_STLU(LAC);_MOVL(LAC,'l');
-	LD(R23);ST(R22);
+	LDW(R23);ST(R22);
 	LDWI('C');POKEA(R22);
 	LDWI('I');DOKEA(R23);
 	LDW(R23);_STLU(LAC);_MOVL(LAC,'L');
@@ -150,7 +150,7 @@ def code1():
 	LDWI('s');DOKEA(R22);
 	LDWI('i');DOKEA(R22);
 	LDW(R23);_STLU(LAC);_MOVL(LAC,'l');
-	LD(R23);ST(R22);
+	LDW(R23);ST(R22);
 	LDWI('C');POKEA(R22);
 	LDWI('S');DOKEA(R23);
 	LDW(R23);_STLU(LAC);_MOVL(LAC,'L');
@@ -167,7 +167,7 @@ def code1():
 	LDWI('s');DOKEA(R23);
 	LDWI('i');DOKEA(R23);
 	_MOVL(LAC,'l');
-	LD(LAC);ST(R23);
+	LDW(LAC);ST(R23);
 	LDWI('C');POKEA(R23);
 	LDWI('S');STW(R23);
 	LDW(LAC);DOKE(R23);

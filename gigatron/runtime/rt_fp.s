@@ -122,11 +122,18 @@ def scope():
     def code_fldfac():
         '''_@_fldfac: Load the float at address vAC into FAC: [vAC]->FAC'''
         nohop()
-        label('_@_fldfac')
-        STW(T3)
-        label('__@fldfac_t3')
-        _PEEKV(T3);ST(AE);_BEQ('.fldz')
-        if args.cpu >= 6:
+        if args.cpu >= 7:
+            label('__@fldfac_t3')
+            LDW(T3)
+            label('_@_fldfac')
+            LDFAC()
+            RET()
+            warning("cpu7: use LDFAC instead of _@_fldfac")
+        elif args.cpu >= 6:
+            label('_@_fldfac')
+            STW(T3)
+            label('__@fldfac_t3')
+            _PEEKV(T3);ST(AE);_BEQ('.fldz')
             INCV(T3);PEEKV(T3);ST(vACH);ORI(0x80);ST(AM+4)
             XORW(AS-1);_BGE('.fld1')
             LD(AS);XORI(0x81);ST(AS)
@@ -135,7 +142,13 @@ def scope():
             INCV(T3);PEEKV(T3);ST(AM+2)
             INCV(T3);PEEKV(T3);ST(AM+1)
             MOVQB(0,AM);RET()
+            label('.fldz')
+            ST(AM);STW(AM+1);STW(AM+2);RET()
         else:
+            label('_@_fldfac')
+            STW(T3)
+            label('__@fldfac_t3')
+            _PEEKV(T3);ST(AE);_BEQ('.fldz')
             LDI(4);ADDW(T3);PEEK();ST(AM+1)
             LDI(3);ADDW(T3);PEEK();ST(AM+2)
             LDI(2);ADDW(T3);PEEK();ST(AM+3)
@@ -144,8 +157,8 @@ def scope():
             LD(AS);XORI(0x81);ST(AS)
             label('.fld1')
             LDI(0);ST(AM);RET()
-        label('.fldz')
-        ST(AM);STW(AM+1);STW(AM+2);RET()
+            label('.fldz')
+            ST(AM);STW(AM+1);STW(AM+2);RET()
 
     module(name='rt_fldfac.s',
            code=[ ('EXPORT', '_@_fldfac'),
@@ -155,11 +168,19 @@ def scope():
     def code_fldarg():
         # [vAC]->FARG
         nohop()
-        label('__@fldarg')
-        STW(T3)
-        label('__@fldarg_t3')
-        _PEEKV(T3);STW(BE);_BEQ('.fldz')
-        if args.cpu >= 6:
+        if args.cpu >= 7:
+            label('__@fldarg_t3')
+            LDW(T3)
+            label('__@fldarg')
+            LDFARG()
+            LD(BE);STW(BE)
+            RET()
+            warning("cpu7: use LDFARG instead of __@fldarg")
+        elif args.cpu >= 6:
+            label('__@fldarg')
+            STW(T3)
+            label('__@fldarg_t3')
+            _PEEKV(T3);STW(BE);_BEQ('.fldz')
             INCV(T3);PEEKV(T3);ST(vACH);ORI(0x80);ST(BM+4)
             LD(vACH);XORW(AS);ANDI(128);PEEK()
             XORW(AS);ANDI(1);XORW(AS);ST(AS)
@@ -167,7 +188,13 @@ def scope():
             INCV(T3);PEEKV(T3);ST(BM+2)
             INCV(T3);PEEKV(T3);ST(BM+1)
             MOVQB(0,BM);RET()
+            label('.fldz')
+            ST(BM);STW(BM+1);STW(BM+2);RET()
         else:
+            label('__@fldarg')
+            STW(T3)
+            label('__@fldarg_t3')
+            _PEEKV(T3);STW(BE);_BEQ('.fldz')
             LDI(4);ADDW(T3);PEEK();ST(BM+1)
             LDI(3);ADDW(T3);PEEK();ST(BM+2)
             LDI(2);ADDW(T3);PEEK();ST(BM+3)
@@ -175,8 +202,8 @@ def scope():
             LD(vACH);XORW(AS);ANDI(128);PEEK()
             XORW(AS);ANDI(1);XORW(AS);ST(AS)
             LDI(0);ST(BM);RET()
-        label('.fldz')
-        ST(BM);STW(BM+1);STW(BM+2);RET()
+            label('.fldz')
+            ST(BM);STW(BM+1);STW(BM+2);RET()
 
     module(name='rt_fldarg.s',
            code=[ ('EXPORT', '__@fldarg'),
@@ -187,16 +214,22 @@ def scope():
         '''_@_fstfac: Store FAC at address vAC: FAC->[vAC]'''
         nohop()
         label('_@_fstfac')
-        STW(T3);LD(AE);POKE(T3);_BNE('.fst1')
-        STW(AM+1);STW(AM+3)
-        label('.fst1')
-        if args.cpu >= 6:
+        if args.cpu >= 7:
+            STFAC()
+            warning("cpu7: use STFAC instead of _@_fstfac")
+        elif args.cpu >= 6:
+            STW(T3);LD(AE);POKE(T3);_BNE('.fst1')
+            STW(AM+1);STW(AM+3)
+            label('.fst1')
             LD(AS);ORI(0x7f);ANDW(AM+4);INCV(T3);POKE(T3)
             LD(AM+3);INCV(T3);POKE(T3)
             LD(AM+2);INCV(T3);POKE(T3)
             LD(AM+1);INCV(T3);POKE(T3)
             RET()
         else:
+            STW(T3);LD(AE);POKE(T3);_BNE('.fst1')
+            STW(AM+1);STW(AM+3)
+            label('.fst1')
             LD(T3);SUBI(0xfc);_BGE('.slow');INC(T3);
             LD(AS);ORI(0x7f);ANDW(AM+4);POKE(T3);INC(T3)
             LD(AM+3);POKE(T3);INC(T3)
@@ -227,9 +260,12 @@ def scope():
         nohop()
         label('__@fac2farg')
         LD(AE);STW(BE)
-        LD(AM);ST(BM)
-        LDW(AM+1);STW(BM+1)
-        LDW(AM+3);STW(BM+3)
+        if args.cpu >= 7:
+            MOVF(AM,BM)   # works!
+        else:
+            LD(AM);ST(BM)
+            LDW(AM+1);STW(BM+1)
+            LDW(AM+3);STW(BM+3)
         LD(AS);ANDI(0xfe);ST(AS)
         RET()
 
@@ -590,8 +626,8 @@ def scope():
             LDI(BM+1);ADDL()
         else:
             LD(BM);_BEQ('.a0')
-            ADDW(AM);ST(AM)
-            LD(vACH);SUBW(AM+1);LD(vACL)
+            ADDW(AM);ST(AM);XORW(AM);_BEQ('.a0') # :-)
+            LDI(1)
             label('.a0')
             PUSH()
             ADDW(BM+1);STW(vLR);ADDW(AM+1);STW(AM+1);_BLT('.a1')
@@ -634,11 +670,17 @@ def scope():
         label('__@fadd_t3')
         PUSH();_PEEKV(T3);STW(BE)
         LD(AE);_BEQ('.fadd1');SUBW(BE);_BGT('.fadd1')
-        _CALLJ('__@fldarg_t3')           # FAC exponent <= arg exponent
+        if args.cpu >= 7:
+            LDW(T3);LDFARG()
+        else:
+            _CALLJ('__@fldarg_t3')       # FAC exponent <= arg exponent
         _BRA('.fadd2')
         label('.fadd1')
-        _CALLJ('__@fac2farg')            # Otherwise
-        _CALLJ('__@fldfac_t3')           # - ensure FAC exponent <= arg_exponent
+        _CALLJ('__@fac2farg')            # Otherwise swap
+        if args.cpu >= 7:
+            LDW(T3);LDFAC()
+        else:
+            _CALLJ('__@fldfac_t3')       # FAC exponent <= arg exponent
         label('.fadd2')
         LD(AE);STW(T3)                   # - we don't need T3 anymore
         LD(BE);_BEQ('.fadd3')            # - adding zero is simple
@@ -676,8 +718,8 @@ def scope():
                   ('IMPORT', '__@amshra'),
                   ('IMPORT', '__@amneg') if args.cpu < 7 else ('NOP',),
                   ('IMPORT', '__@fac2farg'),
-                  ('IMPORT', '__@fldfac_t3'),
-                  ('IMPORT', '__@fldarg_t3'),
+                  ('IMPORT', '__@fldfac_t3') if args.cpu < 7 else ('NOP',),
+                  ('IMPORT', '__@fldarg_t3') if args.cpu < 7 else ('NOP',),
                   ('IMPORT', '__@amaddbm') if args.cpu < 6 else ('NOP',),
                   ('IMPORT', '__@fnorm'),
                   ('CODE', '__@fadd_t3_ss', code_fadd_t3_ss),
@@ -840,9 +882,12 @@ def scope():
         label('_@_fmul')
         PUSH();STW(T3)
         _CALLJ('__@fsavevsp')
-        _CALLJ('__@fldarg_t3')
+        if args.cpu >= 7:
+            LDW(T3);LDFARG()
+        else:
+            _CALLJ('__@fldarg_t3')
         LD(AS);ANDI(1);XORI(0xff);INC(vAC);ANDI(128);ST(AS) # sign
-        LD(BE);_BEQ('.zero')
+        LD(BE);STW(BE);_BEQ('.zero')
         LD(AE);_BEQ('.zero')
         if args.cpu >= 7:
             ADDV(BE)                    # result exponent (+128)
@@ -866,7 +911,7 @@ def scope():
     module(name='rt_fmul.s',
            code=[ ('EXPORT', '_@_fmul'),
                   ('IMPORT', '__@fsavevsp'),
-                  ('IMPORT', '__@fldarg_t3'),
+                  ('IMPORT', '__@fldarg_t3') if args.cpu < 7 else ('NOP',),
                   ('IMPORT', '__@fnorm'),
                   ('IMPORT', '__@amshra'),
                   ('IMPORT', '__@foverflow'),
@@ -976,10 +1021,13 @@ def scope():
         label('_@_fdiv')
         PUSH();STW(T3)
         _CALLJ('__@fsavevsp')
-        _CALLJ('__@fldarg_t3')
+        if args.cpu >= 7:
+            LDW(T3);LDFARG()
+        else:
+            _CALLJ('__@fldarg_t3')
         label('__@fdivfa')
         LD(AS);ANDI(1);ADDI(127);ANDI(128);ST(AS) # sign
-        LD(BE);_BNE('.fdiv0')
+        LD(BE);STW(BE);_BNE('.fdiv0')
         _CALLJ('__@fexception')          # - divisor is zero -> exception
         label('.fdiv0')
         LD(AE);_BEQ('.zero')             # - dividend is zero -> result is zero
@@ -1004,7 +1052,7 @@ def scope():
            code=[ ('EXPORT', '_@_fdiv'),
                   ('EXPORT', '__@fdivfa'),
                   ('IMPORT', '__@fsavevsp'),
-                  ('IMPORT', '__@fldarg_t3'),
+                  ('IMPORT', '__@fldarg_t3') if args.cpu < 7 else ('NOP',),
                   ('IMPORT', '__@fexception'),
                   ('IMPORT', '__@fdivloop'),
                   ('IMPORT', '__@fdivrnd'),
@@ -1018,14 +1066,17 @@ def scope():
         PUSH();STW(T3)
         _CALLJ('__@fsavevsp')
         _CALLJ('__@fac2farg')
-        _CALLJ('__@fldfac_t3')
+        if args.cpu >= 7:
+            LDW(T3);LDFAC()
+        else:
+            _CALLJ('__@fldfac_t3')
         _CALLJ('__@fdivfa') # no return
         
     module(name='rt_fdivr.s',
            code=[ ('EXPORT', '_@_fdivr'),
                   ('IMPORT', '__@fsavevsp'),
                   ('IMPORT', '__@fac2farg'),
-                  ('IMPORT', '__@fldfac_t3'),
+                  ('IMPORT', '__@fldfac_t3') if args.cpu < 7 else ('NOP',),
                   ('IMPORT', '__@fdivfa'),
                   ('CODE', '_@_fdivr', code_fdivr) ] )
     
@@ -1040,8 +1091,11 @@ def scope():
         label('_@_fmod')
         PUSH();STW(T3)
         _CALLJ('__@fsavevsp')
-        _CALLJ('__@fldarg_t3')
-        LD(BE);_BEQ('.zero')
+        if args.cpu >= 7:
+            LDW(T3);LDFARG()
+        else:
+            _CALLJ('__@fldarg_t3')
+        LD(BE);STW(BE);_BEQ('.zero')
         LD(AE);_BEQ('.zero')
         SUBW(BE);_BLT('.zquo')
         STW(B0)
@@ -1063,7 +1117,7 @@ def scope():
                   ('CODE', '_@_fmod', code_fmod),
                   ('IMPORT', '__@fsavevsp'),
                   ('IMPORT', '_@_rndfac'),
-                  ('IMPORT', '__@fldarg_t3'),
+                  ('IMPORT', '__@fldarg_t3') if args.cpu < 7 else ('NOP',),
                   ('IMPORT', '__@fdivloop'),
                   ('IMPORT', '_@_clrfac'),
                   ('IMPORT', '__@fnorm') ] )
@@ -1077,9 +1131,12 @@ def scope():
            numbers are different even though subtracting one from the
            other might underflow and return zero.'''
         label('_@_fcmp')
-        PUSH();STW(T3)
-        _CALLJ('__@fldarg_t3')
-        LD(BE);_BNE('.fcmp0')
+        PUSH()
+        if args.cpu >= 7:
+            LDFARG()
+        else:
+            STW(T3);_CALLJ('__@fldarg_t3')
+        LD(BE);STW(BE);_BNE('.fcmp0')
         LD(AE);_BEQ('.zero')
         label('.plus')
         LD(AS);XORI(128);ANDI(128);PEEK();LSLW();SUBI(1)
@@ -1101,7 +1158,7 @@ def scope():
     module(name='rt_fcmp.s',
            code=[ ('EXPORT', '_@_fcmp'),
                   ('IMPORT', '_@_rndfac'),
-                  ('IMPORT', '__@fldarg_t3'),
+                  ('IMPORT', '__@fldarg_t3') if args.cpu < 7 else ('NOP',),
                   ('CODE', '_@_fcmp', code_fcmp) ] )
 
     def code_fsign():
@@ -1141,11 +1198,14 @@ def scope():
         nohop()
         label('_@_frexp')
         PUSH()
-        LD(AE);_BEQ('.frexp2')
+        LD(AE);_BEQ('.frexp3')
         SUBI(128);STW(T3)
         LDI(128);ST(AE)
         LDW(T3)
         label('.frexp2')
+        tryhop(2);POP();RET()
+        label('.frexp3')
+        #ST(AS)
         tryhop(2);POP();RET()
         
     module(name='rt_frexp.s',

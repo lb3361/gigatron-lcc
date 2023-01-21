@@ -580,7 +580,7 @@ def create_register_names(base):
     if base == None and 'registerBase' in rominfo:
         base = int(str(rominfo['registerBase']),0)
     if base == None:
-        base = zpage_alloc(0x30, "REGS:R0-23", 0x80)
+        base = zpage_alloc(0x30, "REGS:R0-23", 0x90)
     elif base < 0 or base + 0x30 > 0x100:
         fatal(f"Illegal register location {hex(base)}-{hex(base+0x2f)}.")
     else:
@@ -616,6 +616,7 @@ def vasm(func):
 @vasm
 def error(s, dedup=False):
     global the_pass, final_pass, error_counter
+    dedup = dedup or final_pass
     if the_pass == 0 or final_pass:
         if dedup and s in dedup_errors: return
         dedup_errors.add(s)
@@ -626,6 +627,7 @@ def error(s, dedup=False):
 @vasm
 def warning(s, dedup=False):
     global the_pass, final_pass, warning_counter
+    dedup = dedup or final_pass
     if the_pass == 0 or final_pass:
         if dedup and s in dedup_errors: return
         dedup_errors.add(s)
@@ -1200,6 +1202,15 @@ def INCVL(d):
         tryhop(3);emit(0x2f, check_zp(d), 0x4e)
     else:
         emit_op('INCVL_v7', check_zp(d))
+@vasm
+def STFAC():
+    emit_op('STFAC_v7')
+@vasm
+def LDFAC():
+    emit_op('LDFAC_v7')
+@vasm
+def LDFARG():
+    emit_op('LDFARG_v7')
 @vasm
 def PUSHV(d):
     emit_op('PUSHV_v7', check_zp(d))
@@ -1835,13 +1846,19 @@ def _MOVF(s,d): # was _FMOV
         if d == FAC:
             if s != [vAC]:
                 _LDI(s)
-            extern('_@_fldfac')
-            _CALLI('_@_fldfac')   # [vAC..vAC+5) --> FAC
+            if args.cpu >= 7:
+                LDFAC()
+            else:
+                extern('_@_fldfac')
+                _CALLI('_@_fldfac')
         elif s == FAC:
             if d != [vAC]:
                 _LDI(d)
-            extern('_@_fstfac')
-            _CALLI('_@_fstfac')   # FAC --> [vAC..vAC+5)
+            if args.cpu >= 7:
+                STFAC()
+            else:
+                extern('_@_fstfac')
+                _CALLI('_@_fstfac')
         elif is_zeropage(d, 4) and is_zeropage(s, 4):
             if args.cpu >= 6:
                 MOVF(s,d)

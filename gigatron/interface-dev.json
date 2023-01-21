@@ -66,7 +66,9 @@
     "LDLAC_v7"         : "0x351e",
     "STLAC_v7"         : "0x3520",
     "INCVL_v7"         : "0x3523",
-    
+    "STFAC_v7"         : "0x3525",
+    "LDFAC_v7"         : "0x3527",
+    "LDFARG_v7"        : "0x3529",
     "NEGV_v7"          : "0x3537",
     "RDIVS_v7"         : "0x3539",
     "RDIVU_v7"         : "0x353b",

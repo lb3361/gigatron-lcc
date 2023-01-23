@@ -1,6 +1,6 @@
 
 
-# GLCC
+# GLCC relase 2.0
 
 
 This LCC--derived compiler and C library targets the [Gigatron](http://gigatron.io) VCPU.

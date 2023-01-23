@@ -21,7 +21,8 @@ Some useful things to know:
   * Types `short` and `int` are 16 bits long.  Type `long` is 32 bits
 	long. Types `float` and `double` are 40 bits long, using the
 	Microsoft Basic floating point format. Both long arithmetic or
-	floating point arithmetic incur a significant speed penalty.
+	floating point arithmetic incur a substantial speed penalty, 
+	vastly improved with the dev7 rom.
 	
   * Type `char` is unsigned by default. This is more efficient because
 	the C language always promotes `char` values into `int` values to
@@ -219,11 +220,15 @@ are documented by typing `glink -h`
 	the indicated rom version. The default is `v5a` which does not
 	provide much support at this point.
 	
-  * Option `-cpu=[456]` indicates which VCPU version should be
+  * Option `-cpu=[4567]` indicates which VCPU version should be
     targeted.  Version 5 adds the instructions `CALLI`, `CMPHS` and
-    `CMPHU` that came with ROMv5a. Version 6 will support AT67's new
-    instruction once finalized. The default CPU is the one implemented
-    by the selected ROM.
+    `CMPHU` that came with ROMv5a. Version 6, which comes with ROMvX0,
+    is not a strict supersed of version 6 because it changes the 
+    encodings of CMPHS/CMPHU. Version 7, which comes with DEV7ROM 
+    is a strict superset of version 5. Version 6 and 7 are mutually
+    incompatible. GLCC offers primary support for version 7 but can
+    generate version 6 encodings for some of its instructions.
+    The default CPU is the one implemented by the selected ROM.
 
   * Option `-map=<memorymap>{,<overlay>}` is also passed to the linker
     and specifya memory layout for the generated code. The default
@@ -235,11 +240,11 @@ are documented by typing `glink -h`
     using option `-info` as in `glcc -map=sim -info`
 	
     Maps can also manipulate the linker arguments, insert libraries,
-	and define the initialization function that checks the rom type
-	and the ram configuration. For instance, map `sim` produces gt1
-	files that only run in the emulator [`gtsim`](gigatron/mapsim) with a
-	library that redirects `printf` and all standard i/o functions to
-	the emulator itself. This is my main debugging tool.
+    and define the initialization function that checks the rom type
+    and the ram configuration. For instance, map `sim` produces gt1
+    files that only run in the emulator [`gtsim`](gigatron/mapsim) with a
+    library that redirects `printf` and all standard i/o functions to
+    the emulator itself. This is my main debugging tool.
 	
 
 ## 3. Examples
@@ -267,7 +272,7 @@ $ ./build/gtsim -rom gigatron/roms/dev.rom a.gt1
 ...
 ```
 
-### 3.2. Running Marcel's simple chess program:
+### 3.2. Running Marcel's simple chess program in gtsim:
 
 I found this program when studying the previous incarnation 
 of LCC for the Gigatron, with old forums posts where Marcel
@@ -358,15 +363,19 @@ track of all free and used page zero locations.
      for temporaries.
 
   *  Additional registers include: word registers named `T0` to `T3`,
-	 scratch bytes `B0` and `B1`, long accumulator `LAC`, long
-	 accumulator extension byte `LAX`, floating point sign and
-	 exponent bytes `FAS` and `FAE`, and a stack pointer `SP`. ROMs
-	 that provide suitable native support may dictate the location
-	 some of these registers. Otherwise they are allocated by the
-	 linker in the upper half ot page zero. In general, these
-	 locations, as well as `sysArgs[0..7]`, can be used by the 
+     scratch bytes `B0` and `B1`, long accumulator `LAC`, long 
+     accumulator extension byte `LAX`, floating point sign and
+     exponent bytes `FAS` and `FAE`, and a stack pointer `SP`. ROMs
+     that provide suitable native support may dictate the location
+     some of these registers. Otherwise they are allocated by the
+     linker in the upper half ot page zero. In general, these
+     locations, as well as `sysArgs[0..7]`, can be used by the 
      compiler or the runtime, and therefore are not safe to use
-	 from C programs. 
+     from C programs. 
+
+   * Since the DEV7 rom offers a true 16 bits stack pointer, GLCC2
+     makes SP equal to vSP, allowing the use of efficient opcodes
+     such as LDLW and STLW to access non-register local variables.
 
 The function prologue first saves `vLR` and constructs a stack frame
 by adjusting `SP`. It then saves the callee-saved registers onto the
@@ -380,9 +389,7 @@ last resort, often avoiding the construction of a stack-frame.
 Leaf functions that do not need to allocate space on the
 stack can use a register to save VLR and become entirely frameless.
 Sometimes one can help this by using `register` when declaring local
-variables.
-
-Saving `vLR` allows us to use `CALLI` as a long jump
+variables. Saving `vLR` allows us to use `CALLI` as a long jump
 without fearing to erase the function return address.
 This is especially useful when one needs to hop over page boundaries.
 
@@ -400,10 +407,13 @@ various parts of a typical CPU instruction such as the mnemonic,
 the address mode, etc. The VCPU accumulator `vAC` is treated as a scratch 
 register inside a burst. Meanwhile LCC allocates zero page registers 
 to pass data across bursts. This approach avoid the spilling problems
-but sometimes needs improving because we do not keep track
+but sometimes needs improving because it does not keep track
 of what data is left on the accumulator after each burst.
-This has been improved by adding code that opportunistically
-allows using `vAC` to pass data between bursts.
+This has been improved by a `preralloc` pass that tries to eliminate
+temporaries that can be passed through vAC, and by a state machine
+in the instruction emitter which conservatively maintains assertions
+about register or accumulator equality which can be used to
+simplify the code.
 
 The compiler produces a python file that first define a function for each
 code or data fragment. The file then constructs a module that

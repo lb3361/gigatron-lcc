@@ -15,7 +15,6 @@ extern void _exit(int retcode);
 
 /* Exit with a return code_and an optional message.
    The libc version of _exitm does the following:
-   - restore vSP to the value it had in `_start`.
    - calls the function pointer `_exitm_msgfunc` if nonzero
    - flashes a pixel on the first screen line at a position
      indicative of the return code. */

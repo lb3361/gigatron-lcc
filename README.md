@@ -234,16 +234,16 @@ are documented by typing `glink -h`
     and specifya memory layout for the generated code. The default
     map, `32k` uses all little bits of memory available on a 32KB
     Gigatron, starting with the video memory holes `[0x?a0-0x?ff]`,
-    the low memory `[0x200-0x6ff]`. There is also a `64k` map and a
-    `conx` map which uses a reduced console to save memory.
+    the low memory `[0x200-0x6ff]`. There is also a `64k` map, a `128k` map, 
+    and a `conx` map which uses a reduced console to save memory.
     Additional information about each map can be displayed by 
     using option `-info` as in `glcc -map=sim -info`
 	
     Maps can also manipulate the linker arguments, insert libraries,
     and define the initialization function that checks the rom type
     and the ram configuration. For instance, map `sim` produces gt1
-    files that only run in the emulator [`gtsim`](gigatron/mapsim) with a
-    library that redirects `printf` and all standard i/o functions to
+    files that only run in the emulator [`gtsim`](gigatron/mapsim),
+    redirecting `printf` and all standard i/o functions to
     the emulator itself. This is my main debugging tool.
 	
 
@@ -373,9 +373,9 @@ track of all free and used page zero locations.
      compiler or the runtime, and therefore are not safe to use
      from C programs. 
 
-   * Since the DEV7 rom offers a true 16 bits stack pointer, GLCC2
-     makes SP equal to vSP, allowing the use of efficient opcodes
-     such as LDLW and STLW to access non-register local variables.
+   * Since the DEV7 rom offers a true 16 bits stack pointer, GLCC-2.0
+     makes `SP` equal to `vSP`, allowing the use of efficient opcodes
+     to access non-register local variables.
 
 The function prologue first saves `vLR` and constructs a stack frame
 by adjusting `SP`. It then saves the callee-saved registers onto the

@@ -617,7 +617,7 @@ def scope():
         label('__@amaddbm')
         if args.cpu >= 7:
             warning("Cpu7: should ADDX instead of calling __@amaddbm")
-            ADDX()
+            LDI(BM);ADDX()
         elif args.cpu == 6:
             LD(BM);_BEQ('.a0')
             ADDW(AM);ST(AM);XORW(AM);_BEQ('.a0') # :-)

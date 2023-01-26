@@ -33,6 +33,7 @@ void next_0x307(CpuState*);
 char *rom = 0;
 char *gt1 = 0;
 int nogt1 = 0;
+int nogarble = 0;
 const char *trace = 0;
 int verbose = 0;
 int okopen = 0;
@@ -1046,6 +1047,7 @@ void usage(int exitcode)
             "  -rom romfile: load rom from <romfile>\n"
             "  -f: enable file system access\n"
             "  -nogt1: do not override main menu and run forever\n"
+            "  -nogarble: do not garble memory to ensure repeatable runs\n"
             "  -vmode v: set video mode 0,1,2,3,1975\n"
             "  -t<letters>: trace VCPU execution\n"
             "  -prof fn: writes profiling information into file <fn>\n");
@@ -1056,10 +1058,6 @@ void usage(int exitcode)
 
 int main(int argc, char *argv[])
 {
-  // Initialize with randomized data
-  srand(time(NULL));
-  garble((void*)ROM, sizeof ROM);
-  garble((void*)RAM, sizeof RAM);
   // Parse options
   for (int i=1; i<argc; i++)
     {
@@ -1070,6 +1068,10 @@ int main(int argc, char *argv[])
       else if (! strcmp(argv[i], "-nogt1"))
         {
           nogt1 = 1;
+        }
+      else if (! strcmp(argv[i], "-nogarble"))
+        {
+          nogarble = 1;
         }
       else if (! strcmp(argv[i], "-v"))
         {
@@ -1123,7 +1125,12 @@ int main(int argc, char *argv[])
     }
   if (! gt1 && ! nogt1)
     usage(EXIT_FAILURE);
-  
+  if (! nogarble) {
+    // Initialize with randomized data
+    srand(time(NULL));
+    garble((void*)ROM, sizeof ROM);
+    garble((void*)RAM, sizeof RAM);
+  }
   // Read rom
   if (! rom)
     rom = "../gigatron-rom/dev.rom";

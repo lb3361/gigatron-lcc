@@ -513,20 +513,20 @@ ac: BANDI2(ac,iarg) "%0%[1b]ANDW(%1);" 28
 ac: BANDU2(ac,iarg) "%0%[1b]ANDW(%1);" 28
 ac: BANDI2(iarg,ac) "%1%[0b]ANDW(%0);" 28
 ac: BANDU2(iarg,ac) "%1%[0b]ANDW(%0);" 28
-ac: BANDI2(ac,conB) "%0ANDI(%1);" 16
-ac: BANDU2(ac,conB) "%0ANDI(%1);" 16
+ac: BANDI2(ac,conB) "%0ANDI(%1);" 22
+ac: BANDU2(ac,conB) "%0ANDI(%1);" 22
 ac: BORI2(ac,iarg)  "%0%[1b]ORW(%1);" 28
 ac: BORU2(ac,iarg)  "%0%[1b]ORW(%1);" 28
 ac: BORI2(iarg,ac)  "%1%[0b]ORW(%0);" 28
 ac: BORU2(iarg,ac)  "%1%[0b]ORW(%0);" 28
-ac: BORI2(ac,conB)  "%0ORI(%1);" 16
-ac: BORU2(ac,conB)  "%0ORI(%1);" 16
+ac: BORI2(ac,conB)  "%0ORI(%1);" 14
+ac: BORU2(ac,conB)  "%0ORI(%1);" 14
 ac: BXORI2(ac,iarg) "%0%[1b]XORW(%1);" 28
 ac: BXORU2(ac,iarg) "%0%[1b]XORW(%1);" 28
 ac: BXORI2(iarg,ac) "%1%[0b]XORW(%0);" 28
 ac: BXORU2(iarg,ac) "%1%[0b]XORW(%0);" 28
-ac: BXORI2(ac,conB) "%0XORI(%1);" 16
-ac: BXORU2(ac,conB) "%0XORI(%1);"
+ac: BXORI2(ac,conB) "%0XORI(%1);" 14
+ac: BXORU2(ac,conB) "%0XORI(%1);" 14
 
 # A couple EAC variants
 eac: ADDI2(eac,conB)  "%0ADDI(%1);" 28

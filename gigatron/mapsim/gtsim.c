@@ -81,6 +81,7 @@ uint32_t bank;
 long long t;
 
 uint8_t pfx;
+uint16_t da;
 long long dt, rt, st;
 long long vt[2];
 
@@ -213,8 +214,9 @@ void sim(void)
       } else if (S.PC == 0x307) {
         next_0x307(&T);         /* t-dt = (rt-dt-vt[0]) + (t-rt-vt[1]) + (vt[0]+vt[1])  */
         pfx = 2;                /* cpu prefix */
-        dt = t;                 /* instruction dispatch time */
         vt[0] = vt[1] = 0;      /* video time (inside and outside instruction) */
+        dt = t;                 /* instruction dispatch time */
+        da = RAM[22]+(RAM[23]<<8);
       } else if (pfx && (S.PC & 0xff) == 1 && (S.PC >> 8) == (RAM[5]+1)) {
         pfx = RAM[5];
       } else if (S.IR == 0xe1 && S.D == 0x1e) { // jmp(Y,[vReturn])
@@ -757,6 +759,7 @@ void sys_0x3b4(CpuState *S)
           S->PC = 0x3cb;             /* REENTER */
           nogt1 = 1;
           st = dt = rt = t + 9;
+          da = 0;
         }
     }
 
@@ -1016,8 +1019,8 @@ void next_0x307(CpuState *S)
   if (nogt1) {
     if (trace)
       print_trace(S);
-    if (pc2cycs)
-      pc2cycs[deek(vPC)] += t - dt - vt[0] - vt[1];
+    if (pc2cycs && da)
+      pc2cycs[da] += t - dt - vt[0] - vt[1];
   }
 }
 

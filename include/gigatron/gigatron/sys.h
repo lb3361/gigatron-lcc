@@ -91,8 +91,19 @@ extern __near byte v6502_A;
 extern __near byte v6502_X;
 extern __near byte v6502_Y;
 
+extern __near word vSP_v7;
+extern __near byte vSPL_v7;
+extern __near word vSPH_v7;
+extern __near byte vFAS_v7;
+extern __near byte vFAE_v7;
+extern __near byte vLAX_v7;
+extern __near unsigned long vLAC_v7;
+extern __near word vT2_v7;
+extern __near word vT3_v7;
+
 extern byte videoTable[];
 extern void vReset(void);
+extern byte ledTempo_v7;
 extern word vIRQ_c5;
 extern byte videoTop_v5;
 extern byte userCode[];

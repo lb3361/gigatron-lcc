@@ -23,7 +23,7 @@ CFILES=$(wildcard ${LIBNAME}/*.c)
 O4FILES=${patsubst %.c,${B}%_4.o,${CFILES}}
 O5FILES=${patsubst %.c,${B}%_5.o,${CFILES}}
 O6FILES=${patsubst %.c,${B}%_6.o,${CFILES}}
-O7FILES=${patsubst %.c,${B}%_6.o,${CFILES}}
+O7FILES=${patsubst %.c,${B}%_7.o,${CFILES}}
 OFILES=${O4FILES} ${O5FILES} ${O7FILES}
 
 all: ${B}gtsim${E} ${PYTARGETS} ${B}${MAPDIR}/${LIBNAME}.a
@@ -35,7 +35,7 @@ ${B}${MAPDIR}/%.py: %.py
 	-mkdir -p ${B}${MAPDIR}
 	cp $+ $@
 
-${B}${MAPDIR}/${LIBNAME}.a: ${SFILES} ${O4FILES} ${O5FILES} ${O6FILES}
+${B}${MAPDIR}/${LIBNAME}.a: ${SFILES} ${O4FILES} ${O5FILES} ${O6FILES} ${O7FILES}
 	-mkdir -p ${B}${MAPDIR}
 	cat $+ > $@
 

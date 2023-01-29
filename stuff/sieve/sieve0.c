@@ -6,6 +6,9 @@
 #ifndef TIMER
 # define TIMER 1
 #endif
+#ifndef PRINT
+# define PRINT 1
+#endif
 
 /** This is the pristine C program of the sieve benchmark.
     The only additions are the #include directives above
@@ -21,7 +24,9 @@ main() {
 #if TIMER
     unsigned int ticks = _clock();
 #endif
+#if PRINT
     printf("10 iterations\n");
+#endif
     for (iter = 1; iter <= 10; iter ++) {
         count=0 ; 
 	for (i = 0; i <= size; i++)
@@ -30,7 +35,7 @@ main() {
 	    if (flags[i]) {
                 prime = i + i + 3; 
                 k = i + prime; 
-                while (k <= size) { 
+                while (k <= size) {
                     flags[k] = false; 
                     k += prime; 
                 }
@@ -38,7 +43,9 @@ main() {
             }
         }
     }
+#if PRINT
     printf("\n%d primes", count);
+#endif
 #if TIMER
     ticks = _clock() - ticks;
     printf("\n%d %d/60 seconds", ticks/60, ticks % 60);

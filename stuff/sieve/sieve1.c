@@ -43,7 +43,7 @@ main() {
 	    if (flags[i]) {
                 prime = i + i + 3; 
                 k = prime + i; 
-                while (size - k >= 0) { 
+                while (size >= k) { 
                     flags[k] = false; 
                     k += prime; 
                 }

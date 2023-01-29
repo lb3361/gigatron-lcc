@@ -26,10 +26,13 @@ O6FILES=${patsubst %.c,${B}%_6.o,${CFILES}}
 O7FILES=${patsubst %.c,${B}%_7.o,${CFILES}}
 OFILES=${O4FILES} ${O5FILES} ${O7FILES}
 
-all: ${B}gtsim${E} ${PYTARGETS} ${B}${MAPDIR}/${LIBNAME}.a
+all: ${B}gtsim${E} ${B}gtprof ${PYTARGETS} ${B}${MAPDIR}/${LIBNAME}.a
 
 ${B}gtsim${E}: gtsim.c
 	${CC} ${GTSIM_CFLAGS} -o $@ gtsim.c -lm
+
+${B}gtprof: gtprof
+	cp $< $@
 
 ${B}${MAPDIR}/%.py: %.py
 	-mkdir -p ${B}${MAPDIR}
@@ -67,9 +70,11 @@ install: FORCE
 	${INSTALL} -m 0644 "${B}${MAPDIR}/${LIBNAME}.a" "${libdir}/${MAPDIR}/"
 	${INSTALL} -m 0644 ${PYTARGETS} "${libdir}/${MAPDIR}/"
 	${INSTALL} -m 0755 "${B}gtsim${E}" "${libdir}/gtsim${E}"
+	${INSTALL} -m 0755 "${B}gtprof" "${libdir}/gtprof"
 ifndef MSYSTEM
 	-${INSTALL} -d "${bindir}"
 	${LN_S} ${libdir}/gtsim${E} ${bindir}/gtsim${E}
+	${LN_S} ${libdir}/gtprof ${bindir}/gtprof
 endif
 
 test: FORCE

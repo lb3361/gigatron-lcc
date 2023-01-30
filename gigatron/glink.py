@@ -1199,7 +1199,7 @@ def STLAC():
 @vasm
 def INCVL(d):
     if args.cpu == 6:
-        tryhop(3);emit(0x2f, check_zp(d), 0x4e)
+        tryhop(3);emit(0x2f, check_zp(d), 0x4f)
     else:
         emit_op('INCVL_v7', check_zp(d))
 @vasm

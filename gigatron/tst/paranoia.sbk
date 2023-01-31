@@ -2394,7 +2394,7 @@ def code17():
 	LDWI('I');DEEKA(R23);
 	LDI(1);_CMPWS(R23);_BGT('.547');
 	LDI(4);_CMPWS(R23);_BLT('.547');
-	LDW(R23);LSLW();LDXW(vAC,v('.570')-2);CALL(vAC);
+	LDWI(v('.570')-2);ADDW(R23);ADDW(R23);DEEK();CALL(vAC);
 	label('.549');
 	_MOVF('Underflow','UfThold');
 	_MOVF('CInvrse',F21);
@@ -3142,7 +3142,7 @@ def code17():
 	LDWI('Indx');DEEKA(R23);
 	LDI(2);_CMPWS(R23);_BGT('.732');
 	LDI(5);_CMPWS(R23);_BLT('.732');
-	LDW(R23);LSLW();LDXW(vAC,v('.738')-4);CALL(vAC);
+	LDWI(v('.738')-4);ADDW(R23);ADDW(R23);DEEK();CALL(vAC);
 	label('.734');
 	_MOVF('One',FAC);LDWI('U2');_FADD();_MOVF(FAC,'X');
 	_BRA('.733');
@@ -3428,11 +3428,10 @@ def code24():
 	_PROLOGUE(12,6,0xc0); # save=R6-7
 	LDW(R8);STW(R7);
 	LDW(R9);STW(R6);
-	LDWI('ErrCnt');STW(R23);
-	LDW(R7);LSLW();ADDW(R23);STW(R23);
+	LDWI('ErrCnt');ADDW(R7);ADDW(R7);STW(R23);
 	DEEK();ADDI(1);DOKE(R23);
 	LDWI('.838');STW(R8);
-	LDW(R7);LSLW();LDXW(vAC,'.833');STW(R9);
+	LDWI('.833');ADDW(R7);ADDW(R7);DEEKA(R9);
 	LDW(R9);_STLW(2);
 	LDW(R6);STW(R10);
 	LDW(R10);_STLW(4);

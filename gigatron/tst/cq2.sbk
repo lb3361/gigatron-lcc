@@ -29,7 +29,7 @@ def code3():
 	label('.9');
 	LDWI('.4');DEEKA(R8);
 	LDW(R8);_STLW(0);
-	LDW(R7);LSLW();LDXW(vAC,'.2');CALL(vAC);STW(R23);
+	LDWI('.2');ADDW(R7);ADDW(R7);DEEK();CALL(vAC);STW(R23);
 	LDWI(v('.3')+32);DOKEA(R23);
 	LDWI(v('.3')+34);STW(R23);
 	LDWI(v('.3')+32);DEEKA(R22);

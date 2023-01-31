@@ -72,7 +72,7 @@ def code2():
 	label('.50');
 	LDI(98);_CMPWS(R6);_BGT('.20');
 	LDI(102);_CMPWS(R6);_BLT('.20');
-	LDW(R6);LSLW();LDXW(vAC,v('.52')-196);CALL(vAC);
+	LDWI(v('.52')-196);ADDW(R6);ADDW(R6);DEEK();CALL(vAC);
 	label('.51');
 	LDW(R6);XORI(119);_BEQ('.38');
 	_BRA('.20');

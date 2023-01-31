@@ -461,6 +461,10 @@ ac: ADDP2(ac,iarg)  "%0%[1b]ADDW(%1);" 28
 ac: ADDI2(iarg,ac)  "%1%[0b]ADDW(%0);" 28
 ac: ADDU2(iarg,ac)  "%1%[0b]ADDW(%0);" 28
 ac: ADDP2(iarg,ac)  "%1%[0b]ADDW(%0);" 28
+ac: ADDI2(LSHI2(iarg,con1),ac) "%2%[0b]ADDW(%0);ADDW(%0);" 56
+ac: ADDU2(LSHU2(iarg,con1),ac) "%2%[0b]ADDW(%0);ADDW(%0);" 56
+ac: ADDP2(LSHI2(iarg,con1),ac) "%2%[0b]ADDW(%0);ADDW(%0);" 56
+ac: ADDP2(LSHU2(iarg,con1),ac) "%2%[0b]ADDW(%0);ADDW(%0);" 56
 ac: ADDI2(ac,conB)  "%0ADDI(%1);"      if_incr(a,27,10)
 ac: ADDU2(ac,conB)  "%0ADDI(%1);"      if_incr(a,27,10)
 ac: ADDP2(ac,conB)  "%0ADDI(%1);"      if_incr(a,27,10)
@@ -554,6 +558,10 @@ eac: ADDP2(eac,iarg) "%0%[1b]ADDW(%1);" 28
 eac: ADDI2(iarg,eac) "%1%[0b]ADDW(%0);" 28
 eac: ADDU2(iarg,eac) "%1%[0b]ADDW(%0);" 28
 eac: ADDP2(iarg,eac) "%1%[0b]ADDW(%0);" 28
+eac: ADDI2(LSHI2(iarg,con1),eac) "%2%[0b]ADDW(%0);ADDW(%0);" 56
+eac: ADDU2(LSHU2(iarg,con1),eac) "%2%[0b]ADDW(%0);ADDW(%0);" 56
+eac: ADDP2(LSHI2(iarg,con1),eac) "%2%[0b]ADDW(%0);ADDW(%0);" 56
+eac: ADDP2(LSHU2(iarg,con1),eac) "%2%[0b]ADDW(%0);ADDW(%0);" 56
 eac: SUBI2(eac,iarg) "%0%[1b]SUBW(%1);" 28
 eac: SUBU2(eac,iarg) "%0%[1b]SUBW(%1);" 28
 eac: SUBP2(eac,iarg) "%0%[1b]SUBW(%1);" 28

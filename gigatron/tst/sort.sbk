@@ -26,7 +26,7 @@ def code1():
 	MOVQW(0,R7);
 	_BRA('.5');
 	label('.2');
-	LDW(R7);LSLW();LDXW(vAC,'in');STW(R8);
+	LDWI('in');ADDW(R7);ADDW(R7);DEEKA(R8);
 	LDW(R8);_STLW(0);
 	CALLI('putd');
 	LDI(10);STW(R8);

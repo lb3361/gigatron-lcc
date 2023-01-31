@@ -2318,14 +2318,16 @@ def find_data_segment(size, align=None):
         if amax != None and addr + size > amax + 1:
             continue
         while addr > s.pc and s.pc > s.saddr and addr < s.pc + 4:
-            s.pc += 1                           # not worth splitting
-            if s.buffer:
-                s.buffer.append(0)
+            while s.pc < addr:                  # not worth splitting
+                s.buffer.append(0) if s.buffer else None
+                s.pc += 1
+            s.pc = addr
         if addr > s.pc:                         # split the segment
-            ns = Segment(s.saddr, addr, s.flags)
-            ns.pc = s.pc
-            segment_list.insert(i, ns)
-            s.pc = s.saddr = addr
+            ns = Segment(addr, s.eaddr, s.flags)
+            s.eaddr = addr
+            segment_list.insert(i+1, ns)
+            s = ns
+            i = i+1
         return s
 
 def find_code_segment(size):
@@ -2357,18 +2359,17 @@ def find_code_segment(size):
             continue
         # possibly carve segment before address addr
         if addr > s.pc:
-            ns = Segment(s.saddr, addr, s.flags)
-            ns.pc = s.pc
-            segment_list.insert(i, ns)
-            i += 1
-            s.pc = s.saddr = addr
+            ns = Segment(addr, s.eaddr, s.flags)
+            s.eaddr = addr
+            segment_list.insert(i+1, ns)
+            s = ns
+            i = i+1
         # since code segments cannot cross page boundaries
         # it is sometimes necessary to carve a code segment from a larger one
         if s.eaddr > epage:
-            ns = Segment(addr, epage, s.flags)
-            s.saddr = s.pc = epage
-            segment_list.insert(i, ns)
-            s = ns
+            ns = Segment(epage, s.eaddr, s.flags)
+            s.eaddr = epage
+            segment_list.insert(i+1, ns)
         return s
     # not found
     return None
@@ -2429,7 +2430,6 @@ def assemble_data_fragments(m, cseg, placed=False):
             hops_enabled = False
             the_segment = find_data_segment(frag.size, align=frag.align)
             if not the_segment:
-                print(frag, frag.amin, frag.amax)
                 raise Stop(f"cannot fit {cseg} fragment '{frag.name}'")
             elif args.d >= 2 or final_pass:
                 debug(f"assembling {cseg} fragment '{frag.name}' at {hex(the_segment.pc)} in {the_segment}")
@@ -2649,6 +2649,7 @@ def save_gt1(fname, start):
             pc = s.saddr + len(s.buffer)
             while a0 < pc:
                 a1 = min(s.eaddr, (a0 | 0xff) + 1)
+                debug(f"{s} {hex(a0)} {hex(a1)} {hex(pc)}")
                 buffer = s.buffer[(a0-s.saddr):(a1-s.saddr)]
                 fd.write(builtins.bytes((hi(a0),lo(a0),len(buffer)&0xff)))
                 fd.write(buffer)

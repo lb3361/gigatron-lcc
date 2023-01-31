@@ -1,0 +1,25 @@
+
+# code fragments that need to be place in low memory
+lowmem= [  ('core.c',   '*'),
+           ('*',        'memset'),
+           ('*',        'SYS_Exec'),
+           ('*',        'SYS_ExpanderControl') ]
+
+def map_place(filename, fragments):
+    directives = []
+    for spec in lowmem:
+        if spec[0] == filename or spec[0] == '*' and spec[1] in fragments:
+            directive = ('PLACE', spec[1], 0x0200, 0x7fff)
+            directives.append(directive)
+    #if len(directives) > 0:
+    #    print(f"-- {filename} {fragments} {directives}")
+    return directives
+
+# Define an onload function
+args.onload.insert(0,'mscp_onload')
+
+# Local Variables:
+# mode: python
+# indent-tabs-mode: ()
+# End:
+	

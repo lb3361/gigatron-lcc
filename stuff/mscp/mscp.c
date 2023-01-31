@@ -31,27 +31,14 @@ char mscp_c_rcsid[] = "@(#)$Id: mscp.c,v 1.18 2003/12/14 15:12:12 marcelk Exp $"
 /* !GIGATRON */
 # include <stdint.h>
 # define near /**/
-typedef unsigned char byte;
-
+# define SET_COMP_MODE(x) /**/
+# define CLR_TTABLE() memset(&core, 0, sizeof(core))
 #else
 /* GIGATRON */
-# include <gigatron/sys.h>
-# define SUBTRACTIVE_RND 1
-# define AVOID_SCANF 1
-# define MAXDEPTH 3
-# define CORE (256)
-# if _GLCC_VER >= 105040
-#  define near __near
-# else
-#  define near /**/
-# endif
-typedef unsigned long uint32_t;
-typedef unsigned int uint16_t;
-typedef unsigned char uint8_t;
-typedef long int32_t;
-typedef int int16_t;
-typedef signed char int8_t;
+# include "core.h"
 #endif
+
+typedef unsigned char byte;
 
 #define INF 32000
 #define MAX(a,b) ((a)>(b) ? (a) : (b))
@@ -102,7 +89,7 @@ enum {                  /* 64 squares */
 static byte board[64+3]; /* Board state */
 
 static near int ply;    /* Number of half-moves made in game and search */
-#define WTM (~ply & 1)  /* White-to-move predicate */
+#define WTM ((ply&1)^1) /* White-to-move predicate */
 
 static byte castle[64]; /* Which pieces may participate in castling */
 #define CASTLE_WHITE_KING  1
@@ -122,9 +109,14 @@ struct side {           /* Attacks */
 };
 static struct side white, black;
 static struct side * near friend, * near enemy;
+/* fast access */
+static byte * near whitepawns = white.pawns;
+static byte * near blackpawns = black.pawns;
+static byte * near whiteattack = white.attack;
+static byte * near blackattack = black.attack;
+
 
 static uint16_t history[64*64]; /* History-move heuristic counters */
-
 static int8_t   undo_stack[6*1024]; /* Move undo administration */
 static uint32_t hash_stack[1024]; /* History of hashes, for repetition */
 static int8_t  * near undo_sp;
@@ -154,24 +146,31 @@ struct move {
 static struct move move_stack[1024];    /* History of moves */
 static struct move * near move_sp;
 
+#ifdef __gigatron__
+static int piece_square_m[12][64];      /* Position evaluation tables */
+static int *piece_square[12];           /* Pointers saves a multiplication by 128 */
+#else
 static int piece_square[12][64];        /* Position evaluation tables */
+#endif
 static uint32_t zobrist[12][64];        /* Hash-key construction */
 
 /*
- *  CORE is the number of entries in the opening book or transposition table.
+ * Transposition table and opening book share the same memory
+ */
+#ifndef __gigatron
+/*  CORE is the number of entries in the opening book or transposition table.
  *  It must be power of two. MSCP is very simple and optimized for 4 ply,
  *  so I don't want to waste space on a large table. This also makes MSCP
- *  fit well on 8bit machines.
- */
-#ifndef CORE
-#define CORE 2048
-#endif
+ *  fit well on 8bit machines.  */
+# ifndef CORE
+#  define CORE 2048
+# endif
+
 static near int booksize;               /* Number of opening book entries */
 
-/* Transposition table and opening book share the same memory */
 static union {
         struct tt {                     /* Transposition table entry */
-                uint16_t hash;          /* - Identifies position */ 
+                uint16_t hash;          /* - Identifies position */
                 int16_t move;           /* - Best recorded move */
                 int16_t score;          /* - Score */
                 char flag;              /* - How to interpret score */
@@ -184,8 +183,11 @@ static union {
         } bk[CORE];
 } core;
 
-#define TTABLE (core.tt)
-#define BOOK (core.bk)
+# define GET_TTABLE(x)    (&core.tt[x])
+# define SET_TTABLE(x,tt) /**/
+# define BOOK(x)          (&core.bk[x])
+#endif
+
 
 /*----------------------------------------------------------------------+
  |      chess defines                                                   |
@@ -212,12 +214,13 @@ enum { RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8 };
 #define CHAR2FILE(c)            ((c)-'a')               /* text to file */
 #define PIECE2CHAR(p)           ("-KQRBNPkqrbnp"[p])    /* piece to text */
 
-#define F(square)               ((square) >> 3)         /* file */
+#define U(x)                    ((unsigned)(x))
+#define F(square)               (U(square) >> 3)        /* file */
 #define R(square)               ((square) & 7)          /* rank */
 #define SQ(f,r)                 (((f) << 3) | (r))      /* compose square */
 #define FLIP(square)            ((square)^7)            /* flip board */
 #define MOVE(fr,to)             (((fr) << 6) | (to))    /* compose move */
-#define FR(move)                (((move) & 07700) >> 6) /* from square */
+#define FR(move)                (U((move)&07700) >> 6)  /* from square */
 #define TO(move)                ((move) & 00077)        /* target square */
 #define SPECIAL                 (1<<12)                 /* for special moves */
 
@@ -253,7 +256,7 @@ struct command {
 #define ATK_SLIDER              ( ATK_ORTHOGONAL | ATK_DIAGONAL )
 
 static signed char king_step[129];      /* Offsets for king moves */
-static signed char knight_jump[129];    /* Offsets for knight jumps */ 
+static signed char knight_jump[129];    /* Offsets for knight jumps */
 
 /* 8 bits per square representing which directions a king can walk to */
 static const byte king_dirs[64] = {
@@ -288,13 +291,18 @@ static int32_t rnd_seed = 1;
 static int32_t rnd(void)
 {
 	/* Subtractive rnd avoids costly multiplications */
-	static int32_t state[55], x;
-	static int si=0, sj=0;
+	static int32_t state[55];
+        static near int32_t x;
+	static near int si=0, sj=0;
 	if (si == sj || rnd_seed != x) {
 		/* Initialization */
 		int i,j;
 		int32_t p1 = rnd_seed;
 		int32_t p2 = 1;
+                if (p1 < 0)
+                        p1 = -p1;
+                if (p1 >= 1000000000L)
+                        p1 = p1 % 1000000000L;
 		for (i = 1, j = 21; i != 55; i++, j += 21) {
 			if (j >= 55)
 				j -= 55;
@@ -309,7 +317,7 @@ static int32_t rnd(void)
 		for (i=0; i != 165; i++)
 			rnd();
 	}
-	/* Subtrative business here */
+	/* Subtractive business here */
 	if (si) si--; else si=54;
 	if (sj) sj--; else sj=54;
 	if ((x = state[si] - state[sj]) < 0)
@@ -494,15 +502,15 @@ static void setup_board(char *fen)
  |      attack tables                                                   |
  +----------------------------------------------------------------------*/
 
-static void atk_slide(int sq, byte dirs, struct side *s)
+static void atk_slide(int sq, byte bdirs, struct side *s)
 {
-        byte dir = 0;
+        int dirs = bdirs;
+        int dir = 0;
         int to;
 
         dirs &= king_dirs[sq];
         do {
-                dir -= dirs;
-                dir &= dirs;
+                dir = (dir - dirs) & dirs;
                 to = sq;
                 do {
                         to += king_step[dir];
@@ -515,7 +523,7 @@ static void atk_slide(int sq, byte dirs, struct side *s)
 static void compute_attacks(void)
 {
         int sq, to, pc;
-        byte dir, dirs;
+        int dir, dirs;
 
         memset(&white, 0, sizeof white);
         memset(&black, 0, sizeof black);
@@ -533,10 +541,9 @@ static void compute_attacks(void)
                         white.king = sq;
                         dirs = king_dirs[sq];
                         do {
-                                dir -= dirs;
-                                dir &= dirs;
+                                dir = (dir - dirs) & dirs;
                                 to = sq + king_step[dir];
-                                white.attack[to] += 1;
+                                whiteattack[to] += 1;
                         } while (dirs -= dir);
                         break;
 
@@ -545,10 +552,9 @@ static void compute_attacks(void)
                         black.king = sq;
                         dirs = king_dirs[sq];
                         do {
-                                dir -= dirs;
-                                dir &= dirs;
+                                dir = (dir - dirs) & dirs;
                                 to = sq + king_step[dir];
-                                black.attack[to] += 1;
+                                blackattack[to] += 1;
                         } while (dirs -= dir);
                         break;
 
@@ -580,10 +586,9 @@ static void compute_attacks(void)
                         dir = 0;
                         dirs = knight_dirs[sq];
                         do {
-                                dir -= dirs;
-                                dir &= dirs;
+                                dir = (dir - dirs) & dirs;
                                 to = sq + knight_jump[dir];
-                                white.attack[to] += 1;
+                                whiteattack[to] += 1;
                         } while (dirs -= dir);
                         break;
 
@@ -591,30 +596,31 @@ static void compute_attacks(void)
                         dir = 0;
                         dirs = knight_dirs[sq];
                         do {
-                                dir -= dirs;
-                                dir &= dirs;
+                                dir = (dir - dirs) & dirs;
                                 to = sq + knight_jump[dir];
-                                black.attack[to] += 1;
+                                blackattack[to] += 1;
                         } while (dirs -= dir);
                         break;
 
                 case WHITE_PAWN:
-                        white.pawns[1+F(sq)] += 1;
-                        if (F(sq) != FILE_H) {
-                                white.attack[sq + DIR_N + DIR_E] += 1;
+                        to = F(sq);
+                        whitepawns[1+to] += 1;
+                        if (to != FILE_H) {
+                                whiteattack[sq + (DIR_N + DIR_E)] += 1;
                         }
-                        if (F(sq) != FILE_A) {
-                                white.attack[sq + DIR_N - DIR_E] += 1;
+                        if (to != FILE_A) {
+                                whiteattack[sq + (DIR_N - DIR_E)] += 1;
                         }
                         break;
 
                 case BLACK_PAWN:
-                        black.pawns[1+F(sq)] += 1;
-                        if (F(sq) != FILE_H) {
-                                black.attack[sq - DIR_N + DIR_E] += 1;
+                        to = F(sq);
+                        blackpawns[1+to] += 1;
+                        if (to != FILE_H) {
+                                blackattack[sq + (- DIR_N + DIR_E)] += 1;
                         }
-                        if (F(sq) != FILE_A) {
-                                black.attack[sq - DIR_N - DIR_E] += 1;
+                        if (to != FILE_A) {
+                                blackattack[sq + (- DIR_N - DIR_E)] += 1;
                         }
                         break;
                 }
@@ -755,11 +761,11 @@ static int push_move(int fr, int to)
 
         /* does the destination square look safe? */
         if (WTM) {
-                if (black.attack[to] != 0) { /* defended */
+                if (blackattack[to] != 0) { /* defended */
                         prescore -= prescore_piece_value[board[fr]];
                 }
         } else {
-                if (white.attack[to] != 0) { /* defended */
+                if (whiteattack[to] != 0) { /* defended */
                         prescore -= prescore_piece_value[board[fr]];
                 }
         }
@@ -923,7 +929,7 @@ static void generate_moves(unsigned treshold)
                                 to += DIR_N;
                                 if (board[to] == EMPTY) {
                                         if (push_move(fr, to))
-                                        if (black.attack[to-DIR_N]) {
+                                        if (blackattack[to-DIR_N]) {
                                                 move_sp[-1].move |= SPECIAL;
                                         }
                                 }
@@ -952,7 +958,7 @@ static void generate_moves(unsigned treshold)
                                 to -= DIR_N;
                                 if (board[to] == EMPTY) {
                                         if (push_move(fr, to))
-                                        if (white.attack[to+DIR_N]) {
+                                        if (whiteattack[to+DIR_N]) {
                                                 move_sp[-1].move |= SPECIAL;
                                         }
                                 }
@@ -1280,6 +1286,8 @@ static int parse_move(char *line, int *num)
  |      opening book                                                    |
  +----------------------------------------------------------------------*/
 
+#ifndef __gigatron
+
 static int cmp_bk(const void *ap, const void *bp)
 {
         const struct bk *a = ap;
@@ -1293,18 +1301,46 @@ static int cmp_bk(const void *ap, const void *bp)
 static void compact_book(void)
 {
         int b = 0, c = 0;
-        qsort(BOOK, booksize, sizeof(BOOK[0]), cmp_bk);
+        qsort(BOOK(0), booksize, sizeof(*BOOK(0)), cmp_bk);
         while (b<booksize) {
-                BOOK[c] = BOOK[b];
+                *BOOK(c) = *BOOK(b);
                 b++;
-                while (b<booksize && !cmp_bk(&BOOK[c], &BOOK[b])) {
-                        BOOK[c].count += BOOK[b].count;
+                while (b<booksize && !cmp_bk(BOOK(c), BOOK(b))) {
+                        BOOK(c)->count += BOOK(b)->count;
                         b++;
                 }
                 c++;
         }
+#if SAVE_BOOK_BIN 
+        printf("Compacting book from %d to %d\n", booksize, c);
+#endif
         booksize = c;
 }
+
+
+#if SAVE_BOOK_BIN
+static void prune_book(int maxbooksize)
+{
+        int b, c = 0, w = 0, n;
+        do {
+                for (b = n = 0; b < booksize; b++)
+                        if (BOOK(b)->count > w)
+                                n += 1;
+                w += 1;
+                b = 0;
+        } while (n * sizeof(struct bk) > maxbooksize);
+        b = 0;
+        while (b<booksize) {
+                *BOOK(c) = *BOOK(b);
+                b++;
+                while (BOOK(b)->count < w)
+                        b++;
+                c++;
+        }
+        printf("Pruned book from %d to %d (w=%d)\n", booksize, c, w);
+        booksize = c;
+}
+#endif
 
 static void load_book(char *filename)
 {
@@ -1333,6 +1369,11 @@ static void load_book(char *filename)
 		return;
         }
         while (readline(line, sizeof(line), fp) >= 0) {
+#if SAVE_BOOK_BIN
+                int weight = 16;
+#else
+                const int weight = 1;
+#endif
                 s = line;
                 for (;;) {
                         move = parse_move(s, &num);
@@ -1340,50 +1381,59 @@ static void load_book(char *filename)
 
                         s += num;
                         if (booksize < CORE) {
-                                BOOK[booksize].hash = compute_hash();
-                                BOOK[booksize].move = move;
-                                BOOK[booksize].count = 1;
+                                BOOK(booksize)->hash = compute_hash();
+                                BOOK(booksize)->move = move;
+                                BOOK(booksize)->count = weight;
                                 booksize++;
                                 if (booksize >= CORE) compact_book();
                         }
                         make_move(move);
-			if (booksize >= CORE) break;
+#if SAVE_BOOK_BIN
+                        if (weight > 1)
+                                weight--;
+#endif
                 }
                 while (ply>0) unmake_move(); /* @@@ wrong */
-		if (booksize >= CORE) break;
         }
         fclose(fp);
         compact_book();
 #ifdef SAVE_BOOK_BIN
+# ifdef MAXBOOKSIZE
+        prune_book(MAXBOOKSIZE);
+# endif
+        printf("Dumping binary book into book.bin\n");
 	fp = fopen("book.bin","wb");
 	fwrite(&core, sizeof(struct bk), booksize, fp);
 	fclose(fp);
+        exit(0);
 #endif
 }
 
+#endif
+
 static int book_move(void)
 {
-        int move = 0, sum = 0;
-        int32_t x = 0, y, m;
+        int move = 0;
+        int32_t sum = 0, x = 0, y, m;
         char *seperator = "book:";
         uint32_t hash;
 
         if (!booksize) return 0;
         y = booksize;
         hash = compute_hash();
-        while (y-x > 1) { /* inv: BOOK[x].hash <= hash < BOOK[y].hash */
+        while (y-x > 1) { /* inv: BOOK(x)->hash <= hash < BOOK(y)->hash */
                 m = (x + y) / 2;
-                if (hash < BOOK[m].hash) { y=m; } else { x=m; }
+                if (hash < BOOK(m)->hash) { y=m; } else { x=m; }
         }
-        while (BOOK[x].hash == hash) {
-                printf("%s (%d)", seperator, BOOK[x].count);
+        while (BOOK(x)->hash == hash) {
+                printf("%s (%d)", seperator, BOOK(x)->count);
                 seperator = ",";
-                print_move_san(BOOK[x].move);
+                print_move_san(BOOK(x)->move);
                 compute_hash();
 
-                sum += BOOK[x].count;
-                if (rnd()%sum < BOOK[x].count) {
-                        move = BOOK[x].move;
+                sum += BOOK(x)->count;
+                if (rnd()%sum < BOOK(x)->count) {
+                        move = BOOK(x)->move;
                 }
                 if (!x--) break;
         }
@@ -1485,7 +1535,7 @@ static void compute_piece_square_tables(void)
                         case WHITE_PAWN:
                                 score = +100;
                                 score += pawn_advance[sq];
-                                if (!black.pawns[file]) {
+                                if (!blackpawns[file]) {
                                         score += pawn_advance[sq];
                                 }
                                 break;
@@ -1493,7 +1543,7 @@ static void compute_piece_square_tables(void)
                         case BLACK_PAWN:
                                 score = -100;
                                 score -= pawn_advance[FLIP(sq)];
-                                if (!white.pawns[file]) {
+                                if (!whitepawns[file]) {
                                         score -= pawn_advance[FLIP(sq)];
                                 }
                                 break;
@@ -1516,86 +1566,85 @@ static int white_control[64] = {
           1,  1,  1,  1,  2,  2,  2,  2,
 };
 
+
 static int evaluate(void)
 {
         int sq;
         int score = 0;
-
         int white_has, black_has;
+        static byte misspen[] = { 0, 5, 20, 45 };
 
         /*
          *  stage 1: material+piece_square tables
          */
         for (sq=0; sq<64; sq++) {
-                int file;
-
-                if (board[sq] == EMPTY) continue;
-                score += piece_square[board[sq]-1][sq];
-
-                file = F(sq)+1;
-                switch (board[sq]) {
-                case WHITE_PAWN:
-                {
-                        int missing;
-                        if (white.pawns[file] > 1) {
-                                score -= 15;
+                if (board[sq] != EMPTY) {
+                        register int file = F(sq)+1;
+                        score += piece_square[board[sq]-1][sq];
+                        switch (board[sq]) {
+                        case WHITE_PAWN: {
+                                register int missing = 0;
+                                if (whitepawns[file] > 1)
+                                        score -= 15;
+                                if (!whitepawns[file-1])
+                                        missing++;
+                                if (!whitepawns[file+1])
+                                        missing++;
+                                if (!blackpawns[file])
+                                        missing++;
+                                score -= misspen[missing];
+                                break;
                         }
-                        missing = !white.pawns[file-1] + !white.pawns[file+1] +
-                                !black.pawns[file];
-                        score -= missing * missing * 5;
-                        break;
-                }
-                case BLACK_PAWN:
-                {
-                        int missing;
-                        if (black.pawns[file] > 1) {
-                                score += 15;
+                        case BLACK_PAWN: {
+                                register int missing = 0;
+                                if (blackpawns[file] > 1)
+                                        score += 15;
+                                if (!blackpawns[file-1])
+                                        missing++;
+                                if (!blackpawns[file+1])
+                                        missing++;
+                                if (!whitepawns[file])
+                                        missing++;
+                                score -= misspen[missing];
+                                break;
                         }
-                        missing = !black.pawns[file-1] + !black.pawns[file+1] +
-                                !white.pawns[file];
-                        score += missing * missing * 5;
-                        break;
-                }
-                case WHITE_ROOK:
-                        if (!white.pawns[file]) {
-                                score += 10;
-                                if (!black.pawns[file]) {
+                        case WHITE_ROOK: {
+                                if (!whitepawns[file]) {
                                         score += 10;
+                                        if (!blackpawns[file])
+                                                score += 10;
                                 }
+                                break;
                         }
-                        break;
-
-                case BLACK_ROOK:
-                        if (!black.pawns[file]) {
-                                score -= 10;
-                                if (!white.pawns[file]) {
+                        case BLACK_ROOK:
+                                if (!blackpawns[file]) {
                                         score -= 10;
+                                        if (!whitepawns[file])
+                                                score -= 10;
                                 }
+                                break;
+                        default:
+                                break;
                         }
-                        break;
-
-                default:
-                        break;
                 }
         }
-
+        
         /*
          *  stage 2: board control
          */
         white_has = 0;
         black_has = 0;
         for (sq=0; sq<64; sq++) {
-                if (white.attack[sq] > black.attack[sq]) {
+                int cmp = whiteattack[sq] - blackattack[sq];
+                if (cmp > 0)
                         white_has += white_control[sq];
-                }
-                if (white.attack[sq] < black.attack[sq]) {
+                else if (cmp < 0) 
                         black_has += white_control[FLIP(sq)];
-                }
         }
         score += (white_has - black_has);
-
+        
         /* some noise to randomize play */
-        score += (hash_stack[ply] ^ rnd_seed) % 17 - 8;
+        score += (int)(hash_stack[ply] ^ rnd_seed) % 17 - 8;
 
         return WTM ? score : -score;
 }
@@ -1664,6 +1713,7 @@ static int search(int depth, int alpha, int beta)
         struct move                     *moves;
         int                             incheck = 0;
         struct tt                       *tt;
+        int                             tthash;
         int                             oldalpha = alpha;
         int                             oldbeta = beta;
         int                             i, count=0;
@@ -1680,7 +1730,8 @@ static int search(int depth, int alpha, int beta)
         /*
          *  check transposition table
          */
-        tt = &TTABLE[ ((hash_stack[ply]>>16) & (CORE-1)) ];
+        tthash = (hash_stack[ply]>>16) & (CORE-1);
+        tt = GET_TTABLE(tthash);
         if (tt->hash == (hash_stack[ply] & 0xffffU)) {
                 if (tt->depth >= depth) {
                         if (tt->flag >= 0) alpha = MAX(alpha, tt->score);
@@ -1762,7 +1813,7 @@ static int search(int depth, int alpha, int beta)
         tt->score = best_score;
         tt->depth = depth;
         tt->flag = (oldalpha < best_score) - (best_score < oldbeta);
-
+        SET_TTABLE(tthash, tt);
         return best_score;
 }
 
@@ -1987,8 +2038,10 @@ static void cmd_new(char *dummy)
         load_book("book.txt");
         computer[0] = 0;
         computer[1] = 1;
-#ifdef __gigatron__
-	rnd_seed = rand();
+#if REPEATABLE_RND
+        rnd_seed = 1;
+#elif __gigatron__
+	rnd_seed = ((long)rand() << 16) | (long)rand();
 #else
         rnd_seed = time(NULL);
 #endif
@@ -2088,13 +2141,17 @@ int main(void)
         char name[128];
         int move;
 
+#ifdef __gigatron
+        preload_book("book.bin");
+        for (i=0; i<12; i++)
+                piece_square[i] = piece_square_m[i];
+#endif
+
         puts(startup_message);
         signal(SIGINT, catch_sigint);
 
-#ifdef __gigatron
-	SYS_SetMode(3);
-#endif
-	
+        SET_COMP_MODE(1);
+
         for (i=0; i<sizeof(zobrist); i++) {
                 ( (byte*)zobrist )[i] = rnd() & 0xff;
         }
@@ -2131,9 +2188,7 @@ int main(void)
                         fputs("mscp> ", stdout);
                 }
                 fflush(stdout);
-#ifdef __gigatron
-		SYS_SetMode(1);
-#endif
+                SET_COMP_MODE(0);
                 if (readline(line, sizeof(line), stdin) < 0) {
                         break;
                 }
@@ -2149,15 +2204,14 @@ int main(void)
                         }
                 }
                 mscp_commands[cmd].cmd(line);
-#ifdef __gigatron
-		SYS_SetMode(3);
-#endif
+
+                SET_COMP_MODE(1);
 
                 while (computer[!WTM]) {
                         move = book_move();
                         if (!move) {
                                 booksize = 0;
-                                memset(&core, 0, sizeof(core));
+                                CLR_TTABLE();
                                 memset(history, 0, sizeof(history));
                                 move = root_search(maxdepth);
                         }
@@ -2189,3 +2243,8 @@ int main(void)
  |                                                                      |
  +----------------------------------------------------------------------*/
 
+/* Local Variables: */
+/* mode: c */
+/* c-basic-offset: 8 */
+/* indent-tabs-mode: () */
+/* End: */

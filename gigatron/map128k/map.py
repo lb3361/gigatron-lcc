@@ -68,8 +68,6 @@ def map_modules(romtype):
             LD('romType');ANDI(0xfc);XORI(romtype);BNE('.err')
         elif romtype:
             LD('romType');ANDI(0xfc);SUBI(romtype);BLT('.err')
-        # Set up memory
-        LDWI('_map128ksetup');CALL(vAC)
         # Call _start
         LDWI(v(args.e));CALL(vAC)
         # Run sanitized version of Marcel's smallest program when machine check fails
@@ -84,8 +82,12 @@ def map_modules(romtype):
 
     debug(f"synthetizing module '_gt1exec.s' at address 0x200")
 
-    if not "may_work_with_map128k" in rominfo:
-        warning(f"The specified ROM may not support map128k")
+# Specify an onload function to reorganize the memory
+args.onload.insert(0,'_map128ksetup')
+
+# Warn if the rom is not marked as compatible with this map
+if not "may_work_with_map128k" in rominfo:
+    warning(f"The specified ROM may not support map128k")
 
 
 # Local Variables:

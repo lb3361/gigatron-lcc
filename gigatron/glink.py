@@ -2765,6 +2765,8 @@ def glink(argv):
                             help='select the gt1 execution address (default _gt1exec)')
         parser.add_argument('-r', '--require', type=str, action='append', dest='r', metavar='SYM',
                             help='enter a symbol as undefined and require it to be resolved by the link')
+        parser.add_argument('--onload', type=str, action='append', dest='onload', metavar='SYM',
+                            help='define an early initialization function')
         parser.add_argument('--short-function-size-threshold', dest='sfst',
                             metavar='SIZE', type=int, action='store',
                             help='attempts to fit functions smaller than this threshold into a single page.')
@@ -2806,6 +2808,7 @@ def glink(argv):
         args.l = args.l or []
         args.L = args.L or []
         args.r = args.r or []
+        args.onload = args.onload or []
         read_map(args.map, sm[1:])
         args.L.append(os.path.join(lccdir,f"cpu{args.cpu}"))
         args.L.append(lccdir)

@@ -7,6 +7,9 @@ def code0():
     # ensure stack alignment
     # create stack headroom for argc and argv
     LDWI(0xfffc);ANDW(SP);SUBI(4);STW(SP)
+    # call onload functions
+    for f in args.onload:
+        _CALLJ(f)
     # initialize bss
     if not args.no_runtime_bss_initialization:
         _CALLJ('_init_bss')
@@ -78,7 +81,8 @@ code=[
 
 if args.gt1exec != args.e:
     code.append(('IMPORT', args.gt1exec))        # causes map start stub to be included
-
+for f in args.onload:
+    code.append( ('IMPORT', f) )                 # causes onload funcs to be included
 if not args.no_runtime_bss_initialization:
     code.append(('IMPORT', '_init_bss'))         # causes _init1.c to be included
 

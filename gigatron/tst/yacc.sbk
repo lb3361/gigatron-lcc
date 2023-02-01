@@ -1523,7 +1523,7 @@ def code32():
 	LDWI('yyact');ADDW(R1);ADDW(R1);DEEKA(R23);
 	LDW(R23);STW(R6);
 	LDWI('yychk');ADDW(R23);ADDW(R23);DEEKA(R23);
-	LDI(0);SUBW(R4);XORW(R23);_BEQ('.214');
+	LDW(R4);NEGV(vAC);XORW(R23);_BEQ('.214');
 	label('.216');
 	LDWI('yypgo');ADDW(R4);ADDW(R4);DEEK();LSLW();LDXW(vAC,'yyact');STW(R6);
 	label('.214');

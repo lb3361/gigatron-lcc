@@ -20,6 +20,7 @@
     "userVars2_v7"         : "0x008c",
     "ledTempo_v7"          : "0x01f5",
 
+    "NEGV_v7"          : "0x0318",
     "POKEA_v7"         : "0x0339",
     "DOKEA_v7"         : "0x033b",
     "DEEKA_v7"         : "0x033d",
@@ -71,7 +72,6 @@
     "STFAC_v7"         : "0x3525",
     "LDFAC_v7"         : "0x3527", 
     "LDFARG_v7"        : "0x3529",
-    "NEGV_v7"          : "0x3537",
     "RDIVS_v7"         : "0x3539",
     "RDIVU_v7"         : "0x353b",
     "MULW_v7"          : "0x353d",

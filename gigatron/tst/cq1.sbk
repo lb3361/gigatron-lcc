@@ -1684,7 +1684,7 @@ def code59():
 	CALLI('printf');
 	label('.747');
 	_LDLW(-2+44);STW(R23);
-	LDI(0);SUBW(R23);ADDW(R23);_BEQ('.749');
+	NEGV(vAC);ADDW(R23);_BEQ('.749');
 	ADDIV(2,R2);
 	LDWI('.742');STW(R8);
 	_STLW(0);

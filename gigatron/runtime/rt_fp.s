@@ -20,9 +20,9 @@ def scope():
     T3H = T3+1
     AS = FAS      # FAC sign (bit7) FARG sign (bit7^bit1)
     AE = FAE      # FAC exponent
-    AM = LAX      # 40 bits FAC mantissa (one extra low byte)
-    BM = T0       # 40 bits FARG mantissa (overlaps T0high byte overlaps T2L and CM)
-    BE = T2       # FARG exponent (overlaps T2H and CM)
+    AM = LAX      # 40 bits FAC mantissa    (aka LAX)
+    BM = T0       # 40 bits FARG mantissa   (aka sysArgs[0..4])
+    BE = T2       # FARG exponent           (overlaps CM)
     CM = T2       # extra 32 bits register
    
     # naming convention for exported symbols
@@ -261,7 +261,7 @@ def scope():
         label('__@fac2farg')
         LD(AE);STW(BE)
         if args.cpu >= 7:
-            MOVF(AM,BM)   # works!
+            MOVF(AM,BM)   # works (miraculously)!
         else:
             LD(AM);ST(BM)
             LDW(AM+1);STW(BM+1)
@@ -455,22 +455,6 @@ def scope():
                   ('CODE', '__@amshra', code_amshra) ] )
     
 
-    def code_bmshr8():
-        nohop()
-        label('__@bmshr8')
-        LDW(BM+1);STW(BM);
-        LDW(BM+3);STW(BM+2)
-        if args.cpu >= 6:
-            MOVQB(0,BM+4)
-        else:
-            LDI(0);ST(BM+4)
-        RET()
-
-    module(name='rt_bmshr8.s',
-           code=[ ('EXPORT', '__@bmshr8'),
-                  ('CODE', '__@bmshr8', code_bmshr8) ]  )
-
-
     # ==== two complement
 
     def code_amneg():
@@ -504,7 +488,8 @@ def scope():
     def code_fnorm():
         # Normalize FAC
         label('__@fnorm')
-        PUSH()
+        if args.cpu < 7:
+            PUSH()
         label('.norm1a')
         LDW(AM+3);_BLT('.done');_BNE('.norm1b')
         LD(AE);SUBI(16);_BLT('.norm1b');ST(AE)
@@ -538,7 +523,9 @@ def scope():
             _CALLJ('__@amshl1')
         _BRA('.norm1d')
         label('.done')
-        tryhop(2);POP();RET()
+        if args.cpu < 7:
+            tryhop(2);POP()
+        RET()
 
     module(name='rt_fnorm.s',
            code=[ ('EXPORT', '__@fnorm'),
@@ -848,7 +835,8 @@ def scope():
     def code_fmulm():
         nohop()
         label('__@fmulm')
-        PUSH();
+        if args.cpu < 7:
+            PUSH();
         LDW(BM+1);STW(BM)
         LDW(BM+3);STW(BM+2)
         LDW(AM+3);STW(v('__@fmuld')+2)
@@ -874,7 +862,9 @@ def scope():
             MACX()
         else:
             ST(B0);_CALLJ('__@macx_b0')
-        tryhop(2);POP();RET()
+        if args.cpu < 7:
+            tryhop(2);POP()
+        RET()
 
     def code_fmul():
         '''_@_fmul: Multiply FAC by the float at address vAC.'''
@@ -947,7 +937,8 @@ def scope():
            shifts one bit into CM.  This function repeats the division
            loop until either the high bit is set or B0B1 reaches 0.'''
         label('__@fdivloop')
-        PUSH()
+        if args.cpu < 7:
+            PUSH()
         LDW(BM+1);STW(BM);      # - working with the low 32 bits of BM
         LDW(BM+3);STW(BM+2)
         LDI(0);STW(CM);STW(CM+2)
@@ -984,12 +975,15 @@ def scope():
         label('.fdl4')
         LDW(CM+2);_BGE('.fdl0')
         label('.fdl5')
-        tryhop(2);POP();RET()
+        if args.cpu < 7:
+            tryhop(2);POP()
+        RET()
 
     def code_fdivrnd():
         nohop()
         label('__@fdivrnd')
-        PUSH()
+        if args.cpu < 7:
+            PUSH()
         LDW(AM+3);_BLT('.fdr1')
         if args.cpu >= 7:
             LDI(1);LSLXA()
@@ -1005,7 +999,9 @@ def scope():
         LDI(1);ADDW(CM+2);STW(CM+2);_BNE('.fdr0')
         _LDI(0xffff);STW(CM);STW(CM+2)
         label('.fdr0')
-        tryhop(2);POP();RET()
+        if args.cpu < 7:
+            tryhop(2);POP()
+        RET()
         
     module(name='rt_fdivloop.s',
            code=[ ('EXPORT', '__@fdivloop'),
@@ -1131,19 +1127,23 @@ def scope():
            numbers are different even though subtracting one from the
            other might underflow and return zero.'''
         label('_@_fcmp')
-        PUSH()
         if args.cpu >= 7:
             LDFARG()
         else:
+            PUSH()
             STW(T3);_CALLJ('__@fldarg_t3')
         LD(BE);STW(BE);_BNE('.fcmp0')
         LD(AE);_BEQ('.zero')
         label('.plus')
         LD(AS);XORI(128);ANDI(128);PEEK();LSLW();SUBI(1)
-        tryhop(2);POP();RET()
+        if args.cpu < 7:
+            tryhop(2);POP()
+        RET()
         label('.minus')
         LD(AS);ANDI(128);PEEK();LSLW();SUBI(1)
-        tryhop(2);POP();RET()
+        if args.cpu < 7:
+            tryhop(2);POP()
+        RET()
         label('.fcmp0')     # comparing sign
         LD(AS);ANDI(1);_BNE('.plus')
         label('.fcmp1')     # comparing exponents
@@ -1153,7 +1153,10 @@ def scope():
         LDW(AM+3);_CMPWU(BM+3);_BLT('.minus');_BGT('.plus')
         LDW(AM+1);_CMPWU(BM+1);_BLT('.minus');_BGT('.plus')
         label('.zero')
-        LDI(0);tryhop(2);POP();RET()
+        LDI(0)
+        if args.cpu < 7:
+            tryhop(2);POP()
+        RET()
 
     module(name='rt_fcmp.s',
            code=[ ('EXPORT', '_@_fcmp'),
@@ -1165,7 +1168,6 @@ def scope():
         '''_@_fsign: return the sign of FAC into AC (-1/0/+1)'''
         nohop()
         label('_@_fsign')
-        PUSH()
         LD(AE);_BEQ('.done')
         LD(AS);ANDI(128);_BEQ('.plus')
         _LDI(-2)
@@ -1197,16 +1199,12 @@ def scope():
            that FAC = x * 2^exp with 0.5<=x<1.'''
         nohop()
         label('_@_frexp')
-        PUSH()
-        LD(AE);_BEQ('.frexp3')
+        LD(AE);_BEQ('.frexp2')
         SUBI(128);STW(T3)
         LDI(128);ST(AE)
         LDW(T3)
         label('.frexp2')
-        tryhop(2);POP();RET()
-        label('.frexp3')
-        #ST(AS)
-        tryhop(2);POP();RET()
+        RET()
         
     module(name='rt_frexp.s',
            code=[ ('IMPORT', '__@fnorm'),

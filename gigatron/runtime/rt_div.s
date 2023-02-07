@@ -27,7 +27,7 @@ def scope():
             LDI(1);STW(MV)
             _LDI(addr);STW('sysFn');SYS(cycs)
 
-    else:
+    elif args.cpu < 7:
         # Divide using vCPU
         needbig = True
         morecode = [('IMPORT', '__@divworker')]
@@ -59,7 +59,7 @@ def scope():
         label('_@_divu')
         PUSH()
         _BNE('.divu1')
-        _CALLJ('_@_raise_zdiv')                    # divide by zero error (no return)
+        _CALLJ('_@_raise_zdiv')  # divide by zero error
         label('.divu1')
         if args.cpu >= 7:
             RDIVU(T3)

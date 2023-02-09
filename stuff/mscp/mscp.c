@@ -510,7 +510,7 @@ static void atk_slide(int sq, byte bdirs, struct side *s)
 
         dirs &= king_dirs[sq];
         do {
-                dir = (dir - dirs) & dirs;
+                dir = (/*dir*/ - dirs) & dirs;
                 to = sq;
                 do {
                         to += king_step[dir];

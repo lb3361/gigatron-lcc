@@ -1852,7 +1852,9 @@ def _MOVF(s,d): # was _FMOV
                 extern('_@_fldfac')
                 _CALLI('_@_fldfac')
         elif s == FAC:
-            if d != [vAC]:
+            if d == [T2]:
+                LDW(T2)
+            elif d != [vAC]:
                 _LDI(d)
             if args.cpu >= 7:
                 STFAC()

@@ -2011,6 +2011,12 @@ def _EPILOGUE(framesize,maxargoffset,mask,saveAC=False):
         STW(T3);LDWI('_@_rtrn_%02x' % mask);CALL(vAC)
 
 
+# compatibility
+
+module_dict['_LMOV'] = _MOVL
+module_dict['_FMOV'] = _MOVF
+module_dict['_BMOV'] = _MOVM
+
 # ------------- reading .s/.o/.a files
 
 def read_file(f):

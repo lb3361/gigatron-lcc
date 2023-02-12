@@ -6,7 +6,8 @@
     "#" : "- Key 'romType' is used for runtime ROM check",
     "#" : "- Other keys can be tested by the runtime libraries",
 
-    "v4"    : { "cpu" : 4,
+    "v4"    : { 
+		"cpu" : 4,
 		"romType" : "0x38",
 		"maxTicks" : 14
 	      },
@@ -33,11 +34,16 @@
 		"romType" : "0x48"
 	      },
 
+    "v6--"  : { "cpu" : 5,
+		"inherits" : "dev6",
+		"romType" : "0x48",
+		"without_CmpOps" : 1
+	      },
+
     "vx0"   : { "cpu" : 6,
 		"inherits" : "dev6",
 		"romType" : "0x80",
 		"maxTicks" : 15,
-		"has_altCmpOps" : 1,
 		"registerBase" : "0x50",
 		"registerFLAC" : "0xc1",
 		"registerSP"   : "0x48",

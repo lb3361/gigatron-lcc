@@ -907,13 +907,13 @@ def CALLI(d):
     d=int(v(d)); emit_op("CALLI_v5", lo(d), hi(d))
 @vasm
 def CMPHS(d):
-    if args.cpu == 6 or "has_altCmpOps" in rominfo:
+    if args.cpu == 6:
         tryhop(3); emit(0x2f, check_zp(d), 0x37)
     else:
         emit_op("CMPHS_v5", check_zp(d))
 @vasm
 def CMPHU(d):
-    if args.cpu == 6 or "has_altCmpOps" in rominfo:
+    if args.cpu == 6:
         tryhop(3); emit(0x2f, check_zp(d), 0x3a)
     else:
         emit_op("CMPHU_v5", check_zp(d))
@@ -1549,7 +1549,7 @@ def _CMPIS(d):
     '''Compare vAC (signed) with immediate in range 0..255'''
     if args.cpu >= 7:
         CMPIS(d)
-    elif args.cpu > 5 or args.cpu == 5 and not "has_altCmpOps" in rominfo:
+    elif args.cpu >= 5 and not "without_CmpOps" in rominfo:
         CMPHS(0); SUBI(d)
     else:
         lbl = genlabel()
@@ -1562,7 +1562,7 @@ def _CMPIU(d):
     '''Compare vAC (unsigned) with immediate in range 0..255'''
     if args.cpu >= 7:
         CMPIU(d)
-    elif args.cpu > 5 or args.cpu == 5 and not "has_altCmpOps" in rominfo:
+    elif args.cpu >= 5 and not "without_CmpOps" in rominfo:
         CMPHU(0); SUBI(d)
     else:
         lbl = genlabel()
@@ -1576,7 +1576,7 @@ def _CMPWS(d):
     '''Compare vAC (signed) with register.'''
     if args.cpu >= 7:
         CMPWS(d)                # 36 cycles
-    elif args.cpu > 5 or args.cpu == 5 and not "has_altCmpOps" in rominfo:
+    elif args.cpu >= 5 and not "without_CmpOps" in rominfo:
         d = v(d)
         CMPHS(d+1); SUBW(d)     # 28+28 cycles
     else:
@@ -1593,7 +1593,7 @@ def _CMPWU(d):
     '''Compare vAC (unsigned) with register.'''
     if args.cpu >= 7:
         CMPWU(d)                # 36 cycles
-    elif args.cpu > 5 or args.cpu == 5 and not "has_altCmpOps" in rominfo:
+    elif args.cpu >= 5 and not "without_CmpOps" in rominfo:
         d = v(d)
         CMPHU(d+1); SUBW(d)     # 28+28 cycles
     else:

@@ -88,6 +88,7 @@ static int  if_zpglobal(Node);
 static int  if_incr(Node,int,int);
 static int  if_zoffset(Node,int,int);
 static int  if_rmw(Node,int);
+static int  if_rmw_a(Node,int,int);
 static int  if_rmw_incr(Node,int,int);
 static int  if_not_asgn_tmp(Node,int);
 static int  if_cv_from(Node,int,int);
@@ -970,6 +971,9 @@ asgn: ASGNI2(rmw, ADDI2(INDIRI2(rmw), con1)) "\tINCV(%0);\n" mincpu6(if_rmw(a, 2
 asgn: ASGNI2(rmw, ADDI2(INDIRI2(rmw), ac)) "\t%2ADDV(%0);\n" mincpu7(if_rmw(a, 30))
 asgn: ASGNU2(rmw, ADDU2(INDIRU2(rmw), ac)) "\t%2ADDV(%0);\n" mincpu7(if_rmw(a, 30))
 asgn: ASGNP2(rmw, ADDP2(INDIRP2(rmw), ac)) "\t%2ADDV(%0);\n" mincpu7(if_rmw(a, 30))
+asgn: ASGNI2(rmw, ADDI2(ac, INDIRI2(rmw))) "\t%1ADDV(%0);\n" mincpu7(if_rmw_a(a, 1, 30))
+asgn: ASGNU2(rmw, ADDU2(ac, INDIRU2(rmw))) "\t%1ADDV(%0);\n" mincpu7(if_rmw_a(a, 1, 30))
+asgn: ASGNP2(rmw, ADDP2(ac, INDIRP2(rmw))) "\t%1ADDV(%0);\n" mincpu7(if_rmw_a(a, 1, 30))
 asgn: ASGNI2(rmw, SUBI2(INDIRI2(rmw), ac)) "\t%2SUBV(%0);\n" mincpu7(if_rmw(a, 30))
 asgn: ASGNU2(rmw, SUBU2(INDIRU2(rmw), ac)) "\t%2SUBV(%0);\n" mincpu7(if_rmw(a, 30))
 asgn: ASGNP2(rmw, SUBP2(INDIRP2(rmw), ac)) "\t%2SUBV(%0);\n" mincpu7(if_rmw(a, 30))
@@ -1143,12 +1147,19 @@ static int sametree(Node p, Node q) {
 
 static int if_rmw(Node a, int cost)
 {
+  return if_rmw_a(a, 0, cost);
+}
+
+static int if_rmw_a(Node a, int arg, int cost)
+{
   Node r;
   assert(a);
   assert(generic(a->op) == ASGN);
   assert(a->kids[0]);
   assert(a->kids[1]);
   r = a->kids[1];
+  if (arg != 0 && r->kids[arg])
+    r = r->kids[arg];
   while (generic(r->op) != INDIR)
     {
       if (r->kids[0])

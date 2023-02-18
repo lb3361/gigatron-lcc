@@ -621,7 +621,7 @@ def code14():
 	SUBW(R5);_DIVIS(2);LSLW();ADDW(R23);
 	STW(R2);
 	STW(R5);
-	LDW(R3);LSLW();ADDW(R5);STW(R5);
+	LDW(R3);LSLW();ADDV(R5);
 	LDWI('yytop');DEEK();_CMPWU(R5);_BLT('.75');
 	LDWI('yysvec');STW(R23);
 	LDW(R5);PEEK();_MULI(6);ADDW(R23);XORW(R7);_BNE('.75');

@@ -11,7 +11,7 @@ def scope_copy_op():
         label('memcpy1')
         COPY()
         label('memcpy2')
-        BNE('memcpy1')
+        JNE('memcpy1')
         RET()
 
     module(name='memcpy.s',

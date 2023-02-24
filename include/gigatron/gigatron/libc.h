@@ -177,6 +177,9 @@ extern void *_memchr2ext(char bank, const void *s, char c0, char c1, size_t n);
    Returns zero when no expansion. */
 extern void *_memcpyext(char banks, void *dst, const void* src, size_t n);
 
+/* Swap two memory blocks of size n. */
+extern void _memswp(void *a, void *b, size_t n);
+
 
 /* ---- Clock ---- */
 

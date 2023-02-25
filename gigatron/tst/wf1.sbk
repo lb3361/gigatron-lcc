@@ -50,7 +50,7 @@ def code2():
 	label('.9');
 	CALLI('getchar');STW(R23);
 	STW(R6);
-	_LDI(-1);XORW(R23);_BEQ('.11');
+	LDNI(-1);XORW(R23);_BEQ('.11');
 	LDW(R6);STW(R8);
 	LDW(R8);_STLW(0);
 	CALLI('isletter');
@@ -199,7 +199,7 @@ def code6():
 	LDW(R9);PEEK();STW(R23);
 	LDW(R8);PEEK();XORW(R23);_BEQ('.46');
 	LDW(R8);PEEK();_BNE('.51');
-	_LDI(-1);
+	LDNI(-1);
 	_BRA('.45');
 	label('.51');
 	LDW(R9);PEEK();_BNE('.53');

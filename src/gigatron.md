@@ -320,6 +320,13 @@ static unsigned vac_equiv, lac_equiv, fac_equiv;
 #   for cpu versions less than 4 or 5. Note that L implies F and A,
 #   and F implies L and A.
 
+#   Program lburg has also been enhanced in several ways. First it
+#   accepts comments in the rule section (this is one) and keeps track
+#   of line numbers. Second, it has a more refined cost computation
+#   for mayrecalc. Third, it accepts nonconstant costs in nonterminal
+#   closures provided that the cost string starts with a + (to mark
+#   that we know what we are doing.)
+
 
 # -- common rules
 reg:  INDIRI1(VREGP)     "# read register\n"
@@ -406,15 +413,11 @@ reg:  regx "%{=%0}%0"
 reg:  ac   "\t%{=vAC}%0%{?c==vAC::STW(%c);}\n" 19
 
 eac0: conB  "%{=%0}%{?0=~vAC::LDI(%0);}" 16
-eac0: zddr  "%{=%0}%{?0=~vAC::LDI(%0);}" 16
 ac0:  eac0  "%{=%0}%0"
 eac:  eac0  "%{=%0}%0"
 eac:  reg   "%{=%0}%{?0=~vAC::LDW(%0);}" 20
 eac:  con   "%{=%0}%{?0=~vAC::LDWI(%0);}" 21
-eac:  conBn "%{=%0}%{?0=~vAC::_LDI(%0);}" 18
-eac:  zddr  "%{=%0}%{?0=~vAC::LDI(%0);}" 16
-eac:  addr  "%{=%0}%{?0=~vAC::LDWI(%0);}" 21
-eac:  addr  "%{=%0}%{?0=~vAC::LDWI(%0);}" 21
+eac:  conB  "%{=%0}%{?0=~vAC::LDI(%0);}" 16
 eac:  lddr  "%{=%0}%{?0=~vAC::_SP(%0);}" 41
 ac:   ac0   "%{=%0}%0"
 ac:   eac   "%{=%0}%0"
@@ -893,7 +896,8 @@ asgn: ASGNI4(spill,reg) "\tSTW(B0);_MOVL(%1,[SP,%0]);LDW(B0) #genspill\n" 20
 asgn: ASGNU4(spill,reg) "\tSTW(B0);_MOVL(%1,[SP,%0]);LDW(B0) #genspill\n" 20
 asgn: ASGNF5(spill,reg) "\tSTW(B0);_MOVF(%1,[SP,%0]);LDW(B0) #genspill\n" 20
 
-# Additional opcodes for cpu > 5
+# Additional rules for cpu > 5
+eac:  conBn "%{=%0}%{?0=~vAC::LDNI(%0);}" +mincpu6(16)
 ac:  MULI2(con,ac)  "%1_MULI(%0);"  mincpu7(80)
 ac:  MULU2(con,ac)  "%1_MULI(%0);"  mincpu7(80)
 ac:  CVII2(reg)     "LDSB(%0);"     mincpu7(if_cv_from(a,1,26))

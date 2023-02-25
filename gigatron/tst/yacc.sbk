@@ -17,7 +17,7 @@ def code2():
 	_BRA('.3');
 	label('.2');
 	label('.5');
-	_LDI(-1);_CMPWS(R7);_BGT('.6');
+	LDNI(-1);_CMPWS(R7);_BGT('.6');
 	LDI(4);_CMPWS(R7);_BLT('.6');
 	LDWI(v('.17')+2);ADDW(R7);ADDW(R7);DEEK();CALL(vAC);
 	label('.8');
@@ -576,7 +576,7 @@ def code14():
 	label('.57');
 	LDWI('yytchar');DEEK();_STLW(-2+28);
 	label('.58');
-	_LDI(-1);STW(R23);
+	LDNI(-1);STW(R23);
 	_LDLW(-2+28);XORW(R23);_BNE('.55');
 	MOVQW(0,R0);
 	_BRA('.56');
@@ -805,7 +805,7 @@ def code14():
 	label('.113');
 	LDWI('yytchar');DEEK();_STLW(-2+28);
 	label('.114');
-	_LDI(-1);STW(R23);
+	LDNI(-1);STW(R23);
 	_LDLW(-2+28);XORW(R23);_BNE('.111');
 	MOVQW(0,R0);
 	_BRA('.112');
@@ -891,7 +891,7 @@ def code16():
 	label('.138');
 	LDWI('yytchar');DEEKA(R6);
 	label('.139');
-	_LDI(-1);XORW(R6);_BNE('.136');
+	LDNI(-1);XORW(R6);_BNE('.136');
 	MOVQW(0,R7);
 	_BRA('.137');
 	label('.136');
@@ -1433,7 +1433,7 @@ def code32():
 	label('.166');
 	LDWI('yydef');ADDW(R6);ADDW(R6);DEEKA(R23);
 	LDW(R23);STW(R4);
-	_LDI(-2);XORW(R23);_BNE('.178');
+	LDNI(-2);XORW(R23);_BNE('.178');
 	LDWI('yychar');DEEK();_BGE('.180');
 	CALLI('yylex');STW(R23);
 	LDWI('yychar');DOKEA(R23);
@@ -1447,7 +1447,7 @@ def code32():
 	label('.185');
 	ADDIV(4,R2);
 	label('.187');
-	_LDI(-1);STW(R23);
+	LDNI(-1);STW(R23);
 	DEEKV(R2);XORW(R23);_BNE('.184');
 	LDXW(R2,2);XORW(R6);_BNE('.184');
 	_BRA('.189');

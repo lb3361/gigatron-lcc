@@ -1146,7 +1146,7 @@ def code43():
 	PEEK();
 	POKE(R23);
 	LD(vAC);_BNE('.524');
-	_LDI(-19);_STLW(-18+48);
+	LDNI(-19);_STLW(-18+48);
 	_STLS(LAC);_MOVL(LAC,[SP,-24+48]);
 	_MOVL('.529',LAC);_SP(-24+48);_LCMPX();_BEQ('.527');
 	INCV(R2);
@@ -1503,7 +1503,7 @@ def code50():
 	CALLI('printf');
 	label('.707');
 	label('.701');
-	_LDI(-5);STW(R8);
+	LDNI(-5);STW(R8);
 	_STLW(0);
 	CALLI('McCarthy');
 	XORI(91);_BEQ('.709');
@@ -3554,7 +3554,7 @@ def code72():
 	LDI(16);SUBW(R23);
 	_BRA('.1429');
 	label('.1468');
-	_LDI(-1);
+	LDNI(-1);
 	label('.1429');
 	_EPILOGUE(88,0,0xfe,saveAC=True);
 # ======== ('CODE', 'regi', code73)
@@ -3684,7 +3684,7 @@ def code73():
 	LDI(16);SUBW(R23);
 	_BRA('.1470');
 	label('.1509');
-	_LDI(-1);
+	LDNI(-1);
 	label('.1470');
 	_EPILOGUE(112,0,0xfe,saveAC=True);
 # ======== ('CODE', 'regp', code74)
@@ -3814,7 +3814,7 @@ def code74():
 	LDI(16);SUBW(R23);
 	_BRA('.1511');
 	label('.1550');
-	_LDI(-1);
+	LDNI(-1);
 	label('.1511');
 	_EPILOGUE(112,0,0xfe,saveAC=True);
 # ======== ('BSS', '.1553', code75, 210, 2)
@@ -4105,7 +4105,7 @@ def code87():
 	_SHLI(14);_SHRIS(14);_SHLI(13);_SHRIS(13);_SHLI(3);ANDI(56);STW(R22);
 	LDWI(0xffc7);ANDW(R23);ORW(R22);_STLW(-168+276);
 	_SHLI(10);_SHRIS(13);XORI(3);_BEQ('.1655');
-	_LDI(-1);STW(R23);
+	LDNI(-1);STW(R23);
 	_LDLW(-168+276);_SHLI(10);_SHRIS(13);XORW(R23);_BNE('.1657');
 	LDXW(R7,26);_BEQ('.1658');
 	LDWI('.1661');STW(R8);

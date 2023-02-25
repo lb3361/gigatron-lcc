@@ -83,7 +83,7 @@ def code7():
 	LDWI('.31');_STLW(-36+64);
 	LDI(36);ADDW(R7);_STLW(-38+64);
 	LDI(0);_STLW(-40+64);
-	MOVQW(0,R5);
+	STW(R5);
 	LDI(30);ADDW(R7);DEEKA(R6);
 	label('.32');
 	label('.33');
@@ -620,10 +620,10 @@ def code7():
 	label('.198');
 	label('.196');
 	_MOVF('.179',[SP,-19+64]);
-	_MOVF('.56',F21);
-	_MOVF(F21,[SP,-29+64]);
+	_MOVF('.56',FAC);
+	_MOVF(FAC,[SP,-29+64]);
 	_SP(-19+64);STW(T2);_MOVF([SP,-29+64],[T2]);
-	_MOVF(F21,FAC);_SP(-19+64);_FCMP();_BEQ('.200');
+	_SP(-19+64);_FCMP();_BEQ('.200');
 	MOVQW(41,R5);
 	LDW(R6);_BEQ('.202');
 	LDWI('.29');STW(R8);
@@ -725,10 +725,10 @@ def code7():
 	label('.231');
 	label('.229');
 	_MOVF('.208',[SP,-24+64]);
-	_MOVF('.61',F21);
-	_MOVF(F21,[SP,-34+64]);
+	_MOVF('.61',FAC);
+	_MOVF(FAC,[SP,-34+64]);
 	_SP(-24+64);STW(T2);_MOVF([SP,-34+64],[T2]);
-	_MOVF(F21,FAC);_SP(-24+64);_FCMP();_BEQ('.233');
+	_SP(-24+64);_FCMP();_BEQ('.233');
 	MOVQW(49,R5);
 	LDW(R6);_BEQ('.235');
 	LDWI('.29');STW(R8);

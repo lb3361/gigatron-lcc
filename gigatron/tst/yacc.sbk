@@ -1493,8 +1493,8 @@ def code32():
 	_BRA('.158');
 	label('.207');
 	DEEKV(R5);LSLW();LDXW(vAC,'yypact');STW(R4);
-	SUBIV(-(-2),R5);
-	SUBIV(-(-2),R3);
+	LDNI(-2);ADDV(R5);
+	ADDV(R3);
 	label('.205');
 	_SP(-300+324);_CMPWU(R5);_BLE('.204');
 	label('.209');

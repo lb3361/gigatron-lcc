@@ -85,8 +85,9 @@ static void xprint_finish(void);
 /* Cost functions */
 static int  if_zpconst(Node);
 static int  if_zpglobal(Node);
-static int  if_incr(Node,int,int);
-static int  if_zoffset(Node,int,int);
+static int  if_incr(Node,int,int);      /* cost hint */
+static int  if_zoffset(Node,int,int);   /* cost hint */
+static int  if_cnstreuse(Node,int,int); /* cost hint */
 static int  if_rmw(Node,int);
 static int  if_rmw_a(Node,int,int);
 static int  if_rmw_incr(Node,int,int);
@@ -412,15 +413,15 @@ regx: reg  "%{=%0}%0"
 reg:  regx "%{=%0}%0"
 reg:  ac   "\t%{=vAC}%0%{?c==vAC::STW(%c);}\n" 19
 
-eac0: conB  "%{=%0}%{?0=~vAC::LDI(%0);}" 16
 ac0:  eac0  "%{=%0}%0"
 eac:  eac0  "%{=%0}%0"
-eac:  reg   "%{=%0}%{?0=~vAC::LDW(%0);}" 20
-eac:  con   "%{=%0}%{?0=~vAC::LDWI(%0);}" 21
-eac:  conB  "%{=%0}%{?0=~vAC::LDI(%0);}" 16
-eac:  lddr  "%{=%0}%{?0=~vAC::_SP(%0);}" 41
 ac:   ac0   "%{=%0}%0"
 ac:   eac   "%{=%0}%0"
+eac:  reg   "%{=%0}%{?0=~vAC::LDW(%0);}"  20
+eac:  lddr  "%{=%0}%{?0=~vAC::_SP(%0);}" 41
+eac0: conB  "%{=%0}%{?0=~vAC::LDI(%0);}"  +if_cnstreuse(a,16,8)
+eac:  conBn "%{=%0}%{?0=~vAC::LDNI(%0);}" +mincpu6(if_cnstreuse(a,16,8))
+eac:  con   "%{=%0}%{?0=~vAC::LDWI(%0);}" +if_cnstreuse(a,21,8)
 
 # Loads
 eac:  INDIRI2(eac)  "%{?*0=~vAC::%0DEEK();}" 21
@@ -897,7 +898,6 @@ asgn: ASGNU4(spill,reg) "\tSTW(B0);_MOVL(%1,[SP,%0]);LDW(B0) #genspill\n" 20
 asgn: ASGNF5(spill,reg) "\tSTW(B0);_MOVF(%1,[SP,%0]);LDW(B0) #genspill\n" 20
 
 # Additional rules for cpu > 5
-eac:  conBn "%{=%0}%{?0=~vAC::LDNI(%0);}" +mincpu6(16)
 ac:  MULI2(con,ac)  "%1_MULI(%0);"  mincpu7(80)
 ac:  MULU2(con,ac)  "%1_MULI(%0);"  mincpu7(80)
 ac:  CVII2(reg)     "LDSB(%0);"     mincpu7(if_cv_from(a,1,26))
@@ -927,22 +927,22 @@ reg: INDIRU2(ac)     "\t%{?*0=~vAC:STW(%c):%0%{?c==vAC:DEEK():DEEKA(%c)};}\n" mi
 reg: INDIRP2(ac)     "\t%{?*0=~vAC:STW(%c):%0%{?c==vAC:DEEK():DEEKA(%c)};}\n" mincpu6(30)
 reg: INDIRI1(ac)     "\t%0%{?c==vAC:PEEK():PEEKA(%c)};\n" mincpu6(24+5)
 reg: INDIRU1(ac)     "\t%0%{?c==vAC:PEEK():PEEKA(%c)};\n" mincpu6(24+5)
-asgn: ASGNI1(rmw, conBs) "\tMOVQB(%1,%0);\n" mincpu6(if_not_asgn_tmp(a,27))
-asgn: ASGNU1(rmw, conB)  "\tMOVQB(%1,%0);\n" mincpu6(if_not_asgn_tmp(a,27))
-asgn: ASGNI2(rmw, conB)  "\tMOVQW(%1,%0);\n" mincpu6(if_not_asgn_tmp(a,29))
-asgn: ASGNU2(rmw, conB)  "\tMOVQW(%1,%0);\n" mincpu6(if_not_asgn_tmp(a,29))
-asgn: ASGNP2(rmw, conB)  "\tMOVQW(%1,%0);\n" mincpu6(if_not_asgn_tmp(a,29))
-asgn: ASGNI2(rmw, con)   "\tMOVIW(%1,%0);\n"  mincpu7(if_not_asgn_tmp(a,31))
-asgn: ASGNU2(rmw, con)   "\tMOVIW(%1,%0);\n"  mincpu7(if_not_asgn_tmp(a,31))
-asgn: ASGNP2(rmw, con)   "\tMOVIW(%1,%0);\n"  mincpu7(if_not_asgn_tmp(a,31))
-regx: LOADI1(conBs)      "\tMOVQB(%0,%c);\n" mincpu6(27)
-regx: LOADU1(conB)       "\tMOVQB(%0,%c);\n" mincpu6(27)
-regx: LOADI2(conB)       "\tMOVQW(%0,%c);\n" mincpu6(29)
-regx: LOADU2(conB)       "\tMOVQW(%0,%c);\n" mincpu6(29)
-regx: LOADP2(conB)       "\tMOVQW(%0,%c);\n" mincpu6(29)
-regx: LOADI2(con)        "\tMOVIW(%0,%c);\n" mincpu7(31)
-regx: LOADU2(con)        "\tMOVIW(%0,%c);\n" mincpu7(31)
-regx: LOADP2(con)        "\tMOVIW(%0,%c);\n" mincpu7(31)
+asgn: ASGNI1(rmw, conBs) "\t%{?1=~vAC:ST(%0):MOVQB(%1,%0)};\n"  mincpu6(if_not_asgn_tmp(a,27))
+asgn: ASGNU1(rmw, conB)  "\t%{?1=~vAC:ST(%0):MOVQB(%1,%0)};\n"  mincpu6(if_not_asgn_tmp(a,27))
+asgn: ASGNI2(rmw, conB)  "\t%{?1=~vAC:STW(%0):MOVQW(%1,%0)};\n" mincpu6(if_not_asgn_tmp(a,29))
+asgn: ASGNU2(rmw, conB)  "\t%{?1=~vAC:STW(%0):MOVQW(%1,%0)};\n" mincpu6(if_not_asgn_tmp(a,29))
+asgn: ASGNP2(rmw, conB)  "\t%{?1=~vAC:STW(%0):MOVQW(%1,%0)};\n" mincpu6(if_not_asgn_tmp(a,29))
+asgn: ASGNI2(rmw, con)   "\t%{?1=~vAC:STW(%0):MOVIW(%1,%0)};\n" mincpu7(if_not_asgn_tmp(a,31))
+asgn: ASGNU2(rmw, con)   "\t%{?1=~vAC:STW(%0):MOVIW(%1,%0)};\n" mincpu7(if_not_asgn_tmp(a,31))
+asgn: ASGNP2(rmw, con)   "\t%{?1=~vAC:STW(%0):MOVIW(%1,%0)};\n" mincpu7(if_not_asgn_tmp(a,31))
+regx: LOADI1(conBs)      "\t%{?0=~vAC:ST(%c):MOVQB(%0,%c)};\n"  mincpu6(27)
+regx: LOADU1(conB)       "\t%{?0=~vAC:ST(%c):MOVQB(%0,%c)};\n"  mincpu6(27)
+regx: LOADI2(conB)       "\t%{?0=~vAC:STW(%c):MOVQW(%0,%c)};\n" mincpu6(29)
+regx: LOADU2(conB)       "\t%{?0=~vAC:STW(%c):MOVQW(%0,%c)};\n" mincpu6(29)
+regx: LOADP2(conB)       "\t%{?0=~vAC:STW(%c):MOVQW(%0,%c)};\n" mincpu6(29)
+regx: LOADI2(con)        "\t%{?0=~vAC:STW(%c):MOVIW(%0,%c)};\n" mincpu7(31)
+regx: LOADU2(con)        "\t%{?0=~vAC:STW(%c):MOVIW(%0,%c)};\n" mincpu7(31)
+regx: LOADP2(con)        "\t%{?0=~vAC:STW(%c):MOVIW(%0,%c)};\n" mincpu7(31)
 ac: INDIRI2(ADDP2(reg,con)) "LDXW(%0,%1);" mincpu7(60)
 ac: INDIRU2(ADDP2(reg,con)) "LDXW(%0,%1);" mincpu7(60)
 ac: INDIRP2(ADDP2(reg,con)) "LDXW(%0,%1);" mincpu7(60)
@@ -981,15 +981,15 @@ asgn: ASGNP2(rmw, ADDP2(ac, INDIRP2(rmw))) "\t%1ADDV(%0);\n" mincpu7(if_rmw_a(a,
 asgn: ASGNI2(rmw, SUBI2(INDIRI2(rmw), ac)) "\t%2SUBV(%0);\n" mincpu7(if_rmw(a, 30))
 asgn: ASGNU2(rmw, SUBU2(INDIRU2(rmw), ac)) "\t%2SUBV(%0);\n" mincpu7(if_rmw(a, 30))
 asgn: ASGNP2(rmw, SUBP2(INDIRP2(rmw), ac)) "\t%2SUBV(%0);\n" mincpu7(if_rmw(a, 30))
-asgn: ASGNP2(rmw, ADDP2(INDIRP2(rmw), conB)) "\tADDIV(%2,%0);\n" mincpu7(if_rmw_incr(a, 40, 10))
-asgn: ASGNU2(rmw, ADDU2(INDIRU2(rmw), conB)) "\tADDIV(%2,%0);\n" mincpu7(if_rmw_incr(a, 40, 10))
-asgn: ASGNI2(rmw, ADDI2(INDIRI2(rmw), conB)) "\tADDIV(%2,%0);\n" mincpu7(if_rmw_incr(a, 40, 10))
-asgn: ASGNP2(rmw, ADDP2(INDIRP2(rmw), conBn)) "\tSUBIV(-(%2),%0);\n" mincpu7(if_rmw_incr(a, 40, 10))
-asgn: ASGNU2(rmw, ADDU2(INDIRU2(rmw), conBn)) "\tSUBIV(-(%2),%0);\n" mincpu7(if_rmw_incr(a, 40, 10))
-asgn: ASGNI2(rmw, ADDI2(INDIRI2(rmw), conBn)) "\tSUBIV(-(%2),%0);\n" mincpu7(if_rmw_incr(a, 40, 10))
-asgn: ASGNP2(rmw, SUBP2(INDIRP2(rmw), conB)) "\tSUBIV(%2,%0);\n" mincpu7(if_rmw_incr(a, 40, 10))
-asgn: ASGNU2(rmw, SUBU2(INDIRU2(rmw), conB)) "\tSUBIV(%2,%0);\n" mincpu7(if_rmw_incr(a, 40, 10))
-asgn: ASGNI2(rmw, SUBI2(INDIRI2(rmw), conB)) "\tSUBIV(%2,%0);\n" mincpu7(if_rmw_incr(a, 40, 10))
+asgn: ASGNP2(rmw, ADDP2(INDIRP2(rmw), conB))  "\t%{?2=~vAC:ADDV(%0):ADDIV(%2,%0)};\n"    mincpu7(if_rmw_incr(a, 40, 10))
+asgn: ASGNU2(rmw, ADDU2(INDIRU2(rmw), conB))  "\t%{?2=~vAC:ADDV(%0):ADDIV(%2,%0)};\n"    mincpu7(if_rmw_incr(a, 40, 10))
+asgn: ASGNI2(rmw, ADDI2(INDIRI2(rmw), conB))  "\t%{?2=~vAC:ADDV(%0):ADDIV(%2,%0)};\n"    mincpu7(if_rmw_incr(a, 40, 10))
+asgn: ASGNP2(rmw, ADDP2(INDIRP2(rmw), conBn)) "\t%{?2=~vAC:ADDV(%0):SUBIV(-(%2),%0)};\n" mincpu7(if_rmw_incr(a, 40, 10))
+asgn: ASGNU2(rmw, ADDU2(INDIRU2(rmw), conBn)) "\t%{?2=~vAC:ADDV(%0):SUBIV(-(%2),%0)};\n" mincpu7(if_rmw_incr(a, 40, 10))
+asgn: ASGNI2(rmw, ADDI2(INDIRI2(rmw), conBn)) "\t%{?2=~vAC:ADDV(%0):SUBIV(-(%2),%0)};\n" mincpu7(if_rmw_incr(a, 40, 10))
+asgn: ASGNP2(rmw, SUBP2(INDIRP2(rmw), conB))  "\t%{?2=~vAC:SUBV(%0):SUBIV(%2,%0)};\n"    mincpu7(if_rmw_incr(a, 40, 10))
+asgn: ASGNU2(rmw, SUBU2(INDIRU2(rmw), conB))  "\t%{?2=~vAC:SUBV(%0):SUBIV(%2,%0)};\n"    mincpu7(if_rmw_incr(a, 40, 10))
+asgn: ASGNI2(rmw, SUBI2(INDIRI2(rmw), conB))  "\t%{?2=~vAC:SUBV(%0):SUBIV(%2,%0)};\n"    mincpu7(if_rmw_incr(a, 40, 10))
 
 
 # /*-- END RULES --/
@@ -1065,6 +1065,66 @@ static int bitcount(unsigned mask) {
   return n;
 }
 
+/* Compare trees */
+static int sametree(Node p, Node q) {
+  return p == NULL && q == NULL
+    || p && q && p->op == q->op && p->syms[0] == q->syms[0]
+    && sametree(p->kids[0], q->kids[0])
+    && sametree(p->kids[1], q->kids[1]);
+}
+
+/* Find next tree (in forest or in next forest) */
+static Node peektrees(Node tree, int n, Node trees[])
+{
+  int i = 0;
+  Code cp = 0;
+  while (i < n) {
+    if (tree->link) {
+      trees[i++] = tree = tree->link;
+    } else {
+      if (! cp)
+        for (cp = &codehead; cp; cp = cp->next)
+          if (cp->kind == Gen && cp->u.forest == tree)
+            break;
+      if (cp)
+        while ((cp = cp->next))
+          if (cp->kind != Defpoint)
+            break;
+      if (cp && cp->kind == Gen)
+        trees[i++] = tree = cp->u.forest;
+      else
+        break;
+    }
+  }
+  while (i < n)
+    trees[i++] = 0;
+}
+
+/* Test whether tree is a simple use of a constant cnst*/
+static int simplecnstuse(Node p, Symbol cnst)
+{
+  if (p && generic(p->op) == ASGN) {
+    int op = specific(p->kids[0]->op);
+    if (op != VREG+P && op != ADDRL+P && op != ADDRF+P)
+      return 0;
+    p = p->kids[1];
+    op = generic(p->op);
+    if (cpu >= 7 && (op == ADD || op == SUB)
+        && p->kids[0] && generic(p->kids[0]->op) == INDIR) {
+      op = specific(p->kids[0]->kids[0]->op);
+      if (op != VREG+P && op != ADDRL+P && op != ADDRF+P)
+        return 0;
+      p = p->kids[1];
+      op = generic(p->op);
+    }
+    if (p && op == CNST && p->syms[0] == cnst)
+      return 1;
+    if (p && op == INDIR && p->kids[0]->syms[0] == cnst)
+      return 1;
+  }
+  return 0;
+}
+
 /* Cost predicates */
 static int if_arg_reg_only(Node p)
 {
@@ -1095,7 +1155,7 @@ static int if_zpglobal(Node p)
 
 static int if_incr(Node a, int cost, int bonus)
 {
-  /* This assigns a lower cost to an increment/decrement operation
+  /* Reduces the cost of an increment/decrement operation
      when there is evidence that the previous value was preserved in a
      temporary. This is used to prefer dialect LDW(r);ADDW(i);STW(r)
      or ADDIV(i,r) over the potentially more efficient LDI(i);ADDW(r);STW(r)
@@ -1122,6 +1182,38 @@ static int if_incr(Node a, int cost, int bonus)
   return cost;
 }
 
+static int if_cnstreuse(Node a, int cost, int bonus)
+{
+  /* Gives a bonus to a load-constant-into-ac opcode when there is
+     evidence that this constant will be used in the following
+     instruction */
+  extern Node head; /* declared in gen.c */
+  Node h;
+  /* Find ourselves in forest */
+  for (h=head; h; h=h->link)
+    if (generic(h->op) == ASGN && h->kids[1])
+      if (h->kids[1] == a || h->kids[1]->kids[1] && h->kids[1] == a)
+        break;
+  if (! h) {
+    return cost;
+  } else if (h->kids[1]->syms[RX] && h->kids[1]->syms[RX]->temporary
+             && h->kids[1]->syms[RX]->generated
+             && h->kids[1]->syms[RX]->u.t.cse == h->kids[1]) {
+    /* This is a constant subexpression. */
+    Node trees[2];
+    peektrees(h, 2, trees);
+    if (simplecnstuse(trees[0], h->kids[1]->syms[RX]) &&
+        simplecnstuse(trees[1], h->kids[1]->syms[RX]) )
+      return cost - bonus;
+  } else {
+    Node trees[1];
+    peektrees(h, 1, trees);
+    if (simplecnstuse(trees[0], a->syms[0]))
+      return cost - bonus;
+  }
+  return cost;
+}
+
 static int if_zoffset(Node a, int c1, int c2)
 {
   /* Because framesize is not known until much later, we guess it on
@@ -1140,13 +1232,6 @@ static int if_zoffset(Node a, int c1, int c2)
       return (guess >= 0 && guess < 256) ? c1 : c2;
     }
   return LBURG_MAX;
-}
-
-static int sametree(Node p, Node q) {
-  return p == NULL && q == NULL
-    || p && q && p->op == q->op && p->syms[0] == q->syms[0]
-    && sametree(p->kids[0], q->kids[0])
-    && sametree(p->kids[1], q->kids[1]);
 }
 
 static int if_rmw(Node a, int cost)
@@ -1545,8 +1630,8 @@ static void preralloc(Node p)
             r = lreg[31];
           if (r == ireg[31])
             rclobbered = &vac_clobbered;
-          /* Hack because moves to/from FAC are costly */
-          if (r == freg[31] && usecount > 1)
+          /* Hack because moves to/from FAC are costly on cpu<7 */
+          if (r == freg[31] && usecount > 1 && cpu < 7)
             return;
           /* Search for references to sym until accumulator clobbered */
           *rclobbered = 0;

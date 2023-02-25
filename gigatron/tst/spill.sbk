@@ -43,13 +43,13 @@ def code3():
 	_PROLOGUE(32,0,0xff); # save=R0-7
 	LDW(R8);STW(R7);
 	LDW(R9);STW(R6);
-	MOVQW(0,R5);
-	MOVQW(0,R4);
-	MOVQW(0,R3);
-	MOVQW(0,R2);
-	MOVQW(0,R1);
-	MOVQW(0,R0);
-	LDI(0);_STLW(-2+32);
+	LDI(0);STW(R5);
+	STW(R4);
+	STW(R3);
+	STW(R2);
+	STW(R1);
+	STW(R0);
+	_STLW(-2+32);
 	_STLW(-4+32);
 	_STLW(-6+32);
 	_STLW(-8+32);
@@ -71,12 +71,12 @@ def code3():
 def code4():
 	label('f4');
 	_PROLOGUE(8,0,0x0); # save=None
-	MOVQW(0,R19);
-	MOVQW(0,R18);
-	MOVQW(0,R17);
-	MOVQW(0,R16);
-	MOVQW(0,R15);
-	MOVQW(0,R14);
+	LDI(0);STW(R19);
+	STW(R18);
+	STW(R17);
+	STW(R16);
+	STW(R15);
+	STW(R14);
 	LDWI('i');DEEKA(R23);
 	LDW(R23);_MULI(5);STW(R22);
 	LDWI('a');ADDW(R22);_MOVF([vAC],F10);

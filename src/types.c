@@ -144,13 +144,15 @@ void type_init(int argc, char *argv[]) {
 	funcptype = ptr(func(voidtype, NULL, 1));
 	charptype = ptr(chartype);
 #define xx(v,t) if (v==NULL && t->size==voidptype->size && t->align==voidptype->align) v=t
-	xx(unsignedptr,unsignedshort);
+	if (unsignedshort->size != unsignedtype->size)
+		xx(unsignedptr,unsignedshort);
 	xx(unsignedptr,unsignedtype);
 	xx(unsignedptr,unsignedlong);
 	xx(unsignedptr,unsignedlonglong);
 	if (unsignedptr == NULL)
 		unsignedptr = type(UNSIGNED, NULL, voidptype->size, voidptype->align, voidptype->u.sym);
-	xx(signedptr,shorttype);
+	if (shorttype->size != inttype->size)
+		xx(signedptr,shorttype);
 	xx(signedptr,inttype);
 	xx(signedptr,longtype);
 	xx(signedptr,longlong);

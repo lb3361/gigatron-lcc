@@ -512,10 +512,10 @@ ac: DIVI2(ac, iarg) "%0%[1b]_DIVS(%1);" 200
 ac: DIVU2(ac, iarg) "%0%[1b]_DIVU(%1);" 200
 ac: MODI2(ac, iarg) "%0%[1b]_MODS(%1);" 200
 ac: MODU2(ac, iarg) "%0%[1b]_MODU(%1);" 200
-ac: DIVI2(ac, con)  "%0%[1b]_DIVIS(%1);" 200
-ac: DIVU2(ac, con)  "%0%[1b]_DIVIU(%1);" 200
-ac: MODI2(ac, con)  "%0%[1b]_MODIS(%1);" 200
-ac: MODU2(ac, con)  "%0%[1b]_MODIU(%1);" 200
+ac: DIVI2(ac, con)  "%0%[1b]_DIVIS(%1);" 180
+ac: DIVU2(ac, con)  "%0%[1b]_DIVIU(%1);" 180
+ac: MODI2(ac, con)  "%0%[1b]_MODIS(%1);" 180
+ac: MODU2(ac, con)  "%0%[1b]_MODIU(%1);" 180
 ac: BCOMI2(ac)      "%0STW(T3);_LDI(-1);XORW(T3);" 68
 ac: BCOMU2(ac)      "%0STW(T3);_LDI(-1);XORW(T3);" 68
 ac: BANDI2(ac,iarg) "%0%[1b]ANDW(%1);" 28

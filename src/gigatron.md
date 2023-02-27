@@ -418,7 +418,7 @@ eac:  eac0  "%{=%0}%0"
 ac:   ac0   "%{=%0}%0"
 ac:   eac   "%{=%0}%0"
 eac:  reg   "%{=%0}%{?0=~vAC::LDW(%0);}"  20
-eac:  lddr  "%{=%0}%{?0=~vAC::_SP(%0);}" 41
+eac:  lddr  "%{=%0}%{?0=~vAC::_SP(%0);}"  41
 eac0: conB  "%{=%0}%{?0=~vAC::LDI(%0);}"  +if_cnstreuse(a,16,8)
 eac:  conBn "%{=%0}%{?0=~vAC::LDNI(%0);}" +mincpu6(if_cnstreuse(a,16,8))
 eac:  con   "%{=%0}%{?0=~vAC::LDWI(%0);}" +if_cnstreuse(a,21,8)
@@ -1071,6 +1071,21 @@ static int sametree(Node p, Node q) {
     || p && q && p->op == q->op && p->syms[0] == q->syms[0]
     && sametree(p->kids[0], q->kids[0])
     && sametree(p->kids[1], q->kids[1]);
+}
+
+/* Compare constants (aggregating signed and unsigned types) */
+static int samecnst(Symbol a, Symbol b)
+{
+  if (! (a && b))
+    return 0;
+  if (a == b)
+    return 1;
+  if (a->scope == CONSTANTS && isint(a->type)
+      && b->scope == CONSTANTS && isint(b->type)
+      && (a->type->size == b->type->size)
+      && (a->u.c.v.i == b->u.c.v.i) )
+    return 1;
+  return 0;
 }
 
 /* Find next tree (in forest or in next forest) */
@@ -1884,7 +1899,7 @@ static void emit3(const char *fmt, int len, Node p, int nt, Node *kids, short *n
               else if (fmt[3] == '=')
                 eq = 0; /* literal comparison */
               else if (sym && cmp == ireg[31]->x.name && !sym->x.regnode )
-                eq = (vac_constval == sym || vac_memval == sym);
+                eq = (samecnst(vac_constval,sym) || vac_memval == sym);
               else if (sym && cmp == lreg[31]->x.name && !sym->x.regnode )
                 eq = (lac_memval == sym);
               else if (sym && cmp == freg[31]->x.name && !sym->x.regnode )

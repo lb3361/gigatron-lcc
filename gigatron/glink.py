@@ -31,7 +31,7 @@
 
 # -------------- glink proper
 
-import argparse, json, string, functools
+import argparse, json, string, functools, fnmatch
 import os, sys, traceback, copy, builtins
 import builtins
 import glccver
@@ -235,40 +235,43 @@ class Module:
         self.sympass = {}
         # inner function to process a placement fragment
         def placement(tp):
-            matches = self.code
-            if tp[1] != '*':
-                matches = [f for f in self.code if f.name == tp[1]]
-            if len(matches) < 1:
-                error(f"Cannot locate fragment for {tp}")
+            matches = [f for f in self.code if fnmatch.fnmatchcase(f.name, tp[1])]
             for match in matches:
-                if match.amin != None:
-                    if tp[1] != '*':
-                        error(f"Conflicting placement constraints {tp}")
-                else:
+                if tp[0] == 'NOHOP':
+                    match.nohop = True
+                elif match.amin == None:
                     match.amax = tp[3] if len(tp) > 3 else None
                     match.amin = tp[2]
+                elif len(matches) < 2:
+                    error(f"Conflicting placement constraints {tp}")
+            return len(matches)
         # process code list
         for tp in code:
             if tp[0] == 'EXPORT':
-                self.exports.append(tp[1])              # ('EXPORT', "symbolname")
+                self.exports.append(tp[1])                    # ('EXPORT', "symbolname")
             elif tp[0] == 'IMPORT' and len(tp) == 2:
-                self.imports.append(tp[1])              # ('IMPORT', "symbolname")
+                self.imports.append(tp[1])                    # ('IMPORT', "symbolname")
             elif tp[0] == 'IMPORT' and len(tp) > 3 and tp[2] == 'IF':
-                self.cimports.append(tp)                # ('IMPORT', "symbolname", 'IF', ...)
+                self.cimports.append(tp)                      # ('IMPORT', "symbolname", 'IF', ...)
             elif tp[0] == 'CODE':
-                self.code.append(Fragment(*tp))         # ('CODE', "name", func)
+                self.code.append(Fragment(*tp))               # ('CODE', "name", func)
             elif tp[0] == 'DATA' or tp[0] == 'BSS' or tp[0] == 'COMMON':
-                self.code.append(Fragment(*tp))         # ('DATA|BSS|COMMON', "name", func, size, align)
-            elif tp[0] == 'ORG' or tp[0] == 'PLACE':    # ('PLACE', "name|*", minaddr, maxaddr)
-                placement(tp)                           # ('ORG', "name|*", addr)
-            elif tp[0] != 'NOP':                        # ('NOP',)
+                self.code.append(Fragment(*tp))               # ('DATA|BSS|COMMON', "name", func, size, align)
+            elif tp[0] in ('ORG','PLACE','NOHOP'):            # ('PLACE', "pattern", minaddr, maxaddr)
+                if placement(tp) < 1:                         # ('ORG', "pattern", addr)
+                    error(f"Cannot locate fragment for {tp}") # ('NOHOP', "pattern")
+            elif tp[0] != 'NOP':                              # ('NOP',)
                 error(f"Unrecognized fragment specification {tp}")
         # placement overlay
         if map_place:
             fragnames = [f.name for f in self.code]
             for tp in map_place(self.name, fragnames) or []:
-                if tp[0] == 'PLACE' and (tp[1] == '*' or tp[1] in fragnames):
-                    placement(tp)
+                if tp[0] in ('ORG', 'PLACE', 'NOHOP'):
+                    n = placement(tp)
+                    if n == 0:
+                        warning(f"map_place directive {tp} does not match any fragment");
+                    elif args.d > 0:
+                        debug(f"map_place directive {tp} matches {n} fragment(s)")
                 elif tp[0] != 'NOP':
                     error(f"Unrecognized map_place() specification {tp}")
     def __repr__(self):
@@ -2312,6 +2315,8 @@ def find_data_segment(size, align=None):
         addr = aligned(s.pc, align)
         if amin != None and amin > addr:
             addr = aligned(amin, align)
+        if the_fragment.nohop and (addr ^ (addr + size - 1)) & 0xff00 != 0:
+            addr = aligned(addr, 255)
         if amin != None and amax == None:
             if not (amin >= s.saddr and amin < s.eaddr):
                 continue
@@ -2445,7 +2450,10 @@ def assemble_data_fragments(m, cseg, placed=False):
             if args.fragments and final_pass:
                 record_fragment_address(the_pc)
             try:
-                frag.func()
+                if isinstance(frag.func, (builtins.bytes, bytearray)):
+                    emit(*frag.func)
+                else:
+                    frag.func()
             except Exception as err:
                 fatal(str(err), exc=True)
             the_segment.pc = the_pc
@@ -2657,7 +2665,6 @@ def save_gt1(fname, start):
             pc = s.saddr + len(s.buffer)
             while a0 < pc:
                 a1 = min(s.eaddr, (a0 | 0xff) + 1)
-                debug(f"{s} {hex(a0)} {hex(a1)} {hex(pc)}")
                 buffer = s.buffer[(a0-s.saddr):(a1-s.saddr)]
                 fd.write(builtins.bytes((hi(a0),lo(a0),len(buffer)&0xff)))
                 fd.write(buffer)

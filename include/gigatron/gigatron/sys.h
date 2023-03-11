@@ -137,29 +137,29 @@ extern channel_t *channel(int);
 /* All stubs are in gigatron/libc/gigatron.s */
 
 /* -- SYS_Lup -- */
-int SYS_Lup(unsigned int addr);
+extern int SYS_Lup(unsigned int addr);
 #define has_SYS_Lup() 1
 
 /* -- SYS_Random -- */
-unsigned int SYS_Random(void);
+extern unsigned int SYS_Random(void);
 #define has_SYS_Random() 1
 
 /* -- SYS_VDrawBits -- */
-void SYS_VDrawBits(int fgbg, char bits, char *address);
+extern void SYS_VDrawBits(int fgbg, char bits, char *address);
 #define has_SYS_VDrawBits() 1
 
 /* -- SYS_Exec
    Note: Returns if argument vlr is (void*)(-1). */
-void SYS_Exec(void *romptr, void *vlr);
+extern void SYS_Exec(void *romptr, void *vlr);
 #define has_SYS_Exec() 1
 
 /* -- SYS_SetMode */
-void SYS_SetMode(int);
+extern void SYS_SetMode(int);
 #define has_SYS_SetMode 1
 
 /* -- SYS_ReadRomDir
    Notes: the name is copied into buf8 */
-void* SYS_ReadRomDir(void *romptr, char *buf8);
+extern void* SYS_ReadRomDir(void *romptr, char *buf8);
 #define has_SYS_ReadRomDir() \
 	((romType & 0xfc) >= romTypeValue_ROMv5)
 
@@ -167,7 +167,7 @@ void* SYS_ReadRomDir(void *romptr, char *buf8);
    Notes: Calling this from C is risky.
    Notes: This exists in v4 but overwrites 0x81 with ctrlBits. 
    Notes: We depend on ctrlBits being nonzero when an expansion card is present. */
-int SYS_ExpanderControl(unsigned int ctrl);
+extern int SYS_ExpanderControl(unsigned int ctrl);
 #define has_SYS_ExpanderControl() \
 	(((romType & 0xfc) >= romTypeValue_ROMv5) && (ctrlBits_v5 != 0))
 
@@ -175,10 +175,17 @@ int SYS_ExpanderControl(unsigned int ctrl);
    Notes: This exists in v4 but depends on 0x81 containing ctrlBits.
    Notes: only the high 8 bits of `dst` are used.
    Notes: only the low 8 bits of `srcend` are used. */
-void SYS_SpiExchangeBytes(void *dst, void *src, void *srcend);
+extern void SYS_SpiExchangeBytes(void *dst, void *src, void *srcend);
 #define has_SYS_SpiExchangeBytes() \
 	(((romType & 0xfc) >= romTypeValue_ROMv5) && (ctrlBits_v5 != 0))
 
-
+/* -- SYS_Sprite6[x][y] --
+   Notes: This is best called from a subroutine to perform general blits */
+extern void* SYS_Sprite6(void *srcpix, void *dst);
+extern void* SYS_Sprite6x(void *srcpix, void *dst);
+extern void* SYS_Sprite6y(void *srcpix, void *dst);
+extern void* SYS_Sprite6xy(void *srcpix, void *dst);
+#define has_SYS_Sprite6() \
+	((romType & 0xfc) >= romTypeValue_ROMv3)
 
 #endif

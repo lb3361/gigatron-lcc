@@ -159,8 +159,62 @@ def scope():
            code=[('EXPORT', 'SYS_SpiExchangeBytes'),
                  ('CODE', 'SYS_SpiExchangeBytes', code0) ])
 
+    # ----------------------------------------
+    # void* SYS_Sprite6(void *srcpix, void *dst);
+    def code():
+        nohop()
+        label('SYS_Sprite6')
+        _LDI('SYS_Sprite6_v3_64'); STW('sysFn')
+        LDW(R8);STW('sysArgs0')
+        LDW(R9);SYS(64)
+        RET()
 
+    module(name='sys_sprite6.s',
+           code=[('EXPORT', 'SYS_Sprite6'),
+                 ('CODE', 'SYS_Sprite6', code) ] )
     
+    # ----------------------------------------
+    # void* SYS_Sprite6x(void *srcpix, void *dst);
+    def code():
+        nohop()
+        label('SYS_Sprite6x')
+        _LDI('SYS_Sprite6x_v3_64'); STW('sysFn')
+        LDW(R8);STW('sysArgs0')
+        LDW(R9);SYS(64)
+        RET()
+
+    module(name='sys_sprite6x.s',
+           code=[('EXPORT', 'SYS_Sprite6x'),
+                 ('CODE', 'SYS_Sprite6x', code) ] )
+
+    # ----------------------------------------
+    # void* SYS_Sprite6y(void *srcpix, void *dst);
+    def code():
+        nohop()
+        label('SYS_Sprite6y')
+        _LDI('SYS_Sprite6y_v3_64'); STW('sysFn')
+        LDW(R8);STW('sysArgs0')
+        LDW(R9);SYS(64)
+        RET()
+
+    module(name='sys_sprite6y.s',
+           code=[('EXPORT', 'SYS_Sprite6y'),
+                 ('CODE', 'SYS_Sprite6y', code) ] )
+
+    # ----------------------------------------
+    # void* SYS_Sprite6xy(void *srcpix, void *dst);
+    def code():
+        nohop()
+        label('SYS_Sprite6xy')
+        _LDI('SYS_Sprite6xy_v3_64'); STW('sysFn')
+        LDW(R8);STW('sysArgs0')
+        LDW(R9);SYS(64)
+        RET()
+
+    module(name='sys_sprite6xy.s',
+           code=[('EXPORT', 'SYS_Sprite6xy'),
+                 ('CODE', 'SYS_Sprite6xy', code) ] )
+
 # execute    
 scope()
 

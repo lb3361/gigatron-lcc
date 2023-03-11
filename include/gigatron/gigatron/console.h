@@ -98,7 +98,7 @@ extern void _console_setup(void);
 
 /* Draws up to `len` characters from string `s` at the screen position
    given by address `addr`.  This assumes that the horizontal offsets
-   in the string table are all zero. All characters are printed on a
+   in the screen table are all zero. All characters are printed on a
    single line (no newline).  The function returns when any of the
    following conditions is met: (1) `len` characters have been
    printed, (2) the next character would not fit horizontally on the

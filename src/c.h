@@ -91,6 +91,8 @@ typedef struct type *Type;
 
 typedef struct field *Field;
 
+typedef struct attribute *Attribute;
+
 typedef struct {
 	unsigned printed:1;
 	unsigned marked;
@@ -250,6 +252,12 @@ struct swtch {
 	long *values;
 	Symbol *labels;
 };
+struct attribute {
+	Attribute link;
+	const char *name;
+	Symbol args[2];
+	char okay;
+};
 struct symbol {
 	char *name;
 	int scope;
@@ -265,6 +273,7 @@ struct symbol {
 	unsigned generated:1;
 	unsigned defined:1;
 	Type type;
+	Attribute attr;
 	float ref;
 	union {
 		struct {

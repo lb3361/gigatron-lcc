@@ -288,16 +288,18 @@ double feek(word a) {
 }
 
 /* Register base.
-   Code that does not advertise register bases assume old values.
-   New versions of the compiler always advertise bases.
+   Code that does not advertise register bases assume default values
+   that match those alllocated by glink in the absence of rom.json
+   overrides. GLCC-2.x always advertises the correct numbers
+   when compiled with map=sim.
 */
 
 unsigned int regbase = 0x90;
 unsigned int flbase  = 0x81;
-unsigned int t0base  = 0x88;
-unsigned int t2base  = 0x8c;
-unsigned int b0base  = 0x81;
-unsigned int spbase  = 0xbe;
+unsigned int t0base  = 0x24;
+unsigned int t2base  = 0x88;
+unsigned int b0base  = 0x8c;
+unsigned int spbase  = 0x8e;
 
 #define vPC       (0x16)
 #define vAC       (0x18)

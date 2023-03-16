@@ -2,33 +2,16 @@
 def scope():
 
     # ----------------------------------------
-    # Extra definitions
-
-    def code_sysdefs():
-        nohop()
-        label("ctrlBits_v5", 0x1f8)   # may not be defined in interface.json
-
-    module(name='sysdefs.s',
-           code=[('EXPORT', 'ctrlBits_v5'),
-                 ('CODE', 'sysdefs', code_sysdefs) ] )
+    # Channel access function
 
     def code_channel():
-        label("channel1", 0x1fa)      # different from interface.json (0x100)
-        label("channel2", 0x2fa)      # different from interface.json (0x200)
-        label("channel3", 0x3fa)      # different from interface.json (0x300)
-        label("channel4", 0x4fa)      # different from interface.json (0x400)
         nohop()
         label('channel')
         LD(R8);ST(vACH);ORI(0xff);XORI(5);RET()  # nine bytes
 
-    module(name='channel.s',
+        module(name='channel.s',
            code=[('EXPORT', 'channel'),
-                 ('EXPORT', 'channel1'),
-                 ('EXPORT', 'channel2'),
-                 ('EXPORT', 'channel3'),
-                 ('EXPORT', 'channel4'),
                  ('CODE', 'channel', code_channel) ] )
-
 
     # ----------------------------------------
     # int SYS_Lup(unsigned int addr)

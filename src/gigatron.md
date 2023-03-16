@@ -1972,6 +1972,115 @@ static void emit3(const char *fmt, int len, Node p, int nt, Node *kids, short *n
 }
 
 
+/* placement constraints and other attributes */
+struct constraints {
+  char near_p, place_p, org_p, nohop_p;
+  unsigned int amin, amax, aorg;
+};
+
+static int check_uintval(Attribute a, int n)
+{
+  Symbol c = a->args[n];
+  if (c && c->scope == CONSTANTS && isint(c->type)) {
+    unsigned long u = c->u.c.v.u;
+    if (u != (u & 0xffff))
+      warning("attribute `%s`: argument out of range\n", a->name);
+    return 1;
+  }
+  return 0;
+}
+
+static unsigned int uintval(Symbol c)
+{
+  if (c && c->scope == CONSTANTS && isint(c->type))
+    return (unsigned int) c->u.c.v.u;
+  return 0;
+}
+
+static int check_attributes(Symbol p)
+{
+  Attribute a;
+  char is_weak = 0;
+  char has_org = 0;
+  char has_place = 0;
+  char is_extern = (p->sclass == EXTERN);
+  if ((p->scope == GLOBAL) || is_extern) {
+    for (a = p->attr; a; a = a->link) {
+      char yes = 0;
+      if (a->name == string("place") && !is_extern) {
+        if (has_org)
+          error("incompatible placement constraints (org & place)\n");
+        a->okay = (check_uintval(a,0) &&  check_uintval(a,1));
+        yes = 1;
+      } else if (a->name == string("org")) {
+        if (has_org)
+          error("incompatible placement constraints (multiple org)\n");
+        else if (has_place)
+          error("incompatible placement constraints (org & place)\n");
+        a->okay = (check_uintval(a,0) && !a->args[1]);
+        yes = has_org = 1;
+      } else if (a->name == string("nohop") && !is_extern) {
+        a->okay = (!a->args[0] && !a->args[1]);
+        yes = 1;
+      } else if (a->name == string("weak") && is_extern) {
+        is_weak = a->okay = (!a->args[0] && !a->args[1]);
+        yes = 1;
+      }      
+      if (yes && !a->okay)
+        error("illegal argument in `%s` attribute\n", a->name);
+    }
+  }
+  return is_weak;
+}
+
+static void get_constraints(Symbol p, struct constraints *c)
+{
+  Attribute a;
+
+  c->place_p = c->org_p = c->nohop_p = 0;
+  c->amin = c->amax = c->aorg = 0;
+  c->near_p = (fnqual(p->type) == NEAR);
+  for (a = p->attr; a; a = a->link) {
+    if (!a->okay) {
+      continue;
+    } else if (a->name == string("nohop")) {
+      c->nohop_p = 1;
+    } else if (a->name == string("org")) {
+      c->aorg = uintval(a->args[0]);
+      c->org_p = 1;
+    } else if (a->name == string("place")) {
+      unsigned long a0 = uintval(a->args[0]);
+      unsigned long a1 = uintval(a->args[1]);
+      if (c->place_p) {
+        if (a0 < c->amin) a0 = c->amin;
+        if (a1 > c->amax) a1 = c->amax;
+      }
+      c->place_p = 1;
+      c->amin = a0;
+      c->amax = a1;
+    }
+  }
+  if (c->near_p) {
+    if (!c->place_p)
+      c->amin = 0;
+    if (!c->place_p || c->amax > 0xff)
+      c->amax = 0xff;
+  }
+  if ((c->near_p || c->place_p) && (c->amin > c->amax))
+    warning("unsatisfyable placement constraints (place)\n");
+}
+
+static void print_constraints(Symbol p, struct constraints *c)
+{
+  if (c->nohop_p)
+    lprint("('NOHOP', %s)", p->x.name);
+  if (c->org_p)
+    lprint("('ORG', %s, 0x%x)", p->x.name, c->aorg);
+  if (c->near_p || c->place_p)
+    lprint("('PLACE', %s, 0x%x, 0x%x)", p->x.name, c->amin, c->amax);
+}
+
+
 /* lcc callback: annotates arg nodes with offset and register info. */
 static void doarg(Node p)
 {
@@ -2061,7 +2170,9 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   int i, roffset, sizesave, ty;
   unsigned savemask;
   char frameless;
+  struct constraints place;
   Symbol r;
+
   usedmask[0] = usedmask[1] = 0;
   freemask[0] = freemask[1] = ~(unsigned)0;
   offset = maxoffset = 0;
@@ -2075,6 +2186,8 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
     tmask[IREG] = REGMASK_TEMPS;
     vmask[IREG] = REGMASK_MOREVARS;
   }
+  /* placement constraints */
+  get_constraints(f, &place);
   /* locate incoming arguments */
   offset = 0;
   roffset = 0;
@@ -2135,6 +2248,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   xprint_init();
   segment(CODE);
   lprint("('%s', %s, code%d)", segname(), f->x.name, codenum);
+  print_constraints(f, &place);
   print("# ======== %s\n", lhead.prev->s);
   print("def code%d():\n", codenum++);
   print("\tlabel(%s);\n", f->x.name);
@@ -2218,15 +2332,23 @@ static void defstring(int n, char *str)
 /* lcc callback - mark imported symbol. */
 static void import(Symbol p)
 {
-  if (p->ref > 0 && strncmp(p->x.name, "'__glink_weak_", 14) != 0)
-    lprint("('IMPORT', %s)", p->x.name);
+  if (p->ref > 0 && strncmp(p->x.name, "'__glink_weak_", 14) != 0) {
+    Attribute a;
+    for (a = p->attr; a; a = a->link)
+      if (a && a->okay && a->name == string("org"))
+        break;
+    if (a)
+      lprint("('IMPORT', %s, 'AT', 0x%x)", p->x.name, uintval(a->args[0]));
+    else
+      lprint("('IMPORT', %s)", p->x.name);
+  }
 }
 
 /* lcc callback - mark exported symbol. */
 static void export(Symbol p)
 {
   int isnear = fnqual(p->type) == NEAR;
-  int iscommon = (p->u.seg == BSS && !isnear);
+  int iscommon = (p->u.seg == BSS && !isnear && !p->attr);
   if (! iscommon)
     lprint("('EXPORT', %s)", p->x.name);
 }
@@ -2234,10 +2356,14 @@ static void export(Symbol p)
 /* lcc callback: determine symbol names in assembly code. */
 static void defsymbol(Symbol p)
 {
+  /* this is the time to check that attributes are meaningful */
+  int is_weak = check_attributes(p);
   if (p->scope >= LOCAL && p->sclass == STATIC)
     p->x.name = stringf("'.%d'", genlabel(1));
   else if (p->generated)
     p->x.name = stringf("'.%s'", p->name);
+  else if (p->sclass == EXTERN && is_weak)
+    p->x.name = stringf("'__glink_weak_%s'", p->name);
   else if (p->scope == GLOBAL || p->sclass == EXTERN)
     p->x.name = stringf("'%s'", p->name);
   else
@@ -2264,20 +2390,22 @@ static void address(Symbol q, Symbol p, long n)
 /* lcc callback: construct global variable. */
 static void global(Symbol p)
 {
-  int isnear = fnqual(p->type) == NEAR;
-  unsigned int size = p->type->size;
-  unsigned int align = (isnear) ? 1 : p->type->align;
+  struct constraints place;
+  unsigned int size, align;
   const char *s = segname();
   const char *n;
-  if (p->u.seg == BSS && p->sclass != STATIC && !isnear)
-    s = "COMMON";
+
+  get_constraints(p, &place);
+  size = p->type->size;
+  align = (place.near_p) ? 1 : p->type->align;
+  if (p->u.seg == BSS && p->sclass != STATIC && !place.near_p && !p->attr)
+    s = "COMMON";               /* no 'common' in the presence of placement attributes */
   if (p->u.seg == LIT)
     size = 0; /* unreliable in switch tables */
   lprint("('%s', %s, code%d, %d, %d)",
           s, p->x.name, codenum, size, align);
   n = lhead.prev->s;
-  if (isnear)
-    lprint("('PLACE', %s, 0x00, 0xff)", p->x.name);
+  print_constraints(p, &place);
   xprint("# ======== %s\n", n);
   xprint("def code%d():\n", codenum++);
   if (align > 1)

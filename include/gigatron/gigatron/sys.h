@@ -1,6 +1,7 @@
 #ifndef __GIGATRON_SYS
 #define __GIGATRON_SYS
 
+#include <gigatron/pragma.h>
 
 /* ---- Well known constants from interface.json ---- */
 
@@ -105,11 +106,11 @@ extern byte videoTable[];
 extern void vReset(void);
 extern byte ledTempo_v7;
 extern word vIRQ_c5;
+extern byte ctrlBits_v5 __at(0x1f8);  /* not in interface.json */
 extern byte videoTop_v5;
 extern byte userCode[];
 extern byte soundTable[];
 extern byte screenMemory[][256];
-extern byte ctrlBits_v5;          /* not in interface.json */
 
 /* ---- Sound channels ---- */
 
@@ -125,11 +126,11 @@ typedef struct channel_s {
 #endif
 } channel_t;
 
-extern channel_t channel1;
-extern channel_t channel2;
-extern channel_t channel3;
-extern channel_t channel4;
-extern channel_t *channel(int);
+extern channel_t channel1 __at(0x1fa); /* differ from interface.json */
+extern channel_t channel2 __at(0x2fa); /* differ from interface.json */
+extern channel_t channel3 __at(0x3fa); /* differ from interface.json */
+extern channel_t channel4 __at(0x4fa); /* differ from interface.json */
+extern channel_t *channel(int c);      /* c in range 1...4           */
 
 
 /* ---- Calling SYS functions ---- */

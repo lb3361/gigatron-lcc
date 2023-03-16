@@ -253,6 +253,8 @@ class Module:
                 self.imports.append(tp[1])                    # ('IMPORT', "symbolname")
             elif tp[0] == 'IMPORT' and len(tp) > 3 and tp[2] == 'IF':
                 self.cimports.append(tp)                      # ('IMPORT', "symbolname", 'IF', ...)
+            elif tp[0] == 'IMPORT' and len(tp) == 4 and tp[2] == 'AT':
+                self.symdefs[tp[1]] = int(tp[3])              # ('IMPORT', "symbolname", 'AT', address)
             elif tp[0] == 'CODE':
                 self.code.append(Fragment(*tp))               # ('CODE', "name", func)
             elif tp[0] == 'DATA' or tp[0] == 'BSS' or tp[0] == 'COMMON':

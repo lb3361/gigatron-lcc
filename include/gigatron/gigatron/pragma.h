@@ -87,4 +87,13 @@
 #define __at(x) __attribute__((org,x))
 
 
+/* Note that the keywords `__near` and `__far` are not attributes
+   but are type qualifiers comparable to `const` or `volatile`.
+   They can be used in typedefs and inside declarators.
+   For instance `int * __near a;` and `int __near *a` are
+   quite different. The first one locates pointer a in page zero,
+   the second one says that pointer a points to integers located
+   in page zero. Such subtleties do not exist for attributes. */
+
+
 #endif

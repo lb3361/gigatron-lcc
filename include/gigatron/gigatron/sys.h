@@ -182,10 +182,10 @@ extern void SYS_SpiExchangeBytes(void *dst, void *src, void *srcend);
 
 /* -- SYS_Sprite6[x][y] --
    Notes: This is best called from a subroutine to perform general blits */
-extern void* SYS_Sprite6(void *srcpix, void *dst);
-extern void* SYS_Sprite6x(void *srcpix, void *dst);
-extern void* SYS_Sprite6y(void *srcpix, void *dst);
-extern void* SYS_Sprite6xy(void *srcpix, void *dst);
+extern void* SYS_Sprite6(const void *srcpix, void *dst);
+extern void* SYS_Sprite6x(const void *srcpix, void *dst);
+extern void* SYS_Sprite6y(const void *srcpix, void *dst);
+extern void* SYS_Sprite6xy(const void *srcpix, void *dst);
 #define has_SYS_Sprite6() \
 	((romType & 0xfc) >= romTypeValue_ROMv3)
 

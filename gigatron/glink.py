@@ -1983,9 +1983,15 @@ def _PROLOGUE(framesize,maxargoffset,mask):
     '''Function prologue'''
     tryhop(2);LDW(vLR);STW(B0)
     if args.cpu >= 7:
-        _ALLOC(-framesize);_LDI(maxargoffset);ADDW(SP)
+        _ALLOC(-framesize)
+        if maxargoffset == 0:
+            LDW(SP)
+        else:
+            _LDI(maxargoffset);ADDW(SP)
     else:
-        _SP(-framesize);STW(SP);ADDI(maxargoffset)
+        _SP(-framesize);STW(SP)
+        if maxargoffset != 0:
+            ADDI(maxargoffset)
     if mask == 0 and args.cpu >= 6:
         DOKEA(B0)
     elif args.cpu >= 5:

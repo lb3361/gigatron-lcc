@@ -896,8 +896,8 @@ def SYS(op):
         # All ROMs should ensure that 14 works.
         maxTicks = 14
         if 'maxTicks' in rominfo:
-            maxTicks = rominfo['maxTicks']
-        op = min(0, 14 - op // 2) & 0xff
+            maxTicks = int(rominfo['maxTicks'])
+        op = min(0, maxTicks - op // 2) & 0xff
     emit_op("SYS", op)
 @vasm
 def HALT():

@@ -39,9 +39,10 @@ def scope():
            code=[ ('EXPORT', '_vIrqCounter'),
                   ('EXPORT', '_vIrqRelay'),
                   ('BSS', '_vIrqCounter', code0, 2, 1),
-                  ('PLACE', '_vIrqCounter', 0x0000, 0x00ff) ]
+                  ('PLACE', '_vIrqCounter', 0x0000, 0x007f) ]
            +    ( [ ('CODE', '_vIrqHandler', code1),
                     ('CODE', '_vIrqInit', code2), 
+                    ('PLACE', '_vIrqHandler', 0x200, 0x7fff),
                     ('DATA', '__glink_magic_init', code3, 4, 2),
                     ('DATA', '__glink_magic_fini', code4, 4, 2) ]
                   if 'has_vIRQ' in rominfo else [] ) )

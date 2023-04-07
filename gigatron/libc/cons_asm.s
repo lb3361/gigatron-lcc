@@ -35,7 +35,7 @@ def scope():
         LDI(1);ADDW(R12);STW(R12);               # increment counter
         XORW(R11);_BNE('.loop')                  # loop
         label('.ret')
-        tryhop(7);POP();LDW(R12);RET()
+        tryhop(4);LDW(R12);POP();RET()
 
     def code_printonechar():
         nohop()

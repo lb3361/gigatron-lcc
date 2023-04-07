@@ -32,7 +32,7 @@ def code0():
     LDWI(0)                # _exitm_msgfunc is LDWI's argument here
     #####
     ##### Here diverge from the standard start function
-    ##### Wek ignore _exitm_msgfunc and just call the
+    ##### We ignore _exitm_msgfunc and just call the
     ##### gtsim pseudo sys function.
     #####
     LDWI(0xff00);STW('sysFn');SYS(34)

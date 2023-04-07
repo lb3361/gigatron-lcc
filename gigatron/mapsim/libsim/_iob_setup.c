@@ -29,8 +29,3 @@ void _iob_setup(void)
 	
 }
 
-void _sim_flush(void)
-{
-	fflush(stdout);
-}
-

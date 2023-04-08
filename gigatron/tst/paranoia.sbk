@@ -3516,7 +3516,7 @@ def code27():
 	_MOVF(F17,FAC);LDI(F17);_FMUL();LDI(F14);_FMUL();_MOVF(FAC,F14);
 	_MOVF(F17,FAC);_SP(-5+16);_FMUL();_FNEG();LDW(R20);_FADD();LDI(F21);_FDIV();LDI(F14);_FADD();_MOVF(FAC,'Q');
 	_MOVF(F17,FAC);LDWI('Two');_FMUL();LDI(F10);_FMUL();_FNEG();_SP(-5+16);_FADD();_MOVF(FAC,'Z');
-	_MOVF('Zero',FAC);_SP(-8+16);DEEK();_FCMP();_BLT('.851');
+	_MOVF('Zero',FAC);_LDLW(-8+16);_FCMP();_BLT('.851');
 	_MOVF('Z',FAC);_FNEG();_MOVF(FAC,'Z');
 	_MOVF('Z1',FAC);_FNEG();_MOVF(FAC,'Z1');
 	label('.851');

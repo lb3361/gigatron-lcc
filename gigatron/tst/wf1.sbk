@@ -196,18 +196,18 @@ def code6():
 	label('.49');
 	INCV(R9);
 	label('.47');
-	LDW(R9);PEEK();STW(R23);
-	LDW(R8);PEEK();XORW(R23);_BEQ('.46');
-	LDW(R8);PEEK();_BNE('.51');
+	PEEKV(R9);STW(R23);
+	PEEKV(R8);XORW(R23);_BEQ('.46');
+	PEEKV(R8);_BNE('.51');
 	LDNI(-1);
 	_BRA('.45');
 	label('.51');
-	LDW(R9);PEEK();_BNE('.53');
+	PEEKV(R9);_BNE('.53');
 	LDI(1);
 	_BRA('.45');
 	label('.53');
-	LDW(R9);PEEK();STW(R23);
-	LDW(R8);PEEK();SUBW(R23);
+	PEEKV(R9);STW(R23);
+	PEEKV(R8);SUBW(R23);
 	label('.45');
 	tryhop(2);POP();RET()
 # ======== ('COMMON', 'next', code7, 2, 2)

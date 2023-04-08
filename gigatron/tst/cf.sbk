@@ -60,9 +60,9 @@ def code0():
 	label('.22');
 	LDWI('.25');STW(R8);
 	_STLW(0);
-	LDW(R5);_MULI(5);STW(R23);
+	LDWI('f');STW(R23);
 	LDW(R4);_STLS(LAC);_FCVI();_MOVF(FAC,F20);
-	_MOVF('.5',FAC);LDWI('f');ADDW(R23);_FMUL();LDI(F20);_FDIV();_MOVF(FAC,F9);
+	_MOVF('.5',FAC);LDW(R5);_MULI(5);ADDW(R23);_FMUL();LDI(F20);_FDIV();_MOVF(FAC,F9);
 	_MOVF(F9,[SP,2]);
 	CALLI('printf');
 	label('.19');

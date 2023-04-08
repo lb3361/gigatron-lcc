@@ -7,12 +7,12 @@ def code0():
 	MOVIW('.6',R7);
 	_BRA('.5');
 	label('.2');
-	LDW(R7);PEEK();STW(R8);
+	PEEKV(R7);STW(R8);
 	LDW(R8);_STLW(0);
 	CALLI('backslash');STW(R23);
 	LDWI('.7');STW(R8);
 	_STLW(0);
-	LDW(R7);PEEK();STW(R9);
+	PEEKV(R7);STW(R9);
 	LDW(R9);_STLW(2);
 	LDW(R23);STW(R10);
 	LDW(R10);_STLW(4);
@@ -20,7 +20,7 @@ def code0():
 	label('.3');
 	INCV(R7);
 	label('.5');
-	LDW(R7);PEEK();_BNE('.2');
+	PEEKV(R7);_BNE('.2');
 	CALLI('f');
 	CALLI('g');
 	CALLI('h');

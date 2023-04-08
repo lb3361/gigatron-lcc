@@ -831,13 +831,18 @@ stmt: RETP2(ac)   "\t%0\n"  1
 #            /  | X |
 #         F5 - I4 - U4
 # 1) prelabel changes all truncations into LOADs
-ac0: LOADI1(reg) "LD(%0);" 22
-ac0: LOADU1(reg) "LD(%0);" 22
+eac0: LOADI1(reg) "LD(%0);" 22
+eac0: LOADU1(reg) "LD(%0);" 22
 ac: LOADI1(ac) "%{=%0}%0"
 ac: LOADU1(ac) "%{=%0}%0"
 ac: LOADI2(ac) "%{=%0}%0"
 ac: LOADU2(ac) "%{=%0}%0"
 ac: LOADP2(ac) "%{=%0}%0"
+eac: LOADI1(eac) "%{=%0}%0"
+eac: LOADU1(eac) "%{=%0}%0"
+eac: LOADI2(eac) "%{=%0}%0"
+eac: LOADU2(eac) "%{=%0}%0"
+eac: LOADP2(eac) "%{=%0}%0"
 ac: LOADI2(reg)  "%{=%0}%{?0=~vAC::LDW(%0);}" 20
 ac: LOADU2(reg)  "%{=%0}%{?0=~vAC::LDW(%0);}" 20
 ac: LOADP2(reg)  "%{=%0}%{?0=~vAC::LDW(%0);}" 20
@@ -863,6 +868,10 @@ ac: CVII2(ac0) "%0XORI(128);SUBI(128);" if_cv_from(a,1,48)
 ac: CVUI2(ac0) "%0" if_cv_from(a,1,0)
 ac: CVII2(ac) "%0LD(vACL);XORI(128);SUBI(128);" if_cv_from(a,1,66)
 ac: CVUI2(ac) "%0LD(vACL);" if_cv_from(a,1,18)
+eac: CVII2(eac0) "%0XORI(128);SUBI(128);" if_cv_from(a,1,48)
+eac: CVUI2(eac0) "%0" if_cv_from(a,1,0)
+eac: CVII2(eac) "%0LD(vACL);XORI(128);SUBI(128);" if_cv_from(a,1,66)
+eac: CVUI2(eac) "%0LD(vACL);" if_cv_from(a,1,18)
 lac: CVIU4(ac) "%0_STLU(LAC);" 50
 lac: CVII4(ac) "%0_STLS(LAC);" 50
 lac: CVUU4(ac) "%0_STLU(LAC);" 50
@@ -900,9 +909,13 @@ asgn: ASGNF5(spill,reg) "\tSTW(B0);_MOVF(%1,[SP,%0]);LDW(B0) #genspill\n" 20
 # Additional rules for cpu > 5
 ac:  MULI2(con,ac)  "%1_MULI(%0);"  mincpu7(80)
 ac:  MULU2(con,ac)  "%1_MULI(%0);"  mincpu7(80)
-ac:  CVII2(reg)     "LDSB(%0);"     mincpu7(if_cv_from(a,1,26))
 ac:  CVII2(ac)      "%0LDSB(vACL);" mincpu7(if_cv_from(a,1,26))
 ac:  NEGI2(ac)      "%0NEGV(vAC);"  mincpu6(26)
+eac: MULI2(con,eac)  "%1_MULI(%0);"  mincpu7(80)
+eac: MULU2(con,eac)  "%1_MULI(%0);"  mincpu7(80)
+eac: CVII2(reg)     "LDSB(%0);"     mincpu7(if_cv_from(a,1,26))
+eac: CVII2(eac)     "%0LDSB(vACL);" mincpu7(if_cv_from(a,1,26))
+eac: NEGI2(eac)     "%0NEGV(vAC);"  mincpu6(26)
 lac: NEGI4(lac)     "%0NEGVL(LAC);" mincpu6(58)
 asgn: ASGNP2(ac,iarg)  "\t%{=%1}%0%[1b]DOKEA(%1);\n" mincpu6(28)
 asgn: ASGNI2(ac,iarg)  "\t%{=%1}%0%[1b]DOKEA(%1);\n" mincpu6(28)
@@ -917,11 +930,11 @@ asgn: ASGNI2(ac,conB)  "\t%{=%1}%0%[1b]DOKEQ(%1);\n" mincpu7(21)
 asgn: ASGNU2(ac,conB)  "\t%{=%1}%0%[1b]DOKEQ(%1);\n" mincpu7(21)
 asgn: ASGNI1(ac,conBs) "\t%0%[1b]POKEQ(%1);\n" mincpu6(19)
 asgn: ASGNU1(ac,conB)  "\t%0%[1b]POKEQ(%1);\n" mincpu6(19)
-ac: INDIRI2(reg)     "%{?*0=~vAC::%{?0=~vAC:DEEK():DEEKV(%0)};}" mincpu6(28)
-ac: INDIRU2(reg)     "%{?*0=~vAC::%{?0=~vAC:DEEK():DEEKV(%0)};}" mincpu6(28)
-ac: INDIRP2(reg)     "%{?*0=~vAC::%{?0=~vAC:DEEK():DEEKV(%0)};}" mincpu6(28)
-ac: INDIRI1(reg)     "%{?0=~vAC:PEEK():PEEKV(%0)};" mincpu6(28)
-ac: INDIRU1(reg)     "%{?0=~vAC:PEEK():PEEKV(%0)};" mincpu6(28)
+eac: INDIRI2(reg)     "%{?*0=~vAC::%{?0=~vAC:DEEK():DEEKV(%0)};}" mincpu6(28)
+eac: INDIRU2(reg)     "%{?*0=~vAC::%{?0=~vAC:DEEK():DEEKV(%0)};}" mincpu6(28)
+eac: INDIRP2(reg)     "%{?*0=~vAC::%{?0=~vAC:DEEK():DEEKV(%0)};}" mincpu6(28)
+eac0: INDIRI1(reg)     "%{?0=~vAC:PEEK():PEEKV(%0)};" mincpu6(28)
+eac0: INDIRU1(reg)     "%{?0=~vAC:PEEK():PEEKV(%0)};" mincpu6(28)
 reg: INDIRI2(ac)     "\t%{?*0=~vAC:STW(%c):%0%{?c==vAC:DEEK():DEEKA(%c)};}\n" mincpu6(30)
 reg: INDIRU2(ac)     "\t%{?*0=~vAC:STW(%c):%0%{?c==vAC:DEEK():DEEKA(%c)};}\n" mincpu6(30)
 reg: INDIRP2(ac)     "\t%{?*0=~vAC:STW(%c):%0%{?c==vAC:DEEK():DEEKA(%c)};}\n" mincpu6(30)
@@ -943,18 +956,21 @@ regx: LOADP2(conB)       "\t%{?0=~vAC:STW(%c):MOVQW(%0,%c)};\n" mincpu6(29)
 regx: LOADI2(con)        "\t%{?0=~vAC:STW(%c):MOVIW(%0,%c)};\n" mincpu7(31)
 regx: LOADU2(con)        "\t%{?0=~vAC:STW(%c):MOVIW(%0,%c)};\n" mincpu7(31)
 regx: LOADP2(con)        "\t%{?0=~vAC:STW(%c):MOVIW(%0,%c)};\n" mincpu7(31)
-ac: INDIRI2(ADDP2(reg,con)) "LDXW(%0,%1);" mincpu7(60)
-ac: INDIRU2(ADDP2(reg,con)) "LDXW(%0,%1);" mincpu7(60)
-ac: INDIRP2(ADDP2(reg,con)) "LDXW(%0,%1);" mincpu7(60)
+eac: INDIRI2(ADDP2(reg,con)) "LDXW(%0,%1);" mincpu7(60)
+eac: INDIRU2(ADDP2(reg,con)) "LDXW(%0,%1);" mincpu7(60)
+eac: INDIRP2(ADDP2(reg,con)) "LDXW(%0,%1);" mincpu7(60)
 ac: INDIRI2(ADDP2(ac,con))  "%0LDXW(vAC,%1);" mincpu7(60)
 ac: INDIRU2(ADDP2(ac,con))  "%0LDXW(vAC,%1);" mincpu7(60)
 ac: INDIRP2(ADDP2(ac,con))  "%0LDXW(vAC,%1);" mincpu7(60)
+eac: INDIRI2(ADDP2(eac,con)) "%0LDXW(vAC,%1);" mincpu7(60)
+eac: INDIRU2(ADDP2(eac,con)) "%0LDXW(vAC,%1);" mincpu7(60)
+eac: INDIRP2(ADDP2(eac,con)) "%0LDXW(vAC,%1);" mincpu7(60)
 asgn: ASGNI2(ADDP2(reg,con),ac) "\t%2STXW(%0,%1);\n" mincpu7(58)
 asgn: ASGNU2(ADDP2(reg,con),ac) "\t%2STXW(%0,%1);\n" mincpu7(58)
 asgn: ASGNP2(ADDP2(reg,con),ac) "\t%2STXW(%0,%1);\n" mincpu7(58)
-ac: INDIRI2(lddr)     "%{?*0=~vAC::_LDLW(%0);}"  mincpu7(if_zoffset(a,38,60))
-ac: INDIRU2(lddr)     "%{?*0=~vAC::_LDLW(%0);}"  mincpu7(if_zoffset(a,38,60))
-ac: INDIRP2(lddr)     "%{?*0=~vAC::_LDLW(%0);}"  mincpu7(if_zoffset(a,38,60))
+eac: INDIRI2(lddr)  "%{?*0=~vAC::_LDLW(%0);}"  mincpu7(if_zoffset(a,38,60))
+eac: INDIRU2(lddr)  "%{?*0=~vAC::_LDLW(%0);}"  mincpu7(if_zoffset(a,38,60))
+eac: INDIRP2(lddr)  "%{?*0=~vAC::_LDLW(%0);}"  mincpu7(if_zoffset(a,38,60))
 asgn: ASGNI2(lddr,ac) "\t%{=vAC}%1_STLW(%0);\n"  mincpu7(if_zoffset(a,38,60))
 asgn: ASGNU2(lddr,ac) "\t%{=vAC}%1_STLW(%0);\n"  mincpu7(if_zoffset(a,38,60))
 asgn: ASGNP2(lddr,ac) "\t%{=vAC}%1_STLW(%0);\n"  mincpu7(if_zoffset(a,38,60))
@@ -1174,7 +1190,7 @@ static int if_incr(Node a, int cost, int bonus)
      when there is evidence that the previous value was preserved in a
      temporary. This is used to prefer dialect LDW(r);ADDW(i);STW(r)
      or ADDIV(i,r) over the potentially more efficient LDI(i);ADDW(r);STW(r)
-     or LDI(i);ADDV(r). */
+     or LDI(i);ADDV(r). This is hacky and very limited in fact. */
   extern Node head; /* declared in gen.c */
   Node k;
   Symbol syma;

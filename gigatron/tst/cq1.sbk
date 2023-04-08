@@ -260,7 +260,7 @@ def code10():
 	_MOVL([vAC],L8);
 	_MOVL(L8,[SP,0]);
 	CALLI('pow2');
-	_SP(-472+488);DEEK();_MOVL(LAC,[vAC]);
+	_LDLW(-472+488);_MOVL(LAC,[vAC]);
 	LDW(R6);_SHLI(2);STW(R23);
 	LDWI('.45');ADDW(R23);_MOVL([vAC],LAC);LDWI('.74');_LSUB();LDWI(v('.45')-4);ADDW(R23);_MOVL(LAC,[vAC]);
 	ADDIV(2,R6);
@@ -708,7 +708,7 @@ def code22():
 	MOVQW(0,R1);
 	MOVIW('.398',R5);
 	LDI(1);ADDW(R5);PEEK();STW(R23);
-	LDW(R5);PEEK();XORW(R23);_BNE('.402');
+	PEEKV(R5);XORW(R23);_BNE('.402');
 	LDI(2);ADDW(R5);PEEK();STW(R22);
 	LDW(R23);XORW(R22);_BNE('.402');
 	LDW(R22);XORI(46);_BEQ('.399');
@@ -743,7 +743,7 @@ def code22():
 	label('.413');
 	label('.409');
 	MOVIW('.415',R5);
-	LDW(R5);PEEK();XORI(10);_BNE('.423');
+	PEEKV(R5);XORI(10);_BNE('.423');
 	LDI(1);ADDW(R5);PEEK();XORI(9);_BNE('.423');
 	LDI(2);ADDW(R5);PEEK();XORI(8);_BNE('.423');
 	LDI(3);ADDW(R5);PEEK();XORI(13);_BNE('.423');
@@ -1171,7 +1171,7 @@ def code43():
 	_SP(-12+48);ADDW(R6);ADDW(R6);STW(R23);
 	DEEK();STW(R22);
 	ADDI(1);DOKE(R23);
-	LDW(R22);PEEK();_BGE('.544');
+	PEEKV(R22);_BGE('.544');
 	MOVQW(1,R5);
 	label('.544');
 	label('.542');
@@ -3876,8 +3876,8 @@ def code78():
 	label('.1563');
 	MOVQW(0,R5);
 	label('.1567');
-	LDW(R5);_MULI(5);STW(R23);
-	LDW(R5);_STLS(LAC);_FCVI();_SP(-85+156);ADDW(R23);_MOVF(FAC,[vAC]);
+	_SP(-85+156);STW(R23);
+	LDW(R5);_STLS(LAC);_FCVI();LDW(R5);_MULI(5);ADDW(R23);_MOVF(FAC,[vAC]);
 	_SP(-120+156);ADDW(R5);ADDW(R5);STW(R23);
 	_SP(-85+156);STW(R22);
 	LDW(R5);_MULI(5);ADDW(R22);DOKE(R23);
@@ -4332,8 +4332,8 @@ def code97():
 	LDW(R4);_MULI(15);STW(R22);
 	LDWI('.1697');ADDW(R22);ADDW(R23);_MOVF([vAC],FAC);
 	LDWI('.1698');ADDW(R22);ADDW(R23);_FCMP();_BNE('.1735');
-	LDW(R3);_MULI(5);STW(R23);
-	LDWI('.1696');ADDW(R23);_FCMP();_BEQ('.1733');
+	LDWI('.1696');STW(R23);
+	LDW(R3);_MULI(5);ADDW(R23);_FCMP();_BEQ('.1733');
 	label('.1735');
 	MOVQW(1,R2);
 	label('.1733');
@@ -4356,8 +4356,8 @@ def code97():
 	LDI(0);STW(R2);
 	STW(R5);
 	label('.1740');
-	LDW(R5);_MULI(15);STW(R23);
-	LDI(1);ADDW(R5);_STLS(LAC);_FCVI();LDWI('.1699');ADDW(R23);_FCMP();_BEQ('.1744');
+	LDWI('.1699');STW(R23);
+	LDI(1);ADDW(R5);_STLS(LAC);_FCVI();LDW(R5);_MULI(15);ADDW(R23);_FCMP();_BEQ('.1744');
 	MOVQW(1,R2);
 	label('.1744');
 	label('.1741');

@@ -507,10 +507,10 @@ def create_zpage_map():
     zpage_reserve(range(0xd0,0x100), "STACK")
     zpage_reserve(range(0,0x30), "V4")
     zpage_reserve(range(0x80,0x81), "V4")
-    if args.cpu == 4:
-        zpage_reserve(range(0x81,0x82), "V4")
-    if args.cpu >= 5:
-        zpage_reserve(range(0x30,0x36), "V5")
+    if args.cpu < 7:
+        zpage_reserve(range(0x30,0x42), "LOADER")
+    elif args.cpu >= 5:
+        zpage_reserve(range(0x30,0x36), "VIRQ")
     if args.cpu == 6:
         zpage_reserve(range(0xc0,0xd0), "VX0")
     if args.cpu >= 7:

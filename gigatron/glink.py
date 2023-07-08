@@ -1356,8 +1356,11 @@ def _STLW(off, src=None):
 def _SHLI(imm):
     '''Shift vAC left by imm positions'''
     imm &= 0xf
+    if args.cpu >= 7 and imm == 0x8:
+        ST(vACH);MOVQB(0,vAC)
+        imm &= 0x7
     if imm & 0x8:
-        ST('vACH');ORI(255);XORI(255)
+        ST(vACH);ORI(255);XORI(255)
         imm &= 0x7
     if args.cpu >= 7 and imm == 0x4:
         MOVIW('SYS_LSLW4_46','sysFn');SYS(46)

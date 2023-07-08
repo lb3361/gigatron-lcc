@@ -17,8 +17,8 @@ static int cons_read(FILE *fp, register char *buf, size_t cnt)
 	if (fp->_flag & _IOFBF) {
 		register int n;
 		while (! (n = _sread(fp, buf, cnt))) {
-			console_readline(cons_ibuf, CONS_BUFSIZE);
 			fp->_x = cons_ibuf;
+			console_readline(cons_ibuf, CONS_BUFSIZE);
 		}
 		return n;
 	} else {

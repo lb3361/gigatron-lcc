@@ -2027,7 +2027,7 @@ static int check_attributes(Symbol p)
         if (has_org)
           error("incompatible placement constraints (org & place)\n");
         a->okay = (check_uintval(a,0) &&  check_uintval(a,1));
-        yes = 1;
+        yes = has_place = 1;
       } else if (a->name == string("org")) {
         if (has_org)
           error("incompatible placement constraints (multiple org)\n");

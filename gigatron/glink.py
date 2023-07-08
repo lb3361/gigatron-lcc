@@ -2327,7 +2327,7 @@ def find_data_segment(size, align=None):
         if amin != None and amin > addr:
             addr = aligned(amin, align)
         if the_fragment.nohop and (addr ^ (addr + size - 1)) & 0xff00 != 0:
-            addr = aligned(addr, 255)
+            addr = aligned(addr, 256)
         if amin != None and amax == None:
             if not (amin >= s.saddr and amin < s.eaddr):
                 continue

@@ -27,7 +27,6 @@ book.bin: dumpbook book.txt mscp.c Makefile
 clean:
 	-rm ${OBJS} *.gt1 *.prf *.frg prof.txt dumpbook mscp
 
-
 # Profiling support
 
 GTSIM=gtsim -rom ../../../gigatron-rom/dev128k7.rom -vmode 1975
@@ -44,5 +43,11 @@ mscp-sim.gt1: ${CFILES} ${ASMS} mscp.ovl
 
 mscp-sim.prf: mscp-sim.gt1 prof.in
 	${GTSIM} -prof $@ mscp-sim.gt1 < prof.in
+
+
+# Old version
+
+mscp0.gt1: mscp0.c
+	${GLCC} -rom=${ROM} -map=sim,allout -DAVOID_SCANF $< -o $@
 
 

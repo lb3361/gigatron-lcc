@@ -284,14 +284,14 @@ but this is not enough. One could think about using
 the 128KB memory extention but this will require a lot
 of changes to the code. In the mean time. we can
 run it with the `gtsim` emulator which has no screen
-but can forward stdio...
+but can forward stdio.
 
 ```
-$ cp stuff/mscp.c .
-$ cp stuff/book.txt .
+$ cp stuff/mscp/mscp0.c .
+$ cp stuff/mscp/book.txt .
 
 # Using map sim with overlay allout commits all the memory
-$ ./build/glcc -map=sim,allout mscp.c -o mscp.gt1
+$ ./build/glcc -map=sim,allout mscp0.c -o mscp0.gt1
 ```
 
 Now we can run it. Option -f in `gtsim` allows mscp to 
@@ -299,7 +299,7 @@ open and read the opening book file `book.txt`.
 Be patient...
 
 ```
-$ ./build/gtsim -f -rom gigatron/roms/dev.rom  mscp.gt1 
+$ ./build/gtsim -f -rom gigatron/roms/dev.rom mscp0.gt1
 
 This is MSCP 1.4 (Marcel's Simple Chess Program)
 

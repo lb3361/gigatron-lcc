@@ -69,7 +69,7 @@ def code15():
 	DEEK();ADDI(1);DOKE(R23);
 	LDWI('.2');STW(R8);
 	CALLI('printf');
-	LDWI(v('_iob')+16);STW(R8);
+	LDWI(v('_iob')+6);STW(R8);
 	CALLI('fflush');
 	LDWI('sigsave');DEEK();_BEQ('.4');
 	LDI(4);STW(R8);

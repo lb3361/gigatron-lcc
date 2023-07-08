@@ -20,13 +20,13 @@ def scope():
             SUBI(2);_BLT('.loop1');STW(R10)
             LD(T2);SUBI(0xfe);_BGT('.loop1')
             LD(T3);SUBI(0xfe);_BGT('.loop1')
-            DEEKV(T2);STW(R11);DEEKV(T3);DOKE(T2);LDW(R11);DOKE(T3)
+            _DEEKV(T2);STW(R11);_DEEKV(T3);DOKE(T2);LDW(R11);DOKE(T3)
             LDI(2);ADDW(R9);STW(R9)
             LDI(2);ADDW(R8);STW(R8)
             LDW(R10);_BNE('.loop')
             RET()
         label('.loop1')
-        PEEKV(T2);ST(R11);PEEKV(T3);POKE(T2);LD(R11);POKE(T3)
+        _PEEKV(T2);ST(R11);_PEEKV(T3);POKE(T2);LD(R11);POKE(T3)
         if args.cpu >= 6:
             INCV(T2);INCV(T3)
         else:

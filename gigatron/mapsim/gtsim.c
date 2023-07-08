@@ -523,9 +523,9 @@ void sys_printf(void)
 /* LIBSIM stdio forwarding */
 
 /* Offsets in _iobuf structure (see stdio.h) */
-#define G_IOBUF_FLAG_OFFSET 4
-#define G_IOBUF_FILE_OFFSET 6
-#define G_IOBUF_V_OFFSET    14
+#define G_IOBUF_FLAG_OFFSET 0
+#define G_IOBUF_VTBL_OFFSET 2
+#define G_IOBUF_FILE_OFFSET 4
 
 /* Error codes (see errno.h) */
 #define G_EINVAL    3
@@ -635,7 +635,7 @@ void sys_io_lseek(void)
   }
 }
 
-void sys_io_close(void)
+void sys_io_flush(void)
 {
   int flg = deek(deek(R8) + G_IOBUF_FLAG_OFFSET);
   int fd = deek(deek(R8) + G_IOBUF_FILE_OFFSET);
@@ -644,7 +644,7 @@ void sys_io_close(void)
   if (fd < 0 || flg == 0)
     err = G_EINVAL;
   /* Close */
-  if (fd > 2 && close(fd) < 0 && err == 0)
+  if (fd > 2 && deek(R9) && close(fd) < 0 && err == 0)
     err = G_EIO;
   /* Return */
   if (err) {
@@ -658,7 +658,6 @@ void sys_io_close(void)
 void sys_io_openf(void)
 {
   int flg = deek(deek(R8) + G_IOBUF_FLAG_OFFSET);
-  int rfd = deek(deek(R8) + G_IOBUF_FILE_OFFSET);
   int err = 0;
   
   if (okopen)
@@ -684,12 +683,8 @@ void sys_io_openf(void)
         case EINVAL: err = G_EINVAL; break;
         }
       }
-      if (err == 0 && rfd >= 0 && dup2(fd, rfd) >= 0) {
-        close(fd);
-        fd = rfd;
-      }
       doke(deek(R8) + G_IOBUF_FILE_OFFSET, fd);
-      doke(deek(R8) + G_IOBUF_V_OFFSET, deek(sysArgs0+2));
+      doke(deek(R8) + G_IOBUF_VTBL_OFFSET, deek(sysArgs0+2));
     }
   else
     {
@@ -700,7 +695,7 @@ void sys_io_openf(void)
         strcat(mode,"W");
       if (flg & 8)
         strcat(mode,"A");
-      fprintf(stderr, "\n(gtsim) denied attempt to open file '%s' %s. (allow with -f)\n",
+      fprintf(stderr, "\n(gtsim) denied attempt to open file '%s' [%s]. (allow with -f)\n",
               RAM+deek(R9), mode);
       err = G_EPERM;
     }
@@ -727,7 +722,7 @@ void sys_0x3b4(CpuState *S)
         case 0xff02: sys_io_write(); break;
         case 0xff03: sys_io_read(); break;
         case 0xff04: sys_io_lseek(); break;
-        case 0xff05: sys_io_close(); break;
+        case 0xff05: sys_io_flush(); break;
         case 0xff06: sys_io_openf(); break;
         default:
           fprintf(stderr,"(gtsim) unimplemented SysFn=%#x\n", deek(sysFn));

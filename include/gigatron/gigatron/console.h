@@ -78,7 +78,7 @@ extern int console_getkey(void);
 /* Wait for a key press with a flashing cursor. */
 extern int console_waitkey(void);
 
-/* Input a line with rudimentaty editing and return the line length. */
+/* Input a line with rudimentary editing and return the line length. */
 extern int console_readline(char *buffer, int bufsiz);
 
 

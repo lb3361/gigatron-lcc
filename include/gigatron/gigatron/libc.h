@@ -139,7 +139,8 @@ extern char *dtoa(double x, char *buf, char format, int prec);
 
 /* ---- Misc ---- */
 
-/* Calls srand(int) using the gigatron entropy generator */
+/* Calls srand(int) using the gigatron entropy generator.
+   Using srand(0) has the same effect. */
 extern void _srand(void);
 
 /* Scans memory region [s,s+n) and return a pointer to the first byte 

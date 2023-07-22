@@ -92,11 +92,14 @@ def scope():
     def code_doscan_double():
         nohop()
         label('_doscan_double')
-        PUSH()
-        LDWI('__glink_weak__doscan_double_imp');_BEQ('.ret')
-        CALL(vAC)
+        LDWI('__glink_weak__doscan_double_imp')
+        if args.cpu >= 7:
+            JNE('__glink_weak__doscan_double_imp')
+        else:
+            _BEQ('.ret')
+            PUSH();CALL(vAC);POP()
         label('.ret')
-        POP();RET()
+        RET()
 
     module(name='_doscan_double.s',
            code=[ ('EXPORT', '_doscan_double'),
@@ -106,11 +109,14 @@ def scope():
     def code_doprint_double():
         nohop()
         label('_doprint_double')
-        PUSH()
-        LDWI('__glink_weak__doprint_double_imp');_BEQ('.ret')
-        CALL(vAC)
+        LDWI('__glink_weak__doprint_double_imp')
+        if args.cpu >= 7:
+            JNE('__glink_weak__doprint_double_imp')
+        else:
+            _BEQ('.ret')
+            PUSH();CALL(vAC);POP()
         label('.ret')
-        POP();RET()
+        RET()
 
     module(name='_doprint_double.s',
            code=[ ('EXPORT', '_doprint_double'),
@@ -120,11 +126,14 @@ def scope():
     def code_doprint_long():
         nohop()
         label('_doprint_long')
-        PUSH()
-        LDWI('__glink_weak__doprint_long_imp');_BEQ('.ret')
-        CALL(vAC)
+        LDWI('__glink_weak__doprint_long_imp')
+        if args.cpu >= 7:
+            JNE('__glink_weak__doprint_long_imp')
+        else:
+            _BEQ('.ret')
+            PUSH();CALL(vAC);POP()
         label('.ret')
-        POP();RET()
+        RET()
 
     module(name='_doprint_long.s',
            code=[ ('EXPORT', '_doprint_long'),

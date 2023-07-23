@@ -38,16 +38,14 @@ extern __near struct console_state_s {
 #define CONSOLE_DEFAULT_FGBG 0x3f20
 
 /* Print up to len characters of the zero terminated string s.
-   Understands control characters "\a\t\b\n\r\f\v" for
-   bell, tab, backspace, newline, cr, clear screen, clear to eol.
-   Return the number of characters processed. */
+   Understand essential control characters "\b\n\r". More control
+   characters can be supported by forcing _console_ctrl to be included
+   (as with stdio output) in the build or by defining a customized
+   one.  Return the number of characters processed. */
 extern int console_print(const char *s, int len);
 
 /* Reset the video tables and clear the screen. */
 extern void console_clear_screen(void);
-
-/* Clear to end of line */
-extern void console_clear_to_eol(void);
 
 
 /* -------- formatted output ----------- */
@@ -84,9 +82,14 @@ extern int console_readline(char *buffer, int bufsiz);
 
 /* -------- internal ----------- */
 
-/* Handle control characters in _console_print().
-   Must return zero if c is not recognized. */
-extern int _console_ctrl(int c);
+/* Handle additional control characters in _console_print().
+   Override this function to implement more control characters.
+   The default version, included when stdio is active, understands
+   characters "\t" for tabulation (4 chars) "\f" for clearing the
+   screen, "\v" for clearing to the end of the line, and "\a" for an
+   audible bell. Return the number of characters consumed. */
+
+extern int _console_ctrl(const char *s, int len);
 
 /* Reset videotable and optionally clear screen if fgbg >= 0 */
 extern void _console_reset(int fgbg);

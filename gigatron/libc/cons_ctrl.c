@@ -4,41 +4,29 @@
 #include <gigatron/libc.h>
 #include <gigatron/sys.h>
 
-#define CTRL_TABS 1
-#define CTRL_BELL 1
+/* defined in cons_asm.s */
+extern char *_console_addr();
+extern int _console_special(const char *s, int len);
 
-int _console_ctrl(register int c)
+
+/* Handle control characters other than BS, CR, LF */
+int _console_ctrl(register const char *s, int len)
 {
-	switch(c) {
-	case '\b': /* backspace */
-		if (console_state.cx > 0)
-			console_state.cx -= 1;
-		else if (console_state.cy > 0) {
-			console_state.cx = console_info.ncolumns-1;
-			console_state.cy -= 1;
-		}
-		break;
-	case '\n': /* lf */
-		console_state.cy += 1;
-	case '\r': /* cr */
-		console_state.cx = 0;
-		break;
-#if CTRL_TABS
-	case '\t':  /* tab */
+	register char *addr;
+	switch (*s) {
+	case '\t':  /* TAB */
 		console_state.cx = (console_state.cx | 3) + 1;
 		break;
-	case '\f':
+	case '\f': /* FF */
 		console_clear_screen();
 		break;
-	case '\v':
-		console_clear_to_eol();
+	case '\v': /* VT */
+		if ((addr = _console_addr()))
+			_console_clear(addr, console_state.fgbg, 8);
 		break;
-#endif
-#if CTRL_BELL
-	case '\a':
+	case '\a': /* BELL */
 		_console_bell(4);
 		break;
-#endif
 	default:
 		return 0;
 	}

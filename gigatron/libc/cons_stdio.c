@@ -28,3 +28,6 @@ static int cons_read(FILE *fp, register char *buf, size_t cnt)
 }
 
 struct _iovec _cons_iovec = { cons_read, cons_write };
+
+/* Force _console_ctrl to be loaded */
+static int (*junk)() = _console_ctrl;

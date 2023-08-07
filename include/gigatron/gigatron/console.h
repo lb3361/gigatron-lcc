@@ -1,19 +1,12 @@
 #ifndef __GIGATRON_CONSOLE
 #define __GIGATRON_CONSOLE
 
-#if !defined(_VA_LIST) && !defined(_VA_LIST_DEFINED)
-#define _VA_LIST
-#define _VA_LIST_DEFINED
-typedef char *__va_list;
-#endif
+
+/* ---- Console state ---- */
 
 #ifndef CONSOLE_MAX_LINES
 # define CONSOLE_MAX_LINES 15
 #endif
-
-
-
-/* ---- Console state ---- */
 
 /* Console geometry. */
 extern const struct console_info_s {
@@ -52,88 +45,14 @@ extern int console_print(const char *s, int len);
 extern void console_clear_screen(void);
 
 
-/* ---- Formatted output functions ---- */
+/* ---- Formatted output functions ----*/
 
-/* The formatted output functions are similar to the stdio printf
-   functions but they bypass stdio and hit directly the console. The
-   cprintf function still import the relatively heavy printf machinery
-   but not the stdio machinery.  The midcprintf and mincprintf functions
-   are considerably smaller but offer limited capabilities. */
-
-#ifndef _CPRINTF_DEFINED
-#define _CPRINTF_DEFINED
-
-/* Print formatted text at the cursor position */
-extern int cprintf(const char *fmt, ...);
-
-/* Print formatted text like cprintf except that it is called
-   with a va_list instead of a variable number of arguments. */
-extern int vcprintf(const char *fmt, __va_list ap);
-
-/* Alternate cprintf functions with less capabilities.
-   mincprintf only understands %d and %s without qualifications.
-   midcprintf also understands %u, %x, and numeric field sizes.
-   None of these functions handles longs or floating point numbers.
-   These are not standard conio functions. */
-#if defined(cprintf) || defined(printf)
-extern int
-#else
-extern void
-#endif
-mincprintf(const char *fmt, ...),
-midcprintf(const char *fmt, ...);
-
-#endif
+#include <gigatron/printf.h>
 
 
+/* ---- Low level input routines ---- */
 
-/* ---- Low level input routine ---- */
-
-/* Input on the Gigatron is tricky because the famicom controller and
-   the pluggy keyboard share a same interface and can emit similar
-   codes for different events. For instance, code 0x3f can represent
-   both the character '?' on a keyboard and buttonB on a TypeC Famicom
-   controller. The following low level functions provide increasingly
-   sophisticated ways to deal with these problems. */
-
-#ifndef _KBGET_DEFINED
-#define _KBGET_DEFINED 1
-
-/* Function kbgeta() is intended for keyboard centric applications.
-   It returns the code as it appears in the Gigatron variable
-   serialRaw without further interpretation. */
-extern int kbgeta(void);
-
-/* Function kbgetb() heuristically distinguishes keyboard events
-   reported in serialRaw from combined button presses reported in
-   buttonState. Simultaneous button presses are reported as separate
-   events and cleared in buttonState. This function initially reports
-   ambiguous codes as button presses but modifies itself when it
-   observes ascii codes that can only be produced by a keyboard. */
-extern int kbgetb(void);
-
-/* Function kbgetc() works like kbgetb() with autorepeat. */
-extern int kbgetc(void);
-
-/* Function pointer kbget() determines which of the following low
-   level functions is called by the conio routines. All these
-   functions either return an input code or -1 if no key or button is
-   currently pressed. */
-extern int (* const kbget)(void);  /* Default to kbgeta. */
-
-/* Macros to initialize the global function pointer 'kbget'
-   and override the default definition provided by libc.
-   Examples:
-     #include <conio.h>
-     KBGET_AUTOREPEAT;
-     int main() { ...
-*/
-#define KBGET_SIMPLE 		int (*const kbget)(void) = kbgeta
-#define KBGET_AUTOBTN		int (*const kbget)(void) = kbgetb
-#define KBGET_AUTOREPEAT	int (*const kbget)(void) = kbgetc
-
-#endif
-
+#include <gigatron/kbget.h>
 
 
 /* ---- Console input routines ---- */
@@ -156,21 +75,13 @@ extern int console_readline(char *buffer, int bufsiz);
 
 /* -------- internal ----------- */
 
-/* Handle additional control characters in _console_print().
-   Override this function to implement more control characters.
-   The default version, included when stdio is active, understands
-   characters "\t" for tabulation (4 chars) "\f" for clearing the
-   screen, "\v" for clearing to the end of the line, and "\a" for an
-   audible bell. Return the number of characters consumed. */
-extern int _console_ctrl(const char *s, int len);
-
-/* Reset videotable and optionally clear screen if fgbg >= 0 */
-extern void _console_reset(int fgbg);
-
-/* Initialization: called before main */
-extern void _console_setup(void);
-
-/* -------- internal ----------- */
+/* Compute the screen address of the console cursor.
+   Wrap the line if console_state.cx points beyond the screen and
+   console_state.wrapx is nonzero. Scroll the screen if
+   console_state.cy points beyond the screen and console_state.wrapy
+   is nonzero. Return zero if the cursor is still beyond the
+   screen. */
+extern char *_console_addr(void);
 
 /* Draws up to `len` characters from string `s` at the screen position
    given by address `addr`.  This assumes that the horizontal offsets
@@ -185,14 +96,30 @@ extern int _console_printchars(int fgbg, char *addr, const char *s, int len);
    Repeats for nl successive lines. */
 extern void _console_clear(char *addr, int clr, int nl);
 
+/* Handle additional control characters in _console_print().
+   Override this function to implement more control characters.
+   The default version, included when stdio is active, understands
+   characters "\t" for tabulation (4 chars) "\f" for clearing the
+   screen, "\v" for clearing to the end of the line, and "\a" for an
+   audible bell. Return the number of characters consumed. */
+extern int _console_ctrl(const char *s, int len);
+
 /* Sounds the bell for n frames */
 extern void _console_bell(int n);
+
+/* Reset videotable and optionally clear screen if fgbg >= 0.
+   This is called by _console_setup and console_clear_screen. */
+extern void _console_reset(int fgbg);
+
+/* Initialization: called before main */
+extern void _console_setup(void);
 
 
 /* -------- extra ------------ */
 
-/* The following functions are useful for scrolling partial sets of lines.
-   These are only linked if used because console_print uses a simpler code. */
+/* The following functions are useful for scrolling line ranges.
+   They are not used by console_print but are still available for
+   backward compatibility. */
 
 /* Clear character row y */
 extern void console_clear_line(int y);

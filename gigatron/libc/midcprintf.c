@@ -10,7 +10,7 @@
 #define FLG_ZPAD 1
 #define FLG_RPAD 2
 
-void midcprintf(const char *fmt, ...)
+int midcprintf(const char *fmt, ...)
 {
 	register va_list ap;
 	register const char *f = fmt;
@@ -81,4 +81,5 @@ void midcprintf(const char *fmt, ...)
 		while (--pad >= 0)
 			console_print(" ", 1);
 	}
+	return 0;
 }

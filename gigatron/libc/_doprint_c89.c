@@ -205,8 +205,8 @@ int _doprint_c89(register doprint_t *dd, register const char *fmt, __va_list ap)
 			continue;
 		}
 		if (s[1] == '%') {
-			s += 1;
-			fmt += 1;
+			fmt = fmt + 1;
+			s = fmt + 1;
 			goto pfmt;
 		}
 		memset(spec, 0, sizeof(*spec));

@@ -11,13 +11,6 @@ extern int _console_special(const char *s, int len);
 /* console state */
 __near struct console_state_s console_state = { CONSOLE_DEFAULT_FGBG, 0, 0, 1, 1 };
 
-/* cls */
-void console_clear_screen(void)
-{
-	_console_reset(console_state.fgbg);
-	console_state_set_cycx(0);
-}
-
 /* print */
 int console_print(register const char *s, register int len)
 {

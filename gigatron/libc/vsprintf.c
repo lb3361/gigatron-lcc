@@ -5,32 +5,26 @@
 
 #include "_doprint.h"
 
-typedef struct doprint2_s {
-	doprint_t dp;
-	char *buffer;
-} doprint2_t;
-
-static void dpf(char **bb, const char *buf, size_t sz)
+static int _sprintf_writall(register const char *buf, register size_t sz, register FILE *fp)
 {
 	register char *b;
-	if ((b = *bb)) {
+	if ((b = fp->_x)) {
 		memcpy(b, buf, sz);
 		b += sz;
 		*b = 0;
-		*bb = b;
+		fp->_x = b;
 	}
+	return sz;
 }
+
+static struct _iobuf _sprintf_iobuf;
 
 int vsprintf(register char *s, register const char *fmt, register va_list ap)
 {
-	doprint2_t dp2obj;
-	register doprint_t *dp = &dp2obj.dp;
-	register char **bb = &dp2obj.buffer;
-	dp->cnt = 0;
-	dp->closure = bb;
-	dp->f = (void(*)(void*,const char*,size_t))dpf;
-	*bb = s;
-	return _doprint(dp, fmt, ap);
+	_sprintf_iobuf._x = s;
+	_doprint_dst.fp = &_sprintf_iobuf;
+	_doprint_dst.writall = (writall_t)_sprintf_writall;
+	return _doprint(fmt, ap);
 }
 
 /* A sprintf relay is defined in _printf.s */

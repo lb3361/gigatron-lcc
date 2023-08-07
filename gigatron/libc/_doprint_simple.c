@@ -9,13 +9,14 @@ static char hash1[8] = "uiocdxss";
 static char hash2[9] = { 10, 255, 8, 0, 255, 16, 1, 1 };
 
 
-int _doprint_simple(register doprint_t *dd, register const char *f, register __va_list ap)
+int _doprint_simple(register const char *f, register __va_list ap)
 {
 	register const char *s;
 	register int l, c, pad;
 	register char style;
 	char buf8[8];
 
+	_doprint_dst.cnt = 0;
 	while(*f) {
 		s = f;
 		style = ' ';
@@ -60,7 +61,7 @@ int _doprint_simple(register doprint_t *dd, register const char *f, register __v
 					if (c == 255) {     /* %i %d */
 						s = itoa(l, buf8, 10);
 						if (style == '0' && *s == '-') {
-							_doprint_putc(dd, '-', 1);
+							_doprint_putc('-', 1);
 							pad -= 1;
 							s += 1;
 						}
@@ -73,10 +74,10 @@ int _doprint_simple(register doprint_t *dd, register const char *f, register __v
 			}
 		}
 		if (style != '-' && pad > 0)
-			_doprint_putc(dd, style, pad);
-		_doprint_puts(dd, s, l);
+			_doprint_putc(style, pad);
+		_doprint_puts(s, l);
 		if (style == '-' && pad > 0)
-			_doprint_putc(dd, ' ', pad);
+			_doprint_putc(' ', pad);
 	}
-	return dd->cnt;
+	return _doprint_dst.cnt;
 }

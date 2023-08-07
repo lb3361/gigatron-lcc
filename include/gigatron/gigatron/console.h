@@ -41,6 +41,10 @@ extern __near struct console_state_s {
    one.  Return the number of characters processed. */
 extern int console_print(const char *s, unsigned int len);
 
+/* Works like console_print but prints exactly len characters
+   regardless of the presence of a null character. */
+extern int console_writall(const char *s, unsigned int len);
+
 /* Reset the video tables and clear the screen. */
 extern void console_clear_screen(void);
 

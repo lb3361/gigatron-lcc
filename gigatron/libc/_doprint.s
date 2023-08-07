@@ -3,11 +3,9 @@ def scope():
 
     # -- int (*_doprint)(doprint_t*, const char*, __va_list) = _doprint_c89;
     # Default value for function pointer _doprint.
-
     doprint_default = '_doprint_c89'
     if 'PRINTF_SIMPLE' in args.opts:
         doprint_default = '_doprint_simple'
-
     def code_doprint():
         align(2)
         label('_doprint')
@@ -19,58 +17,56 @@ def scope():
                  ('DATA','_doprint',code_doprint, 2, 2) ] )
 
 
-    # -- void _doprint_putc(doprint_t *dp, int c, size_t cnt)
-    # Output cnt copies of character c.
-    # This code epends on the layout of struct doprint_s defined in _doprint.h
-    def code_dp_putc():
-        nohop()
-        label('_doprint_putc')
-        PUSH();ALLOC(-6)
-        LDW(R8);STLW(4);DEEK();ADDW(R10);DOKE(R8)
-        LD(R9);STLW(0)
-        LDW(R10);_BRA('.tst')
-        label('.loop')
-        LDLW(4);ADDI(2);DEEK();STW(R8)
-        if args.cpu >= 7:
-            LDW(vSP);STW(R9)
-        else:
-            LD(vSP);STW(R9)
-        LDI(1);STW(R10)
-        LDLW(4);ADDI(4);DEEK();CALL(vAC)
-        LDLW(2);SUBI(1)
-        label('.tst')
-        STLW(2)
-        _BNE('.loop')
-        ALLOC(6);tryhop(2);POP();RET()
+    # - struct _doprint_dst_s _doprint_dst
+    def code_doprint_dst():
+        align(2)
+        label('_doprint_dst')
+        words(0,0,0)
 
-    module(name='_doprint_putc.s',
-           code=[('EXPORT', '_doprint_putc'),
-                 ('CODE', '_doprint_putc', code_dp_putc) ] )
+    module(name='doprint_dst.s',
+           code=[('EXPORT','_doprint_dst'),
+                 ('DATA','_doprint_dst',code_doprint_dst, 6, 2) ] )
 
-    # -- void _doprint_puts(doprint_t *dp, const char *s, size_t cnt)
-    # Output at most cnt chars of string s
-    # This code epends on the layout of struct doprint_s defined in _doprint.h
-    def code_dp_puts():
+
+    # - void _doprint_puts(const char *s, size_t len)
+    def code_doprint_puts():
         nohop()
         label('_doprint_puts')
-        PUSH();ALLOC(-2)
-        LDW(R8);STLW(0)
-        LDW(R9);STW(R8)
-        LDI(0);STW(R9)
-        _CALLJ('__memchr2') # known to preserve R8-R10
-        _BEQ('.nz')
-        SUBW(R8);STW(R10)
-        label('.nz')
-        LDW(R8);STW(R9)
-        LDLW(0);STW(R11);ADDI(2);DEEK();STW(R8)
-        LDW(R11);DEEK();ADDW(R10);DOKE(R11)
-        LDW(R11);ADDI(4);DEEK();CALL(vAC)
-        ALLOC(2);tryhop(2);POP();RET()
+        PUSH();_ALLOC(-6)
+        LDWI(v('_doprint_dst'));STW(R23);DEEK();ADDW(R9);DOKE(R23)
+        LDWI(v('_doprint_dst')+2);DEEK();STW(R10) # append extra argument
+        LDI(vPC);STW(R23);LDWI(v('_doprint_dst')+4);DEEK();CALL(vAC)
+        _ALLOC(6);POP();RET()
 
-    module(name='_doprint_puts.s',
+    module(name='doprint_puts.s',
            code=[('EXPORT', '_doprint_puts'),
-                 ('IMPORT', '__memchr2'),
-                 ('CODE', '_doprint_puts', code_dp_puts) ] )
+                 ('IMPORT', '_doprint_dst'),
+                 ('CODE', '_doprint_puts', code_doprint_puts) ] )
+
+
+    # - void _doprint_putc(int c, size_t cnt)
+    def code_doprint_putc():
+        label('_doprint_putc')
+        _PROLOGUE(12,6,0xc0)
+        _SP(12);STW(R6);LD(R8);DOKE(R6)
+        LDWI(v('_doprint_dst'));STW(R23);DEEK();ADDW(R9);DOKE(R23)
+        LDW(R9)
+        _BRA('.tst')
+        label('.loop')
+        SUBI(1);STW(R7)
+        LDW(R6);STW(R8)
+        LDI(1);STW(R9)
+        LDWI(v('_doprint_dst')+2);DEEK();STW(R10)
+        LDWI(v('_doprint_dst')+4);DEEK();CALL(vAC)
+        LDW(R7)
+        label('.tst')
+        _BNE('.loop')
+        _EPILOGUE(12,6,0xc0,saveAC=False)
+
+    module(name='doprint_putc.s',
+           code=[('EXPORT', '_doprint_putc'),
+                 ('IMPORT', '_doprint_dst'),
+                 ('CODE', '_doprint_putc', code_doprint_putc) ] )
 
 scope()
 

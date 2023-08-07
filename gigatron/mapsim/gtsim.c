@@ -9,9 +9,12 @@
 #include <errno.h>
 
 #ifndef WIN32
+# define UNIX 1
 # include <unistd.h>
 # include <fcntl.h>
 # include <signal.h>
+# include <termios.h>
+# undef B0
 #else
 # include <io.h>
 # include <fcntl.h>
@@ -535,16 +538,17 @@ void sys_printf(void)
 #define G_EPERM     9
 #define G_ENOTSUP  10
 
-void sys_io_write(void)
+void sys_io_writall(void)
 {
   int flg = deek(deek(R8) + G_IOBUF_FLAG_OFFSET);
-  int fd = deek(deek(R8) + G_IOBUF_FILE_OFFSET);
+  int fd  = deek(deek(R8) + G_IOBUF_FILE_OFFSET);
   int buf = deek(R9);
   int cnt = deek(R10);
   int ret = 0;
+  int tot = 0;
   int err = 0;
   /* Validate */
-  if (fd < 0 || (flg & 2) == 0)
+  if (fd < 0 || (flg & 2) == 0)  /* _IOWRITE */
     err = G_EINVAL;
   if (buf + cnt >= 0x10000)
     cnt = 0x10000 - buf;
@@ -554,14 +558,18 @@ void sys_io_write(void)
   if (err == 0) {
     if (fd <= 2)
       fflush(stdout);
-    if ((ret = write(fd, RAM+buf, cnt)) <= 0)
-      err = G_EIO;
+    while (cnt > 0) {
+      if ((ret = write(fd, RAM+buf, cnt)) <= 0)
+        err = G_EIO;
+      tot += ret;
+      cnt -= ret;
+    }
   }
   if (err) {
     doke(deek(sysArgs0), err);
     doke(vAC, -1);
   } else {
-    doke(vAC, ret);
+    doke(vAC, tot);
   }
   return;
 }
@@ -576,7 +584,7 @@ void sys_io_read(void)
   int err = 0;
 
   /* Validate */
-  if (fd < 0 || (flg & 1) == 0)
+  if (fd < 0 || (flg & 1) == 0) /* _IOREAD */
     err = EINVAL;
   if (buf + cnt >= 0x10000)
     cnt = 0x10000 - buf;
@@ -584,10 +592,25 @@ void sys_io_read(void)
     err = G_EINVAL;
   /* READ */
   if (err == 0) {
+#ifdef UNIX
+    struct termios told, tnew;
+    if (isatty(fd)) {
+      tcgetattr(fd, &told);
+      if (! (flg & 0x40)) {     /* _IOFBF */
+        tnew = told;
+        cfmakeraw(&tnew);
+        tcsetattr(fd, TCSAFLUSH, &tnew);
+      }
+    }
+#endif
     if (fd <= 2)
       fflush(stdout);
     if ((ret = read(fd, RAM+buf, cnt)) < 0)
       err = G_EIO;
+#ifdef UNIX
+    if (isatty(fd))
+      tcsetattr(fd, TCSANOW, &told);
+#endif
   }
   /* Return */
   if (err) {
@@ -719,7 +742,7 @@ void sys_0x3b4(CpuState *S)
         case 0xffff: sys_regbase(); break;
         case 0xff00: sys_exit(); break;
         case 0xff01: sys_printf(); break;
-        case 0xff02: sys_io_write(); break;
+        case 0xff02: sys_io_writall(); break;
         case 0xff03: sys_io_read(); break;
         case 0xff04: sys_io_lseek(); break;
         case 0xff05: sys_io_flush(); break;
@@ -886,7 +909,6 @@ int disassemble(word addr, char **pm, char *operand)
         *pm = (b > 0) ? "S??" : "HALT";
       return 2;
     }
-    case 0x1c:  *pm = "POPV";  goto oper8;    /* v7 */
     case 0x39:  *pm = "POKEA"; goto oper8;    /* v7 */
     case 0x3b:  *pm = "DOKEA"; goto oper8;    /* v7 */
     case 0x3d:  *pm = "DEEKA"; goto oper8;    /* v7 */
@@ -915,6 +937,7 @@ int disassemble(word addr, char **pm, char *operand)
     case 0xd9:  *pm = "CMPIS"; goto oper8;    /* v7 */
     case 0xdb:  *pm = "CMPIU"; goto oper8;    /* v7 */
     case 0xdd:  *pm = "PEEKV"; goto oper8;    /* v7 */
+    case 0xe1:  *pm = "PEEKA"; goto oper8;    /* v7 */
     default:    *pm = "???";   goto unknown;
     oper8:
       sprintf(operand, "$%02x", peek(addlo(addr,1)));

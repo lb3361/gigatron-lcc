@@ -1309,8 +1309,6 @@ def _ALLOC(d):
        - Emits ALLOC, ADDIV, SUBIV or a _SP based solution.
        - May trash vAC.'''
     d = int(v(d))
-    if d & 3:
-        warning("Unaligned stack can cause serious trouble")
     if args.cpu >= 7:
         if SP == vSP and d >= -128 and d < 128:
             ALLOC(d)

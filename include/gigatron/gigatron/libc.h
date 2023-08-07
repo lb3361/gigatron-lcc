@@ -93,11 +93,6 @@ extern double _p1evl(double x, double *coeff, int n);
 
 /* ---- Stdio ---- */
 
-
-/* This function is called before main() to initialize the _iob[]. 
-   The default version hooks the console to stdin/stdout/stderr. */
-extern void _iob_setup(void);
-
 /* Low-level open function called by fopen/freopen. The default
    version always returns -1 and sets errno to ENOTSUP.  Should be
    called with fp->_flag containing the desired read/write mode

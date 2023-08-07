@@ -194,24 +194,24 @@ def scope():
 
 
     # -- int console_print(const char *s, unsigned int len)
-    # -- int _console_writall(void *null, const char *s, unsigned int len);
-    # Function console_writall writes exactly len characters. Argument null MUST be zero!
+    # -- int _console_writall(void *unused, const char *s, unsigned int len);
+    # Function console_writall writes exactly len characters.
     # Function console_print stops on a zero char.
 
     def code_print():
         label('console_print')
         tryhop(12)
-        LDW(R9);STW(R10)
-        LDW(R8);STW(R9)
-        label('_console_writall')
+        bytes(v('LDWI')&0xff)      # LDWI eats LDI(0)
+        label('console_writall')
+        LDI(0);STW(R10)
         # Stack:
         # - 2 bytes for console_ctrl argument
         # - 8 bytes for R4-R7
         # - 2 bytes for vLR
         _PROLOGUE(12,2,0xf0) # save R4-R7
-        LDW(R8);STW(R4)  # zeroterm
-        LDW(R9);STW(R7)  # s
-        LDW(R10);STW(R6) # len
+        LDW(R10);STW(R4)     # zeroterm flag
+        LDW(R8);STW(R7)      # s
+        LDW(R9);STW(R6)      # len
         _MOVIW(0,R5)
         _BRA('.tst1')
         label('.loop')
@@ -267,15 +267,21 @@ def scope():
         LDW(R5)
         _EPILOGUE(12,2,0xf0,saveAC=True);
 
+
+    ctrl = []
+    if 'CTRL_RICH' in args.opts:
+        ctrl = [('IMPORT', '_console_ctrl')]
+    elif not 'CTRL_SIMPLE'  in args.opts:
+        ctrl = [('IMPORT', '_console_ctrl', 'IF', '_iob1')]
+
     module(name='cons_print.s',
            code=[ ('EXPORT', 'console_print'),
-                  ('EXPORT', '_console_writall'),
+                  ('EXPORT', 'console_writall'),
                   ('IMPORT', 'console_state'),
                   ('IMPORT', 'console_info'),
                   ('IMPORT', '_console_addr'),
-                  ('IMPORT', '_console_ctrl', 'IF', '_iob'),
                   ('IMPORT', '_console_printchars'),
-                  ('CODE', 'console_print', code_print) ] )
+                  ('CODE', 'console_print', code_print) ] + ctrl )
 
 scope()
 

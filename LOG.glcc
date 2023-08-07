@@ -5,6 +5,7 @@
 - Choice of low level input routines via <gigatron/kbget.h>
 - Choice of low level input routines via <gigatron/print.h>
 - New linker option --option=STRING (see above include files)
+- Decoupled stdio implementation takes less space in typical cases.
 
 GLCC_RELEASE_2.2
 

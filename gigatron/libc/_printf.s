@@ -1,5 +1,21 @@
 def scope():
 
+    def code_printf():
+        nohop()
+        label('printf')
+        _SP(2);STW(R9)
+        if args.cpu >= 7:
+            JNE('vprintf')
+        else:
+            PUSH();_CALLJ('vprintf')
+            tryhop(2);POP();RET()
+
+    module(name='printf.s',
+           code=[('EXPORT', 'printf'),
+                 ('IMPORT', 'vprintf'),
+                 ('CODE', 'printf', code_printf) ] )
+
+
     def code_cprintf():
         nohop()
         label('cprintf')

@@ -2,33 +2,6 @@
 
 def scope():
 
-  # ------- NOTES -------
-  #
-  # Some precautions are in order when writing assembly code routines
-  # that might directly or indirectly call a C function such as
-  # console_print() or even _console_reset().
-  # 
-  # * The stack pointer vSP on vCPU7 must remain four bytes aligned
-  #   because the 16 bits vCPU7 stack pointer vSP is also used as the
-  #   C stack pointer SP which must remain long-aligned if C functions
-  #   are to be called. On earlier vCPUs, these two pointers are
-  #   different and vSP does not need to be aligned. This constraint
-  #   only matters to assembly routines that may call a C function.
-  #
-  # * Although the first few arguments of a C function are passed in
-  #   registers R8-R15, space must be allocated on the C stack (SP)
-  #   for them because the C function might not store them in
-  #   registers (for instance when using the & operator). We do not do
-  #   this here because we know that none of the C functions we call
-  #   need their arguments in registers.
-  #
-  # * Registers R0-R7 are callee-saved. Therefore assembly routines
-  #   called from C should either leave them unchanged or save and
-  #   restore their values before returning to the calling C
-  #   functions. All other registers are caller-saved. Therefore
-  #   assembly routines that use them should not expect their values
-  #   to be conserved when they call a C function.
-
 
   # ------- OUTPUT ROUTINES -------
 
@@ -36,17 +9,15 @@ def scope():
   def code_putch():
     nohop()
     label('putch')
-    PUSH();ALLOC(-2)
-    LDW(R8);STLW(0)
-    if args.cpu >= 7:
-      LDW(vSP);STW(R8)
-    else:
-      LD(vSP);STW(R8)
+    LDW(R8);DOKE(SP) # using arg buildup zone
+    LDW(SP);STW(R8)
     LDI(1);STW(R9)
-    _CALLJ('console_print')
-    LDLW(0);ALLOC(2)
-    tryhop(2);POP();RET()
-
+    if args.cpu >= 6:
+      JNE('console_print')
+    else:
+      PUSH();_CALLJ('console_print')
+      tryhop(2);POP();RET()
+    
   module(name='putch.s',
          code=[('EXPORT', 'putch'),
                ('IMPORT', 'console_print'),

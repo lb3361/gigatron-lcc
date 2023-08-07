@@ -5,25 +5,6 @@
 
 #include "_doprint.h"
 
-void _doprint_putc(register doprint_t *dp, int c, register size_t cnt)
-{
-	dp->cnt += cnt;
-	while (cnt) {
-		dp->f(dp->closure, (char*)&c, 1);
-		cnt -= 1;
-	}
-}
-
-void _doprint_puts(register doprint_t *dp, register const char *s, register size_t cnt)
-{
-	register const char *e;
-	if (e = memchr(s, 0, cnt))
-		cnt = e - s;
-	dp->cnt += cnt;
-	dp->f(dp->closure, s, cnt);
-}
-
-
 static const char *parsespec(const char *s, doprintspec_t *spec, va_list *ap)
 {
 	static char fl[] = " + #0 - ";
@@ -206,7 +187,7 @@ static int _doprint_conv_info(int c)
 }
 
 
-int _doprint(register doprint_t *dd, register const char *fmt, __va_list ap)
+int _doprint_c89(register doprint_t *dd, register const char *fmt, __va_list ap)
 {
 	doprintspec_t spobj;
 	register doprintspec_t *spec = &spobj;

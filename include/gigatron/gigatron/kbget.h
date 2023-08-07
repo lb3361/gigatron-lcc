@@ -35,10 +35,13 @@ extern int (* const kbget)(void);  /* Default to kbgeta. */
 
 /* Macros to initialize the global function pointer 'kbget'
    and override the default definition provided by libc.
-   Examples:
+   Example:
      #include <conio.h>
      KBGET_AUTOREPEAT;
      int main() { ...
+   Compile with option
+     --option=KBGET_AUTOREPEAT
+   has the same effect with a lower priority. 
 */
 #define KBGET_SIMPLE 		int (*const kbget)(void) = kbgeta
 #define KBGET_AUTOBTN		int (*const kbget)(void) = kbgetb

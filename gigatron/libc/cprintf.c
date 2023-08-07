@@ -5,17 +5,15 @@
 #include "_doprint.h"
 
 
-static void dpf(void *closure, const char *buf, size_t sz)
-{
-	console_print(buf, sz);
-}
+/* Defined in doprint.s for size. Just calls console_print. */
+extern void _doprint_console(void *closure, const char *buf, size_t sz);
 
 int vcprintf(const char *fmt, __va_list ap)
 {
 	doprint_t ddobj;
 	register doprint_t *dp = &ddobj;
 	dp->cnt = 0;
-	dp->f = dpf;
+	dp->f = _doprint_console;
 	return _doprint(&ddobj, fmt, ap);
 }
 

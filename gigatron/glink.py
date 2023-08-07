@@ -2793,6 +2793,8 @@ def glink(argv):
                             help='enter a symbol as undefined and require it to be resolved by the link')
         parser.add_argument('--onload', type=str, action='append', dest='onload', metavar='SYM',
                             help='define an early initialization function')
+        parser.add_argument('--option', type=str, action='append', dest='opts', metavar='OPT',
+                            help='defines an option string that can be leveraged by libraries')
         parser.add_argument('--short-function-size-threshold', dest='sfst',
                             metavar='SIZE', type=int, action='store',
                             help='attempts to fit functions smaller than this threshold into a single page.')
@@ -2834,6 +2836,7 @@ def glink(argv):
         args.l = args.l or []
         args.L = args.L or []
         args.r = args.r or []
+        args.opts = args.opts or []
         args.onload = args.onload or []
         read_map(args.map, sm[1:])
         args.L.append(os.path.join(lccdir,f"cpu{args.cpu}"))

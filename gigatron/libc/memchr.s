@@ -3,8 +3,9 @@ def scope():
 
     # -- void *memchr(const void *s, int c0, size_t n)
     # -- void *__memchr2(const void *s, int c0c1, size_t n)
-    # - scans at most n bytes from s until finding one equal to c0 or c1
-    # - return pointer to the byte if found, 0 if not found.
+    # scan at most n bytes from s until finding one equal to c0 or c1
+    # return pointer to the byte if found, 0 if not found.
+    # known to leave R8/R9/R10 unchanged!!!
     def code1():
         nohop()
         label('memchr')

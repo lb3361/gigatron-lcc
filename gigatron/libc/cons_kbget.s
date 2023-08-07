@@ -16,14 +16,20 @@ def scope():
 
 
   # -- int (*kbget)(void) default value
+  kbget_default = 'kbgeta'
+  if 'KBGET_AUTOBTN' in args.opts:
+    kbget_default = 'kbgetb'
+  elif 'KBGET_AUTOREPEAT' in args.opts:
+    kbget_default = 'kbgetc'
+
   def code_kbget():
     align(2)
     label('kbget')
-    words('kbgeta')
+    words(kbget_default)
 
   module(name='kbget',
          code=[('EXPORT', 'kbget'),
-               ('IMPORT', 'kbgeta'),
+               ('IMPORT', kbget_default),
                ('DATA', 'kbget', code_kbget, 2, 2) ])
 
 

@@ -5,8 +5,9 @@
 
 /* This file provides a semi-standard conio interface to the gigatron
    console. The output routines are thin wrappers to the
-   gigatron/console.h ones. The new input routines replace the
-   original functions provided by gigatron/console.h ones. */
+   gigatron/console.h ones. Both the conio.h input routines and the
+   gigatron/console.h input routines use the low level driver selected
+   in gigatron/kbget.h. */
 
 
 /* ---- Conio output functions ---- */
@@ -25,10 +26,12 @@ extern void cputs(const char *s);
 
 /* Cursor position functions.
    Unlike the console_state variables cx and cy, these function
-   address the top left screen corner as (1,1). */
+   address the top left screen corner as (1,1).
+   The wherex/wherey functions return the current coordinates.
+   The gotoxy function sets the current coordinates. */
+void gotoxy(int x, int y);
 int wherex(void);
 int wherey(void);
-void gotoxy(int x, int y);
 
 /* Color functions.
    Either use one of the macros or use six bit gigatron colors. */
@@ -97,13 +100,13 @@ extern int getche(void);
 
 /* Gets a character string from the console and stores it in the
    character array pointed to by buffer. The array's first element,
-   buffer[0], must contain the maximum length, in characters, of the
-   string to be read. The array's second element, buffer[1], is where
-   _cgets stores the string's actual length cgets reads characters
-   until it reads a line feed character. Returns a pointer to
-   buffer[2] which is where the characters are stored.
-     See also console_readline() defined in gigatron/console.h which
-   takes different arguments and is used to implement cgets(). */
+   buffer[0], must contain the maximum length of the string to be
+   read. The string actual length will be stored into buffer[1].
+   Function cgets reads characters and stores them in the buffer
+   starting at buffer[2] until it meets a line feed. It returns
+   a pointer to buffer[2] which is where the string is stored.
+     See also console_readline() defined in gigatron/console.h
+   which takes different arguments and is used to implement cgets(). */
 extern char *cgets(char *buffer);
 
 

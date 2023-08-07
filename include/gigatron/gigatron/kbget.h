@@ -11,25 +11,35 @@
 
 
 /* Function kbgeta() is intended for keyboard centric applications.
-   It returns the code as it appears in the Gigatron variable
-   serialRaw without further interpretation. */
+   It reports all values read from 'serialRaw' that are different from
+   both 0xff and the last reported value. Otherwise it returns -1 to
+   indicate that no new key is pressed. */
 extern int kbgeta(void);
 
-/* Function kbgetb() heuristically distinguishes keyboard events
-   reported in serialRaw from combined button presses reported in
-   buttonState. Simultaneous button presses are reported as separate
-   events and cleared in buttonState. This function initially reports
-   ambiguous codes as button presses but modifies itself when it
-   observes ascii codes that can only be produced by a keyboard. */
+/* Function kbgetb() can work in one of two modes:
+   - Keyboard mode works like function kbgeta() but switches to button
+     mode whenever the observed code can be understood as a button press.
+   - Button mode returns independent button codes (0xff ^ buttonBit)
+     for each of the depressed buttons shown in 'buttonState',
+     clearing the 'buttonState' bits to mark the button press as
+     processed, except for the Start button in order to keep the
+     ability to reset the Gigatron with a long press on Start.
+   The function reverts to keyboard mode whenever all keys and buttons
+   are released. The serialRaw codes returned by a type C controller
+   initially cause a switch to button mode. However this behavior
+   stops as soon as one observes a code that a Type C controller could
+   not emit. This means that typing a question mark (code 0x3f) on a
+   keyboard can initially be returned as buttonB, but that this will
+   stop as soon as one presses another key. */
 extern int kbgetb(void);
 
-/* Function kbgetc() works like kbgetb() with autorepeat. */
+/* Function kbgetc() works like kbgetb() but adds autorepeat. */
 extern int kbgetc(void);
 
 /* Function pointer kbget() determines which of the following low
    level functions is called by the conio routines. All these
-   functions either return an input code or -1 if no key or button is
-   currently pressed. */
+   functions either return an input code or -1 if no key or
+   button is currently pressed. */
 extern int (* const kbget)(void);  /* Default to kbgeta. */
 
 
@@ -41,7 +51,7 @@ extern int (* const kbget)(void);  /* Default to kbgeta. */
      int main() { ...
    Compile with option
      --option=KBGET_AUTOREPEAT
-   has the same effect with a lower priority. 
+   has the same effect with a lower priority.
 */
 #define KBGET_SIMPLE 		int (*const kbget)(void) = kbgeta
 #define KBGET_AUTOBTN		int (*const kbget)(void) = kbgetb

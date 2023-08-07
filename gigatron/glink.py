@@ -1329,7 +1329,7 @@ def _LDLW(off):
     off = int(v(off))
     if args.cpu >= 7 and SP == vSP and is_zeropage(off):
         LDLW(off)
-    elif args.cpu > 7:
+    elif args.cpu >= 7:
         LDXW(SP,off)
     else:
         _SP(off);DEEK()

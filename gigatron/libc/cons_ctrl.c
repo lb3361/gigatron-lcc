@@ -12,10 +12,10 @@ extern void clrscr();
 extern void clreol();
 
 /* Handle control characters other than BS, CR, LF */
-int _console_ctrl(register const char *s, int len)
+int _console_ctrl(int c)
 {
 	register char *addr;
-	switch (*s) {
+	switch (c) {
 	case '\t':  /* TAB */
 		console_state.cx = (console_state.cx | 3) + 1;
 		break;

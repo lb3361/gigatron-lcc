@@ -1105,7 +1105,7 @@ static int samecnst(Symbol a, Symbol b)
 }
 
 /* Find next tree (in forest or in next forest) */
-static Node peektrees(Node tree, int n, Node trees[])
+static void peektrees(Node tree, int n, Node trees[])
 {
   int i = 0;
   Code cp = 0;

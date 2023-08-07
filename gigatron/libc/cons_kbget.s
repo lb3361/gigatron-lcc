@@ -132,7 +132,7 @@ def scope():
     PUSH()
     _CALLJ('kbget.sub');_BLT('.nok')
     ST('kbget.last')
-    LD('frameCount');ADDI(32);ST('kbget.fc')
+    LD('frameCount');ADDI(48);ST('kbget.fc')
     label('.ret1')
     LD('kbget.last')
     tryhop(2);POP();RET()       # normal return

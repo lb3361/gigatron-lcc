@@ -39,7 +39,7 @@ extern __near struct console_state_s {
    characters can be supported by forcing _console_ctrl to be included
    (as with stdio output) in the build or by defining a customized
    one.  Return the number of characters processed. */
-extern int console_print(const char *s, int len);
+extern int console_print(const char *s, unsigned int len);
 
 /* Reset the video tables and clear the screen. */
 extern void console_clear_screen(void);
@@ -90,7 +90,7 @@ extern char *_console_addr(void);
    following conditions is met: (1) `len` characters have been
    printed, (2) the next character would not fit horizontally on the
    screen, or (3), an unprintable character has been met. */
-extern int _console_printchars(int fgbg, char *addr, const char *s, int len);
+extern int _console_printchars(int fgbg, const char *addr, const char *s, int len);
 
 /* Clear with color clr from screen address addr to the end of the row.
    Repeats for nl successive lines. */
@@ -102,7 +102,7 @@ extern void _console_clear(char *addr, int clr, int nl);
    characters "\t" for tabulation (4 chars) "\f" for clearing the
    screen, "\v" for clearing to the end of the line, and "\a" for an
    audible bell. Return the number of characters consumed. */
-extern int _console_ctrl(const char *s, int len);
+extern int _console_ctrl(int c);
 
 /* Sounds the bell for n frames */
 extern void _console_bell(int n);

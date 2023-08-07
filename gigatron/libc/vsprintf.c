@@ -33,10 +33,4 @@ int vsprintf(register char *s, register const char *fmt, register va_list ap)
 	return _doprint(dp, fmt, ap);
 }
 
-int sprintf(register char *s, const char *fmt, ...)
-{
-	register va_list ap;
-	va_start(ap, fmt);
-	return vsprintf(s, fmt, ap);
-	// va_end(ap) is a no-op
-}
+/* A sprintf relay is defined in _printf.s */

@@ -4,7 +4,7 @@
 #include "_stdio.h"
 #include "_doprint.h"
 
-int vfprintf(register FILE *fp, register const char *fmt, __va_list ap)
+int vfprintf(register FILE *fp, register const char *fmt, register __va_list ap)
 {
 	int c;
 	doprint_t ddobj;
@@ -19,3 +19,5 @@ int vfprintf(register FILE *fp, register const char *fmt, __va_list ap)
 		return EOF;
 	return c;
 }
+
+/* A fprintf relay is defined in _printf.s */

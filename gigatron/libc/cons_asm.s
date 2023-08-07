@@ -13,7 +13,7 @@ def scope():
 
 
     # -- int _console_printchars(int fgbg, char *addr, const char *s, int len)
-    
+
     # Draws up to `len` characters from string `s` at the screen
     # position given by address `addr`.  This assumes that the
     # horizontal offsets in the string table are all zero. All
@@ -166,7 +166,7 @@ def scope():
         INC(v('console_state')+2)                       # cy++
         LDI(0);ST(v('console_state')+3)                 # cx=0
         label('.nw')
-        LD(v('console_state')+2);STW(R8)                # cy 
+        LD(v('console_state')+2);STW(R8)                # cy
         LDWI(v('console_info')+0);DEEK();               # nlines
         SUBW(R8);_BGT('.nh')
         LD(v('console_state')+4);_BEQ('.ret0');         # wrapy
@@ -193,48 +193,89 @@ def scope():
                   ('CODE', '_console_addr', code_addr) ] )
 
 
-    # -- int _console_special(const char *s, int len)
-    # This function processes control characters BS, CR, and LF,
-    # and otherwise calls _console_ctrl if defined.
-    
-    def code_special():
-        nohop()
-        label('_console_special')
-        LDW(R8);PEEK()
+    # -- int console_print(const char *s, unsigned int len)
+    # -- int _console_writall(void *null, const char *s, unsigned int len);
+    # Function console_writall writes exactly len characters. Argument null MUST be zero!
+    # Function console_print stops on a zero char.
+
+    def code_print():
+        label('console_print')
+        tryhop(12)
+        LDW(R9);STW(R10)
+        LDW(R8);STW(R9)
+        label('_console_writall')
+        # Stack:
+        # - 2 bytes for console_ctrl argument
+        # - 8 bytes for R4-R7
+        # - 2 bytes for vLR
+        _PROLOGUE(12,2,0xf0) # save R4-R7
+        LDW(R8);STW(R4)  # zeroterm
+        LDW(R9);STW(R7)  # s
+        LDW(R10);STW(R6) # len
+        _MOVIW(0,R5)
+        _BRA('.tst1')
+        label('.loop')
+        # Try _console_ctrl
+        _PEEKV(R7);STW(R8);DOKE(SP)
+        LDWI('__glink_weak__console_ctrl');_BEQ('.ctrl')
+        CALL(vAC);_BNE('.add')
+        # Handle CR LF BS
+        label('.ctrl')
+        _DEEKV(SP)
         XORI(8);_BEQ('.ctrl_bs')
-        XORI(8 ^ 10);_BEQ('.ctrl_lf')
-        XORI(10 ^ 13);_BEQ('.ctrl_cr')
-        LDWI('__glink_weak__console_ctrl');
-        if args.cpu >= 7:
-            JNE('__glink_weak__console_ctrl');
-        else:
-            _BEQ('.ret')
-            PUSH();CALL(vAC);POP();
-        label('.ret')
-        RET()
-        label('.ctrl_bs')
-        LD(v('console_state')+3);_BLE('.ctrl_bs1')
-        SUBI(1);ST(v('console_state')+3); # cx--
-        _BRA('.ctrl_ret1')
-        label('.ctrl_bs1')
-        LD(v('console_state')+2);_BLE('.ctrl_ret1')
-        SUBI(1);ST(v('console_state')+2); # cy--
-        LDWI(v('console_info')+2);DEEK()
-        SUBI(1);ST(v('console_state')+3); # cx=ncolumns-1
-        _BRA('.ctrl_ret1')
+        XORI(13 ^ 8);_BEQ('.ctrl_cr')
+        XORI(10 ^ 13);_BNE('.print')
         label('.ctrl_lf')
         INC(v('console_state')+2)         # cy++
         label('.ctrl_cr')
         LDI(0);ST(v('console_state')+3)   # cx=0
-        label('.ctrl_ret1')
-        LDI(1);RET()
+        _BRA('.add1')
+        label('.ctrl_bs')
+        LD(v('console_state')+3);_BLE('.ctrl_bs1')
+        SUBI(1);ST(v('console_state')+3); # cx--
+        _BRA('.add1')
+        label('.ctrl_bs1')
+        LD(v('console_state')+2);_BLE('.add1')
+        SUBI(1);ST(v('console_state')+2); # cy--
+        LDWI(v('console_info')+2);DEEK()
+        SUBI(1);ST(v('console_state')+3); # cx=ncolumns-1
+        label('.add1')
+        LDI(1);_BNE('.add')
+        # Try printchars
+        label('.print')
+        _CALLJ('_console_addr');STW(R9);_BEQ('.add1')
+        LDW(v('console_state')+0);STW(R8) # fgbg
+        LDW(R7);STW(R10)
+        LDW(R6);STW(R11)
+        _CALLJ('_console_printchars');_BEQ('.add1')
+        STW(R8);ADDW(v('console_state')+3)
+        ST(v('console_state')+3)          # console_state.cx
+        LDW(R8)
+        label('.add')
+        if args.cpu >= 7:
+            ADDV(R7);ADDV(R5);SUBV(R6)
+        else:
+            STW(R8);ADDW(R7);STW(R7)
+            LDW(R5);ADDW(R8);STW(R5)
+            LDW(R6);SUBW(R8);STW(R6)
+        # Test for more
+        label('.tst1')
+        LDW(R6);_BEQ('.ret')
+        LDW(R4);_BEQ('.loop')
+        _PEEKV(R7);_BNE('.loop')
+        label('.ret')
+        LDW(R5)
+        _EPILOGUE(12,2,0xf0,saveAC=True);
 
-
-    module(name='cons_special.s',
-           code=[ ('EXPORT', '_console_special'),
+    module(name='cons_print.s',
+           code=[ ('EXPORT', 'console_print'),
+                  ('EXPORT', '_console_writall'),
                   ('IMPORT', 'console_state'),
                   ('IMPORT', 'console_info'),
-                  ('CODE', '_console_special', code_special) ] )
+                  ('IMPORT', '_console_addr'),
+                  ('IMPORT', '_console_ctrl', 'IF', '_iob'),
+                  ('IMPORT', '_console_printchars'),
+                  ('CODE', 'console_print', code_print) ] )
 
 scope()
 

@@ -72,24 +72,6 @@ def scope():
                  ('IMPORT', '__memchr2'),
                  ('CODE', '_doprint_puts', code_dp_puts) ] )
 
-
-    # -- void _doprint_console(void *closure, const char *buf, size_t sz)
-    # Helper for cprintf
-    def code_dp_cons():
-        nohop()
-        label('_doprint_console')
-        LDW(R9);STW(R8);LDW(R10);STW(R9)
-        if args.cpu >= 6:
-            JNE('console_print')
-        else:
-            PUSH();_CALLJ('console_print');POP()
-        RET()
-
-    module(name='_doprint_console',
-           code=[('EXPORT', '_doprint_console'),
-                 ('IMPORT', 'console_print'),
-                 ('CODE', '_doprint_console', code_dp_cons) ] )
-
 scope()
 
 

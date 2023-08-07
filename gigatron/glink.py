@@ -1984,7 +1984,7 @@ def _CALLJ(d):
 @vasm
 def _PROLOGUE(framesize,maxargoffset,mask):
     '''Function prologue'''
-    tryhop(2);LDW(vLR);STW(B0)
+    tryhop(4);LDW(vLR);STW(B0)
     if args.cpu >= 7:
         _ALLOC(-framesize)
         if maxargoffset == 0:

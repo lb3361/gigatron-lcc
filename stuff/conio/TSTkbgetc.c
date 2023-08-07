@@ -39,6 +39,7 @@ int main()
 	int k;
 	for(;;) {
 		if ((k = kbgetc()) >= 0)
-			cprintf("sr=%02x k=%02x %s\n", serialRaw, k, kbname(k));
+			cprintf("sr=%02x bs=%02x > %02x %s\n",
+				serialRaw, buttonState, k, kbname(k));
 	}
 }

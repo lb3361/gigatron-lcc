@@ -2423,7 +2423,7 @@ def assemble_code_fragments(m, placed=False, absolute=False):
             if not the_segment:
                 short_function = False
                 hops_enabled = True
-                lfss = args.lfss or 32
+                lfss = args.lfss or 64
                 the_segment = find_code_segment(min(lfss, 256))
                 if not the_segment:
                     raise Stop(f"cannot fit code fragment '{frag.name}'")

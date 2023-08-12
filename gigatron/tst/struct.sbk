@@ -142,7 +142,6 @@ def code10():
 	_SP(-40+68);STW(R8);
 	MOVIW(-10,R9);
 	MOVIW(-10,R10);
-	LDW(R10);_STLW(4);
 	CALLI('makepoint');
 	_SP(-44+68);STW(R8);
 	_SP(2);STW(T2);_MOVM([SP,-36+68],[T2],4,2);
@@ -151,7 +150,6 @@ def code10():
 	_SP(-48+68);STW(R8);
 	MOVQW(10,R9);
 	MOVQW(10,R10);
-	LDW(R10);_STLW(4);
 	CALLI('makepoint');
 	_SP(-52+68);STW(R8);
 	_SP(2);STW(T2);_MOVM([SP,-32+68],[T2],4,2);
@@ -168,7 +166,6 @@ def code10():
 	LDW(R7);_SHLI(2);STW(R23);
 	_SP(-16+68);ADDW(R23);DEEKA(R9);
 	_SP(-14+68);ADDW(R23);DEEKA(R10);
-	LDW(R10);_STLW(4);
 	CALLI('makepoint');
 	LDWI('.65');STW(R8);
 	_STLW(0);

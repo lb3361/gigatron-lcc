@@ -2130,6 +2130,8 @@ static void doarg(Node p)
       while (c->syms[0]->type->u.f.proto[argmaxno] &&
              c->syms[0]->type->u.f.proto[argmaxno] != voidtype)
         argmaxno += 1;
+    if (c && isstruct(c->syms[0]->type->type)) /* for callb */
+      argmaxno += 1;
   }
   r  = argreg(argno, optype(p->op), opsize(p->op), &roffset);
   offset = mkactual(p->syms[1]->u.c.v.i, p->syms[0]->u.c.v.i);

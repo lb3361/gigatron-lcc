@@ -2111,6 +2111,7 @@ def get_rominfo(roms, rom):
                 fatal(f"roms.json: rom '{rom}' inherits from an unknown rom")
             else:
                 rj = get_rominfo(roms, ri['inherits'])
+                rj.pop('info')
                 for k in rj:
                     if k not in ri:
                         ri[k] = rj[k]
@@ -2764,11 +2765,15 @@ def glink(argv):
         parser.add_argument('-o', type=str, default='a.gt1', metavar='GT1FILE',
                             help='select the output filename (default: a.gt1)')
         parser.add_argument('-cpu', "--cpu", type=int, action='store',
-                            help='select the target cpu version: 4, 5, 6.')
-        parser.add_argument('-rom', "--rom", type=str, action='store', default='v5a',
-                            help='select the target rom version: v4, v5a (default: v5a).')
+                            help=''''select the target vCPU: 4, 5, 6, 7,
+                                     defaulting to the value implied by the -rom option.''')
+        parser.add_argument('-rom', "--rom", type=str, action='store', default='v6',
+                            help='''select the target rom version as defined in roms.json,
+                                    including v4, v5a, v6, dev7 (default v6)''')
         parser.add_argument('-map', "--map", type=str, action='store',
-                            help='select a linker map')
+                            help='''select the linker map defined in the map<MAP> directory,
+                                    including 32k, 64k, and sim (default 32k). Use option --info
+                                    to get information about the selected map.''')
         parser.add_argument('-info', "--info", action='store_true',
                             help='describe the selected map, cpu, rom')
         parser.add_argument('-V', "--version", action='store_true',
@@ -2849,14 +2854,24 @@ def glink(argv):
         elif args.info:
             print('================= ROM INFO')
             if rominfo and romtype and romcpu:
-                print(f"  Rom '{args.rom}' (romType={hex(romtype)}) implements cpu {romcpu}")
-                print(f"  Keys: {[k for k in rominfo if k not in ('cpu', 'romType')]}")
+                if 'info' in rominfo:
+                    print(f"  Option '-rom={args.rom}' {rominfo['info']}")
+                print(f"  - cpu = {romcpu}")
+                print(f"  - romTypeValue = {hex(romtype)}")
+                for k in rominfo:
+                    if k not in ('cpu', 'romType', 'info'):
+                        v = rominfo[k]
+                        if not isinstance(v,dict):
+                            print(f"  - {k} = {v}")
+                        else:
+                            print(f"  - {k} = {'{...}'}")
             else:
                 print(f" No information found on rom '{args.rom}'")
             print()
             print('================= CPU INFO')
             if args.cpu == 7:
-                print('  vCPU 7 comes with the DEV7 roms and adds new opcodes to vCPU 5.')
+                print('  vCPU 7 comes with the DEV7 roms and adds new opcodes to vCPU 5.\n'
+                      ' See https://github.com/lb3361/gigatron-rom/blob/master/Docs/vCPU7.md.')
             elif args.cpu == 6:
                 print('  vCPU 6 comes with at67'"'"'s ROMvX0 and contains many new opcodes\n'
                       ' whose encoding might change from release to release. vCPU 6 is not\n'

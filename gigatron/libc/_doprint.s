@@ -1,20 +1,21 @@
 
 def scope():
 
-    # -- int (*_doprint)(doprint_t*, const char*, __va_list) = _doprint_c89;
-    # Default value for function pointer _doprint.
-    doprint_default = '_doprint_c89'
+    # -- int _doprint(const char*, __va_list);
+    # aliased to either _doprint_c89 or _doprint_simple
+
     if 'PRINTF_SIMPLE' in args.opts:
         doprint_default = '_doprint_simple'
+    else:
+        doprint_default = '_doprint_c89'
+
     def code_doprint():
-        align(2)
-        label('_doprint')
-        words(doprint_default)
+        label('_doprint', doprint_default)
 
     module(name='doprint.s',
            code=[('EXPORT','_doprint'),
-                 ('IMPORT',doprint_default),
-                 ('DATA','_doprint',code_doprint, 2, 2) ] )
+                 ('IMPORT', doprint_default),
+                 ('CODE','_doprint',code_doprint) ] )
 
 
     # - struct _doprint_dst_s _doprint_dst

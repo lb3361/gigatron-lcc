@@ -9,6 +9,12 @@
    sophisticated ways to deal with these problems. */
 
 
+/* Function kbget() is aliased to either of kbgeta(), kbgetb()
+   or kbgetc() depending on the linker options --option=KBGET_SIMPLE,
+   --option=KBGET_AUTOBTN or --option=KBGET_AUTOREPEAT.
+   The default is kbgeta(). */
+extern int kbget(void);
+
 
 /* Function kbgeta() is intended for keyboard centric applications.
    It reports all values read from 'serialRaw' that are different from
@@ -35,27 +41,6 @@ extern int kbgetb(void);
 
 /* Function kbgetc() works like kbgetb() but adds autorepeat. */
 extern int kbgetc(void);
-
-/* Function pointer kbget() determines which of the following low
-   level functions is called by the conio routines. All these
-   functions either return an input code or -1 if no key or
-   button is currently pressed. */
-extern int (* const kbget)(void);  /* Default to kbgeta. */
-
-
-/* Macros to initialize the global function pointer 'kbget'
-   and override the default definition provided by libc.
-   Example:
-     #include <conio.h>
-     KBGET_AUTOREPEAT;
-     int main() { ...
-   Compile with option
-     --option=KBGET_AUTOREPEAT
-   has the same effect with a lower priority.
-*/
-#define KBGET_SIMPLE 		int (*const kbget)(void) = kbgeta
-#define KBGET_AUTOBTN		int (*const kbget)(void) = kbgetb
-#define KBGET_AUTOREPEAT	int (*const kbget)(void) = kbgetc
 
 #endif
 

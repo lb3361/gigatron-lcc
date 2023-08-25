@@ -26,12 +26,6 @@
 # define CLOCKS_PER_SEC 60
 # define clock() frameCount
 
-/* Process input buttons */
-KBGET_AUTOBTN;
-
-/* Light printf implementation */
-PRINTF_SIMPLE;
-
 #else /* ! __gigatron */
 
 # include <time.h>

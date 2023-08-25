@@ -4,10 +4,6 @@
 #include <stdio.h>
 #include <gigatron/sys.h>
 
-KBGET_AUTOREPEAT;
-
-PRINTF_SIMPLE;
-
 const char *kbname(int k)
 {
 	static char buf[8];
@@ -38,7 +34,7 @@ int main()
 {
 	int k;
 	for(;;) {
-		if ((k = kbgetc()) >= 0)
+		if ((k = kbget()) >= 0)
 			cprintf("sr=%02x bs=%02x > %02x %s\n",
 				serialRaw, buttonState, k, kbname(k));
 	}

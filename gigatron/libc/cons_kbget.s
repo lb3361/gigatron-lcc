@@ -15,7 +15,9 @@ def scope():
       STW(T2);LDI(i);POKE(T2)
 
 
-  # -- int (*kbget)(void) default value
+  # -- int kbget(void)
+  # Aliased to one of kbget[abc]()
+
   kbget_default = 'kbgeta'
   if 'KBGET_AUTOBTN' in args.opts:
     kbget_default = 'kbgetb'
@@ -23,30 +25,22 @@ def scope():
     kbget_default = 'kbgetc'
 
   def code_kbget():
-    align(2)
-    label('kbget')
-    words(kbget_default)
+    label('kbget', kbget_default)
+    label('console_getkey', kbget_default)
 
-  module(name='kbget',
+  module(name='kbget.s',
          code=[('EXPORT', 'kbget'),
                ('IMPORT', kbget_default),
-               ('DATA', 'kbget', code_kbget, 2, 2) ])
+               ('CODE', 'kbget', code_kbget) ])
 
-
-  # -- int console_getkey(void)
   def code_getkey():
-    nohop()
-    label('console_getkey')
-    PUSH();
-    LDWI('kbget');DEEK();CALL(vAC)
-    tryhop(2);POP();RET()
+    label('console_getkey', kbget_default)
 
   module(name='console_getkey.s',
          code=[('EXPORT', 'console_getkey'),
-               ('IMPORT', 'kbget'),
-               ('CODE', 'console_getkey', code_getkey) ])
-
-
+               ('IMPORT', kbget_default),
+               ('CODE', 'kbget', code_kbget) ])
+  
   # -- int kbgeta(void)
   def code_kbgeta():
     nohop()

@@ -61,10 +61,12 @@ extern int midcprintf(const char *fmt, ...);
    PRINTF CAPABILITY SELECTION
    ======================================== */
 
-/* Function pointer _doprint selects the low level formatting routine
-   used by all the printf-like functions (except mincprintf and
-   midcprintf). The default value is _doprint_c89. */
-extern int (* const _doprint)(const char*, __va_list);
+/* Function __doprint() is the formatting routine underlying all the
+   printf functions except mincprintf() and midcprintf(). It is
+   aliased to either _doprint_c89() or _doprint_simple() depending on
+   the linker option --option=PRINTF_C89 or --option=PRINTF_SIMPLE.
+   The default is _doprint_c89(). */
+extern int _doprint(const char*, __va_list);
 
 /* The _doprint_c89 formatting routine complies with the ANSI C89
    specification which is unfortunately complex. This formatting
@@ -80,21 +82,5 @@ extern int  _doprint_c89(const char*, __va_list);
    The same code is used directly by function midcprinf. */
 extern int  _doprint_simple(const char*, __va_list);
 
-/* Macro PRINTF_C89 and PRINTF_SIMPLE can be used to select the
-   low-level formatting routine used by the printf-like
-   routines. These macro merely define and initialize the _doprint
-   function pointer.
-   Example:
-     #include <conio.h>
-     PRINTF_SIMPLE;
-     int main() { ...
-   Compile with option
-     --option=PRINTF_SIMPLE
-   has the same effect with a lower priority. 
-*/
-#define PRINTF_C89 \
-  int (*const _doprint)(const char*, __va_list) = _doprint_c89
-#define PRINTF_SIMPLE \
-  int (*const _doprint)(const char*, __va_list) = _doprint_simple
 
 #endif

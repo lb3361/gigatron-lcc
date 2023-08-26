@@ -11,8 +11,10 @@ def scope():
         label('_@_raise_zdiv')
         LDWI('.msg');STW(T3)
         LDWI(0x104)
-        _CALLI('__@raisem')
-        POP();RET()
+        if SP == vSP:
+            POP();JNE('__@raisem')            # preserve vSP long alignment
+        else:
+            _CALLI('__@raisem');POP();RET()
 
     def code0m():
         label('.msg') # "Division by zero"
@@ -33,8 +35,10 @@ def scope():
         label('_@_raise_ferr')
         LDWI('.msg');STW(T3)
         LDWI(0x304)
-        _CALLI('__@raisem')
-        POP();RET()
+        if SP == vSP:
+            POP();JNE('__@raisem')
+        else:
+            _CALLI('__@raisem');POP();RET()
 
     def code1m():
         label('.msg') # "Floating point exception"
@@ -58,8 +62,10 @@ def scope():
         LDWI('errno');STW(T2);LDI(2);POKE(T2);  # set errno=ERANGE on overflow.
         LDWI('.msg');STW(T3)
         LDWI(0x204)
-        _CALLI('__@raisem')
-        POP();RET()
+        if SP == vSP:
+            POP();JNE('__@raisem')
+        else:
+            _CALLI('__@raisem');POP();RET()
 
     def code2m():
         label('.msg') # "Floating point overflow"

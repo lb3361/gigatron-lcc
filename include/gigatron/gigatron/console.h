@@ -48,6 +48,9 @@ extern int console_writall(const char *s, unsigned int len);
 /* Reset the video tables and clear the screen. */
 extern void console_clear_screen(void);
 
+/* Clear screen from the cursor to the end of line */
+extern void console_clear_to_eol(void);
+
 
 /* ---- Formatted output functions ----*/
 

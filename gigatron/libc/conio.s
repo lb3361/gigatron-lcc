@@ -131,6 +131,7 @@ def scope():
   def code_clreol():
     nohop()
     label('clreol')
+    label('console_clear_to_eol')
     PUSH()
     _CALLJ('_console_addr');STW(R8);_BEQ('.ret')
     LD(v('console_state')+0);STW(R9)
@@ -141,6 +142,7 @@ def scope():
 
   module(name='clreol.s',
          code=[('EXPORT', 'clreol'),
+               ('EXPORT', 'console_clear_to_eol'),
                ('IMPORT', '_console_addr'),
                ('IMPORT', '_console_clear'),
                ('IMPORT', 'console_state'),

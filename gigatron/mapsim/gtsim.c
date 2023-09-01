@@ -1066,84 +1066,102 @@ void usage(int exitcode)
             "instead of the main menu.\n"
             "\n"
             "Options:\n"
-            "  -v: print debug messages\n"
-            "  -rom romfile: load rom from <romfile>\n"
-            "  -f: enable file system access\n"
-            "  -nogt1: do not override main menu and run forever\n"
-            "  -nogarble: do not garble memory to ensure repeatable runs\n"
-            "  -vmode v: set video mode 0,1,2,3,1975\n"
-            "  -t<letters>: trace VCPU execution\n"
-            "  -prof fn: writes profiling information into file <fn>\n");
+            "  -v              print debug messages\n"
+            "  -rom=<romfile>  load rom from <romfile>\n"
+            "  -f              enable file system access\n"
+            "  -nogt1          do not override main menu and run forever\n"
+            "  -nogarble       do not garble memory to ensure repeatable runs\n"
+            "  -vmode=<mode>   set video mode 0,1,2,3,1975\n"
+            "  -t<letters>     trace VCPU execution\n"
+            "  -prof=<fn>      writes profiling information into file <fn>\n");
     
   }
   exit(exitcode);
 }
 
+
+int optind;
+char *optarg;
+
+int optargcmp(int argc, char *argv[], const char *opt)
+{
+  int l = strlen(opt);
+  char *arg = argv[optind];
+  if (! strncmp(arg, opt, l)) {
+    if (arg[l] == '=') {
+      optarg = arg + l + 1;
+      return 0;
+    } else if (! arg[l]) {
+      if (1 + optind >= argc)
+        fatal("Missing argument for option %s\n", opt);
+      optarg = argv[++optind];
+      return 0;
+    }
+  }
+  return -1;
+}
+
 int main(int argc, char *argv[])
 {
   // Parse options
-  for (int i=1; i<argc; i++)
+  for (optind=1; optind<argc; optind++)
     {
-      if (!strcmp(argv[i],"-h"))
+      char *arg = argv[optind];
+      if (!strcmp(arg,"-h"))
         {
           usage(EXIT_SUCCESS);
         }
-      else if (! strcmp(argv[i], "-nogt1"))
+      else if (! strcmp(arg, "-nogt1"))
         {
           nogt1 = 1;
         }
-      else if (! strcmp(argv[i], "-nogarble"))
+      else if (! strcmp(arg, "-nogarble"))
         {
           nogarble = 1;
         }
-      else if (! strcmp(argv[i], "-v"))
+      else if (! strcmp(arg, "-v"))
         {
           verbose = 1;
         }
-      else if (! strncmp(argv[i], "-t", 2))
+      else if (! strncmp(arg, "-t", 2))
         {
-          trace = argv[i]+2;
+          trace = arg+2;
         }
-      else if (! strcmp(argv[i], "-f"))
+      else if (! strcmp(arg, "-f"))
         {
           okopen = 1;
         }
-      else if (! strcmp(argv[i], "-prof"))
+      else if (! optargcmp(argc, argv, "-prof"))
         {
-          if (i+1 >= argc)
-            fatal("Missing argument for option -prof\n");
           if (prof)
             fatal("Duplicate option -prof\n");
-          setup_profile(argv[++i]);
+          setup_profile(optarg);
         }
-      else if (! strcmp(argv[i], "-rom"))
+      else if (! optargcmp(argc, argv, "-rom"))
         {
-          if (i+1 >= argc)
-            fatal("Missing argument for option -rom\n");
           if (rom)
             fatal("Duplicate option -rom\n");
-          rom = argv[++i];
+          rom = optarg;
         }
-      else if (! strcmp(argv[i],"-vmode"))
+      else if (! optargcmp(argc, argv, "-vmode"))
         {
-          if (i+1 >= argc)
-            fatal("Missing argument for option -vmode\n");
-          char *s = argv[++i], *e = 0;
+          char *s = optarg;
+          char *e = 0;
           vmode = strtol(s, &e, 0);
           if (e == s || *e)
             fatal("Invalid value '%s' for option -vmode\n", s);
           if (vmode!= 1975 && (vmode < 0 || vmode > 3))
             fatal("Invalid value '%s' for option -vmode\n", s);
         }
-      else if (argv[i][0] == '-')
+      else if (arg[0] == '-')
         {
-          fatal("Unrecognized option %s\n", argv[i]);
+          fatal("Unrecognized option %s\n", arg);
         }
       else
         {
           if (gt1)
             usage(EXIT_FAILURE);
-          gt1 = argv[i];
+          gt1 = arg;
         }
     }
   if (! gt1 && ! nogt1)

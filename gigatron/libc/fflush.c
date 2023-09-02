@@ -1,9 +1,6 @@
 #include <gigatron/pragma.h>
 #include <errno.h>
-#define _IOB_DEFINED
 #include "_stdio.h"
-
-extern __weak struct _iobuf _iob0, _iob1, _iob2, _iob[];
 
 static int _flush(register FILE *fp)
 {

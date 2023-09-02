@@ -60,10 +60,7 @@ struct _iovec {
 	long (*lseek)(FILE *fp, long off, int whence);
 };
 
-#if !defined(_IOB_DEFINED)
-#define _IOB_DEFINED
 extern struct _iobuf _iob0, _iob1, _iob2, _iob[];
-#endif
 
 #define stderr (&_iob2)
 #define stdin  (&_iob0)

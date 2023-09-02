@@ -2013,10 +2013,37 @@ static unsigned int uintval(Symbol c)
   return 0;
 }
 
-static int check_attributes(Symbol p)
+static const char *check_strval(Attribute a, int n)
+{
+  Symbol c = a->args[n];
+  if (c && c->scope == CONSTANTS &&
+      isarray(c->type) && ischar(c->type->type))
+    return (const char*)(c->u.c.v.p);
+  return 0;
+}
+
+static const char* check_idval(Attribute a, int n)
+{
+  const char *str = check_strval(a, n);
+  const char *s;
+  int flag = 0;
+  if (str) {
+    for (s=str; *s; s++) {
+      if (s[0] == '%' && s[1] == 's' && !flag)
+        flag = 1;
+      else if (isdigit(s[0]) && s != str)
+        continue;
+      else if (!isalpha(s[0]) && s[0] != '_')
+        return 0;
+    }
+  }
+  return str;
+}
+
+static const char *check_attributes(Symbol p)
 {
   Attribute a;
-  char is_weak = 0;
+  const char *alias = 0;
   char has_org = 0;
   char has_place = 0;
   char is_extern = (p->sclass == EXTERN);
@@ -2038,15 +2065,16 @@ static int check_attributes(Symbol p)
       } else if (a->name == string("nohop") && !is_extern) {
         a->okay = (!a->args[0] && !a->args[1]);
         yes = 1;
-      } else if (a->name == string("weak") && is_extern) {
-        is_weak = a->okay = (!a->args[0] && !a->args[1]);
+      } else if (a->name == string("alias") && is_extern) {
+        alias = check_idval(a, 0);
+        a->okay = (alias!=0 && !a->args[1]);
         yes = 1;
       }      
       if (yes && !a->okay)
         error("illegal argument in `%s` attribute\n", a->name);
     }
   }
-  return is_weak;
+  return alias;
 }
 
 static void get_constraints(Symbol p, struct constraints *c)
@@ -2375,13 +2403,13 @@ static void export(Symbol p)
 static void defsymbol(Symbol p)
 {
   /* this is the time to check that attributes are meaningful */
-  int is_weak = check_attributes(p);
+  const char *alias = check_attributes(p);
   if (p->scope >= LOCAL && p->sclass == STATIC)
     p->x.name = stringf("'.%d'", genlabel(1));
   else if (p->generated)
     p->x.name = stringf("'.%s'", p->name);
-  else if (p->sclass == EXTERN && is_weak)
-    p->x.name = stringf("'__glink_weak_%s'", p->name);
+  else if (alias)
+    p->x.name = stringf(stringf("'%s'", alias), p->name);
   else if (p->scope == GLOBAL || p->sclass == EXTERN)
     p->x.name = stringf("'%s'", p->name);
   else

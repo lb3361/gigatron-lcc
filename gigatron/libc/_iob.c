@@ -7,8 +7,9 @@
 /* Handles additional IOBs besides stdin/stdout/stderr */
 
 struct _iobuf _iob[IOBSIZE];
-
-extern __weak struct _iobuf _iob0, _iob1, _iob2;
+extern struct _iobuf wiob0 __weakref("_iob0");
+extern struct _iobuf wiob1 __weakref("_iob1");
+extern struct _iobuf wiob2 __weakref("_iob2");
 
 FILE *_sfindiob(void)
 {
@@ -34,12 +35,12 @@ void _swalk(register int (*fptr)(FILE*))
 	do {
 		fptr(--fp);
 	} while (fp != _iob);
-	if (&_iob2)
-		fptr(&_iob2);
-	if (&_iob1)
-		fptr(&_iob1);
-	if (&_iob0)
-		fptr(&_iob0);
+	if (& wiob2)
+		fptr(& wiob2);
+	if (& wiob1)
+		fptr(& wiob1);
+	if (& wiob0)
+		fptr(& wiob0);
 }
 
 static void _fcloseall(void)

@@ -932,9 +932,12 @@ static void oldparam(Symbol p, void *cl) {
 		}
 	error("declared parameter `%s' is missing\n", p->name);
 }
+
 void compound(int loop, struct swtch *swp, int lev) {
 	Code cp;
 	int nregs;
+	int hasstmt = 0;
+	int haswarn = 0;
 
 	walk(NULL, 0, 0);
 	cp = code(Blockbeg);
@@ -952,9 +955,24 @@ void compound(int loop, struct swtch *swp, int lev) {
 		retv->ref = 1;
 		registers = append(retv, registers);
 	}
-	while (kind[t] == CHAR || kind[t] == STATIC
-	|| istypename(t, tsym) && getchr() != ':')
-		decl(dcllocal);
+	if (events.blockentry)
+		apply(events.blockentry, NULL, NULL);
+	for (;;)
+		if (kind[t] == CHAR || kind[t] == STATIC
+		    || istypename(t, tsym) && getchr() != ':') {
+			if (Aflag >= 1 && hasstmt && !haswarn)
+				warning("Mixed declarations and statements\n");
+			haswarn = hasstmt;
+			decl(dcllocal);
+		} else if (kind[t] == IF || kind[t] == ID) {
+			List saved_registers = registers;
+			List saved_autos = autos;
+			hasstmt = 1;
+			statement(loop, swp, lev);
+			registers = saved_registers;
+			autos = saved_autos;
+		} else
+			break;
 	{
 		int i;
 		Symbol *a = ltov(&autos, STMT);
@@ -963,10 +981,6 @@ void compound(int loop, struct swtch *swp, int lev) {
 			registers = append(a[i], registers);
 		cp->u.block.locals = ltov(&registers, FUNC);
 	}
-	if (events.blockentry)
-		apply(events.blockentry, cp->u.block.locals, NULL);
-	while (kind[t] == IF || kind[t] == ID)
-		statement(loop, swp, lev);
 	walk(NULL, 0, 0);
 	foreach(identifiers, level, checkref, NULL);
 	{

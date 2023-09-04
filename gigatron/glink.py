@@ -775,6 +775,17 @@ def label(sym, val=None, hop=None):
         the_module.label(sym, v(val) if val != None else the_pc)
 
 @vasm
+def pragma_option(opt):
+    assert type(opt) == str
+    if not opt in args.opts:
+        args.opts.append(opt)
+@vasm
+def pragma_lib(fn):
+    assert type(fn) == str
+    if not fn in args.l:
+        args.l.append(fn)
+
+@vasm
 def ST(d):
     emit_op("ST", check_zp(d))
 @vasm

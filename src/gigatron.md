@@ -1434,6 +1434,36 @@ static void progend(void)
         "\n# End:\n");
 }
 
+/* lcc callback: pragma */
+static int do_pragma()
+{
+  int i;
+  unsigned char *s;
+  static const char *patterns[] = {
+    "option ( \"%*[^\"]\" ) %n",
+    "lib ( \"%*[^\"]\" ) %n",
+    0
+  };
+
+  while (*cp == ' ' || *cp == '\t')
+    cp++;
+  for(s = cp; *s; s++)
+    if (*s == '\n')
+      break;
+  for (i=0; patterns[i]; i++) {
+    int n = -1;
+    int c = *s;
+    *s = 0;
+    sscanf((char*)cp, patterns[i], &n);
+    *s = c;
+    if (n >= 0 && cp + n == s) {
+      print("# ======== pragma\npragma_%S\n\n", cp, n);
+      return 1;
+    }
+  }
+  return 0;
+}
+
 /* lcc callback: initializer */
 static void progbeg(int argc, char *argv[])
 {
@@ -1474,6 +1504,8 @@ static void progbeg(int argc, char *argv[])
   tmask[FREG] = vmask[FREG] = 0;
   /* No segment */
   cseg = -1;
+  /* Pragmas */
+  register_pragma("glcc", do_pragma);
 }
 
 /* Return register set for op */

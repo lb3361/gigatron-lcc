@@ -495,6 +495,7 @@ extern void swtoseg(int);
 extern void input_init(int, char *[]);
 extern void fillbuf(void);
 extern void nextline(void);
+extern void register_pragma(const char *id, int (*handler)(void));
 
 extern int getchr(void);
 extern int gettok(void);

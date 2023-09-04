@@ -19,10 +19,10 @@ def scope():
   # Aliased to one of kbget[abc]()
 
   kbget_default = 'kbgeta'
-  if 'KBGET_AUTOBTN' in args.opts:
-    kbget_default = 'kbgetb'
-  elif 'KBGET_AUTOREPEAT' in args.opts:
+  if 'KBGET_AUTOREPEAT' in args.opts:
     kbget_default = 'kbgetc'
+  elif 'KBGET_AUTOBTN' in args.opts:
+    kbget_default = 'kbgetb'
 
   def code_kbget():
     label('kbget', kbget_default)

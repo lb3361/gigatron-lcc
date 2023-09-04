@@ -64,7 +64,11 @@ extern int midcprintf(const char *fmt, ...);
 /* Function __doprint() is the formatting routine underlying all the
    printf functions except mincprintf() and midcprintf(). It is
    aliased to either _doprint_c89() or _doprint_simple() depending on
-   the linker option --option=PRINTF_C89 or --option=PRINTF_SIMPLE.
+   the linker option
+      --option=PRINTF_C89, or
+      --option=PRINTF_SIMPLE.
+   The same can be achieved with, for instance,
+      #pragma glcc option("PRINTF_SIMPLE")
    The default is _doprint_c89(). */
 extern int _doprint(const char*, __va_list);
 

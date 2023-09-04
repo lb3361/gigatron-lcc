@@ -4,10 +4,11 @@ def scope():
     # -- int _doprint(const char*, __va_list);
     # aliased to either _doprint_c89 or _doprint_simple
 
-    if 'PRINTF_SIMPLE' in args.opts:
-        doprint_default = '_doprint_simple'
-    else:
+    doprint_default = '_doprint_c89'
+    if 'PRINTF_C89' in args.opts:
         doprint_default = '_doprint_c89'
+    elif 'PRINTF_SIMPLE' in args.opts:
+        doprint_default = '_doprint_simple'
 
     def code_doprint():
         label('_doprint', doprint_default)

@@ -9,12 +9,15 @@
    sophisticated ways to deal with these problems. */
 
 
-/* Function kbget() is aliased to either of kbgeta(), kbgetb()
-   or kbgetc() depending on the linker options --option=KBGET_SIMPLE,
-   --option=KBGET_AUTOBTN or --option=KBGET_AUTOREPEAT.
+/* Function kbget() is aliased to either of kbgeta(), kbgetb() or kbgetc()
+   depending on the respective linker options
+     --option=KBGET_SIMPLE,
+     --option=KBGET_AUTOBTN, or
+     --option=KBGET_AUTOREPEAT.
+   The same effect can be achieved for instance with
+     #pragma glcc option("KBGET_AUTOREPEAT")
    The default is kbgeta(). */
 extern int kbget(void);
-
 
 /* Function kbgeta() is intended for keyboard centric applications.
    It reports all values read from 'serialRaw' that are different from

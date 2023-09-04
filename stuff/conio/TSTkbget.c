@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include <gigatron/sys.h>
 
+#pragma glcc option("PRINTF_SIMPLE")
+
+
 const char *kbname(int k)
 {
 	static char buf[8];

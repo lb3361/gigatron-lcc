@@ -6,6 +6,8 @@
 - Choice of low level input routines via <gigatron/print.h>
 - New linker option --option=STRING (see above include files)
 - Decoupled stdio implementation takes less space in typical cases.
+- Attribute syntax is closer to gcc's
+- Pragmas glcc option and glcc lib
 
 GLCC_RELEASE_2.2
 

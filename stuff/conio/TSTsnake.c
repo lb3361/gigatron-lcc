@@ -26,6 +26,9 @@
 # define CLOCKS_PER_SEC 60
 # define clock() frameCount
 
+# pragma glcc option("PRINTF_SIMPLE")
+# pragma glcc option("KBGET_AUTOBTN")
+
 #else /* ! __gigatron */
 
 # include <time.h>

@@ -7,8 +7,17 @@
    to cover common use cases and to ensure forward and backward
    compatibility. */
 
+/* ==== Pragmas ====
 
-/* Declaration attributes  ---
+   The following pragmas are supported:
+
+   * #pragma glcc option("OPTION")
+     Passes argument --option=OPTION to the linker.
+   * #pragma glcc lib("LIB")
+     Passes argument -lLIB to the linker.
+
+
+   ==== Declaration attributes ====
 
    The syntax `__attribute__((LIST))`, where `LIST` is a
    comma-separated list of identifiers optionally followed by a comma
@@ -38,10 +47,12 @@
      Define an external variable assumed in the current compilation
      unit to be located at absolute address `ADDRESS`.
 
+
+   ==== Attribute macros ====
+
    The following definitions are provided as convenience
    and also to protect programs against possible changes
    in attribute syntax or semantics: */
-
 
 /*  `__nohop` --
     Mark a variable or a function that should

@@ -669,10 +669,13 @@ static void fields(Type ty) {
 	  while (istypename(t, tsym)) {
 	  	static char stop[] = { IF, CHAR, '}', 0 };
 	  	Type ty1 = specifier(NULL, NULL);
+		int t1 = t;
 	  	for (;;) {
 	  		Field p;
 	  		char *id = NULL;
 	  		Type fty = dclr(ty1, &id, NULL, 0, NULL);
+			if (id == NULL && fty == ty1 && isstruct(fty) && t1 == ';')
+				id = ""; /* anonymous field */
 			p = newfield(id, ty, fty);
 			if (Aflag >= 1 && !hasproto(p->type))
 				warning("missing prototype\n");

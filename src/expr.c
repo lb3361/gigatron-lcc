@@ -656,13 +656,14 @@ Tree cast(Tree p, Type type) {
 }
 Tree field(Tree p, const char *name) {
 	Field q;
+	int offset;
 	Type ty1, ty = p->type;
 
 	if (isptr(ty))
 		ty = deref(ty);
 	ty1 = ty;
 	ty = unqual(ty);
-	if ((q = fieldref(name, ty)) != NULL) {
+	if ((q = fieldref(name, ty, &offset)) != NULL) {
 		if (isarray(q->type)) {
 			ty = q->type->type;
 			if (isconst(ty1) && !isconst(ty))
@@ -678,10 +679,10 @@ Tree field(Tree p, const char *name) {
 				ty = qual(VOLATILE, ty);
 			ty = ptr(ty);
 		}
-		if (YYcheck && !isaddrop(p->op) && q->offset > 0)	/* omit */
-			p = nullcall(ty, YYcheck, p, consttree(q->offset, inttype));	/* omit */
+		if (YYcheck && !isaddrop(p->op) && offset > 0)	/* omit */
+			p = nullcall(ty, YYcheck, p, consttree(offset, inttype));	/* omit */
 		else					/* omit */
-		p = simplify(ADD+P, ty, p, consttree(q->offset, signedptr));
+			p = simplify(ADD+P, ty, p, consttree(offset, signedptr));
 
 		if (q->lsb) {
 			p = tree(FIELD, ty->type, rvalue(p), NULL);

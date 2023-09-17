@@ -1128,9 +1128,6 @@ def ADDL():
     else:
         emit_op("ADDL_v7")
 @vasm
-def ADDX():
-    emit_op("ADDX_v7")
-@vasm
 def SUBL():
     if args.cpu == 6:
         tryhop(2); emit(0xb1, 0x1d)

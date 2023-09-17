@@ -601,20 +601,18 @@ def scope():
 
     def code_amaddbm():
         nohop()
-        label('__@amaddbm')
-        if args.cpu >= 7:
-            warning("Cpu7: should ADDX instead of calling __@amaddbm")
-            LDI(BM);ADDX()
-        elif args.cpu == 6:
-            LD(BM);_BEQ('.a0')
-            ADDW(AM);ST(AM);XORW(AM);_BEQ('.a0') # :-)
+        label('__@amaddbm40')
+        LD(BM);ADDW(AM);ST(AM);XORW(AM);_BEQ('.a0') # :-)
+        if args.cpu >= 6:
             INCVL(LAC)
+        else:
+            LDI(1);BRA('.a0')
+        label('__@amaddbm')
+        if args.cpu >= 6:
             label('.a0')
             LDI(BM+1);ADDL()
         else:
-            LD(BM);_BEQ('.a0')
-            ADDW(AM);ST(AM);XORW(AM);_BEQ('.a0') # :-)
-            LDI(1)
+            LDI(0)
             label('.a0')
             PUSH()
             ADDW(BM+1);STW(vLR);ADDW(AM+1);STW(AM+1);_BLT('.a1')
@@ -629,6 +627,7 @@ def scope():
 
     module(name='rt_amaddbm.s',
            code=[ ('EXPORT', '__@amaddbm'),
+                  ('EXPORT', '__@amaddbm40'),
                   ('CODE', '__@amaddbm', code_amaddbm) ])
 
     def code_fadd_t3_ss():
@@ -764,9 +763,12 @@ def scope():
         _CALLJ('__@fac2farg')
         LDI(2);_CALLI('__@amshra')
         if args.cpu >= 7:
-            LDI(BM);ADDX();
+            LD(BM);ADDW(AM);ST(AM);XORW(AM);_BEQ('.a0') # :-)
+            INCVL(LAC)
+            label('.a0')
+            LDI(BM+1);ADDL()
         else:
-            _CALLJ('__@amaddbm')
+            _CALLJ('__@amaddbm40')
         LDW(AM+3);_BLT('.ret')
         if args.cpu >= 6:
             _LDI(0xffff);RORX(cpu6exact=False)
@@ -783,7 +785,7 @@ def scope():
            code=[ ('EXPORT', '_@_fmul10'),
                   ('IMPORT', '__@amshra'),
                   ('IMPORT', '__@fac2farg'),
-                  ('IMPORT', '__@amaddbm') if args.cpu < 7 else ('NOP',),
+                  ('IMPORT', '__@amaddbm40') if args.cpu < 7 else ('NOP',),
                   ('IMPORT', '__@foverflow'),
                   ('CODE', '_@_fmul10', code_fmul10) ] )
 
@@ -804,10 +806,7 @@ def scope():
         LDI(1);ST(B1)
         label('.macx1')
         ANDW(B0);_BEQ('.macx2')
-        if args.cpu >= 7:
-            LDI(BM);ADDX()
-        else:
-            _CALLJ('__@amaddbm')
+        _CALLJ('__@amaddbm40')
         label('.macx2')
         if args.cpu >= 6:
             LDW(BM+3);LSLW();LD(vACH);ST(BM+4)
@@ -824,7 +823,7 @@ def scope():
     module(name='rt_macx.s',
            code=[ ('EXPORT', '__@macx'),
                   ('EXPORT', '__@macx_b0'),
-                  ('IMPORT', '__@amaddbm') if args.cpu < 7 else ('NOP',),
+                  ('IMPORT', '__@amaddbm40') if args.cpu < 7 else ('NOP',),
                   ('IMPORT', '__@bmshl1') if args.cpu < 6 else ('NOP',),
                   ('CODE', '__@macx', code_macx) ] )
 

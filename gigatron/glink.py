@@ -935,34 +935,13 @@ def CMPHU(d):
         emit_op("CMPHU_v5", check_zp(d))
 
 # cpu 7 opcodes (with cpu 6 aliases when known)
+# interface-dev order.
 @vasm
-def MOVQB(imm,d):
+def NEGV(d):
     if args.cpu == 6:
-        tryhop(3);emit(0x16, check_zp(imm), check_zp(d))
+        tryhop(3);emit(0x2f,check_zp(d),0x17)
     else:
-        emit_op("MOVQB_v7", check_zp(d), check_zp(imm))
-@vasm
-def MOVQW(imm,d):
-    if args.cpu == 6:
-        tryhop(3);emit(0x4d, check_zp(imm), check_zp(d))
-    else:
-        emit_op("MOVQW_v7", check_zp(d), check_zp(imm))
-@vasm
-def POKEQ(d):
-    if args.cpu == 6:
-        tryhop(2);emit(0x25, check_zp(d)) # aka POKEI
-    else:
-        emit_op("POKEQ_v7", check_zp(d))
-@vasm
-def DOKEQ(d):
-    emit_op("DOKEQ_v7", check_zp(d))
-@vasm
-def DOKEI(d):
-    d = int(v(d))
-    if args.cpu == 6:
-        tryhop(3);emit(0x77, (d>>8)&0xff, d&0xff)
-    else:
-        emit_op("DOKEI_v7", (d>>8)&0xff, d&0xff)
+        emit_op("NEGV_v7", check_zp(d))
 @vasm
 def POKEA(d):
     if args.cpu == 6:
@@ -976,35 +955,11 @@ def DOKEA(d):
     else:
         emit_op("DOKEA_v7", check_zp(d))
 @vasm
-def DEEKV(d):
-    if args.cpu == 6:
-        tryhop(2);emit(0x3b, check_zp(d))
-    else:
-        emit_op("DEEKV_v7", check_zp(d))
-@vasm
-def PEEKV(d):
-    if args.cpu == 6:
-        tryhop(2);emit(0x5b, check_zp(d))
-    else:
-        emit_op("PEEKV_v7", check_zp(d))
-@vasm
 def DEEKA(d):
     if args.cpu == 6:
         tryhop(2);emit(0x6f, check_zp(d))
     else:
         emit_op("DEEKA_v7", check_zp(d))
-@vasm
-def PEEKA(d):
-    if args.cpu == 6:
-        tryhop(2);emit(0x67, check_zp(d))
-    else:
-        emit_op("PEEKA_v7", check_zp(d))
-@vasm
-def LDNI(d):
-    if args.cpu == 6:
-        tryhop(2);emit(0x9c, check_zp(-d))
-    else:
-        emit_op("LDNI_v7", check_zp(d ^ 0xff00))
 @vasm
 def JEQ(d):
     tryhop(3); d=int(v(d));
@@ -1012,6 +967,105 @@ def JEQ(d):
         emit(0xbb, lo(d-2), hi(d))
     else:
         emit_op("JEQ_v7", lo(d-2), hi(d))
+@vasm
+def DEEKV(d):
+    if args.cpu == 6:
+        tryhop(2);emit(0x3b, check_zp(d))
+    else:
+        emit_op("DEEKV_v7", check_zp(d))
+@vasm
+def DOKEQ(d):
+    emit_op("DOKEQ_v7", check_zp(d))
+@vasm
+def POKEQ(d):
+    if args.cpu == 6:
+        tryhop(2);emit(0x25, check_zp(d)) # aka POKEI
+    else:
+        emit_op("POKEQ_v7", check_zp(d))
+@vasm
+def MOVQB(imm,d):
+    if args.cpu == 6:
+        tryhop(3);emit(0x16, check_zp(imm), check_zp(d))
+    else:
+        emit_op("MOVQB_v7", check_zp(d), check_zp(imm))
+@vasm
+def MOVQW(imm,d):
+    if args.cpu == 6:
+        tryhop(3);emit(0x4d, check_zp(imm), check_zp(d))
+    else:
+        emit_op("MOVQW_v7", check_zp(d), check_zp(imm))
+@vasm
+def JGT(d):
+    tryhop(3); d=int(v(d));
+    if args.cpu == 6:
+        emit(0xc1, lo(d-2), hi(d))
+    else:
+        emit_op("JGT_v7", lo(d-2), hi(d))
+@vasm
+def JLT(d):
+    tryhop(3); d=int(v(d));
+    if args.cpu == 6:
+        emit(0xbf, lo(d-2), hi(d))
+    else:
+        emit_op("JLT_v7", lo(d-2), hi(d))
+@vasm
+def JGE(d):
+    tryhop(3); d=int(v(d));
+    if args.cpu == 6:
+        emit(0xc5, lo(d-2), hi(d))
+    else:
+        emit_op("JGE_v7", lo(d-2), hi(d))
+@vasm
+def JLE(d):
+    tryhop(3); d=int(v(d));
+    if args.cpu == 6:
+        emit(0xc3, lo(d-2), hi(d))
+    else:
+        emit_op("JLE_v7", lo(d-2), hi(d))
+@vasm
+def ADDV(d):
+    emit_op("ADDV_v7", check_zp(d))
+@vasm
+def SUBV(d):
+    emit_op("SUBV_v7", check_zp(d))
+@vasm
+def LDXW(d,imm):
+    emit_op('LDXW_v7', check_zp(d), lo(imm), hi(imm))
+@vasm
+def STXW(d,imm):
+    emit_op('STXW_v7', check_zp(d), lo(imm), hi(imm))
+@vasm
+def LDSB(d):
+    emit_op('LDSB_v7', check_zp(d))
+@vasm
+def INCV(d):
+    if args.cpu == 6:
+        tryhop(3);emit(0x2f, check_zp(d), 0x6a)
+    else:
+        emit_op("INCV_v7", check_zp(d))
+@vasm
+def JNE(d):
+    tryhop(3); d=int(v(d));
+    if args.cpu == 6:
+        emit(0xbd, lo(d-2), hi(d))
+    else:
+        emit_op("JNE_v7", lo(d-2), hi(d))
+@vasm
+def LDNI(d):
+    if args.cpu == 6:
+        tryhop(2);emit(0x9c, check_zp(-d))
+    else:
+        emit_op("LDNI_v7", check_zp(d ^ 0xff00))
+@vasm
+def MULQ(kod):
+    emit_op('MULQ_v7', check_zp(kod))
+@vasm
+def MOVIW(d,x):
+    d=int(v(d))
+    emit_op('MOVIW_v7', check_zp(x), hi(d), lo(d))
+@vasm
+def MOVW(s,d):
+    emit_op('MOVW_v7', check_zp(d), check_zp(s))
 @vasm
 def CMPWS(d):
     emit_op("CMPWS_v7", check_zp(d))
@@ -1025,108 +1079,26 @@ def CMPIS(d):
 def CMPIU(d):
     emit_op("CMPIU_v7", check_zp(d))
 @vasm
-def JNE(d):
-    tryhop(3); d=int(v(d));
+def PEEKV(d):
     if args.cpu == 6:
-        emit(0xbd, lo(d-2), hi(d))
+        tryhop(2);emit(0x5b, check_zp(d))
     else:
-        emit_op("JNE_v7", lo(d-2), hi(d))
+        emit_op("PEEKV_v7", check_zp(d))
 @vasm
-def JLT(d):
-    tryhop(3); d=int(v(d));
+def PEEKA(d):
     if args.cpu == 6:
-        emit(0xbf, lo(d-2), hi(d))
+        tryhop(2);emit(0x67, check_zp(d))
     else:
-        emit_op("JLT_v7", lo(d-2), hi(d))
-@vasm
-def JGT(d):
-    tryhop(3); d=int(v(d));
-    if args.cpu == 6:
-        emit(0xc1, lo(d-2), hi(d))
-    else:
-        emit_op("JGT_v7", lo(d-2), hi(d))
-@vasm
-def JLE(d):
-    tryhop(3); d=int(v(d));
-    if args.cpu == 6:
-        emit(0xc3, lo(d-2), hi(d))
-    else:
-        emit_op("JLE_v7", lo(d-2), hi(d))
-@vasm
-def JGE(d):
-    tryhop(3); d=int(v(d));
-    if args.cpu == 6:
-        emit(0xc5, lo(d-2), hi(d))
-    else:
-        emit_op("JGE_v7", lo(d-2), hi(d))
-@vasm
-def MOVIW(d,x):
-    d=int(v(d))
-    emit_op('MOVIW_v7', check_zp(x), hi(d), lo(d))
-@vasm
-def MULQ(kod):
-    emit_op('MULQ_v7', check_zp(kod))
-@vasm
-def MOVL(s,d):
-    if args.cpu == 6:
-        tryhop(4);emit(0xc7, check_zp(d), 0xcd, check_zp(s))
-    else:
-        emit_op("MOVL_v7", check_zp(d), check_zp(s))
-@vasm
-def MOVF(s,d):
-    if args.cpu == 6:
-        tryhop(4);emit(0xc7, check_zp(d), 0xd0, check_zp(s))
-    else:
-        emit_op("MOVF_v7", check_zp(d), check_zp(s))
-@vasm
-def COPY():
-    emit_op("COPY_v7")
-@vasm
-def COPYN(n):
-    n = check_zp(n)
-    if args.cpu == 6:
-        LDW(T3);tryhop(3);emit(0x2f,n,0xcd);STW(T3)
-    else:
-        emit_op("COPYN_v7", n)
-@vasm
-def NEGV(d):
-    if args.cpu == 6:
-        tryhop(3);emit(0x2f,check_zp(d),0x17)
-    else:
-        emit_op("NEGV_v7", check_zp(d))
-@vasm
-def MULW(d):
-    emit_op("MULW_v7", check_zp(d))
-@vasm
-def RDIVU(d):
-    emit_op("RDIVU_v7", check_zp(d))
-@vasm
-def RDIVS(d):
-    emit_op("RDIVS_v7", check_zp(d))
-@vasm
-def INCV(d):
-    if args.cpu == 6:
-        tryhop(3);emit(0x2f, check_zp(d), 0x6a)
-    else:
-        emit_op("INCV_v7", check_zp(d))
-@vasm
-def ADDV(d):
-    emit_op("ADDV_v7", check_zp(d))
-@vasm
-def SUBV(d):
-    emit_op("SUBV_v7", check_zp(d))
-@vasm
-def ADDIV(i,d):
-    emit_op("ADDIV_v7", check_zp(i), check_zp(d))
-@vasm
-def SUBIV(i,d):
-    emit_op("SUBIV_v7", check_zp(i), check_zp(d))
+        emit_op("PEEKA_v7", check_zp(d))
 @vasm
 def ADDL():
     if args.cpu == 6:
         tryhop(2); emit(0xb1, 0x1a)
     else:
         emit_op("ADDL_v7")
+@vasm
+def ADDX():
+    error(f"Opcode ADDX is deprecated")
 @vasm
 def SUBL():
     if args.cpu == 6:
@@ -1225,20 +1197,49 @@ def LDFAC():
 def LDFARG():
     emit_op('LDFARG_v7')
 @vasm
-def PUSHV(d):
-    emit_op('PUSHV_v7', check_zp(d))
+def RDIVS(d):
+    emit_op("RDIVS_v7", check_zp(d))
 @vasm
-def POPV(d):
-    emit_op('POPV_v7', check_zp(d))
+def RDIVU(d):
+    emit_op("RDIVU_v7", check_zp(d))
 @vasm
-def LDXW(d,imm):
-    emit_op('LDXW_v7', check_zp(d), lo(imm), hi(imm))
+def MULW(d):
+    emit_op("MULW_v7", check_zp(d))
 @vasm
-def STXW(d,imm):
-    emit_op('STXW_v7', check_zp(d), lo(imm), hi(imm))
+def DOKEI(d):
+    d = int(v(d))
+    if args.cpu == 6:
+        tryhop(3);emit(0x77, (d>>8)&0xff, d&0xff)
+    else:
+        emit_op("DOKEI_v7", (d>>8)&0xff, d&0xff)
 @vasm
-def LDSB(d):
-    emit_op('LDSB_v7', check_zp(d))
+def ADDIV(i,d):
+    emit_op("ADDIV_v7", check_zp(i), check_zp(d))
+@vasm
+def SUBIV(i,d):
+    emit_op("SUBIV_v7", check_zp(i), check_zp(d))
+@vasm
+def COPY():
+    emit_op("COPY_v7")
+@vasm
+def COPYN(n):
+    n = check_zp(n)
+    if args.cpu == 6:
+        LDW(T3);tryhop(3);emit(0x2f,n,0xcd);STW(T3)
+    else:
+        emit_op("COPYN_v7", n)
+@vasm
+def MOVL(s,d):
+    if args.cpu == 6:
+        tryhop(4);emit(0xc7, check_zp(d), 0xcd, check_zp(s))
+    else:
+        emit_op("MOVL_v7", check_zp(d), check_zp(s))
+@vasm
+def MOVF(s,d):
+    if args.cpu == 6:
+        tryhop(4);emit(0xc7, check_zp(d), 0xd0, check_zp(s))
+    else:
+        emit_op("MOVF_v7", check_zp(d), check_zp(s))
 
 # pseudo instructions used by the compiler
 @vasm

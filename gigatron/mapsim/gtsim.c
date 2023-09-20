@@ -932,6 +932,7 @@ int disassemble(word addr, char **pm, char *operand)
     case 0x78:  *pm = "LDNI";  goto oper8n;   /* v7 */
     case 0x7d:  *pm = "MULQ";  goto oper8;    /* v7 */
     case 0xb1:  *pm = "MOVIW"; goto oper16r8; /* v7 */
+    case 0xbc:  *pm = "MOVW";  goto oper8x2r; /* v7 */
     case 0xd3:  *pm = "CMPWS"; goto oper8;    /* v7 */
     case 0xd6:  *pm = "CMPWU"; goto oper8;    /* v7 */
     case 0xd9:  *pm = "CMPIS"; goto oper8;    /* v7 */

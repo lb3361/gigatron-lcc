@@ -1898,6 +1898,8 @@ def _MOVF(s,d): # was _FMOV
             COPYN(5)
         else:
             maycross=False
+            extern('_@_fcopy_')
+            extern('_@_fcopync_')
             if d == [vAC]:
                 STW(T2)
                 maycross = True
@@ -1911,10 +1913,8 @@ def _MOVF(s,d): # was _FMOV
                 _LDI(s); STW(T0)
                 maycross = maycross or (int(s) & 0xfc == 0xfc)
             if maycross:
-                extern('_@_fcopy_')       # [T0..T0+5) --> [T2..]
-                _CALLJ('_@_fcopy_')
+                _CALLJ('_@_fcopy_')       # [T0..T0+5) --> [T2..]
             else:
-                extern('_@_fcopync_')     # [T0..T0+5) --> [T2..]
                 _CALLJ('_@_fcopync_')     # without page crossing!
 @vasm
 def _FADD():

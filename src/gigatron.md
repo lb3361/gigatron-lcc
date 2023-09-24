@@ -1482,7 +1482,7 @@ static int do_pragma()
     sscanf((char*)cp, patterns[i], &n);
     *s = c;
     if (n >= 0 && cp + n == s) {
-      print("# ======== pragma\npragma_%S\n\n", cp, n);
+      xprint("# ======== pragma\npragma_%S\n\n", cp, n);
       return 1;
     }
   }

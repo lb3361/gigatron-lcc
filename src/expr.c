@@ -350,11 +350,11 @@ static Tree primary(void) {
 	case FCON: p = tree(mkop(CNST,tsym->type), tsym->type, NULL, NULL);
 		   p->u.v = tsym->u.c.v;
  break;
-	case SCON: if (ischar(tsym->type->type))
-		   	tsym->u.c.v.p = stringn(tsym->u.c.v.p, tsym->type->size);
-		   else
+	case SCON: if (tsym->type->type == widechar)
 		   	tsym->u.c.v.p = memcpy(allocate((tsym->type->size/widechar->size)*sizeof (int), PERM),
 		   		tsym->u.c.v.p, (tsym->type->size/widechar->size)*sizeof (int));
+		   else
+		   	tsym->u.c.v.p = stringn(tsym->u.c.v.p, tsym->type->size);
 		   tsym = constant(tsym->type, tsym->u.c.v); 
 		   if (tsym->u.c.loc == NULL)
 		   	tsym->u.c.loc = genident(STATIC, tsym->type, GLOBAL);

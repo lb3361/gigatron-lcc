@@ -156,6 +156,9 @@ extern void *__memchr2ext(char bank, const void *s, int c0c1, size_t n);
    Returns zero when no expansion. */
 extern void *_memcpyext(char banks, void *dst, const void* src, size_t n);
 
+/* Same as strtok but uses the last argument as context */
+extern char *_strtok(char *str, const char *delim, char **ps);
+
 /* Swap two memory blocks of size n. */
 extern void _memswp(void *a, void *b, size_t n);
 

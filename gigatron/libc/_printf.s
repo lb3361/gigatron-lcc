@@ -47,6 +47,20 @@ def scope():
                  ('IMPORT', 'vsprintf'),
                  ('CODE', 'sprintf', code_sprintf) ] )
 
+    def code_snprintf():
+        nohop()
+        label('snprintf')
+        _SP(6);STW(R11)
+        if args.cpu >= 7:
+            JNE('vsnprintf')
+        else:
+            PUSH();_CALLJ('vsnprintf')
+            tryhop(2);POP();RET()
+
+    module(name='snprintf.s',
+           code=[('EXPORT', 'snprintf'),
+                 ('IMPORT', 'vnsprintf'),
+                 ('CODE', 'snprintf', code_snprintf) ] )
 
     def code_fprintf():
         nohop()

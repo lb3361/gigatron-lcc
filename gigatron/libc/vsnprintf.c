@@ -5,7 +5,7 @@
 
 #include "_doprint.h"
 
-typedef struct { char *x; } spdata_t;
+typedef struct { char *x, *e; } spdata_t;
 
 static spdata_t spdata;
 
@@ -13,20 +13,26 @@ static int _sprintf_writall(register const char *buf, register size_t sz, regist
 {
 	register char *b = ((spdata_t*)fp)->x;
 	if (b) {
-		memcpy(b, buf, sz);
-		b += sz;
+		register size_t rsz = (size_t)(((spdata_t*)fp)->e - b);
+		if (rsz > sz)
+			rsz = sz;
+		memcpy(b, buf, rsz);
+		b += rsz;
 		*b = 0;
 		((spdata_t*)fp)->x = b;
 	}
 	return sz;
 }
 
-int vsprintf(register char *s, register const char *fmt, register va_list ap)
+int vsnprintf(register char *s, size_t n, register const char *fmt, register va_list ap)
 {
+	if (n == 0)
+		s = 0;
 	_doprint_dst.writall = (writall_t)_sprintf_writall;
 	_doprint_dst.fp = (FILE*)&spdata;
 	spdata.x = s;
+	spdata.e = s + n - 1;
 	return _doprint(fmt, ap);
 }
 
-/* A sprintf relay is defined in _printf.s */
+/* A snprintf relay is defined in _printf.s */

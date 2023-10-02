@@ -438,15 +438,16 @@ def scope():
         if args.cpu >= 7:
             warning("cpu7: use NEGX instead of __@amneg")
             NEGX()
+        elif args.cpu >= 6:
+            LD(AM);_BEQ('.amneg0')
+            NEGVL(AM);LD(AM+4);XORI(0xff);ST(AM+4);RET()
+            label('.amneg0')
+            NEGVL(AM+1);RET()
         else:
             LDI(0);SUBW(AM);ST(AM);LD(AM);_BNE('.amneg1')
-            if args.cpu == 6:
-                NEGVL(AM+1)
-                RET()
-            else:
-                LDI(0);SUBW(AM+1);STW(AM+1);_BNE('.amneg2')
-                LDI(0);SUBW(AM+3);STW(AM+3)
-                RET()
+            LDI(0);SUBW(AM+1);STW(AM+1);_BNE('.amneg2')
+            LDI(0);SUBW(AM+3);STW(AM+3)
+            RET()
             label('.amneg1')
             LDWI(0xffff);XORW(AM+1);STW(AM+1)
             label('.amneg2')
@@ -526,7 +527,7 @@ def scope():
         LDI(0);ST(AM)
         LD(AM+4);ANDI(128);STW(AS);_BEQ('.fcv1')
         if args.cpu >= 7:
-            NEGX()
+            NEGVL(AM+1)
         else:
             _CALLJ('__@amneg')
         label('.fcv1')

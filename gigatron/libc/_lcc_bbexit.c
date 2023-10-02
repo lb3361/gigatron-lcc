@@ -4,9 +4,8 @@
 struct callsite {
 	char *file, *name;
 	union coordinate {
-		struct { unsigned int index:6,x:10,y:16; } be;
+		struct { unsigned int index:6,x:10,y:16; } be; /* unused */
 		struct { unsigned int y:16,x:10,index:6; } le;
-		unsigned int coord;
 	} u;
 } *_caller, **_callerp = &_caller;
 
@@ -16,7 +15,8 @@ void _setcallerp(struct callsite **p) {
 
 static struct _bbdata {
 	struct _bbdata *link;
-	int npoints, *counts;
+	int npoints;
+	unsigned long *counts;
 	union coordinate *coords;
 	char **files;
 	struct func {
@@ -24,19 +24,17 @@ static struct _bbdata {
 		struct caller {
 			struct caller *link;
 			struct callsite *caller;
-			int count;
+			unsigned long count;
 		} *callers;
 		char *name;
 		union coordinate src;
 	} *funcs;
 } tail, *_bblist = &tail;
 
-static void unpack(unsigned int coord, int *index, int *x, int *y) {
-	union coordinate u;
-	u.coord = coord;
-	*index = u.le.index;
-	*x = u.le.x;
-	*y = u.le.y;
+static void unpack(union coordinate *u, int *index, int *x, int *y) {
+	*index = u->le.index;
+	*x = u->le.x;
+	*y = u->le.y;
 }				
 
 static void profout(struct _bbdata *p, FILE *fp) {
@@ -50,30 +48,30 @@ static void profout(struct _bbdata *p, FILE *fp) {
 	for (i = 0; p->files[i]; i++)
 		fprintf(fp, "%s\n", p->files[i]);
 	for (i = 0, f = p->funcs; f; i++, f = f->link)
-		if (q = f->callers)
+		if ((q = f->callers))
 			for (i--; q; q = q->link)
 				i++;
 	fprintf(fp, "%d\n", i);
 	for (f = p->funcs; f; f = f->link) {
 		int n = 0;
 		for (q = f->callers; q; n += q->count, q = q->link) {
-			unpack(f->src.coord, &index, &x, &y);
-			fprintf(fp, "%s %d %d %d %d", f->name, index, x, y, q->count);
+			unpack(&(f->src), &index, &x, &y);
+			fprintf(fp, "%s %d %d %d %lu", f->name, index, x, y, q->count);
 			if (q->caller) {
-				unpack(q->caller->u.coord, &index, &x, &y);
+				unpack(&(q->caller->u), &index, &x, &y);
 				fprintf(fp, " %s %s %d %d\n", q->caller->name, q->caller->file, x, y);
 			} else
 				fprintf(fp, " ? ? 0 0\n");
 		}
 		if (n == 0) {
-			unpack(f->src.coord, &index, &x, &y);
+			unpack(&(f->src), &index, &x, &y);
 			fprintf(fp, "%s %d %d %d 0 ? ? 0 0\n", f->name, index, x, y);
 		}
 	}		
 	fprintf(fp, "%d\n", p->npoints);
 	for (i = 0; i < p->npoints; i++) {
-		unpack(p->coords[i].coord, &index, &x, &y);
-		fprintf(fp, "%d %d %d %d\n", index, x, y, p->counts[i]);
+		unpack(&(p->coords[i]), &index, &x, &y);
+		fprintf(fp, "%d %d %d %lu\n", index, x, y, p->counts[i]);
 	}
 }
 
@@ -92,7 +90,7 @@ void _epilogue(struct func *callee) {
 }
 
 void _prologue(struct func *callee, struct _bbdata *yylink) {
-	static struct caller callers[4096];
+	static struct caller callers[256];
 	static int next;
 	struct caller *p;
 

@@ -165,12 +165,13 @@ static void resynch(void) {
 	} else if (Aflag >= 2 && *cp != '\n')
 		warning("unrecognized control line\n");
 	while (*cp)
-		if (*cp++ == '\n')
+		if (*cp++ == '\n') {
 			if (cp == limit + 1) {
 				nextline();
 				if (cp == limit)
 					break;
 			} else
 				break;
+		}
 }
 

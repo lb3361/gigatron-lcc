@@ -284,11 +284,12 @@ static Tree postfix(Tree p) {
 			    	Tree q;
 			    	t = gettok();
 			    	q = expr(']');
-			    	if (YYnull)
+			    	if (YYnull) {
 			    		if (isptr(p->type))
 			    			p = nullcheck(p);
 			    		else if (isptr(q->type))
 			    			q = nullcheck(q);
+				}
 			    	p = (*optree['+'])(ADD, pointer(p), pointer(q));
 			    	if (isptr(p->type) && isarray(p->type->type))
 			    		p = retype(p, p->type->type);

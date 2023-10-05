@@ -44,7 +44,7 @@
     "LDNI_v7"          : "0x0378",
     "MULQ_v7"          : "0x037d",
     "MOVIW_v7"         : "0x03b1",
-    "MOVW_v7"          : "0x03bc",
+    "MOVW_v7"          : "0x03bb",
     "CMPWS_v7"         : "0x03d3",
     "CMPWU_v7"         : "0x03d6",
     "CMPIS_v7"         : "0x03d9",

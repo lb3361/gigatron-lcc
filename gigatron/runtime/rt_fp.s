@@ -891,13 +891,13 @@ def scope():
             _CALLJ('__@cmshl1')
         LDW(AM+3);_BGE('.fdl1')
         if args.cpu >= 7:
-            LDI(1);LSLXA()
+            LSLVL(AM+1)
         else:
             _CALLJ('__@amshl1')
         _BRA('.fdl3')
         label('.fdl1')
         if args.cpu >= 7:
-            LDI(1);LSLXA()
+            LSLVL(AM+1)
         else:
             _CALLJ('__@amshl1')
         label('.fdl2')
@@ -926,7 +926,7 @@ def scope():
             PUSH()
         LDW(AM+3);_BLT('.fdr1')
         if args.cpu >= 7:
-            LDI(1);LSLXA()
+            LSLVL(AM+1)
         else:
             _CALLJ('__@amshl1')
         if args.cpu >= 6:

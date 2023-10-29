@@ -26,6 +26,7 @@ GFILES=${B}glcc ${B}glink ${B}gt1dump \
        ${B}interface-dev.json ${B}roms.json ${GFILES_W}
 ROMFILES=${wildcard ${G}roms/*.rom}
 ROMS=${patsubst ${G}roms/%.rom,%,${ROMFILES}}
+RUNROM=
 
 ifdef COMSPEC
 E=.exe
@@ -55,7 +56,7 @@ test: all
 	    printf "+----------------------------------+\n"; \
 	    printf "|  Compiling for rom: %-8s     |\n" $$rom; \
 	    printf "+----------------------------------+\n"; \
-	    ${MAKE} ROM=$$rom glcc-test subdirs-test || exit; \
+	    ${MAKE} ROM=$$rom RUNROM=${RUNROM} glcc-test subdirs-test || exit; \
 	    wc -c ${B}tst/*.gt1 > ${B}tst/sizes-$$rom.txt; \
 	 done
 	@echo "+----------------------------------+"
@@ -89,6 +90,7 @@ subdirs-%: FORCE
 		"LDFLAGS=${LDFLAGS}" \
 		"E=${E}" \
 		"ROM=${ROM}" \
+		"RUNROM=${RUNROM}" \
 		`echo $@ | sed -e 's/^subdirs-//'` || exit; \
 	   done
 
@@ -149,7 +151,7 @@ ${B}%: ${G}%
 	cp $< $@
 
 
-GTSIMR=${GTSIM} -rom ${G}roms/${ROM}.rom
+GTSIMR=${GTSIM} -rom ${or ${RUNROM},${G}roms/${ROM}.rom}
 TSTBK1FILES=$(wildcard ${G}tst/*.1bk)
 TSTBK2FILES=$(wildcard ${G}tst/*.2bk)
 TSTX=${patsubst ${G}tst/%.1bk,${B}tst/%.gt1, ${TSTBK1FILES}}

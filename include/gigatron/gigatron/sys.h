@@ -146,7 +146,7 @@ extern unsigned int SYS_Random(void);
 #define has_SYS_Random() 1
 
 /* -- SYS_VDrawBits -- */
-extern void SYS_VDrawBits(int fgbg, char bits, char *address);
+extern void SYS_VDrawBits(int fgbg, int bits, char *address);
 #define has_SYS_VDrawBits() 1
 
 /* -- SYS_Exec

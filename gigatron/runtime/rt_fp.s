@@ -777,10 +777,10 @@ def scope():
         label('__@fmulm')
         if args.cpu < 7:
             PUSH();
-        LDW(BM+1);STW(BM)
-        LDW(BM+3);STW(BM+2)
-        LDW(AM+3);STW(v('__@fmuld')+2)
-        LDW(AM+1);STW(v('__@fmuld')+0)
+        _MOVW(BM+1, BM)
+        _MOVW(BM+3, BM+2)
+        _MOVW(AM+3, v('__@fmuld')+2)
+        _MOVW(AM+1, v('__@fmuld')+0)
         LDI(0);ST(AM);STW(AM+1);STW(AM+3)
         LD(v('__@fmuld')+0)
         if args.cpu >= 7:
@@ -879,8 +879,8 @@ def scope():
         label('__@fdivloop')
         if args.cpu < 7:
             PUSH()
-        LDW(BM+1);STW(BM);      # - working with the low 32 bits of BM
-        LDW(BM+3);STW(BM+2)
+        _MOVW(BM+1, BM);      # - working with the low 32 bits of BM
+        _MOVW(BM+3, BM+2)
         LDI(0);STW(CM);STW(CM+2)
         _BRA('.fdl2')
         label('.fdl0')
@@ -975,8 +975,8 @@ def scope():
         LDW(B0);ST(AE);_BLE('.zero')     # - copy exponent
         LD(vACH);_BNE('.ovf')            #   and test for overflow
         LDI(0);ST(AM)                    # - copy quotient into AM
-        LDW(CM);STW(AM+1)
-        LDW(CM+2);STW(AM+3)
+        _MOVW(CM, AM+1)
+        _MOVW(CM+2, AM+3)
         tryhop(2);POP();RET()
         label('.ovf')
         _CALLJ('__@foverflow')

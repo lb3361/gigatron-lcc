@@ -1313,6 +1313,12 @@ def _MOVIW(d,x):
     else:
         _LDI(d);STW(x)
 @vasm
+def _MOVW(s,d):
+    if args.cpu >= 7:
+        MOVW(s,d)
+    else:
+        LDW(s);STW(d)
+@vasm
 def _ALLOC(d):
     '''Adds positive of negative immediate d to SP (not vSP).
        - Emits ALLOC, ADDIV, SUBIV or a _SP based solution.
@@ -1991,7 +1997,7 @@ def _CALLJ(d):
 @vasm
 def _PROLOGUE(framesize,maxargoffset,mask):
     '''Function prologue'''
-    tryhop(4);LDW(vLR);STW(B0)
+    tryhop(4);_MOVW(vLR,B0)
     if args.cpu >= 7:
         _ALLOC(-framesize)
         if maxargoffset == 0:

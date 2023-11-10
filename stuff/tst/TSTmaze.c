@@ -2,7 +2,7 @@
 #include <gigatron/console.h>
 
 
-char * __near addr = 0;
+char * __near addr = (char*)160;
 
 void print_fslash(void)
 {
@@ -23,18 +23,19 @@ void print_bslash(void)
 void scroll(void)
 {
 	byte *p = videoTable;
-	byte x = *p;
-	addr = (char*)(x << 8);
+	byte b = *p;
+	((byte*)&addr)[1] = b;
+	((byte*)&addr)[0] = 0;
 	for(; p != videoTable + 112 * 2; p += 2)
 		p[0] = p[16];
-	for(; p != videoTable + 120 * 2; p += 2, x++)
-		p[0] = x;
+	for(; p != videoTable + 120 * 2; p += 2, b++)
+		p[0] = b;
 }
 
 void main(void)
 {
 	while(1) {
-		if (addr == 0) {
+		if ((char)(unsigned)addr == 160) {
 			scroll();
 			_console_clear(addr, CONSOLE_DEFAULT_FGBG, 8);
 		}
@@ -42,7 +43,5 @@ void main(void)
 			print_fslash();
 		else
 			print_bslash();
-		if ((char)(unsigned)addr == 160)
-			addr = 0;
 	}
 }

@@ -26,4 +26,4 @@ TSTmem.gt1: TSTmem.c
 	${CC} -map=32k -rom=${ROM} TSTmem.c -o $@
 
 TSTmaze.gt1: TSTmaze.c
-	${CC} -map=32k -rom=${ROM} TSTmaze.c -o $@
+	${CC} -map=32k -rom=${ROM} TSTmaze.c -o $@ --no-runtime-bss

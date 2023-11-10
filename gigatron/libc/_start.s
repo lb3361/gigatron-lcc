@@ -19,15 +19,15 @@ def code0():
     LDI(0); STW(R8); STW(R9); _CALLI('main'); STW(R8)
     ### exit()
     label('exit')
-    LDW(R8); STW(R0)
+    _MOVW(R8,R0)
     # call fini chain
     LDWI('__glink_magic_fini'); _CALLI('_callchain')
-    LDW(R0); STW(R8)
+    _MOVW(R0,R8)
     ### _exit()
     label('_exit')
-    LDI(0); STW(R9)
+    _MOVIW(0,R9)
     label('_exitm');
-    LDW(R8);STW(R0)
+    _MOVW(R8,R0)
     label('_exitm_msgfunc', pc()+1)
     LDWI(0);_BEQ('.halt')  # _exitm_msgfunc is LDWI's argument here
     CALL(vAC)              # arguments in R8 and R9 are already correct
@@ -45,7 +45,7 @@ def code1():
     # subroutine to call a chain of init/fini functions
     nohop()
     label('_callchain')
-    DEEK(); STW(R7); LDW(vLR); STW(R6)
+    DEEK(); STW(R7); _MOVW(vLR,R6)
     LDWI(0xBEEF);XORW(R7);_BEQ('.callchaindone')
     LDW(R7);_BRA('.callchaintst')
     label('.callchainloop')
@@ -54,7 +54,7 @@ def code1():
     label('.callchaintst')
     _BNE('.callchainloop')
     label('.callchaindone')
-    LDW(R6); STW(vLR); RET()
+    _MOVW(R6,vLR); RET()
 
 def code2():
     align(2)

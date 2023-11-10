@@ -158,6 +158,10 @@ extern void SYS_Exec(void *romptr, void *vlr);
 extern void SYS_SetMode(int);
 #define has_SYS_SetMode 1
 
+/* -- SYS_SetMemory */
+extern void SYS_SetMemory(int count, int val, void *addr);
+#define has_SYS_SetMemory 1
+
 /* -- SYS_ReadRomDir
    Notes: the name is copied into buf8 */
 extern void* SYS_ReadRomDir(void *romptr, char *buf8);

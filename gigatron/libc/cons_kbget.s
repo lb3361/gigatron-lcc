@@ -45,7 +45,7 @@ def scope():
   def code_kbgeta():
     nohop()
     label('kbgeta')
-    LDWI('.last');STW(R9)
+    _MOVIW('.last',R9)
     LD('serialRaw');ST(R8)
     label('.last', pc()+1) # next opcode arg
     XORI(0xff);_BEQ('.ret')

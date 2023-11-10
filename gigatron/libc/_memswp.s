@@ -5,8 +5,8 @@ def scope():
         '''void _memswp(char *R8, char *R9, size_t R10)'''
         nohop()
         label('_memswp')
-        LDW(R8);STW(T2)
-        LDW(R9);STW(T3)
+        _MOVW(R8,T2)
+        _MOVW(R9,T3)
         LDW(R10);_BEQ('.ret')
         label('.loop')
         if args.cpu >= 7:

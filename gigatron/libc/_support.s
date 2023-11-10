@@ -59,8 +59,8 @@ def scope():
         label('_foverflow')
         PUSH();_MOVF(F8,FAC);
         label('_@_raise_fovf')
-        LDWI('errno');STW(T2);LDI(2);POKE(T2);  # set errno=ERANGE on overflow.
-        LDWI('.msg');STW(T3)
+        _MOVIW('errno',T2);LDI(2);POKE(T2);  # set errno=ERANGE on overflow.
+        _MOVIW('.msg',T3)
         LDWI(0x204)
         if SP == vSP:
             POP();JNE('__@raisem')

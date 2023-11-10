@@ -14,7 +14,7 @@ def code0():
     _SP(-38);STW(SP);ADDI(6);STW(T2)
     if args.cpu >= 6:
         LDW(T3);DOKE(SP)
-        LDI(R8);STW(T3);COPYN(32)
+        _MOVIW(R8,T3);COPYN(32)
         # call _sigcall(signo,fpeinfo)
         LDW(B0);ST(R8);LD(vACH);ST(R9)
         DEEKV(SP);STW(R10);CALLI('_sigcall');STW(B0)

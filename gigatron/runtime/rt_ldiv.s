@@ -14,7 +14,7 @@ def scope():
         label('__@ldivworker')
         if args.cpu < 6:
             PUSH()
-        LDW(LAC);STW(T2);LDW(LAC+2);STW(T2+2)
+        _MOVW(LAC,T2);_MOVW(LAC+2,T2+2)
         LDI(0);ST(B1);STW(LAC);STW(LAC+2)
         label('.ldiv0')
         if args.cpu >= 7:
@@ -80,7 +80,7 @@ def scope():
         PUSH()
         _CALLI('__@ldivprep')
         CallWorker()
-        LDW(T2);STW(LAC);LDW(T2+2);STW(LAC+2)
+        _MOVW(T2,LAC);_MOVW(T2+2,LAC+2)
         tryhop(2);POP();RET()
 
     module(name='rt_ldivu.s',
@@ -141,7 +141,7 @@ def scope():
         _CALLI('__@ldivprep')
         _CALLJ('__@ldivsign')
         CallWorker()
-        LDW(T2);STW(LAC);LDW(T2+2);STW(LAC+2)
+        _MOVW(T2,LAC);_MOVW(T2+2,LAC+2)
         LD(B0);ANDI(0x80);_BEQ('.ret')
         if args.cpu >= 6:
             NEGVL(LAC)
@@ -166,7 +166,7 @@ def scope():
         _CALLI('__@ldivprep')
         _CALLJ('__@ldivsign')
         CallWorker()
-        LDW(T2);STW(T0);LDW(T2+2);STW(T0+2)
+        _MOVW(T2,T0);_MOVW(T2+2,T0+2)
         LD(B0);ANDI(0x80);_BEQ('.lms1')
         if args.cpu >= 6:
             NEGVL(T0)

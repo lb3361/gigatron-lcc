@@ -4,9 +4,8 @@
 def code0():
     ### _start()
     label('_start');
-    # ensure stack alignment
-    # create stack headroom for argc and argv
-    LDWI(0xfffc);ANDW(SP);SUBI(4);STW(SP)
+    # ensure stack alignment with space for argc and argv
+    LDI(3);ORW(SP);SUBI(7);STW(SP)
     # call onload functions
     for f in args.onload:
         _CALLJ(f)
@@ -34,11 +33,10 @@ def code0():
     # If _exitm_msgfunc is zero or returns
     # we just Flash a pixel with a position indicative of the return code
     label('.halt')
-    LDWI(0x101);PEEK();ADDW(R0);ST(R7);
-    LDWI(0x100);PEEK();ST(R7+1)
+    LDWI(0x100);DEEK();ST(R7+1)
+    LD(vACH);ADDW(R0);ST(R7)
     label('.loop')
-    POKE(R7)
-    ADDI(1)
+    POKE(R7);ADDW(0x80)
     BRA('.loop')
 
 def code1():

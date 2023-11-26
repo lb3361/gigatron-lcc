@@ -578,28 +578,29 @@ def scope():
     def code_amaddbm():
         nohop()
         label('__@amaddbm40')
-        LD(BM);ADDW(AM);ST(AM);XORW(AM);_BEQ('.a0') # :-)
+        LD(BM);ADDW(AM);ST(AM);XORW(AM);_BEQ('__@amaddbm32') # :-)
         if args.cpu >= 6:
             INCVL(LAC)
-        else:
-            LDI(1);BRA('.a0')
-        label('__@amaddbm32')
-        if args.cpu >= 6:
-            label('.a0')
+            label('__@amaddbm32')
             LDI(BM+1);ADDL()
+            RET()
         else:
-            LDI(0)
+            LDI(1);ADDW(BM+1);BRA('.a0')
+            label('__@amaddbm32')
+            LDW(BM+1)
             label('.a0')
-            PUSH()
-            ADDW(BM+1);STW(vLR);ADDW(AM+1);STW(AM+1);_BLT('.a1')
-            SUBW(vLR);ORW(BM+1);BRA('.a2')
+            PUSH();STW(vLR)
+            ADDW(AM+1);STW(AM+1);_BLT('.a2')
+            SUBW(vLR);ORW(BM+1);_BLT('.a3')
             label('.a1')
-            SUBW(vLR);ANDW(BM+1)
+            LDW(BM+3);BRA('.a4')
             label('.a2')
-            POP()
-            LD(vACH);ANDI(128);PEEK()
-            ADDW(BM+3);ADDW(AM+3);STW(AM+3)
-        RET()
+            SUBW(vLR);ANDW(BM+1);_BGE('.a1')
+            label('.a3')
+            LDI(1);ADDW(BM+3)
+            label('.a4')
+            ADDW(AM+3);STW(AM+3)
+            POP();RET()
 
     module(name='rt_amaddbm.s',
            code=[ ('EXPORT', '__@amaddbm32'),

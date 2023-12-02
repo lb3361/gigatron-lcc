@@ -41,18 +41,22 @@ Some useful things to know:
 
 * The traditional C standard library offers feature rich functions
   like `printf()` and `scanf()`. These functions are present but their
-  implementation requires a lot of space. Instead one can call some of
-  the lower level functions that either are standard like `fputs()` or
-  non standard functions such as `itoa()`, `dtoa()` whose prototypes
-  are provided by [`<gigatron/libc.h>`](include/gigatron/gigatron/libc.h).
+  default implementation requires a lot of space. Using option
+  `--option=PRINTF_SIMPLE` selects code that only recognizes a
+  common subset of the printf formatting strings. See the
+  include file [`<gigatron/printf.h>`](include/gigatron/gigatron/printf.h).
+  Alternatively one can instead call lower level functions that either
+  are standard like `fputs()` or non standard functions such as `itoa()`,
+  `dtoa()` whose prototypes are provided
+  by [`<gigatron/libc.h>`](include/gigatron/gigatron/libc.h).
   
 * Alternatively one can completely bypass stdio and use the 
   low-level console functions whose prototypes are provided in
   [`<gigatron/console.h>`](include/gigatron/gigatron/console.h).
   The function `cprintf()` has all the formatting abilities of `printf`
   but saves memory by bypassing standard io and printing to the console.
-  The function `mincprintf()` further saves space but only recognizes
-  `%d` and `%s` in format strings.
+  The function `midcprintf` and `mincprintf()` further saves space
+  by only recognizing a subset of the printf format strings.
 
 * The include file [`<gigatron/sys.h>`](include/gigatron/gigatron/sys.h)
   provides declarations to access the gigatron hardware and wrappers
@@ -216,9 +220,10 @@ Additional options recognized by the assembler/linker `glink`
 are documented by typing `glink -h`
  	
   * Option `-rom=<romversion>` is passed to the linked and helps
-	selecting runtime code that uses the SYS functions implemented by
-	the indicated rom version. The default is `v5a` which does not
-	provide much support at this point.
+    selecting the vCPU version and the runtime code that sometimes
+    relies on SYS functions implemented by the indicated rom version.
+    Rom names are described in file [`roms.json`](gigatron/roms.json).
+    The default is `v6`.
 	
   * Option `-cpu=[4567]` indicates which VCPU version should be
     targeted.  Version 5 adds the instructions `CALLI`, `CMPHS` and
@@ -299,7 +304,7 @@ open and read the opening book file `book.txt`.
 Be patient...
 
 ```
-$ ./build/gtsim -f -rom gigatron/roms/dev.rom mscp0.gt1
+$ ./build/gtsim -f -rom gigatron/roms/v6.rom mscp0.gt1
 
 This is MSCP 1.4 (Marcel's Simple Chess Program)
 

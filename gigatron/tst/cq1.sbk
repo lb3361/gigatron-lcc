@@ -4083,7 +4083,7 @@ def code87():
 	LDWI('.1654');STW(R8);
 	_STLW(0);
 	LDW(R6);LSLW();STW(R23);
-	LDWI('.1616');ADDW(R23);DEEKA(R9);
+	LDXW(R23,'.1616');STW(R9);
 	LDW(R9);_STLW(2);
 	LDWI('.1617');STW(R10);
 	_STLW(4);

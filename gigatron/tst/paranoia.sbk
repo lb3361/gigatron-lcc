@@ -3142,9 +3142,9 @@ def code17():
 	_LDLW(-92+132);LSLW();LDXW(vAC,'ErrCnt');_BEQ('.765');
 	MOVIW('.767',R8);
 	_LDLW(-92+132);LSLW();STW(R23);
-	LDWI('.756');ADDW(R23);DEEKA(R9);
+	LDXW(R23,'.756');STW(R9);
 	LDW(R9);_STLW(2);
-	LDWI('ErrCnt');ADDW(R23);DEEKA(R10);
+	LDXW(R23,'ErrCnt');STW(R10);
 	LDW(R10);_STLW(4);
 	CALLI('printf');
 	label('.765');

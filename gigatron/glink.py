@@ -943,6 +943,9 @@ def NEGV(d):
     else:
         emit_op("NEGV_v7", check_zp(d))
 @vasm
+def ADDHI(d):
+    emit_op("ADDHI_v7", check_zp(d))
+@vasm
 def POKEA(d):
     if args.cpu == 6:
         tryhop(2);emit(0x69, check_zp(d))
@@ -1241,6 +1244,18 @@ def MOVF(s,d):
     else:
         emit_op("MOVF_v7", check_zp(d), check_zp(s))
 
+@vasm
+def ADDWI(d):
+    '''Instruction ADDWI is both a CPU6 instruction 
+       and a convenient shorthand for ADDHI+ADDI on CPU7.'''
+    d = int(v(d))
+    if args.cpu == 6:
+        tryhop(4);emit(0xc7, hi(d), 0x1b, lo(d))
+    else:
+        # skipping ADDI when lo(d)==0 can
+        # send the relaxation in a loop
+        ADDHI(hi(d));ADDI(lo(d))
+        
 # pseudo instructions used by the compiler
 @vasm
 def _SP(n):

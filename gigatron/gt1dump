@@ -94,7 +94,7 @@ opcodes = [
     0xf8: ('ANDW',  1), 0xfa: ('ORW',   1), 0xfc: ('XORW',  1),
     0xff: ('RET',   0),
     # DEV7 opcodes
-    0x18: ('NEGV',  1),
+    0x18: ('NEGV',  1),  0x33: ('ADDHI', 1),
     0x39: ('POKEA', 1),  0x3b: ('DOKEA', 1),  0x3d: ('DEEKA', 1),
     0x3f: ('JEQ',  'J'), 0x41: ('DEEKV', 1),  0x44: ('DOKEQ', 1),
     0x46: ('POKEQ', 1),  0x48: ('MOVQB','M'), 0x4a: ('MOVQW','M'),

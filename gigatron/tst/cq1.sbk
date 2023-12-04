@@ -247,15 +247,13 @@ def code10():
 	label('.61');
 	MOVQW(0,R6);
 	label('.65');
-	MOVIW('.45',R23);
-	LDW(R6);_STLS(LAC);LDW(R6);_SHLI(2);ADDW(R23);_MOVL(LAC,[vAC]);
+	LDW(R6);_STLS(LAC);LDW(R6);_SHLI(2);ADDWI('.45');_MOVL(LAC,[vAC]);
 	label('.66');
 	INCV(R6);
 	LDI(17);_CMPWS(R6);_BGT('.65');
 	MOVQW(18,R6);
 	label('.69');
-	MOVIW('.45',R23);
-	LDW(R6);_SHLI(2);ADDW(R23);STW(R23);
+	LDW(R6);_SHLI(2);ADDWI('.45');STW(R23);
 	STW(B0);_STLW(-472+488,src=R23);LDW(B0)  #genspill
 	_MOVL([vAC],L8);
 	_MOVL(L8,[SP,0]);
@@ -3907,8 +3905,7 @@ def code78():
 	label('.1584');
 	MOVQW(0,R6);
 	label('.1588');
-	MOVIW('.1553',R23);
-	LDW(R4);_MULI(70);ADDW(R23);STW(R23);
+	LDW(R4);_MULI(70);ADDWI('.1553');STW(R23);
 	LDW(R5);_MULI(14);ADDW(R23);ADDW(R6);ADDW(R6);STW(R23);
 	LDW(R5);_MULI(7);STW(R22);
 	LDW(R4);_MULI(35);ADDW(R22);ADDW(R6);DOKE(R23);
@@ -3932,8 +3929,7 @@ def code78():
 	_STLW(4);
 	CALLI('array');STW(R23);
 	STW(B0);_STLW(-132+156,src=R23);LDW(B0)  #genspill
-	MOVIW('.1553',R22);
-	LDW(R4);_MULI(70);ADDW(R22);STW(R8);
+	LDW(R4);_MULI(70);ADDWI('.1553');STW(R8);
 	LDW(R8);_STLW(0);
 	LDI(35);STW(R9);
 	_STLW(2);
@@ -3941,8 +3937,7 @@ def code78():
 	_STLW(4);
 	CALLI('array');STW(R22);
 	STW(B0);_STLW(-134+156,src=R22);LDW(B0)  #genspill
-	MOVIW('.1553',R23);
-	LDW(R4);_MULI(70);ADDW(R23);STW(R23);
+	LDW(R4);_MULI(70);ADDWI('.1553');STW(R23);
 	LDW(R5);_MULI(14);ADDW(R23);STW(R8);
 	LDW(R8);_STLW(0);
 	LDI(7);STW(R9);
@@ -3950,8 +3945,7 @@ def code78():
 	LDI(49);STW(R10);
 	_STLW(4);
 	CALLI('array');STW(R23);
-	MOVIW('.1553',R22);
-	LDW(R4);_MULI(70);ADDW(R22);STW(R22);
+	LDW(R4);_MULI(70);ADDWI('.1553');STW(R22);
 	LDW(R5);_MULI(14);ADDW(R22);ADDW(R6);ADDW(R6);DEEKA(R22);
 	_LDLW(-132+156);STW(B0);_LDLW(-134+156);STW(T0);LDW(B0);ADDW(T0);ADDW(R23);ADDW(R22);SUBI(52);_BEQ('.1592');
 	LDXW(R7,28);_BEQ('.1594');
@@ -4257,7 +4251,7 @@ def code97():
 	label('s86');
 	_PROLOGUE(28,4,0xff); # save=R0-7
 	MOVW(R8,R7);
-	LDWI('.1693');DEEK();SUBI(-(-2));_STLW(-4+28);
+	LDWI('.1693');DEEK();SUBI(-v(-2));_STLW(-4+28);
 	CALLI('one');STW(R23);
 	_LDLW(-4+28);ADDW(R23);ADDW(R23);STW(R6);
 	MOVIW('.1691',R1);
@@ -4331,8 +4325,7 @@ def code97():
 	LDW(R4);_MULI(15);STW(R22);
 	LDWI('.1697');ADDW(R22);ADDW(R23);_MOVF([vAC],FAC);
 	LDWI('.1698');ADDW(R22);ADDW(R23);_FCMP();_BNE('.1735');
-	MOVIW('.1696',R23);
-	LDW(R3);_MULI(5);ADDW(R23);_FCMP();_BEQ('.1733');
+	LDW(R3);_MULI(5);ADDWI('.1696');_FCMP();_BEQ('.1733');
 	label('.1735');
 	MOVQW(1,R2);
 	label('.1733');
@@ -4355,8 +4348,7 @@ def code97():
 	LDI(0);STW(R2);
 	STW(R5);
 	label('.1740');
-	MOVIW('.1699',R23);
-	LDI(1);ADDW(R5);_STLS(LAC);_FCVI();LDW(R5);_MULI(15);ADDW(R23);_FCMP();_BEQ('.1744');
+	LDI(1);ADDW(R5);_STLS(LAC);_FCVI();LDW(R5);_MULI(15);ADDWI('.1699');_FCMP();_BEQ('.1744');
 	MOVQW(1,R2);
 	label('.1744');
 	label('.1741');

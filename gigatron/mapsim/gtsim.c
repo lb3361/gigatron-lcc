@@ -909,6 +909,7 @@ int disassemble(word addr, char **pm, char *operand)
       return 2;
     }
     case 0x18:  *pm = "NEGV";  goto oper8;    /* v7 */
+    case 0x33:  *pm = "ADDHI"; goto oper8;    /* v7 */
     case 0x39:  *pm = "POKEA"; goto oper8;    /* v7 */
     case 0x3b:  *pm = "DOKEA"; goto oper8;    /* v7 */
     case 0x3d:  *pm = "DEEKA"; goto oper8;    /* v7 */

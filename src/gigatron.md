@@ -473,18 +473,18 @@ ac: ADDP2(LSHU2(iarg,con1),ac) "%2%[0b]ADDW(%0);ADDW(%0);" 56
 ac: ADDI2(ac,conB)  "%0ADDI(%1);"      if_incr(a,25,10)
 ac: ADDU2(ac,conB)  "%0ADDI(%1);"      if_incr(a,25,10)
 ac: ADDP2(ac,conB)  "%0ADDI(%1);"      if_incr(a,25,10)
-ac: ADDI2(ac,conBn) "%0SUBI(-(%1));"   if_incr(a,25,10)
-ac: ADDU2(ac,conBn) "%0SUBI(-(%1));"   if_incr(a,25,10)
-ac: ADDP2(ac,conBn) "%0SUBI(-(%1));"   if_incr(a,25,10)
+ac: ADDI2(ac,conBn) "%0SUBI(-v(%1));"   if_incr(a,25,10)
+ac: ADDU2(ac,conBn) "%0SUBI(-v(%1));"   if_incr(a,25,10)
+ac: ADDP2(ac,conBn) "%0SUBI(-v(%1));"   if_incr(a,25,10)
 ac: SUBI2(ac,iarg)  "%0%[1b]SUBW(%1);" 28
 ac: SUBU2(ac,iarg)  "%0%[1b]SUBW(%1);" 28
 ac: SUBP2(ac,iarg)  "%0%[1b]SUBW(%1);" 28
 ac: SUBI2(ac,conB)  "%0SUBI(%1);"      25
 ac: SUBU2(ac,conB)  "%0SUBI(%1);"      25
 ac: SUBP2(ac,conB)  "%0SUBI(%1);"      25
-ac: SUBI2(ac,conBn) "%0ADDI(-(%1));"   25
-ac: SUBU2(ac,conBn) "%0ADDI(-(%1));"   25
-ac: SUBP2(ac,conBn) "%0ADDI(-(%1));"   25
+ac: SUBI2(ac,conBn) "%0ADDI(-v(%1));"   25
+ac: SUBU2(ac,conBn) "%0ADDI(-v(%1));"   25
+ac: SUBP2(ac,conBn) "%0ADDI(-v(%1));"   25
 ac: NEGI2(ac)       "%0STW(T3);LDI(0);SUBW(T3);" 68
 ac: NEGI2(regx)     "LDI(0);SUBW(%0);" 48
 ac: LSHI2(ac, con1) "%0LSLW();" 28
@@ -538,18 +538,18 @@ ac: BXORI2(ac,conB) "%0XORI(%1);" 14
 ac: BXORU2(ac,conB) "%0XORI(%1);" 14
 
 # A couple EAC variants
-eac: ADDI2(eac,conB)  "%0ADDI(%1);" 28
-eac: ADDU2(eac,conB)  "%0ADDI(%1);" 28
-eac: ADDP2(eac,conB)  "%0ADDI(%1);" 28
-eac: ADDI2(eac,conBn) "%0SUBI(-(%1));" 28
-eac: ADDU2(eac,conBn) "%0SUBI(-(%1));" 28
-eac: ADDP2(eac,conBn) "%0SUBI(-(%1));" 28
-eac: SUBI2(eac,conB)  "%0SUBI(%1);" 28
-eac: SUBU2(eac,conB)  "%0SUBI(%1);" 28
-eac: SUBP2(eac,conB)  "%0SUBI(%1);" 28
-eac: SUBI2(eac,conBn) "%0ADDI(-(%1));" 28
-eac: SUBU2(eac,conBn) "%0ADDI(-(%1));" 28
-eac: SUBP2(eac,conBn) "%0ADDI(-(%1));" 28
+eac: ADDI2(eac,conB)  "%0ADDI(%1);" 25
+eac: ADDU2(eac,conB)  "%0ADDI(%1);" 25
+eac: ADDP2(eac,conB)  "%0ADDI(%1);" 25
+eac: ADDI2(eac,conBn) "%0SUBI(-v(%1));" 25
+eac: ADDU2(eac,conBn) "%0SUBI(-v(%1));" 25
+eac: ADDP2(eac,conBn) "%0SUBI(-v(%1));" 25
+eac: SUBI2(eac,conB)  "%0SUBI(%1);" 25
+eac: SUBU2(eac,conB)  "%0SUBI(%1);" 25
+eac: SUBP2(eac,conB)  "%0SUBI(%1);" 25
+eac: SUBI2(eac,conBn) "%0ADDI(-v(%1));" 25
+eac: SUBU2(eac,conBn) "%0ADDI(-v(%1));" 25
+eac: SUBP2(eac,conBn) "%0ADDI(-v(%1));" 25
 eac: LSHI2(eac, con1) "%0LSLW();" 28
 eac: LSHU2(eac, con1) "%0LSLW();" 28
 eac: LSHI2(eac, conB) "%0_SHLI(%1);" 100
@@ -907,6 +907,18 @@ asgn: ASGNU4(spill,reg) "\tSTW(B0);_MOVL(%1,[SP,%0]);LDW(B0) #genspill\n" 20
 asgn: ASGNF5(spill,reg) "\tSTW(B0);_MOVF(%1,[SP,%0]);LDW(B0) #genspill\n" 20
 
 # Additional rules for cpu > 5
+ac:  ADDI2(ac,con)  "%0ADDWI(%1);"      mincpu6(if_incr(a,41,10))
+ac:  ADDU2(ac,con)  "%0ADDWI(%1);"      mincpu6(if_incr(a,41,10))
+ac:  ADDP2(ac,con)  "%0ADDWI(%1);"      mincpu6(if_incr(a,41,10))
+ac:  SUBI2(ac,con)  "%0ADDWI(-v(%1));"  mincpu6(if_incr(a,41,10))
+ac:  SUBU2(ac,con)  "%0ADDWI(-v(%1));"  mincpu6(if_incr(a,41,10))
+ac:  SUBP2(ac,con)  "%0ADDWI(-v(%1));"  mincpu6(if_incr(a,41,10))
+eac:  ADDI2(eac,con)  "%0ADDWI(%1);"      mincpu6(41)
+eac:  ADDU2(eac,con)  "%0ADDWI(%1);"      mincpu6(41)
+eac:  ADDP2(eac,con)  "%0ADDWI(%1);"      mincpu6(41)
+eac:  SUBI2(eac,con)  "%0ADDWI(-v(%1));"  mincpu6(41)
+eac:  SUBU2(eac,con)  "%0ADDWI(-v(%1));"  mincpu6(41)
+eac:  SUBP2(eac,con)  "%0ADDWI(-v(%1));"  mincpu6(41)
 ac:  MULI2(con,ac)  "%1_MULI(%0);"  mincpu7(80)
 ac:  MULU2(con,ac)  "%1_MULI(%0);"  mincpu7(80)
 ac:  CVII2(ac)      "%0LDSB(vACL);" mincpu7(if_cv_from(a,1,26))

@@ -21,6 +21,7 @@
     "ledTempo_v7"          : "0x01f5",
 
     "NEGV_v7"          : "0x0318",
+    "ADDHI_v7"         : "0x0333",
     "POKEA_v7"         : "0x0339",
     "DOKEA_v7"         : "0x033b",
     "DEEKA_v7"         : "0x033d",

@@ -1289,7 +1289,6 @@ static void load_book(char *filename)
         }
         while (readline(line, sizeof(line), fp) >= 0) {
                 s = line;
-		printf("Book %d : %s\n", booksize, line);
                 for (;;) {
                         move = parse_move(s, &num);
                         if (!move) break;

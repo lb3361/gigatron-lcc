@@ -96,11 +96,13 @@ static int  if_cv_from(Node,int,int);
 static int  if_arg_reg_only(Node);
 static int  if_arg_stk(Node,int);
 
-#define mincpu5(cost) ((cpu<5)?LBURG_MAX:(cost))
-#define mincpu6(cost) ((cpu<6)?LBURG_MAX:(cost))
-#define mincpu7(cost) ((cpu<7)?LBURG_MAX:(cost))
-#define ifcpu7(c1,c2) ((cpu<7)?(c2):(c1))
-#define if_spill()    ((spilling)?0:LBURG_MAX)
+#define mincpuf(c,f,cost) ((cpu<(c)&&!cpuflags.f)?LBURG_MAX:(cost))
+#define mincpu(c,cost)    ((cpu<(c))?LBURG_MAX:(cost))
+#define mincpu5(cost)     mincpu(5,cost)
+#define mincpu6(cost)     mincpu(6,cost)
+#define mincpu7(cost)     mincpu(7,cost)
+#define ifcpu7(c1,c2)     ((cpu<7)?(c2):(c1))
+#define if_spill()        ((spilling)?0:LBURG_MAX)
 
 /* Registers */
 static Symbol ireg[32], lreg[32], freg[32];
@@ -112,9 +114,13 @@ static Symbol iregw, lregw, fregw;
 #define REGMASK_TEMPS           0x00ffff00
 
 /* Misc */
-static int codenum = 0;
-static int cseg = 0;
-static int cpu = 5;
+static int codenum = 0;         /* uni */
+static int cseg = 0;            /* segment */
+static int cpu = 5;             /* cpu version */
+
+static struct cpuflags_s {
+  unsigned addhi : 1;           /* cpu as instruction addhi/addwi */
+} cpuflags;
 
 /* Register equivalences for the emitter state machine */
 static int vac_clobbered;
@@ -907,18 +913,18 @@ asgn: ASGNU4(spill,reg) "\tSTW(B0);_MOVL(%1,[SP,%0]);LDW(B0) #genspill\n" 20
 asgn: ASGNF5(spill,reg) "\tSTW(B0);_MOVF(%1,[SP,%0]);LDW(B0) #genspill\n" 20
 
 # Additional rules for cpu > 5
-ac:  ADDI2(ac,con)  "%0ADDWI(%1);"      mincpu6(if_incr(a,41,10))
-ac:  ADDU2(ac,con)  "%0ADDWI(%1);"      mincpu6(if_incr(a,41,10))
-ac:  ADDP2(ac,con)  "%0ADDWI(%1);"      mincpu6(if_incr(a,41,10))
-ac:  SUBI2(ac,con)  "%0ADDWI(-v(%1));"  mincpu6(if_incr(a,41,10))
-ac:  SUBU2(ac,con)  "%0ADDWI(-v(%1));"  mincpu6(if_incr(a,41,10))
-ac:  SUBP2(ac,con)  "%0ADDWI(-v(%1));"  mincpu6(if_incr(a,41,10))
-eac:  ADDI2(eac,con)  "%0ADDWI(%1);"      mincpu6(41)
-eac:  ADDU2(eac,con)  "%0ADDWI(%1);"      mincpu6(41)
-eac:  ADDP2(eac,con)  "%0ADDWI(%1);"      mincpu6(41)
-eac:  SUBI2(eac,con)  "%0ADDWI(-v(%1));"  mincpu6(41)
-eac:  SUBU2(eac,con)  "%0ADDWI(-v(%1));"  mincpu6(41)
-eac:  SUBP2(eac,con)  "%0ADDWI(-v(%1));"  mincpu6(41)
+ac:  ADDI2(ac,con)  "%0ADDWI(%1);"      mincpuf(6,addhi,if_incr(a,41,10))
+ac:  ADDU2(ac,con)  "%0ADDWI(%1);"      mincpuf(6,addhi,if_incr(a,41,10))
+ac:  ADDP2(ac,con)  "%0ADDWI(%1);"      mincpuf(6,addhi,if_incr(a,41,10))
+ac:  SUBI2(ac,con)  "%0ADDWI(-v(%1));"  mincpuf(6,addhi,if_incr(a,41,10))
+ac:  SUBU2(ac,con)  "%0ADDWI(-v(%1));"  mincpuf(6,addhi,if_incr(a,41,10))
+ac:  SUBP2(ac,con)  "%0ADDWI(-v(%1));"  mincpuf(6,addhi,if_incr(a,41,10))
+eac:  ADDI2(eac,con)  "%0ADDWI(%1);"      mincpuf(6,addhi,41)
+eac:  ADDU2(eac,con)  "%0ADDWI(%1);"      mincpuf(6,addhi,41)
+eac:  ADDP2(eac,con)  "%0ADDWI(%1);"      mincpuf(6,addhi,41)
+eac:  SUBI2(eac,con)  "%0ADDWI(-v(%1));"  mincpuf(6,addhi,41)
+eac:  SUBU2(eac,con)  "%0ADDWI(-v(%1));"  mincpuf(6,addhi,41)
+eac:  SUBP2(eac,con)  "%0ADDWI(-v(%1));"  mincpuf(6,addhi,41)
 ac:  MULI2(con,ac)  "%1_MULI(%0);"  mincpu7(80)
 ac:  MULU2(con,ac)  "%1_MULI(%0);"  mincpu7(80)
 ac:  CVII2(ac)      "%0LDSB(vACL);" mincpu7(if_cv_from(a,1,26))
@@ -1501,6 +1507,7 @@ static int do_pragma()
   return 0;
 }
 
+
 /* lcc callback: initializer */
 static void progbeg(int argc, char *argv[])
 {
@@ -1508,16 +1515,24 @@ static void progbeg(int argc, char *argv[])
   /* Parse flags */
   parseflags(argc, argv);
   for (i=0; i<argc; i++)
-    if (!strcmp(argv[i],"-cpu=4"))
-      cpu = 4;
-    else if (!strcmp(argv[i],"-cpu=5"))
-      cpu = 5; /* Has CALLI,CMPHI,CMPHS. */
-    else if (!strcmp(argv[i],"-cpu=6")) {
-      cpu = 6; /* TBD */
-    } else if (!strcmp(argv[i],"-cpu=7"))
-      cpu = 7; /* TBD */
-    else if (!strncmp(argv[i],"-cpu=",5))
-      warning("invalid cpu %s\n", argv[i]+5);
+    if (!strncmp(argv[i],"-cpu=", 5)) {
+      char *s = argv[i] + 5;
+      int cpumajor = *s++ - '0';
+      while (*s == ',') {
+        char *d = ++s;
+        while (*d && *d != ',')
+          d++;
+        if (! strncmp("addhi", s, d-s))
+          cpuflags.addhi = 1;
+        else
+          cpumajor = -1;
+        s = d;
+      }
+      if (cpumajor >= 4 && cpumajor <= 7 && !*s)
+        cpu = cpumajor;
+      else
+        warning("invalid cpu option %s\n", argv[i]+5);
+    }
   /* Print header */
   print("#VCPUv%d\n\n",cpu);
   /* Prepare registers */

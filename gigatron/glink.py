@@ -432,19 +432,20 @@ def emitjcc(BCC, BNCC, JCC, d):
 
 # ------------- opcode helpers
 
-def emit_op(*args):
+def emit_op(*argv, okflag=None):
     '''Calls emits with strings replaced by opcodes according to interface.json.
        This displaces the knowledge of the correct opcodes into inteface[-dev].json
        but one still has to provide the right arguments.'''
     bytes=[]
-    for arg in args:
+    for arg in argv:
         if not isinstance(arg, str):
             bytes.append(arg)
         elif not arg in symdefs:
             error(f"emit_op: opcode {arg} not defined in interface.json")
         else:
             if arg[-3:-1] == "_v":
-                check_cpu(int(arg[-1:]))
+                if not okflag in args.cpuflags:
+                    check_cpu(int(arg[-1:]))
             op = symdefs[arg]
             oq = op >> 8
             if oq == 0x35:
@@ -944,7 +945,7 @@ def NEGV(d):
         emit_op("NEGV_v7", check_zp(d))
 @vasm
 def ADDHI(d):
-    emit_op("ADDHI_v7", check_zp(d))
+    emit_op("ADDHI_v7", check_zp(d), okflag='addhi')
 @vasm
 def POKEA(d):
     if args.cpu == 6:
@@ -2154,14 +2155,12 @@ def read_rominfo(rom):
         rominfo = get_rominfo(json.load(file), rom)
     if rominfo and 'romType' in rominfo and 'cpu' in rominfo:
         romtype = int(str(rominfo['romType']),0)
-        romcpu = int(str(rominfo['cpu']),0)
+        romcpu = str(rominfo['cpu'])
     else:
         print(f"glink: warning: rom '{args.rom}' is not recognized", file=sys.stderr)
         rominfo = {}
-    if romcpu and not args.cpu:
-        args.cpu = romcpu
-    if romcpu and args.cpu and args.cpu > romcpu:
-        print(f"glink: warning: rom '{args.rom}' does not implement cpu{args.cpu}", file=sys.stderr)
+    if romcpu and args.cpu and args.cpu > romcpu + '.0':
+        print(f"glink: warning: rom '{args.rom}' does not implement cpu {args.cpu}", file=sys.stderr)
     if 'warning' in rominfo:
         warning(rominfo['warning'])
 
@@ -2745,9 +2744,7 @@ def print_fragments():
 
 # ------------- main function
 
-
 def glink(argv):
-
     '''Main entry point'''
     global lccdir, args, symdefs, module_list
     try:
@@ -2792,7 +2789,7 @@ def glink(argv):
                             help='input files')
         parser.add_argument('-o', type=str, default='a.gt1', metavar='GT1FILE',
                             help='select the output filename (default: a.gt1)')
-        parser.add_argument('-cpu', "--cpu", type=int, action='store',
+        parser.add_argument('-cpu', "--cpu", type=str, action='store',
                             help=''''select the target vCPU: 4, 5, 6, 7,
                                      defaulting to the value implied by the -rom option.''')
         parser.add_argument('-rom', "--rom", type=str, action='store', default='v6',
@@ -2855,11 +2852,15 @@ def glink(argv):
                             help='enable debugging output. repeat for more.')
 
         args = parser.parse_args(argv)
-
+      
         # process args
         read_rominfo(args.rom)
         args.cpu = args.cpu or romcpu or 5
+        args.cpu = str(args.cpu).split(',')
+        args.cpuflags = args.cpu[1:]
+        args.cpu = int(args.cpu[0])
         args.files = args.files or []
+        
         read_interface()
         create_zpage_map()
         create_mulq_map()

@@ -112,7 +112,7 @@ def scope():
     label('clrscr')
     label('console_clear_screen')
     _MOVIW(0,v('console_state')+2)
-    LD(v('console_state')+0);STW(R8)
+    LDW(v('console_state')+0);STW(R8)
     if args.cpu >= 6:
       JGE('_console_reset')
     else:

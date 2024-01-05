@@ -191,12 +191,13 @@ void sim(void)
           fprintf(stderr, "(gtsim) Horizontal timing error:"
                   "vgaY %-3d, vgaX %-3d, t=%0.3f\n", vgaY, vgaX, t/6.25e6);
 #if EXTRA_DEBUG
-          for(int i=0; i<48; i+=16) {
-            fprintf(stderr, "\t%04x:", i);
-            for (int j=0; j<16; j++)
-              fprintf(stderr, " %02x", RAM[i+j]);
-            fprintf(stderr, "\n");
-          }
+          { int i,j;
+            for(i=0; i<48; i+=16) {
+              fprintf(stderr, "\t%04x:", i);
+              for (j=0; j<16; j++)
+                fprintf(stderr, " %02x", RAM[i+j]);
+              fprintf(stderr, "\n");
+            } }
 #endif     
         }
         vgaX = 0;
@@ -374,8 +375,9 @@ void setup_profile(const char *f)
 
 void debugSysFn(void)
 {
+  int i, c;
   debug("SysFn=$%04x SysArgs=", deek(sysFn));
-  for (int i=0,c='['; i<8; i++, c=' ')
+  for (i=0, c='['; i<8; i++, c=' ')
     debug("%c%02x", c, peek(sysArgs0+i));
   debug("]");
 }
@@ -1055,7 +1057,9 @@ void next_0x307(CpuState *S)
 
 void garble(uint8_t mem[], int len)
 {
-  for (int i=0; i<len; i++) mem[i] = rand();
+  int i;
+  for (i=0; i<len; i++)
+    mem[i] = rand();
 }
 
 void usage(int exitcode)

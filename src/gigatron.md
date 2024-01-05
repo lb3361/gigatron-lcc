@@ -1933,7 +1933,7 @@ static void emit3(const char *fmt, int len, Node p, int nt, Node *kids, short *n
      information gleaned by the emitter state machine. */
   if (len > 0 && fmt[0] == '!')
     {
-      for (int i=1; i<len; i++)
+      for (i=1; i<len; i++)
         switch(fmt[i]) {
         case '4': if (cpu <= 4) goto xvac; break;
         case '5': if (cpu <= 5) goto xvac; break;

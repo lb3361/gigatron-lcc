@@ -18,7 +18,8 @@
     "vT2_v7"               : "0x0088",
     "vT3_v7"               : "0x008a",
     "userVars2_v7"         : "0x008c",
-    "ledTempo_v7"          : "0x01f5",
+    "ledTempo_v7"          : "0x01f3",
+    "vIrqMask_v7"          : "0x01f5",
 
     "NEGV_v7"          : "0x0318",
     "ADDHI_v7"         : "0x0333",

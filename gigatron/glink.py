@@ -1559,28 +1559,28 @@ def _BNE(d):
         emitjcc(BNE, BEQ, JNE, v(d))
 @vasm
 def _BLT(d):
-    if args.cpu >= 6 and not args.bcconly:
+    if args.cpu >= 6:
         JLT(d)
-    else:
+    else:        
         emitjcc(BLT, BGE, JLT, v(d))
 @vasm
+def _BGE(d):
+    if args.cpu >= 6:
+        JGE(d)
+    else:
+        emitjcc(BGE, BLT, JGE, v(d))
+@vasm
 def _BGT(d):
-    if args.cpu >= 6 and not args.bcconly:
+    if args.cpu >= 6:
         JGT(d)
     else:
         emitjcc(BGT, BLE, JGT, v(d))
 @vasm
 def _BLE(d):
-    if args.cpu >= 6 and not args.bcconly:
+    if args.cpu >= 6 and args.jcconly:
         JLE(d)
     else:
         emitjcc(BLE, BGT, JLE, v(d))
-@vasm
-def _BGE(d):
-    if args.cpu >= 6 and args.jcconly:
-        JGE(d)
-    else:
-        emitjcc(BGE, BLT, JGE, v(d))
 @vasm
 def _CMPIS(d):
     '''Compare vAC (signed) with immediate in range 0..255'''
@@ -2831,10 +2831,8 @@ def glink(argv):
         parser.add_argument('--long-function-segment-size', dest='lfss',
                             metavar='SIZE', type=int, action='store',
                             help='minimal segment size for functions split across segments.')
-        parser.add_argument('--branch-bcc', dest='bcconly', action='store_true',
-                            help='compile conditional branch with Bcc whenever possible')
         parser.add_argument('--branch-jcc', dest='jcconly', action='store_true',
-                            help='compile all conditional branches with Jcc')
+                            help='compile all conditional branches with Jcc (v6+)')
         parser.add_argument('--no-runtime-bss-initialization', action='store_true',
                             help='cause all bss segments to go as zeroes in the gt1 file')
         parser.add_argument('--minimal-heap-segment-size', dest='mhss',

@@ -182,6 +182,7 @@ opcodes35 = {
   0x18: ('LSRXA', 0),  0x1a: ('RORX',  0),  0x1c: ('MACX',  0),
   0x1e: ('LDLAC', 0),  0x20: ('STLAC', 0),  0x23: ('INCVL', 1),
   0x25: ('STFAC', 0),  0x27: ('LDFAC', 0),  0x29: ('LDFARG',0),
+  0x2b: ('VSAVE', 0),  0x2d: ('VRESTORE',0), 0x2f: ('EXCH', 0),
   0x38: ('RDIVS', 1),  0x3b: ('RDIVU', 1),  0x3d: ('MULW',  1),
   0x3f: ('BEQ',   1),  0x4d: ('BGT',   1),  0x50: ('BLT',   1),
   0x53: ('BGE',   1),  0x56: ('BLE',   1),  0x5c: ('RESET', 0),

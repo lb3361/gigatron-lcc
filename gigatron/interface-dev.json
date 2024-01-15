@@ -19,7 +19,7 @@
     "vT3_v7"               : "0x008a",
     "userVars2_v7"         : "0x008c",
     "ledTempo_v7"          : "0x01f3",
-    "vIrqMask_v7"          : "0x01f5",
+    "vIrqCtx_v7"           : "0x01f5",
 
     "NEGV_v7"          : "0x0318",
     "ADDHI_v7"         : "0x0333",
@@ -74,6 +74,9 @@
     "STFAC_v7"         : "0x3525",
     "LDFAC_v7"         : "0x3527", 
     "LDFARG_v7"        : "0x3529",
+    "VSAVE_v7"         : "0x352b",
+    "VRESTORE_v7"      : "0x352d",
+    "EXCH_v7"          : "0x352f",
     "RDIVS_v7"         : "0x3539",
     "RDIVU_v7"         : "0x353b",
     "MULW_v7"          : "0x353d",

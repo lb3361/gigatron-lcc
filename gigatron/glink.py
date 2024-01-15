@@ -1201,6 +1201,15 @@ def LDFAC():
 def LDFARG():
     emit_op('LDFARG_v7')
 @vasm
+def VSAVE():
+    emit_op('VSAVE_v7')
+@vasm
+def VRESTORE():
+    emit_op('VRESTORE_v7')
+@vasm
+def EXCH():
+    emit_op('EXCH_v7')
+@vasm
 def RDIVS(d):
     emit_op("RDIVS_v7", check_zp(d))
 @vasm
@@ -1404,7 +1413,7 @@ def _SHLI(imm):
 def _SHRIS(imm):
     '''Shift vAC right (signed) by imm positions'''
     imm &= 0xf
-    if imm & 8:
+    if imm == 8 or imm == 9:
         if args.cpu >= 7:
             LDSB(vACH)
         else:

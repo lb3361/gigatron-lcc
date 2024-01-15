@@ -86,7 +86,7 @@ long long t;
 uint8_t pfx;
 uint16_t da;
 long long dt, rt, st;
-long long vt[2];
+long long vt[2], vr;
 
 
 CpuState cpuCycle(const CpuState S)
@@ -224,9 +224,13 @@ void sim(void)
       } else if (pfx && (S.PC & 0xff) == 1 && (S.PC >> 8) == (RAM[5]+1)) {
         pfx = RAM[5];
       } else if (S.IR == 0xe1 && S.D == 0x1e) { // jmp(Y,[vReturn])
-        vt[!pfx] -= t;
+        vr = t;
       } else if (S.IR == 0xe0 && S.D == 0xff && S.Y == RAM[5]) {
-        vt[!pfx] += t - 3;
+        if (vr >= 0)
+          vt[!pfx] += t - vr - 3;
+        else
+          rt = t + 7;
+        vr = -1;
       }
       // commit
       S = T;
@@ -864,6 +868,9 @@ int disassemble(word addr, char **pm, char *operand)
         case 0x25:  *pm = "STFAC"; return 2;       /* v7 */
         case 0x27:  *pm = "LDFAC"; return 2;       /* v7 */
         case 0x29:  *pm = "LDFARG";return 2;       /* v7 */
+        case 0x2b:  *pm = "VSAVE"; return 2;       /* v7 */
+        case 0x2d:  *pm = "VRESTORE"; return 2;    /* v7 */
+        case 0x2f:  *pm = "EXCH";  return 2;       /* v7 */
         case 0x39:  *pm = "RDIVS"; goto operx8;    /* v7 */
         case 0x3b:  *pm = "RDIVU"; goto operx8;    /* v7 */
         case 0x3d:  *pm = "MULW";  goto operx8;    /* v7 */

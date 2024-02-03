@@ -204,7 +204,7 @@ def resolve(s, ignore=None):
 
 class Fragment:
     "Class for representing the code/data fragments in a module"
-    __slots__ = ('segment', 'name','func', 'size', 'align', 'nohop', 'amin', 'amax')
+    __slots__ = ('segment', 'name','func', 'size', 'align', 'nohop', 'amin', 'amax', 'aoff')
     def __init__(self, segment, name, func, size = None, align = None):
         self.segment = segment     # CODE, DATA, BSS, COMMON
         self.name = name           # fragment name
@@ -212,6 +212,7 @@ class Fragment:
         self.size = size           # fragment size (data)
         self.align = align         # fragment alignment (data)
         self.nohop = False         # short function
+        self.aoff = None           # required page offset
         self.amin = None           # min address range
         self.amax = None           # max address range
     def __repr__(self):
@@ -237,13 +238,27 @@ class Module:
         def placement(tp):
             matches = [f for f in self.code if fnmatch.fnmatchcase(f.name, tp[1])]
             for match in matches:
-                if tp[0] == 'NOHOP':
-                    match.nohop = True
-                elif match.amin == None:
-                    match.amax = tp[3] if len(tp) > 3 else None
-                    match.amin = tp[2]
-                elif len(matches) < 2:
-                    error(f"Conflicting placement constraints {tp}")
+                conflict = False
+                if tp[0] == 'NOHOP' and len(tp) == 2:
+                    match.nohop = True        #('NOHOP', "pattern")
+                elif tp[0] == 'OFFSET' and len(tp) == 3 and isinstance(tp[2], int):
+                    conflict = not match.aoff is None
+                    if not conflict:          #('OFFSET', "pattern", addr)
+                        match.aoff = tp[2]
+                elif tp[0] == 'ORG' and len(tp) == 3 and isinstance(tp[2],int):
+                    conflict = not match.amin is None
+                    if not conflict:          #('ORG', "pattern", addr)
+                        match.amin = tp[2]
+                        match.amax = None
+                elif tp[0] == 'PLACE' and len(tp) == 4 and isinstance(tp[2],int) and isinstance(tp[3],int):
+                    conflict = not match.amin is None
+                    if not conflict:          #('PLACE', "pattern", minaddr, maxaddr)
+                        match.amin = tp[2]
+                        match.amax = tp[3]
+                else:
+                    error(f"Invalid placement constraints {tp}")
+                if conflict and len(matches) <= 1:
+                    error(f"Placement constraints {tp} conflicts with previous constraints")
             return len(matches)
         # process code list
         for tp in code:
@@ -259,8 +274,8 @@ class Module:
                 self.code.append(Fragment(*tp))               # ('CODE', "name", func)
             elif tp[0] == 'DATA' or tp[0] == 'BSS' or tp[0] == 'COMMON':
                 self.code.append(Fragment(*tp))               # ('DATA|BSS|COMMON', "name", func, size, align)
-            elif tp[0] in ('ORG','PLACE','NOHOP'):            # ('PLACE', "pattern", minaddr, maxaddr)
-                if placement(tp) < 1:                         # ('ORG', "pattern", addr)
+            elif tp[0] in ('ORG','PLACE','NOHOP','OFFSET'):   # ('PLACE', "pattern", minaddr, maxaddr)
+                if placement(tp) < 1:                         # ('ORG', "pattern", addr) ('OFFSET', "pattern", off)
                     error(f"Cannot locate fragment for {tp}") # ('NOHOP', "pattern")
             elif tp[0] != 'NOP':                              # ('NOP',)
                 error(f"Unrecognized fragment specification {tp}")
@@ -268,7 +283,7 @@ class Module:
         if map_place:
             fragnames = [f.name for f in self.code]
             for tp in map_place(self.name, fragnames) or []:
-                if tp[0] in ('ORG', 'PLACE', 'NOHOP'):
+                if tp[0] in ('ORG', 'PLACE', 'NOHOP', 'OFFSET'):
                     n = placement(tp)
                     if n == 0:
                         warning(f"map_place directive {tp} does not match any fragment");
@@ -556,11 +571,13 @@ def create_register_names(base):
     # ROM-dependent registers
     t0t1 = t2t3 = b0b1 = flac = rsp = None
     if 'registerFLAC' in rominfo:
+        assert args.cpu < 7
         flac = int(str(rominfo['registerFLAC']),0)
         zpReserve(flac,flac+6,"REGS:FLAC")
     elif args.cpu >= 7:
         flac = symdefs['vFAS_v7']
     if 'registerT2T3' in rominfo:
+        assert args.cpu < 7
         t2t3 = int(str(rominfo['registerT2T3']),0)
         zpReserve(t2t3,t2t3+3,"REGS:T2T3")
     elif args.cpu >= 7:
@@ -569,14 +586,18 @@ def create_register_names(base):
         b0b1 = int(str(rominfo['registerB0B1']),0)
         zpReserve(b0b1,b0b1+1,"REGS:B0B1")
     if 'registerTOT1' in rominfo:
+        assert args.cpu < 7
         t0t1 = int(str(rominfo['registerT0T1']),0)
         zpReserve(t0t1,t0t1+3,"REGS:T0T1")
+    elif args.cpu >= 7:
+        t0t1 = symdefs['sysArgs0']
     if 'registerSP' in rominfo:
         assert args.cpu < 7
         rsp  = int(str(rominfo['registerSP']),0)
         zpReserve(rsp,rsp+1,"REGS:SP")
     elif args.cpu >= 7:
-        rsp = d['vSP'] ## USE 16BITS STACK
+        # set 16 bits stack
+        rsp = d['vSP']
     flac = flac or zpage_alloc(7,"REGS:FLAC", 0x80)
     t0t1 = t0t1 or symdefs['sysArgs0']
     t2t3 = t2t3 or zpage_alloc(4,"REGS:T2T3", 0x80)
@@ -2357,10 +2378,13 @@ def aligned(addr, align):
 def find_data_segment(size, align=None):
     amin = the_fragment.amin
     amax = the_fragment.amax
+    aoff = the_fragment.aoff
     for (i,s) in enumerate(segment_list):
         if amin == None and (s.flags & 0x2):  # not a data segment
             continue
         addr = aligned(s.pc, align)
+        if aoff != None and aoff & 0xff >= addr & 0xff:
+            addr = aligned((addr & 0xff00)|(aoff & 0xff), align)
         if amin != None and amin > addr:
             addr = aligned(amin, align)
         if the_fragment.nohop and (addr ^ (addr + size - 1)) & 0xff00 != 0:
@@ -2377,6 +2401,8 @@ def find_data_segment(size, align=None):
         if addr + size > s.eaddr:
             continue
         if amax != None and addr + size > amax + 1:
+            continue
+        if aoff != None and addr & 0xff != aoff:
             continue
         while addr > s.pc and s.pc > s.saddr and addr < s.pc + 4:
             while s.pc < addr:                  # not worth splitting
@@ -2395,13 +2421,16 @@ def find_code_segment(size):
     size = min(256, size)
     amin = the_fragment.amin
     amax = the_fragment.amax
+    aoff = the_fragment.aoff
     for (i,s) in enumerate(segment_list):
         if amin == None and s.flags & 0x1:  # not a code segment
             continue
         if amin and amax and amin < 0x100 and amax >= 0x100:
             amin = 0x100                    # do not place code in page zero
         addr = s.pc
-        if amin != None and amin > s.pc:
+        if aoff != None and aoff >= addr & 0xff:
+            addr = (addr & 0xff00) | (aoff & 0xff)
+        if amin != None and amin > addr:
             addr = amin
         epage = (addr | 0xff) + 1
         if amin != None and amax == None:
@@ -2417,6 +2446,8 @@ def find_code_segment(size):
         if addr + size > min(epage, s.eaddr):
             continue
         if amax != None and addr + size > amax + 1:
+            continue
+        if aoff != None and addr & 0xff != aoff:
             continue
         # possibly carve segment before address addr
         if addr > s.pc:

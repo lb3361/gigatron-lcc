@@ -2077,8 +2077,8 @@ static void emit3(const char *fmt, int len, Node p, int nt, Node *kids, short *n
 
 /* placement constraints and other attributes */
 struct constraints {
-  char near_p, place_p, org_p, nohop_p;
-  unsigned int amin, amax, aorg;
+  char near_p, place_p, org_p, off_p, nohop_p;
+  unsigned int amin, amax, aorg, aoff;
 };
 
 static int check_uintval(Attribute a, int n)
@@ -2133,8 +2133,10 @@ static const char *check_attributes(Symbol p)
   const char *alias = 0;
   char has_org = 0;
   char has_place = 0;
+  char has_off = 0;
+  char is_static = (p->sclass == STATIC);
   char is_extern = (p->sclass == EXTERN);
-  if ((p->scope == GLOBAL) || is_extern) {
+  if (p->scope == GLOBAL || is_static || is_extern) {
     for (a = p->attr; a; a = a->link) {
       char yes = 0;
       if (a->name == string("place") && !is_extern) {
@@ -2149,6 +2151,11 @@ static const char *check_attributes(Symbol p)
           error("incompatible placement constraints (org & place)\n");
         a->okay = (check_uintval(a,0) && !a->args[1]);
         yes = has_org = 1;
+      } else if (a->name == string("offset")) {
+        if (has_off)
+          error("incompatible placement constraints (multiple offsets)\n");
+        a->okay = (check_uintval(a,0) && !a->args[1]);
+        yes = has_off = 1;
       } else if (a->name == string("nohop") && !is_extern) {
         a->okay = (!a->args[0] && !a->args[1]);
         yes = 1;
@@ -2168,8 +2175,8 @@ static void get_constraints(Symbol p, struct constraints *c)
 {
   Attribute a;
 
-  c->place_p = c->org_p = c->nohop_p = 0;
-  c->amin = c->amax = c->aorg = 0;
+  c->place_p = c->org_p = c->off_p = c->nohop_p = 0;
+  c->amin = c->amax = c->aorg = c->aoff = 0;
   c->near_p = (fnqual(p->type) == NEAR);
   for (a = p->attr; a; a = a->link) {
     if (!a->okay) {
@@ -2179,6 +2186,9 @@ static void get_constraints(Symbol p, struct constraints *c)
     } else if (a->name == string("org")) {
       c->aorg = uintval(a->args[0]);
       c->org_p = 1;
+    } else if (a->name == string("offset")) {
+      c->aoff = uintval(a->args[0]);
+      c->off_p = 1;
     } else if (a->name == string("place")) {
       unsigned long a0 = uintval(a->args[0]);
       unsigned long a1 = uintval(a->args[1]);
@@ -2207,6 +2217,8 @@ static void print_constraints(Symbol p, struct constraints *c)
     lprint("('NOHOP', %s)", p->x.name);
   if (c->org_p)
     lprint("('ORG', %s, 0x%x)", p->x.name, c->aorg);
+  if (c->off_p)
+    lprint("('OFFSET', %s, 0x%x)", p->x.name, c->aoff & 0xff);
   if (c->near_p || c->place_p)
     lprint("('PLACE', %s, 0x%x, 0x%x)", p->x.name, c->amin, c->amax);
 }

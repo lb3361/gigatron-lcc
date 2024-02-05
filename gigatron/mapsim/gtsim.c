@@ -14,7 +14,6 @@
 # include <fcntl.h>
 # include <signal.h>
 # include <termios.h>
-# undef B0
 #else
 # include <io.h>
 # include <fcntl.h>
@@ -317,7 +316,6 @@ unsigned int spbase  = 0x8e;
 #define sysArgs0  (0x24+0)
 #define LAC       (flbase+3)
 #define T0        (t0base)
-#define B0        (b0base)
 #define T2        (t2base)
 #define R0        (regbase+0)
 #define R8        (regbase+16)
@@ -1005,10 +1003,13 @@ void print_trace(CpuState *S)
   fprintf(stderr, " vAC=%04x vLR=%04x SP=%04x", deek(vAC), deek(vLR), deek(SP));
   if (strchr(trace, 's'))
     fprintf(stderr, " vSP=%04x", deek(vSP));
-  if (strchr(trace, 't'))
-    fprintf(stderr, " T[0-3]=%04x %04x %04x %04x B[0-1]=%02x %02x",
-            deek(T0), deek(T0+2), deek(T2), deek(T2+2),
-            peek(B0), peek(B0+1));
+  if (strchr(trace, 't')) {
+    fprintf(stderr, " T[0-3]=%04x %04x %04x %04x",
+            deek(T0), deek(T0+2), deek(T2), deek(T2+2) );
+    if (b0base)
+      fprintf(stderr, " B[0-1]=%02x %02x",
+              peek(b0base), peek(b0base+1) );
+  }
   if (strchr(trace, 'f')) {
     int as = peek(LAC-3);
     int ae = peek(LAC-2);

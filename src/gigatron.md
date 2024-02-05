@@ -459,9 +459,9 @@ iarg: INDIRU2(zddr) "%0"
 iarg: INDIRP2(zddr) "%0"
 
 spill: ADDRLP2 "%a+%F" if_spill()
-iarg: INDIRU2(spill) "T0|STW(B0);_LDLW(%0);STW(T0);LDW(B0);" 20
-iarg: INDIRI2(spill) "T0|STW(B0);_LDLW(%0);STW(T0);LDW(B0);" 20
-iarg: INDIRP2(spill) "T0|STW(B0);_LDLW(%0);STW(T0);LDW(B0);" 20
+iarg: INDIRU2(spill) "T1|STW(T0);_LDLW(%0);STW(T1);LDW(T0);" 20
+iarg: INDIRI2(spill) "T1|STW(T0);_LDLW(%0);STW(T1);LDW(T0);" 20
+iarg: INDIRP2(spill) "T1|STW(T0);_LDLW(%0);STW(T1);LDW(T0);" 20
 
 # Integer operations. This is verbose because there are variants for
 # types I2, U2, P2, variants for argument ordering, and variants for
@@ -905,12 +905,12 @@ stmt: JUMPV(ac)    "\t%0CALL(vAC)%{!ALF};\n" 14
 # More about spills: we want to save/restore vAC when genspill() inserts
 # instructions because preralloc might have decided to use vAC at this
 # precise point.
-asgn: ASGNI2(spill,reg) "\tSTW(B0);_STLW(%0,src=%1);LDW(B0)  #genspill\n" 20
-asgn: ASGNU2(spill,reg) "\tSTW(B0);_STLW(%0,src=%1);LDW(B0)  #genspill\n" 20
-asgn: ASGNP2(spill,reg) "\tSTW(B0);_STLW(%0,src=%1);LDW(B0)  #genspill\n" 20
-asgn: ASGNI4(spill,reg) "\tSTW(B0);_MOVL(%1,[SP,%0]);LDW(B0) #genspill\n" 20
-asgn: ASGNU4(spill,reg) "\tSTW(B0);_MOVL(%1,[SP,%0]);LDW(B0) #genspill\n" 20
-asgn: ASGNF5(spill,reg) "\tSTW(B0);_MOVF(%1,[SP,%0]);LDW(B0) #genspill\n" 20
+asgn: ASGNI2(spill,reg) "\tSTW(T0);_STLW(%0,src=%1);LDW(T0)  #genspill\n" 20
+asgn: ASGNU2(spill,reg) "\tSTW(T0);_STLW(%0,src=%1);LDW(T0)  #genspill\n" 20
+asgn: ASGNP2(spill,reg) "\tSTW(T0);_STLW(%0,src=%1);LDW(T0)  #genspill\n" 20
+asgn: ASGNI4(spill,reg) "\tSTW(T0);_MOVL(%1,[SP,%0]);LDW(T0) #genspill\n" 20
+asgn: ASGNU4(spill,reg) "\tSTW(T0);_MOVL(%1,[SP,%0]);LDW(T0) #genspill\n" 20
+asgn: ASGNF5(spill,reg) "\tSTW(T0);_MOVF(%1,[SP,%0]);LDW(T0) #genspill\n" 20
 
 # Additional rules for cpu > 5
 ac:  ADDI2(ac,con)  "%0ADDWI(%1);"      mincpuf(6,addhi,if_incr(a,41,10))

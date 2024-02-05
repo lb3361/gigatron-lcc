@@ -254,7 +254,7 @@ def code10():
 	MOVQW(18,R6);
 	label('.69');
 	LDW(R6);_SHLI(2);ADDWI('.45');STW(R23);
-	STW(B0);_STLW(-472+488,src=R23);LDW(B0)  #genspill
+	STW(T0);_STLW(-472+488,src=R23);LDW(T0)  #genspill
 	_MOVL([vAC],L8);
 	_MOVL(L8,[SP,0]);
 	CALLI('pow2');
@@ -957,7 +957,7 @@ def code29():
 	LDW(R6);STW(R8);
 	_STLW(0);
 	CALLI('svtest');STW(R23);
-	STW(B0);_STLW(-10+32,src=R23);LDW(B0)  #genspill
+	STW(T0);_STLW(-10+32,src=R23);LDW(T0)  #genspill
 	CALLI('zero');STW(R22);
 	_LDLW(-10+32);XORW(R22);_BEQ('.478');
 	MOVQW(1,R1);
@@ -3928,7 +3928,7 @@ def code78():
 	LDI(0);STW(R10);
 	_STLW(4);
 	CALLI('array');STW(R23);
-	STW(B0);_STLW(-132+156,src=R23);LDW(B0)  #genspill
+	STW(T0);_STLW(-132+156,src=R23);LDW(T0)  #genspill
 	LDW(R4);_MULI(70);ADDWI('.1553');STW(R8);
 	LDW(R8);_STLW(0);
 	LDI(35);STW(R9);
@@ -3936,7 +3936,7 @@ def code78():
 	STW(R10);
 	_STLW(4);
 	CALLI('array');STW(R22);
-	STW(B0);_STLW(-134+156,src=R22);LDW(B0)  #genspill
+	STW(T0);_STLW(-134+156,src=R22);LDW(T0)  #genspill
 	LDW(R4);_MULI(70);ADDWI('.1553');STW(R23);
 	LDW(R5);_MULI(14);ADDW(R23);STW(R8);
 	LDW(R8);_STLW(0);
@@ -3947,7 +3947,7 @@ def code78():
 	CALLI('array');STW(R23);
 	LDW(R4);_MULI(70);ADDWI('.1553');STW(R22);
 	LDW(R5);_MULI(14);ADDW(R22);ADDW(R6);ADDW(R6);DEEKA(R22);
-	_LDLW(-132+156);STW(B0);_LDLW(-134+156);STW(T0);LDW(B0);ADDW(T0);ADDW(R23);ADDW(R22);SUBI(52);_BEQ('.1592');
+	_LDLW(-132+156);STW(T0);_LDLW(-134+156);STW(T1);LDW(T0);ADDW(T1);ADDW(R23);ADDW(R22);SUBI(52);_BEQ('.1592');
 	LDXW(R7,28);_BEQ('.1594');
 	LDWI('.1554');STW(R8);
 	_STLW(0);

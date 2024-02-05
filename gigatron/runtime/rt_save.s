@@ -9,30 +9,38 @@ def scope():
         return "_@_rtrn_%02x" % savemask(i)
 
     def code0():
+        """ Prologue helper
+            - Writes callee-savee registers at address vAC (T2 on ROMv4)
+              then writes vLR which was saved in register T0. Uses T2.
+              May potentially use T[0-3] and sysArgs[0-7] some day."""
         nohop()
         if args.cpu >= 6:
             for i in range(0,8):
                 label(savename(i))
                 DOKEA(R0+i+i);ADDI(2)
             label(savename(8))
-            DOKEA(B0)
+            DOKEA(T0)
         elif args.cpu >= 5:
             for i in range(0,8):
                 label(savename(i))
                 STW(T2);LDW(R0+i+i);DOKE(T2)
                 LDI(2);ADDW(T2)
             label(savename(8))
-            STW(T2);LDW(B0);DOKE(T2)
+            STW(T2);LDW(T0);DOKE(T2)
         else:
             for i in range(0,8):
                 label(savename(i))
                 LDW(R0+i+i);DOKE(T2)
                 LDI(2);ADDW(T2);STW(T2)
             label(savename(8))
-            LDW(B0);DOKE(T2)
+            LDW(T0);DOKE(T2)
         RET()
 
     def code1():
+        """ Epilogue helper
+            - Restores callee-saved registers from address vAC (T3 on ROMv4)
+              then restores vLR and returns. Uses T3. May potentially use
+              T[0-3] and sysArgs[0-7] some day."""
         nohop()
         if args.cpu >= 6:
             for i in range(0,8):

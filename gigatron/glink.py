@@ -569,7 +569,7 @@ def create_register_names(base):
           "vLR":  0x001a, "vSP":  0x001c,
           "FAC":  0xFACFACFAC }
     # ROM-dependent registers
-    t0t1 = t2t3 = b0b1 = flac = rsp = None
+    t0t1 = t2t3 = t4t5 = b0b1 = flac = rsp = None
     if 'registerFLAC' in rominfo:
         assert args.cpu < 7
         flac = int(str(rominfo['registerFLAC']),0)
@@ -582,26 +582,24 @@ def create_register_names(base):
         zpReserve(t2t3,t2t3+3,"REGS:T2T3")
     elif args.cpu >= 7:
         t2t3 = symdefs['vT2_v7']
-    if 'registerB0B1' in rominfo:
-        b0b1 = int(str(rominfo['registerB0B1']),0)
-        zpReserve(b0b1,b0b1+1,"REGS:B0B1")
     if 'registerTOT1' in rominfo:
         assert args.cpu < 7
         t0t1 = int(str(rominfo['registerT0T1']),0)
         zpReserve(t0t1,t0t1+3,"REGS:T0T1")
-    elif args.cpu >= 7:
-        t0t1 = symdefs['sysArgs0']
+    if 'registerT4T5' in rominfo:
+        assert args.cpu < 7
+        t4t5 = int(str(rominfo['registerT4T5']),0)
+        zpReserve(t0t1,t0t1+3,"REGS:T4T5")
     if 'registerSP' in rominfo:
         assert args.cpu < 7
         rsp  = int(str(rominfo['registerSP']),0)
         zpReserve(rsp,rsp+1,"REGS:SP")
     elif args.cpu >= 7:
-        # set 16 bits stack
         rsp = d['vSP']
     flac = flac or zpage_alloc(7,"REGS:FLAC", 0x80)
     t0t1 = t0t1 or symdefs['sysArgs0']
     t2t3 = t2t3 or zpage_alloc(4,"REGS:T2T3", 0x80)
-    b0b1 = b0b1 or zpage_alloc(2,"REGS:B0B1", 0x80)
+    t4t5 = t4t5 or symdefs['sysArgs4']
     rsp  = rsp or zpage_alloc(2,"REGS:SP", 0x80)
     # GLCC registers
     if base == None and 'registerBase' in rominfo:
@@ -617,9 +615,9 @@ def create_register_names(base):
     for i in range(0,22): d[f'F{i}'] = d[f'R{i}']
     rsp = rsp or d['R23']
     debug(f"Registers: base:{hex(base)} T01:{hex(t0t1)} T23:{hex(t2t3)}")
-    debug(f"Registers: LAC:{hex(flac+3)} B012:{hex(b0b1)} SP:{hex(rsp)}")
+    debug(f"Registers: LAC:{hex(flac+3)} SP:{hex(rsp)}")
     d.update({'T0':t0t1, 'T1':t0t1+2, 'T2':t2t3, 'T3':t2t3+2,
-              'B0':b0b1, 'B1':b0b1+1, 'LAX':flac+2, 'LAC':flac+3,
+              'T4':t4t5, 'T5':t4t5+2, 'LAX':flac+2, 'LAC':flac+3,
               'FAS':flac, 'FAE':flac+1, 'SP':rsp })
     # Publish register names
     for (k,v) in d.items():
@@ -814,8 +812,11 @@ def ST(d):
 def STW(d):
     emit_op("STW", check_zp(d))
 @vasm
-def STLW(d):
-    emit_op("STLW", check_im8s(d))
+def STLW(d, opt=True):
+    if args.cpu >= 7 and SP == vSP and is_zero(v(d)) and opt:
+        emit_op("DOKE", SP)  # faster than STLW(0)
+    else:
+        emit_op("STLW", check_im8s(d))
 @vasm
 def LD(d):
     emit_op("LD", check_zp(d))
@@ -829,8 +830,11 @@ def LDWI(d):
 def LDW(d):
     emit_op("LDW", check_zp(d))
 @vasm
-def LDLW(d):
-    emit_op("LDLW", check_im8s(d))
+def LDLW(d, opt=True):
+    if args.cpu >= 7 and SP == vSP and is_zero(v(d)) and opt:
+        emit_op("DEEKV_v7", SP)  # faster than LDLW(0)
+    else:
+        emit_op("LDLW", check_im8s(d))
 @vasm
 def ADDW(d):
     emit_op("ADDW", check_zp(d))
@@ -1160,7 +1164,7 @@ def NEGX():
 @vasm
 def LSLVL(d):
     if args.cpu == 6:
-        LDI(0);tryhop(4);emit(0xc7, check_zp(d), 0xd3, check_zp(d)+4)
+        tryhop(3);emit(0x2f, check_zp(d), 0x4c)
     else:
         emit_op('LSLVL_v7', check_zp(d))
 @vasm
@@ -1678,7 +1682,7 @@ def _MOVM(s,d,n,align=1): # was _BMOV
     '''Move memory block of size n from addr s to d.
        One of s or d can be either [vAC] or [SP,offset].
        Argument d can also be [T2].
-       Trashes vAC, T0-T2.'''
+       Trashes vAC, T1-T3.'''
     d = v(d)
     s = v(s)
     n = v(n)
@@ -1706,24 +1710,24 @@ def _MOVM(s,d,n,align=1): # was _BMOV
             if d == [vAC]:
                 STW(T2)
             if s == [vAC]:
-                STW(T0)
+                STW(T3)
             if d != [vAC] and d != [T2]:
                 _LDI(d); STW(T2)
             if s != [vAC]:
-                _LDI(s); STW(T0)
-            _LDI(n);ADDW(T0);STW(T1)
+                _LDI(s); STW(T3)
+            _LDI(n);ADDW(T3);STW(T1)
             if align == 2:
-                extern('_@_wcopy_')
-                _CALLI('_@_wcopy_')         # [T0..T1) --> [T2..]
+                extern('_@_wcopy')
+                _CALLI('_@_wcopy')         # [T3..T1) --> [T2..]
             else:
-                extern('_@_bcopy_')
-                _CALLI('_@_bcopy_')         # [T0..T1) --> [T2..]
+                extern('_@_bcopy')
+                _CALLI('_@_bcopy')         # [T3..T1) --> [T2..]
 @vasm
 def _MOVL(s,d): # was _LMOV
     '''Move long from reg/addr s to d.
        One of s or d can be either [vAC] or [SP,offset].
        Argument d can be [T2].
-       Can trash vAC, T0-T3'''
+       Can trash vAC, T1-T3'''
     s = v(s)
     d = v(d)
     if s != d:
@@ -1765,8 +1769,8 @@ def _MOVL(s,d): # was _LMOV
             if is_zeropage(d,3) and is_zeropage(s,3):
                 if args.cpu >= 5:
                     LDWI(((d & 0xff) << 8) | (s & 0xff))
-                    extern('_@_lcopyz_')
-                    _CALLI('_@_lcopyz_')  # 6 bytes
+                    extern('_@_lcopyz')
+                    _CALLI('_@_lcopyz')  # 6 bytes
                 else:
                     LDW(s);STW(d)
                     LDW(s+2);STW(d+2)     # 8 bytes
@@ -1774,13 +1778,13 @@ def _MOVL(s,d): # was _LMOV
                 if d == [vAC]:
                     STW(T2)
                 if s == [vAC]:
-                    STW(T0)
+                    STW(T3)
                 if d != [vAC] and d != [T2]:
                     _LDI(d); STW(T2)
                 if s != [vAC]:            # 5-13 bytes
-                    _LDI(s); STW(T0)
-                extern('_@_lcopy_')
-                _CALLJ('_@_lcopy_')
+                    _LDI(s); STW(T3)
+                extern('_@_lcopy')
+                _CALLJ('_@_lcopy')
 @vasm
 def _LADD():
     if args.cpu >= 6:
@@ -1901,7 +1905,7 @@ def _MOVF(s,d): # was _FMOV
     '''Move float from reg s to d with special cases when s or d is FAC.
        One of s or d can be [vAC] or [SP, offset].
        Argument d can also be [T2].
-       Can trash vAC, T0-T2, and T3 if s or d is FAC.'''
+       Can trash vAC, T1-T3.'''
     s = v(s)
     d = v(d)
     if s != d:
@@ -1933,8 +1937,8 @@ def _MOVF(s,d): # was _FMOV
                 MOVF(s,d)
             elif args.cpu >= 5:
                 LDWI(((d & 0xff) << 8) | (s & 0xff))
-                extern('_@_fcopyz_')
-                _CALLI('_@_fcopyz_')
+                extern('_@_fcopyz')
+                _CALLI('_@_fcopyz')
             else:
                 LDW(s);STW(d);LDW(s+2);STW(d+2)
                 LD(s+4);ST(d+4)
@@ -1950,24 +1954,24 @@ def _MOVF(s,d): # was _FMOV
             COPYN(5)
         else:
             maycross=False
-            extern('_@_fcopy_')
-            extern('_@_fcopync_')
+            extern('_@_fcopy')
+            extern('_@_fcopync')
             if d == [vAC]:
                 STW(T2)
                 maycross = True
             if s == [vAC]:
-                STW(T0)
+                STW(T3)
                 maycross = True
             if d != [vAC] and d != [T2]:
                 _LDI(d); STW(T2)
                 maycross = maycross or (int(d) & 0xfc == 0xfc)
             if s != [vAC]:
-                _LDI(s); STW(T0)
+                _LDI(s); STW(T3)
                 maycross = maycross or (int(s) & 0xfc == 0xfc)
             if maycross:
-                _CALLJ('_@_fcopy_')       # [T0..T0+5) --> [T2..]
+                _CALLJ('_@_fcopy')       # [T3..T3+5) --> [T2..]
             else:
-                _CALLJ('_@_fcopync_')     # without page crossing!
+                _CALLJ('_@_fcopync')     # without page crossing!
 @vasm
 def _FADD():
     extern('_@_fadd')
@@ -2030,7 +2034,9 @@ def _CALLI(d):
         CALLI(d)
     else:
         # no hops because cpu4 long jumps also use -2(vSP)
-        tryhop(11);STLW(-2);LDWI(d);STW('sysArgs6');LDLW(-2);CALL('sysArgs6')
+        tryhop(11)
+        STLW(-2);LDWI(d);STW('sysArgs6')
+        LDLW(-2);CALL('sysArgs6')
 @vasm
 def _CALLJ(d):
     '''Call subroutine at far location d.
@@ -2043,7 +2049,7 @@ def _CALLJ(d):
 @vasm
 def _PROLOGUE(framesize,maxargoffset,mask):
     '''Function prologue'''
-    tryhop(4);_MOVW(vLR,B0)
+    tryhop(4);_MOVW(vLR,T0)
     if args.cpu >= 7:
         _ALLOC(-framesize)
         if maxargoffset == 0:
@@ -2055,7 +2061,7 @@ def _PROLOGUE(framesize,maxargoffset,mask):
         if maxargoffset != 0:
             ADDI(maxargoffset)
     if mask == 0 and args.cpu >= 6:
-        DOKEA(B0)
+        DOKEA(T0)
     elif args.cpu >= 5:
         extern('_@_save_%02x' % mask)
         CALLI('_@_save_%02x' % mask)

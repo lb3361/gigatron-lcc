@@ -12,7 +12,7 @@ def code0():
     if args.cpu >= 6:
         STW(T2);MOVQW(R0,T3);COPYN(16)
     else:
-        LDI(R0);STW(T0);LDW(R8);STW(T2);LDI(R8);STW(T1);_CALLJ('_@_wcopy_')
+        LDI(R0);STW(T3);LDW(R8);STW(T2);LDI(R8);STW(T1);_CALLJ('_@_wcopy')
     # return 0
     LDW(R22);tryhop(5);STW(vLR);LDI(0);RET()
 
@@ -29,10 +29,11 @@ def code1():
             STW(vSP)
         else:
             ST(vSP);
+    LDI(6);ADDW(R8);STW(T3)
     if args.cpu >= 6:
-        MOVQW(R0,T2);LDI(6);ADDW(R8);STW(T3);COPYN(16)
+        MOVQW(R0,T2);COPYN(16)
     else:
-        LDI(6);ADDW(R8);STW(T0);ADDI(8+8);STW(T1);LDI(R0);STW(T2);_CALLJ('_@_wcopy_')
+        ADDI(16);STW(T1);LDI(R0);STW(T2);_CALLJ('_@_wcopy')
     # return R9
     LDW(R22);tryhop(5);STW(vLR);LDW(R9);RET()
     
@@ -41,7 +42,7 @@ module(name='setjmp.s',
               ('EXPORT', 'longjmp'),
               ('CODE', 'setjmp', code0),
               ('CODE', 'longjmp', code1),
-              ('IMPORT', '_@_wcopy_') ])
+              ('IMPORT', '_@_wcopy') ])
 
 # Local Variables:
 # mode: python

@@ -539,7 +539,7 @@ def code14():
 	label('.50');
 	label('.46');
 	MOVW(R4,R23);
-	STW(B0);_STLW(-6+28,src=R23);LDW(B0)  #genspill
+	STW(T0);_STLW(-6+28,src=R23);LDW(T0)  #genspill
 	INCV(R4);
 	LDWI('yysptr');DEEKA(R22);
 	LDWI('yysbuf');_CMPWU(R22);_BGE('.59');
@@ -571,7 +571,7 @@ def code14():
 	LDWI('yytchar');DEEKA(R0);
 	label('.56');
 	LDW(R0);STW(R3);
-	STW(B0);_LDLW(-6+28);STW(T0);LDW(B0);POKE(T0);
+	STW(T0);_LDLW(-6+28);STW(T1);LDW(T0);POKE(T1);
 	label('.61');
 	LDW(R5);STW(R2);
 	LDWI('yycrank');_CMPWU(R5);_BGE('.62');

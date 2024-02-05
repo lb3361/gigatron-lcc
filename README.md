@@ -367,18 +367,20 @@ track of all free and used page zero locations.
      to pass arguments to functions. Registers `R15` to `R22` are used
      for temporaries.
 
-  *  Additional registers include: word registers named `T0` to `T3`,
-     scratch bytes `B0` and `B1`, long accumulator `LAC`, long 
-     accumulator extension byte `LAX`, floating point sign and
-     exponent bytes `FAS` and `FAE`, and a stack pointer `SP`. ROMs
-     that provide suitable native support may dictate the location
-     some of these registers. Otherwise they are allocated by the
-     linker in the upper half ot page zero. In general, these
-     locations, as well as `sysArgs[0..7]`, can be used by the 
-     compiler or the runtime, and therefore are not safe to use
-     from C programs. 
+  *  The compiler makes use of additional locations.  The word
+     registers `T2` and `T3`, the long accumulator `LAC`, the
+     accumulator extension byte `LAX`, the floating point sign and
+     exponent bytes `FAS` and `FAE`, and the stack pointer `SP` are
+     allocated in the upper half of page zero. ROMs that provide
+     suitable native support may dictate the location some of these
+     registers. The compiler uses the names `T0` and `T1` to refer to
+     the first two words of the `sysArgs` array. The library also uses
+     the names `T4` and `T5` for the remaining two words of the
+     `sysArgs` array. Care is needed because these locations are also
+     often used by SYS calls or by the new opcodes implemented in
+     recent roms.
 
-   * Since the DEV7 rom offers a true 16 bits stack pointer, GLCC-2.0
+  *  Since the DEV7 rom offers a true 16 bits stack pointer, GLCC-2.0
      makes `SP` equal to `vSP`, allowing the use of efficient opcodes
      to access non-register local variables.
 

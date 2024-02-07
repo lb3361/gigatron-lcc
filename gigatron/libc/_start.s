@@ -2,6 +2,7 @@
 ### The rom/ram checking code must work on all cpu
 
 def code0():
+    nohop()
     ### _start()
     label('_start');
     # ensure stack alignment with space for argc and argv
@@ -13,14 +14,14 @@ def code0():
     if not args.no_runtime_bss_initialization:
         _CALLJ('_init_bss')
     # call init chain
-    LDWI('__glink_magic_init'); _CALLI('_callchain')
+    _CALLJ('_callchain_init')
     # call main
-    LDI(0); STW(R8); STW(R9); _CALLI('main'); STW(R8)
+    LDI(0); STW(R8); STW(R9); _CALLJ('main'); STW(R8)
     ### exit()
     label('exit')
     _MOVW(R8,R0)
     # call fini chain
-    LDWI('__glink_magic_fini'); _CALLI('_callchain')
+    _CALLJ('_callchain_fini')
     _MOVW(R0,R8)
     ### _exit()
     label('_exit')
@@ -42,6 +43,10 @@ def code0():
 def code1():
     # subroutine to call a chain of init/fini functions
     nohop()
+    label('_callchain_fini')
+    LDWI('__glink_magic_fini'); _BRA('_callchain')
+    label('_callchain_init')
+    LDWI('__glink_magic_init')
     label('_callchain')
     DEEK(); STW(R7); _MOVW(vLR,R6)
     LDWI(0xBEEF);XORW(R7);_BEQ('.callchaindone')

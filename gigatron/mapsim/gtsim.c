@@ -973,7 +973,7 @@ int disassemble(word addr, char **pm, char *operand)
       sprintf(operand, "$%02x,$%02x", peek(addlo(addr,2)), peek(addlo(addr,1)));
       return 3;
     oper16r8:
-      sprintf(operand, "$$%02x%02x,$%02x", 
+      sprintf(operand, "$%02x%02x,$%02x",
               peek(addlo(addr,2)), peek(addlo(addr,3)), peek(addlo(addr,1)) );
       return 4;
     oper816:

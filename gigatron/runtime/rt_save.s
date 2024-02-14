@@ -54,7 +54,7 @@ def scope():
                 STW(T3);DEEK();STW(R0+i+i)
                 LDI(2);ADDW(T3)
             label(rtrnname(8))
-            STW(T3);DEEK();STW(vLR)
+            DEEK();STW(vLR)
         else:
             for i in range(0,8):
                 label(rtrnname(i))
@@ -63,6 +63,10 @@ def scope():
             label(rtrnname(8))
             LDW(T3);DEEK();STW(vLR)
         # return
+        if args.cpu >= 7:
+            LDW(T2);ADDV(SP)
+        else:
+            LDW(T2);ADDW(SP);STW(SP)
         LDW(R8);RET()
 
     module(name='rt_save.s', code=

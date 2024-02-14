@@ -16,7 +16,7 @@ def scope():
         label('_raise_disposition', pc()+1)
         LDWI(0)
         _BEQ('.raise2')
-        PUSH()             # warning vSP_v7 % 4 == 2
+        PUSH()             # warning vSP_v7 % 4 unknown
         CALL(vAC)          # dispatcher (no return)
         label('.raise2')
         _MOVIW(20,R8);

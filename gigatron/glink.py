@@ -2052,10 +2052,7 @@ def _PROLOGUE(framesize,maxargoffset,mask):
     tryhop(4);_MOVW(vLR,T0)
     if args.cpu >= 7:
         _ALLOC(-framesize)
-        if maxargoffset == 0:
-            LDW(SP)
-        else:
-            _LDI(maxargoffset);ADDW(SP)
+        _SP(maxargoffset)
     else:
         _SP(-framesize);STW(SP)
         if maxargoffset != 0:
@@ -2073,15 +2070,8 @@ def _EPILOGUE(framesize,maxargoffset,mask,saveAC=False):
     '''Function epilogue'''
     if saveAC:
         STW(R8);
-    if args.cpu >= 7:
-        _ALLOC(framesize)
-        _SP(maxargoffset-framesize)
-    else:
-        _SP(framesize);STW(SP)
-        if framesize - maxargoffset < 256:
-            SUBI(framesize - maxargoffset)
-        else:
-            _SP(maxargoffset-framesize)
+    _MOVIW(framesize, T2)
+    _SP(maxargoffset)
     if args.cpu >= 5:
         extern('_@_rtrn_%02x' % mask)
         CALLI('_@_rtrn_%02x' % mask)

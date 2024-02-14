@@ -83,8 +83,8 @@ def scope():
         label('_@_shrs1')
         _BGE('_@_shru1')
         if args.cpu >= 7:
-            _MOVIW('SYS_LSRW1_48','sysFn')
-            _MOVIW(0x8000, T4)
+            MOVIW('SYS_LSRW1_48','sysFn')
+            MOVIW(0x8000, T4)
         else:
             STW(T5)
             _MOVIW('SYS_LSRW1_48','sysFn')

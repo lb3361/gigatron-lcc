@@ -40,6 +40,10 @@ default: all
 
 all: build-dir lcc-all gigatron-all
 	${MAKE} subdirs-all
+	@echo "+----------------------------------+"
+	@echo "|   Compilation ran successfully!  |"
+	@echo "+----------------------------------+"
+
 
 clean: lcc-clean gigatron-clean subdirs-clean build-dir-clean
 
@@ -143,9 +147,13 @@ ${B}glcc.cmd ${B}glink.cmd: FORCE
 	echo '@py -3 "%~dp0\%~n0" %*' > $@
 
 ${B}glccver.py: FORCE
-	if [ -r "${G}glccver.py" ] ; then cp "${G}glccver.py" "$@" ; else\
-	  id=`( test -d .git && which git > /dev/null && git describe --tags )\
-	      || echo 'GLCC-unknown-version'`; echo 'ver="'"$${id}"'"' > "$@" ; fi
+	id=`( test -d .git && which git >/dev/null && \
+              git describe --tags 2>/dev/null || echo no )` ; \
+	if test "$${id}" != no ; then \
+	    echo 'ver="'"$${id}"'"' > "$@" ; \
+	else \
+	    cp "${G}glccver.py" "$@" ; \
+	fi
 
 ${B}%: ${G}%
 	cp $< $@
@@ -177,11 +185,11 @@ ${B}tst/%.xx1: ${B}tst/%.gt1 FORCE
 	${GTSIMR} $< > "$@" < "tst/$(*F).0"
 	cmp $@ ${G}tst/$(*F).1bk
 
+FORCE:
+
 .PRECIOUS: ${B}tst/%.gt1
 
-FORCE: .PHONY
-
-.PHONY:
+.PHONY: FORCE
 
 
 

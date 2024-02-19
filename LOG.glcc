@@ -1,5 +1,13 @@
 
 
+NEW
+
+- Added support for vsave/vrestore/exch and thread demo
+- Eliminated B0/B1 scratch registers (abi change)
+- Faster long multiplication
+- Added support for addhi and cpu flags
+- Fixed memswp
+
 GLCC_RELEASE_2.3
 
 - Faster fp

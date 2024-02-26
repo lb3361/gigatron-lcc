@@ -846,7 +846,7 @@ int disassemble(word addr, char **pm, char *operand)
       switch(peek(addlo(addr,1)))
         {
         case 0x00:  *pm = "ADDL";  return 2;       /* v7 */
-        case 0x02:  *pm = "?ADDX"; return 2;       /* v7 */
+        case 0x02:  *pm = "COPYS"; goto oper8x2;   /* v7 */
         case 0x04:  *pm = "SUBL";  return 2;       /* v7 */
         case 0x06:  *pm = "ANDL";  return 2;       /* v7 */
         case 0x08:  *pm = "ORL";   return 2;       /* v7 */
@@ -869,6 +869,8 @@ int disassemble(word addr, char **pm, char *operand)
         case 0x2b:  *pm = "VSAVE"; return 2;       /* v7 */
         case 0x2d:  *pm = "VRESTORE"; return 2;    /* v7 */
         case 0x2f:  *pm = "EXCH";  return 2;       /* v7 */
+        case 0x32:  *pm = "LEEKA"; goto operx8;    /* v7 */
+        case 0x34:  *pm = "LOKEA"; goto operx8;    /* v7 */          
         case 0x39:  *pm = "RDIVS"; goto operx8;    /* v7 */
         case 0x3b:  *pm = "RDIVU"; goto operx8;    /* v7 */
         case 0x3d:  *pm = "MULW";  goto operx8;    /* v7 */

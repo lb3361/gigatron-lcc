@@ -813,8 +813,8 @@ def STW(d):
     emit_op("STW", check_zp(d))
 @vasm
 def STLW(d, opt=True):
-    if args.cpu >= 7 and SP == vSP and is_zero(v(d)) and opt:
-        emit_op("DOKE", SP)  # faster than STLW(0)
+    if args.cpu >= 7 and is_zero(v(d)) and opt:
+        emit_op("DOKE", vSP)  # faster than STLW(0)
     else:
         emit_op("STLW", check_im8s(d))
 @vasm
@@ -831,8 +831,8 @@ def LDW(d):
     emit_op("LDW", check_zp(d))
 @vasm
 def LDLW(d, opt=True):
-    if args.cpu >= 7 and SP == vSP and is_zero(v(d)) and opt:
-        emit_op("DEEKV_v7", SP)  # faster than LDLW(0)
+    if args.cpu >= 7 and is_zero(v(d)) and opt:
+        emit_op("DEEKV_v7", vSP)  # faster than LDLW(0)
     else:
         emit_op("LDLW", check_im8s(d))
 @vasm
@@ -1235,6 +1235,18 @@ def VRESTORE():
 def EXCH():
     emit_op('EXCH_v7')
 @vasm
+def LEEKA(d):
+    if args.cpu == 6:
+        tryhop();emit(0x2f, check_zp(d), 0x3d)
+    else:
+        emit_op('LEEKA_v7', check_zp(d))
+@vasm
+def LOKEA(d):
+    if args.cpu == 6:
+        tryhop();emit(0x2f, check_zp(d), 0x3f)
+    else:
+        emit_op('LOKEA_v7', check_zp(d))
+@vasm
 def RDIVS(d):
     emit_op("RDIVS_v7", check_zp(d))
 @vasm
@@ -1267,6 +1279,17 @@ def COPYN(n):
     else:
         emit_op("COPYN_v7", n)
 @vasm
+def COPYS(s,d,n):
+    n = v(n)
+    if n <= 0 or n >= 128:
+        warning(f'COPYS cannot copy {n} bytes')
+    if s == [vSP]:
+        emit_op('COPYS_v7', check_zp(d), n & 127)
+    elif d == [vSP]:
+        emit_op('COPYS_v7', check_zp(s), (n & 127) | 128)
+    else:
+        error(f"invalid arguments to COPYS")
+@vasm
 def MOVL(s,d):
     if args.cpu == 6:
         tryhop(4);emit(0xc7, check_zp(d), 0xcd, check_zp(s))
@@ -1281,7 +1304,7 @@ def MOVF(s,d):
 
 @vasm
 def ADDWI(d):
-    '''Instruction ADDWI is both a CPU6 instruction 
+    '''Instruction ADDWI is both a CPU6 instruction
        and a convenient shorthand for ADDHI+ADDI on CPU7.'''
     d = int(v(d))
     if args.cpu == 6:
@@ -1290,7 +1313,7 @@ def ADDWI(d):
         # skipping ADDI when lo(d)==0 can
         # send the relaxation in a loop
         ADDHI(hi(d));ADDI(lo(d))
-        
+
 # pseudo instructions used by the compiler
 @vasm
 def _SP(n):
@@ -1375,7 +1398,8 @@ def _ALLOC(d):
        - May trash vAC.'''
     d = int(v(d))
     if args.cpu >= 7:
-        if SP == vSP and d >= -128 and d < 128:
+        if d >= -128 and d < 128:
+            assert SP == vSP
             ALLOC(d)
         elif d > 0 and d < 256:
             ADDIV(d,SP)
@@ -1390,7 +1414,8 @@ def _LDLW(off):
     '''Load word at offset <off> from SP (not vSP).
        - Emits LDLW LDXW (cpu7) or a DEEK solution'''
     off = int(v(off))
-    if args.cpu >= 7 and SP == vSP and is_zeropage(off):
+    if args.cpu >= 7 and is_zeropage(off):
+        assert SP == vSP
         LDLW(off)
     elif args.cpu >= 7:
         LDXW(SP,off)
@@ -1403,7 +1428,8 @@ def _STLW(off, src=None):
        clobber T2,T3).  Optional argument src can specify a source
        register other than vAC, allowing better DOKE solutions.'''
     off = int(v(off))
-    if args.cpu >= 7 and SP == vSP and is_zeropage(off):
+    if args.cpu >= 7 and is_zeropage(off):
+        assert SP == vSP
         if src != None and src != vAC: LDW(src)
         STLW(off)
     elif args.cpu >= 7:
@@ -1595,7 +1621,7 @@ def _BNE(d):
 def _BLT(d):
     if args.cpu >= 6:
         JLT(d)
-    else:        
+    else:
         emitjcc(BLT, BGE, JLT, v(d))
 @vasm
 def _BGE(d):
@@ -1745,7 +1771,7 @@ def _MOVL(s,d): # was _LMOV
                 if d == LAC:
                     LDLAC()
                 else:
-                    DEEKA(d);ADDI(2);DEEKA(d+2)
+                    LEEKA(d)
             elif is_zeropage(s,3):
                 if d == [T2]:
                     LDW(T2)
@@ -1754,7 +1780,7 @@ def _MOVL(s,d): # was _LMOV
                 if s == LAC:
                     STLAC()
                 else:
-                    DOKEA(s);ADDI(2);DOKEA(s+2)
+                    LOKEA(s)
             else:
                 if d == [vAC]:
                     STW(T2)
@@ -2049,35 +2075,64 @@ def _CALLJ(d):
 @vasm
 def _PROLOGUE(framesize,maxargoffset,mask):
     '''Function prologue'''
-    tryhop(4);_MOVW(vLR,T0)
+    mask = 0xff & -(mask & -mask)  # normalize mask to Rx-R7
     if args.cpu >= 7:
-        _ALLOC(-framesize)
-        _SP(maxargoffset)
+        assert SP == vSP
+        reg = (mask & -mask).bit_length() - 1
+        tryhop(10)
+        _ALLOC(-framesize+maxargoffset+2)
+        if reg == 7:
+            LDW(SP);DOKEA(R7) #faster
+        elif reg == 6:
+            LDW(SP);LOKEA(R6) #faster
+        elif reg >= 0:
+            COPYS(R0+reg+reg, [SP], (8-reg)*2)
+        PUSH();ALLOC(-maxargoffset)
     else:
+        tryhop(4)
+        _MOVW(vLR,T0)
         _SP(-framesize);STW(SP)
         if maxargoffset != 0:
             ADDI(maxargoffset)
-    if mask == 0 and args.cpu >= 6:
-        DOKEA(T0)
-    elif args.cpu >= 5:
-        extern('_@_save_%02x' % mask)
-        CALLI('_@_save_%02x' % mask)
-    else:
-        extern('_@_save_%02x' % mask)
-        STW(T2);LDWI('_@_save_%02x' % mask);CALL(vAC)
+        if mask == 0 and args.cpu >= 6:
+            DOKEA(T0)
+        elif args.cpu >= 5:
+            extern('_@_save_%02x' % mask)
+            CALLI('_@_save_%02x' % mask)
+        else:
+            extern('_@_save_%02x' % mask)
+            STW(T2);LDWI('_@_save_%02x' % mask);CALL(vAC)
 @vasm
 def _EPILOGUE(framesize,maxargoffset,mask,saveAC=False):
     '''Function epilogue'''
-    if saveAC:
-        STW(R8);
-    _MOVIW(framesize, T2)
-    _SP(maxargoffset)
-    if args.cpu >= 5:
-        extern('_@_rtrn_%02x' % mask)
-        CALLI('_@_rtrn_%02x' % mask)
+    mask = 0xff & -(mask & -mask)  # normalize mask to Rx-R7
+    if args.cpu >= 7:
+        assert SP == vSP
+        reg = (mask & -mask).bit_length() - 1
+        short = framesize - maxargoffset - 2 < 128
+        tryhop(4 + (4 if reg >= 0 else 0) + (2 if short else 7 if saveAC else 5))
+        ALLOC(maxargoffset);POP()
+        if reg == 7 and not saveAC:
+            DEEKV(SP);STW(R7) # faster
+        elif reg >= 0:
+            COPYS([SP], R0+reg+reg, (8-reg)*2)
+        if short:
+            ALLOC(framesize - maxargoffset - 2)
+        else:
+            STW(R8) if saveAC else None
+            _ALLOC(framesize - maxargoffset - 2)
+            LDW(R8) if saveAC else None
+        RET()
     else:
-        extern('_@_rtrn_%02x' % mask)
-        STW(T3);LDWI('_@_rtrn_%02x' % mask);CALL(vAC)
+        STW(R8) if saveAC else None;
+        _MOVIW(framesize, T0)
+        _SP(maxargoffset)
+        if args.cpu >= 5:
+            extern('_@_rtrn_%02x' % mask)
+            CALLI('_@_rtrn_%02x' % mask)
+        else:
+            extern('_@_rtrn_%02x' % mask)
+            STW(T3);LDWI('_@_rtrn_%02x' % mask);CALL(vAC)
 
 
 # compatibility
@@ -2886,7 +2941,7 @@ def glink(argv):
                             help='enable debugging output. repeat for more.')
 
         args = parser.parse_args(argv)
-      
+
         # process args
         read_rominfo(args.rom)
         args.cpu = args.cpu or romcpu or 5
@@ -2894,7 +2949,7 @@ def glink(argv):
         args.cpuflags = args.cpu[1:]
         args.cpu = int(args.cpu[0])
         args.files = args.files or []
-        
+
         read_interface()
         create_zpage_map()
         create_mulq_map()

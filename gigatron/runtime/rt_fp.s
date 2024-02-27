@@ -777,12 +777,12 @@ def scope():
         label('__@fmulm')
         if args.cpu < 7:
             PUSH();
-        ALLOC(-4)
+        ALLOC(-2)
         _MOVW(BM+1, BM)
         _MOVW(BM+3, BM+2)
-        LDW(AM+3);STLW(2)
+        _MOVW(AM+3, T3)
         LDW(AM+1);STLW(0)
-        if args.cpu >= 7:
+        if args.cpu >= 6:
             MOVQB(0,AM);MOVQW(0,AM+1);MOVQW(0,AM+3)
         else:
             LDI(0);ST(AM);STW(AM+1);STW(AM+3);LDLW(0)
@@ -790,22 +790,22 @@ def scope():
             MACX();LDI(8);LSRXA()
         else:
             ST(T5);_CALLJ('__@macx_t5');_CALLJ('__@amshr8')
-        LDLW(1)
+        LDLW(0);LD(vACH)
         if args.cpu >= 7:
             MACX();LDI(8);LSRXA()
         else:
             ST(T5);_CALLJ('__@macx_t5');_CALLJ('__@amshr8')
-        LDLW(2)
+        LD(T3)
         if args.cpu >= 7:
             MACX();LDI(8);LSRXA()
         else:
             ST(T5);_CALLJ('__@macx_t5');_CALLJ('__@amshr8')
-        LDLW(3)
+        LD(T3+1)
         if args.cpu >= 7:
             MACX()
         else:
             ST(T5);_CALLJ('__@macx_t5')
-        ALLOC(4)
+        ALLOC(2)
         if args.cpu < 7:
             tryhop(2);POP()
         RET()

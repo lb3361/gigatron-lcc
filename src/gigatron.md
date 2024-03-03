@@ -373,6 +373,8 @@ conB: CNSTU1  "%a"
 conB: zddr    "%0"
 conBn: CNSTI2 "%a"  range(a,-255,-1)
 conBs: CNSTI2 "%a"  range(a,-128,+127)
+conBm: CNSTI2  "%a"  range(a,0,52)
+conBm: CNSTU2  "%a"  range(a,0,52)
 con: CNSTI1   "%a"
 con: CNSTU1   "%a"
 con: CNSTI2   "%a"
@@ -530,20 +532,26 @@ ac: BANDI2(iarg,ac) "%1%[0b]ANDW(%0);" 28
 ac: BANDU2(iarg,ac) "%1%[0b]ANDW(%0);" 28
 ac: BANDI2(ac,conB) "%0ANDI(%1);" 22
 ac: BANDU2(ac,conB) "%0ANDI(%1);" 22
+ac0: BANDI2(ac0,conB) "%0ANDI(%1);" 22
+ac0: BANDU2(ac0,conB) "%0ANDI(%1);" 22
 ac: BORI2(ac,iarg)  "%0%[1b]ORW(%1);" 28
 ac: BORU2(ac,iarg)  "%0%[1b]ORW(%1);" 28
 ac: BORI2(iarg,ac)  "%1%[0b]ORW(%0);" 28
 ac: BORU2(iarg,ac)  "%1%[0b]ORW(%0);" 28
 ac: BORI2(ac,conB)  "%0ORI(%1);" 14
 ac: BORU2(ac,conB)  "%0ORI(%1);" 14
+ac0: BORI2(ac0,conB)  "%0ORI(%1);" 14
+ac0: BORU2(ac0,conB)  "%0ORI(%1);" 14
 ac: BXORI2(ac,iarg) "%0%[1b]XORW(%1);" 28
 ac: BXORU2(ac,iarg) "%0%[1b]XORW(%1);" 28
 ac: BXORI2(iarg,ac) "%1%[0b]XORW(%0);" 28
 ac: BXORU2(iarg,ac) "%1%[0b]XORW(%0);" 28
 ac: BXORI2(ac,conB) "%0XORI(%1);" 14
 ac: BXORU2(ac,conB) "%0XORI(%1);" 14
+ac0: BXORI2(ac0,conB) "%0XORI(%1);" 14
+ac0: BXORU2(ac0,conB) "%0XORI(%1);" 14
 
-# A couple EAC variants
+# EAC variants
 eac: ADDI2(eac,conB)  "%0ADDI(%1);" 25
 eac: ADDU2(eac,conB)  "%0ADDI(%1);" 25
 eac: ADDP2(eac,conB)  "%0ADDI(%1);" 25
@@ -562,7 +570,20 @@ eac: LSHI2(eac, conB) "%0_SHLI(%1);" 100
 eac: LSHU2(eac, conB) "%0_SHLI(%1);" 100
 eac: MULI2(conB, eac) "%1%{mul0}" 150
 eac: MULI2(conB, eac) "%1%{mul0}" 150
-# More eac variants involving iarg because iarg spills preserve T2
+eac: BANDI2(eac,conB) "%0ANDI(%1);" 22
+eac: BANDU2(eac,conB) "%0ANDI(%1);" 22
+eac0: BANDI2(eac0,conB) "%0ANDI(%1);" 22
+eac0: BANDU2(eac0,conB) "%0ANDI(%1);" 22
+eac: BORI2(eac,conB)  "%0ORI(%1);" 14
+eac: BORU2(eac,conB)  "%0ORI(%1);" 14
+eac0: BORI2(eac0,conB)  "%0ORI(%1);" 14
+eac0: BORU2(eac0,conB)  "%0ORI(%1);" 14
+eac: BXORI2(eac,conB) "%0XORI(%1);" 14
+eac: BXORU2(eac,conB) "%0XORI(%1);" 14
+eac0: BXORI2(eac0,conB) "%0XORI(%1);" 14
+eac0: BXORU2(eac0,conB) "%0XORI(%1);" 14
+
+# EAC variants involving iarg because iarg spills preserve T2
 eac: ADDI2(eac,iarg) "%0%[1b]ADDW(%1);" 28
 eac: ADDU2(eac,iarg) "%0%[1b]ADDW(%1);" 28
 eac: ADDP2(eac,iarg) "%0%[1b]ADDW(%1);" 28
@@ -576,6 +597,18 @@ eac: ADDP2(LSHU2(iarg,con1),eac) "%2%[0b]ADDW(%0);ADDW(%0);" 56
 eac: SUBI2(eac,iarg) "%0%[1b]SUBW(%1);" 28
 eac: SUBU2(eac,iarg) "%0%[1b]SUBW(%1);" 28
 eac: SUBP2(eac,iarg) "%0%[1b]SUBW(%1);" 28
+eac: BANDI2(eac,iarg) "%0%[1b]ANDW(%1);" 28
+eac: BANDU2(eac,iarg) "%0%[1b]ANDW(%1);" 28
+eac: BANDI2(iarg,eac) "%1%[0b]ANDW(%0);" 28
+eac: BANDU2(iarg,eac) "%1%[0b]ANDW(%0);" 28
+eac: BORI2(eac,iarg)  "%0%[1b]ORW(%1);" 28
+eac: BORU2(eac,iarg)  "%0%[1b]ORW(%1);" 28
+eac: BORI2(iarg,eac)  "%1%[0b]ORW(%0);" 28
+eac: BORU2(iarg,eac)  "%1%[0b]ORW(%0);" 28
+eac: BXORI2(eac,iarg) "%0%[1b]XORW(%1);" 28
+eac: BXORU2(eac,iarg) "%0%[1b]XORW(%1);" 28
+eac: BXORI2(iarg,eac) "%1%[0b]XORW(%0);" 28
+eac: BXORU2(iarg,eac) "%1%[0b]XORW(%0);" 28
 
 # More assignments (indirect and explicit addresses)
 asgn: ASGNP2(zddr,ac)  "\t%{=vAC}%1STW(%0);\n"       20
@@ -849,16 +882,15 @@ eac: LOADU1(eac) "%{=%0}%0"
 eac: LOADI2(eac) "%{=%0}%0"
 eac: LOADU2(eac) "%{=%0}%0"
 eac: LOADP2(eac) "%{=%0}%0"
-ac: LOADI2(reg)  "%{=%0}%{?0=~vAC::LDW(%0);}" if_asgnreuse(a,20,8)
-ac: LOADU2(reg)  "%{=%0}%{?0=~vAC::LDW(%0);}" if_asgnreuse(a,20,8)
-ac: LOADP2(reg)  "%{=%0}%{?0=~vAC::LDW(%0);}" if_asgnreuse(a,20,8)
-ac: LOADI2(lac) "%0LDW(LAC);" 20
-ac: LOADU2(lac) "%0LDW(LAC);" 20
-ac: LOADP2(lac) "%0LDW(LAC);" 20
+eac: LOADI2(reg)  "%{=%0}%{?0=~vAC::LDW(%0);}" if_asgnreuse(a,20,8)
+eac: LOADU2(reg)  "%{=%0}%{?0=~vAC::LDW(%0);}" if_asgnreuse(a,20,8)
+eac: LOADP2(reg)  "%{=%0}%{?0=~vAC::LDW(%0);}" if_asgnreuse(a,20,8)
+eac: LOADI2(lac) "%0LDW(LAC);" 20
+eac: LOADU2(lac) "%0LDW(LAC);" 20
+eac: LOADP2(lac) "%0LDW(LAC);" 20
 lac: LOADI4(lac) "%{=%0}%0"
 lac: LOADU4(lac) "%{=%0}%0"
 fac: LOADF5(fac) "%{=%0}%0"
-
 reg: LOADI1(reg)   "\t%{?0=~vAC::LD(%0);}{?c==vAC::ST(%c);}%{!A}\n"   38
 reg: LOADU1(reg)   "\t%{?0=~vAC::LD(%0);}{?c==vAC::ST(%c);}%{!A}\n"   38
 reg: LOADI1(ac)    "\t%0%{?c==vAC::ST(%c);}\n"   16
@@ -868,31 +900,34 @@ reg: LOADU4(reg)   "\t_MOVL(%0,%c)%{!5};\n" 120
 regx: LOADF5(regx) "\t_MOVF(%0,%c)%{!5};\n" 150
 
 # 2) extensions
-ac: CVII2(reg) "LD(%0);XORI(128);SUBI(128);" if_cv_from(a,1,66)
-ac: CVUI2(reg) "LD(%0);" if_cv_from(a,1,18)
+eac: CVII2(reg) "LD(%0);XORI(128);SUBI(128);" if_cv_from(a,1,66)
+eac0: CVUI2(reg) "LD(%0);" if_cv_from(a,1,18)
 ac: CVII2(ac0) "%0XORI(128);SUBI(128);" if_cv_from(a,1,48)
-ac: CVUI2(ac0) "%0" if_cv_from(a,1,0)
+ac0: CVUI2(ac0) "%0" if_cv_from(a,1,0)
 ac: CVII2(ac) "%0LD(vACL);XORI(128);SUBI(128);" if_cv_from(a,1,66)
-ac: CVUI2(ac) "%0LD(vACL);" if_cv_from(a,1,18)
+ac0: CVUI2(ac) "%0LD(vACL);" if_cv_from(a,1,18)
 eac: CVII2(eac0) "%0XORI(128);SUBI(128);" if_cv_from(a,1,48)
-eac: CVUI2(eac0) "%0" if_cv_from(a,1,0)
+eac0: CVUI2(eac0) "%0" if_cv_from(a,1,0)
 eac: CVII2(eac) "%0LD(vACL);XORI(128);SUBI(128);" if_cv_from(a,1,66)
-eac: CVUI2(eac) "%0LD(vACL);" if_cv_from(a,1,18)
-lac: CVIU4(ac) "%0_STLU(LAC);" 50
-lac: CVII4(ac) "%0_STLS(LAC);" 50
-lac: CVUU4(ac) "%0_STLU(LAC);" 50
-lac: CVUI4(ac) "%0_STLU(LAC);" 50
-reg: CVIU4(ac) "\t%0_STLU(%c)%{!5};\n" 50
-reg: CVII4(ac) "\t%0_STLS(%c)%{!5};\n" 50
-reg: CVUU4(ac) "\t%0_STLU(%c)%{!5};\n" 50
-reg: CVUI4(ac) "\t%0_STLU(%c)%{!5};\n" 50
+eac0: CVUI2(eac) "%0LD(vACL);" if_cv_from(a,1,18)
+lac: CVIU4(ac)  "%0_STLU(LAC);" if_cv_from(a,2,50)
+lac: CVII4(ac0) "%0_STLU(LAC);" if_cv_from(a,2,50)
+lac: CVII4(ac)  "%0_STLS(LAC);" if_cv_from(a,2,60)
+lac: CVUU4(ac)  "%0_STLU(LAC);" if_cv_from(a,2,50)
+lac: CVUI4(ac)  "%0_STLU(LAC);" if_cv_from(a,2,50)
+reg: CVIU4(ac)  "\t%0_STLU(%c)%{!5};\n" if_cv_from(a,2,50)
+reg: CVII4(ac0) "\t%0_STLU(%c)%{!5};\n" if_cv_from(a,2,50)
+reg: CVII4(ac)  "\t%0_STLS(%c)%{!A};\n" if_cv_from(a,2,60)
+reg: CVUU4(ac)  "\t%0_STLU(%c)%{!5};\n" if_cv_from(a,2,50)
+reg: CVUI4(ac)  "\t%0_STLU(%c)%{!5};\n" if_cv_from(a,2,50)
 # 3) floating point conversions
-ac: CVFU2(fac)  "%0_FTOU();LDW(LAC)%{!L};" 200
+ac:  CVFU2(fac) "%0_FTOU();LDW(LAC)%{!L};" 200
 lac: CVFU4(fac) "%0_FTOU();" 200
 fac: CVUF5(ac)  "%0_STLU(LAC);_FCVU();" if_cv_from(a,2,180)
 fac: CVUF5(lac) "%0_FCVU();" if_cv_from(a,4,200)
-ac: CVFI2(fac)  "%0_FTOI();LDW(LAC)%{!L};" 200
+ac:  CVFI2(fac) "%0_FTOI();LDW(LAC)%{!L};" 200
 lac: CVFI4(fac) "%0_FTOI();" 200
+fac: CVIF5(ac0) "%0_STLU(LAC);_FCVU();" if_cv_from(a,2,178)
 fac: CVIF5(ac)  "%0_STLS(LAC);_FCVI();" if_cv_from(a,2,180)
 fac: CVIF5(lac) "%0_FCVI();" if_cv_from(a,4,200)
 
@@ -929,8 +964,8 @@ ac:  MULI2(con,ac)  "%1_MULI(%0);"  mincpu7(80)
 ac:  MULU2(con,ac)  "%1_MULI(%0);"  mincpu7(80)
 ac:  CVII2(ac)      "%0LDSB(vACL);" mincpu7(if_cv_from(a,1,26))
 ac:  NEGI2(ac)      "%0NEGV(vAC);"  mincpu6(26)
-eac: MULI2(con,eac)  "%1_MULI(%0);"  mincpu7(80)
-eac: MULU2(con,eac)  "%1_MULI(%0);"  mincpu7(80)
+eac: MULI2(conBm,eac)  "%1_MULI(%0);"  mincpu7(80)
+eac: MULU2(conBm,eac)  "%1_MULI(%0);"  mincpu7(80)
 eac: CVII2(reg)     "LDSB(%0);"     mincpu7(if_cv_from(a,1,26))
 eac: CVII2(eac)     "%0LDSB(vACL);" mincpu7(if_cv_from(a,1,26))
 eac: NEGI2(eac)     "%0NEGV(vAC);"  mincpu6(26)
@@ -991,6 +1026,8 @@ eac: INDIRP2(ADDP2(eac,con)) "%0LDXW(vAC,%1);" mincpu7(58)
 asgn: ASGNI2(ADDP2(reg,con),ac) "\t%2STXW(%0,%1);\n" mincpu7(58)
 asgn: ASGNU2(ADDP2(reg,con),ac) "\t%2STXW(%0,%1);\n" mincpu7(58)
 asgn: ASGNP2(ADDP2(reg,con),ac) "\t%2STXW(%0,%1);\n" mincpu7(58)
+eac: INDIRI1(lddr)  "%{?*0=~vAC::_LDLW(%0);}"  mincpu7(if_zoffset(a,38,58))
+eac: INDIRU1(lddr)  "%{?*0=~vAC::_LDLW(%0);}"  mincpu7(if_zoffset(a,38,58))
 eac: INDIRI2(lddr)  "%{?*0=~vAC::_LDLW(%0);}"  mincpu7(if_zoffset(a,38,58))
 eac: INDIRU2(lddr)  "%{?*0=~vAC::_LDLW(%0);}"  mincpu7(if_zoffset(a,38,58))
 eac: INDIRP2(lddr)  "%{?*0=~vAC::_LDLW(%0);}"  mincpu7(if_zoffset(a,38,58))
@@ -1388,7 +1425,7 @@ static Symbol get_cnst_or_reg(Node p, int nt, int starred)
   if (p)
     {
       p = reuse(p, nt);
-      rx = (p->x.inst) ? p->syms[RX] : 0;
+      rx = (p->x.inst == nt) ? p->syms[RX] : 0;
       while (generic(p->op) == LOAD && p->kids[0])
         p = p->kids[0];
       if (generic(p->op) == CNST || generic(p->op) == ADDRG)
@@ -1396,7 +1433,7 @@ static Symbol get_cnst_or_reg(Node p, int nt, int starred)
       if (p->syms[0] && (generic(p->op) == ADDRL || generic(p->op) == ADDRF))
         return make_derived_symbol((starred) ? "*%" : "%", p->syms[0]);
       if (generic(p->op) == INDIR && specific(p->kids[0]->op) == VREG+P && !starred)
-        return (rx) ? rx : p->kids[0]->syms[0];
+        return (rx) ? rx : p->syms[RX] ? p->syms[RX] : p->kids[0]->syms[0];
     }
   return 0;
 }

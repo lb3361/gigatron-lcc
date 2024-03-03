@@ -102,10 +102,13 @@ def scope():
     def code5():
         nohop()
         label('_@_lexts')
-        _BLT('.m1')
-        LDI(0);RET();
-        label('.m1')
-        _LDI(-1);RET()
+        if args.cpu >= 7:
+            LDSB(vACH);LDSB(vACH)
+        else:
+            _BLT('.m1')
+            LDI(0);RET();
+            label('.m1')
+            _LDI(-1);RET()
 
     module(name='rt_lexts.s',
            code=[ ('EXPORT', '_@_lexts'),

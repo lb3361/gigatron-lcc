@@ -1918,7 +1918,10 @@ def _LCMPX():
         _CALLI('_@_lcmpx')      # TST(LAC-[vAC]) --> vAC
 @vasm
 def _STLU(d):
-    STW(d);LDI(0);STW(d+2);
+    if args.cpu >= 6:
+        STW(d);MOVQW(0,d+2)
+    else:
+        STW(d);LDI(0);STW(d+2);
 @vasm
 def _STLS(d):
     if args.cpu >= 7:

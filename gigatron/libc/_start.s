@@ -21,7 +21,10 @@ def code0():
     label('exit')
     _MOVW(R8,R0)
     # call fini chain
-    _CALLJ('_callchain_fini')
+    if args.cpu < 5:
+        _CALLJ('_callchain_fini')
+    else:
+        LDWI('__glink_magic_fini'); CALLI('_callchain')
     _MOVW(R0,R8)
     ### _exit()
     label('_exit')
@@ -43,8 +46,9 @@ def code0():
 def code1():
     # subroutine to call a chain of init/fini functions
     nohop()
-    label('_callchain_fini')
-    LDWI('__glink_magic_fini'); _BRA('_callchain')
+    if args.cpu < 5:
+        label('_callchain_fini')
+        LDWI('__glink_magic_fini'); _BRA('_callchain')
     label('_callchain_init')
     LDWI('__glink_magic_init')
     label('_callchain')

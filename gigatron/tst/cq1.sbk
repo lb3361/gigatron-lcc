@@ -1278,12 +1278,12 @@ def code46():
 	label('.578');
 	INCV(R6);
 	LDI(28);_CMPWS(R6);_BGT('.577');
-	_SP(-54+104);PEEK();STW(R23);
+	_LDLW(-54+104);LD(vACL);STW(R23);
 	_LDLW(-68+104);STW(R22);
 	LDW(R23);_MUL(R23);XORW(R22);_BEQ('.581');
 	_SP(-28+104);POKEQ(1);
 	label('.581');
-	_SP(-54+104);PEEK();STW(R23);
+	_LDLW(-54+104);LD(vACL);STW(R23);
 	_LDLW(-68+104);STW(R22);
 	_LDLW(-56+104);_MUL(R23);XORW(R22);_BEQ('.583');
 	_SP(-27+104);POKEQ(1);
@@ -1293,7 +1293,7 @@ def code46():
 	LDW(R23);_MUL(R23);XORW(R22);_BEQ('.586');
 	_SP(-26+104);POKEQ(1);
 	label('.586');
-	_SP(-54+104);PEEK();STW(R23);
+	_LDLW(-54+104);LD(vACL);STW(R23);
 	_LDLW(-68+104);STW(R22);
 	_LDLW(-58+104);_MUL(R23);XORW(R22);_BEQ('.589');
 	_SP(-25+104);POKEQ(1);
@@ -1308,7 +1308,7 @@ def code46():
 	LDW(R23);_MUL(R23);XORW(R22);_BEQ('.595');
 	_SP(-23+104);POKEQ(1);
 	label('.595');
-	_SP(-54+104);PEEK();STW(R23);
+	_LDLW(-54+104);LD(vACL);STW(R23);
 	_LDLW(-70+104);STW(R22);
 	_LDLW(-60+104);_MUL(R23);XORW(R22);_BEQ('.598');
 	_SP(-22+104);POKEQ(1);
@@ -1328,7 +1328,7 @@ def code46():
 	LDW(R23);_MUL(R23);XORW(R22);_BEQ('.607');
 	_SP(-19+104);POKEQ(1);
 	label('.607');
-	_SP(-54+104);PEEK();_STLS(LAC);_SP(-48+104);_LMUL();_SP(-76+104);_LCMPX();_BEQ('.610');
+	_LDLW(-54+104);LD(vACL);_STLU(LAC);_SP(-48+104);_LMUL();_SP(-76+104);_LCMPX();_BEQ('.610');
 	_SP(-18+104);POKEQ(1);
 	label('.610');
 	_LDLW(-56+104);_STLS(LAC);_SP(-48+104);_LMUL();_SP(-76+104);_LCMPX();_BEQ('.613');
@@ -1345,7 +1345,7 @@ def code46():
 	_MOVL(L22,LAC);LDI(L22);_LMUL();_SP(-76+104);_LCMPX();_BEQ('.622');
 	_SP(-14+104);POKEQ(1);
 	label('.622');
-	_SP(-54+104);PEEK();_STLS(LAC);_FCVI();_SP(-53+104);_FMUL();_SP(-37+104);_FCMP();_BEQ('.625');
+	_LDLW(-54+104);LD(vACL);_STLU(LAC);_FCVU();_SP(-53+104);_FMUL();_SP(-37+104);_FCMP();_BEQ('.625');
 	_SP(-13+104);POKEQ(1);
 	label('.625');
 	_LDLW(-56+104);_STLS(LAC);_FCVI();_SP(-53+104);_FMUL();_SP(-37+104);_FCMP();_BEQ('.628');
@@ -1364,7 +1364,7 @@ def code46():
 	_MOVF(F21,FAC);LDI(F21);_FMUL();_SP(-37+104);_FCMP();_BEQ('.640');
 	_SP(-8+104);POKEQ(1);
 	label('.640');
-	_SP(-54+104);PEEK();_STLS(LAC);_FCVI();_SP(-65+104);_FMUL();_SP(-37+104);_FCMP();_BEQ('.643');
+	_LDLW(-54+104);LD(vACL);_STLU(LAC);_FCVU();_SP(-65+104);_FMUL();_SP(-37+104);_FCMP();_BEQ('.643');
 	_SP(-7+104);POKEQ(1);
 	label('.643');
 	_LDLW(-56+104);_STLS(LAC);_FCVI();_SP(-65+104);_FMUL();_SP(-37+104);_FCMP();_BEQ('.646');
@@ -1768,7 +1768,7 @@ def code59():
 	ADDIV(4,R3);
 	label('.780');
 	_MOVL('.763',L22);
-	LD(R0);_STLS(LAC);LDI(L22);_LCMPX();_BNE('.793');
+	LD(R0);_STLU(LAC);LDI(L22);_LCMPX();_BNE('.793');
 	_LDLW(-4+44);_STLS(LAC);LDI(L22);_LCMPX();_BNE('.793');
 	LDW(R1);_STLS(LAC);LDI(L22);_LCMPX();_BNE('.793');
 	_LDLW(-10+44);_STLU(LAC);LDI(L22);_LCMPX();_BNE('.793');
@@ -1788,7 +1788,7 @@ def code59():
 	ADDIV(16,R3);
 	label('.794');
 	_MOVF('.764',F21);
-	LD(R0);_STLS(LAC);_FCVI();LDI(F21);_FCMP();_BNE('.807');
+	LD(R0);_STLU(LAC);_FCVU();LDI(F21);_FCMP();_BNE('.807');
 	_LDLW(-4+44);_STLS(LAC);_FCVI();LDI(F21);_FCMP();_BNE('.807');
 	LDW(R1);_STLS(LAC);_FCVI();LDI(F21);_FCMP();_BNE('.807');
 	_SP(-8+44);_MOVL([vAC],LAC);_FCVI();LDI(F21);_FCMP();_BNE('.807');
@@ -1798,7 +1798,7 @@ def code59():
 	ADDIV(32,R3);
 	label('.801');
 	_MOVF('.764',F21);
-	LD(R0);_STLS(LAC);_FCVI();LDI(F21);_FCMP();_BNE('.814');
+	LD(R0);_STLU(LAC);_FCVU();LDI(F21);_FCMP();_BNE('.814');
 	_LDLW(-4+44);_STLS(LAC);_FCVI();LDI(F21);_FCMP();_BNE('.814');
 	LDW(R1);_STLS(LAC);_FCVI();LDI(F21);_FCMP();_BNE('.814');
 	_SP(-8+44);_MOVL([vAC],LAC);_FCVI();LDI(F21);_FCMP();_BNE('.814');
@@ -4155,7 +4155,7 @@ def code87():
 	POKEQ(2);
 	_LDLW(-170+276);STW(R23);
 	PEEK();ADDI(1);POKE(R23);
-	_SP(-220+276);PEEK();XORI(3);_BEQ('.1685');
+	_LDLW(-220+276);LD(vACL);XORI(3);_BEQ('.1685');
 	LDXW(R7,28);_BEQ('.1687');
 	LDWI('.1607');STW(R8);
 	_STLW(0);

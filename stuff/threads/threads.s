@@ -298,8 +298,9 @@ def scope():
         LD(R8);XORI(0xaa);_BNE('.s0')
         LDW(R8);DEEK();BNE('.s0')
         # prepare context
-        LD(R11);SUBI(4);ST(R11)           # initial pc
+        LD(R11);SUBI(2);ST(R11)           # initial pc
         LDW(R9);ADDW(R10);SUBI(2);STW(R9) # initial sp
+        ANDI(0xfc);ST(R9)                 # long-align sp
         LDW(R8);XORI(0xaa^0xac);DOKEQ(0)  # clear wchan
         XORI(0xac^0xae);DOKEQ(0)          # clear wclk
         XORI(0xae^0xc0);DOKEA(R12)        # t.r8 := arg

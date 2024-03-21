@@ -520,7 +520,10 @@ def zpage_alloc(sz, label, fromAddr=0):
             return i
 
 def create_zpage_map():
-    zpage_reserve(range(0xd0,0x100), "STACK")
+    if args.cpu < 7:
+        zpage_reserve(range(0xd0,0x100), "STACK")
+    else:
+        zpage_reserve(range(0xf0,0x100), "STACK")
     zpage_reserve(range(0,0x30), "V4")
     zpage_reserve(range(0x80,0x81), "V4")
     if args.cpu < 7:
@@ -537,7 +540,7 @@ def create_zpage_segments():
     last = None
     for i in range(256):
         if last and zpage_map[i]:
-            segs.append(Segment(last, i-1, 7))
+            segs.append(Segment(last, i, 7))
             last = None
         elif not last and not zpage_map[i]:
             last = i

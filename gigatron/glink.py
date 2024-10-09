@@ -1340,7 +1340,7 @@ def _LDI(d):
         LDI(d)
     elif args.cpu == 6 and is_zeropage(-d):
         LDNI(d)
-    elif args.cpu >= 6 and is_zeropage(-d-1):
+    elif args.cpu > 6 and is_zeropage(-d-1):
         LDNI(d)
     else:
         LDWI(d)
@@ -1390,6 +1390,9 @@ def _MOVIW(d,x):
         _LDI(d);STW(x)
 @vasm
 def _MOVW(s,d):
+    '''Moves word var s into word var d.
+       - Emits MOVW or LDW+STW
+       - May trash vAC.'''
     if args.cpu >= 7:
         MOVW(s,d)
     else:
@@ -1921,10 +1924,7 @@ def _LCMPX():
         _CALLI('_@_lcmpx')      # TST(LAC-[vAC]) --> vAC
 @vasm
 def _STLU(d):
-    if args.cpu >= 6:
-        STW(d);MOVQW(0,d+2)
-    else:
-        STW(d);LDI(0);STW(d+2);
+    STW(d);_MOVIW(0,d+2)
 @vasm
 def _STLS(d):
     if args.cpu >= 7:

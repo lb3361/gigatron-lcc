@@ -9,14 +9,17 @@ def scope():
   def code_putch():
     nohop()
     label('putch')
-    LDW(R8);DOKE(SP) # using arg buildup zone
+    PUSH()
+    if SP == vSP:
+      ALLOC(-2) 
+    LDW(R8);DOKE(SP)
     _MOVW(SP,R8)
     _MOVIW(1,R9)
-    if args.cpu >= 6:
-      JNE('console_print')
-    else:
-      PUSH();_CALLJ('console_print')
-      tryhop(2);POP();RET()
+    _CALLJ('console_print')
+    _DEEKV(SP)
+    if SP == vSP:
+      ALLOC(2)
+    tryhop(2);POP();RET()
     
   module(name='putch.s',
          code=[('EXPORT', 'putch'),

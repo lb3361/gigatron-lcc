@@ -483,13 +483,15 @@ def create_mulq_map():
         for kk in range(256):
             p = c = 2
             k = kk
-            while k != 0:
-                if k & 0x80 == 0x80:
-                    p = p << 1; c += 1; k <<= 1; k &= 0xff
+            while k & 0xff:
+                if k & 0xc0 == 0x80:
+                    p = p << 1; c += 18; k <<= 1
+                elif k & 0xc0 == 0xc0:
+                    p = p << 2; c += 28; k <<= 2
                 elif k & 0xc0 == 0x40:
-                    p += 1; c += 1; k <<= 2; k &= 0xff
+                    p += 1; c += 24; k <<= 2
                 else:
-                    p -= 1; c += 1; k <<= 3; k &= 0xff
+                    p -= 1; c += 24; k <<= 3
             if not p in mulq_n or mulq_n[p] >= c:
                 mulq_n[p] = c
                 mulq_map[p] = kk

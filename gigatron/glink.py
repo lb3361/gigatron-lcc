@@ -2090,9 +2090,9 @@ def _PROLOGUE(framesize,maxargoffset,mask):
         tryhop(10)
         _ALLOC(-framesize+maxargoffset+2)
         if reg == 7:
-            LDW(SP);DOKEA(R7) #faster
-        elif reg == 6:
-            LDW(SP);LOKEA(R6) #faster
+            LDW(SP);DOKEA(R7)  #faster
+        #elif reg == 6:
+        #    LDW(SP);LOKEA(R6) #faster but maybe misaligned
         elif reg >= 0:
             COPYS(R0+reg+reg, [SP], (8-reg)*2)
         PUSH();ALLOC(-maxargoffset)

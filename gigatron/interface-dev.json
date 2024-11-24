@@ -4,7 +4,7 @@
     "vSPH_v7"     :  "0x001d",
     
     "SYS_Multiply_s16_v7_34"      : "0x009e",
-    "SYS_Divide_s16_v7_34"        : "0x00a1",
+    "SYS_Divide_u16_v7_34"        : "0x00a1",
 
     "userVars_v7"          : "0x0036",
     "userVars2"            : "0x0081",

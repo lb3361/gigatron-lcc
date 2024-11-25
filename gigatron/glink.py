@@ -2083,16 +2083,16 @@ def _CALLJ(d):
 @vasm
 def _PROLOGUE(framesize,maxargoffset,mask):
     '''Function prologue'''
-    mask = 0xff & -(mask & -mask)  # normalize mask to Rx-R7
+    mask &= 0xff  # normalize mask to Rx-R7
     if args.cpu >= 7:
         assert SP == vSP
         reg = (mask & -mask).bit_length() - 1
         tryhop(10)
         _ALLOC(-framesize+maxargoffset+2)
         if reg == 7:
-            LDW(SP);DOKEA(R7)  #faster
-        #elif reg == 6:
-        #    LDW(SP);LOKEA(R6) #faster but maybe misaligned
+            LDW(SP);DOKEA(R7) # faster
+        # elif reg == 6:
+        #   LDW(SP);LOKEA(R6) # no: potentially misaligned!
         elif reg >= 0:
             COPYS(R0+reg+reg, [SP], (8-reg)*2)
         PUSH();ALLOC(-maxargoffset)
@@ -2113,23 +2113,23 @@ def _PROLOGUE(framesize,maxargoffset,mask):
 @vasm
 def _EPILOGUE(framesize,maxargoffset,mask,saveAC=False):
     '''Function epilogue'''
-    mask = 0xff & -(mask & -mask)  # normalize mask to Rx-R7
+    mask &= 0xff # normalize mask to Rx-R7
     if args.cpu >= 7:
         assert SP == vSP
         reg = (mask & -mask).bit_length() - 1
         short = framesize - maxargoffset - 2 < 128
-        tryhop(4 + (4 if reg >= 0 else 0) + (2 if short else 7 if saveAC else 5))
+        save = saveAC and (not short or reg == 7)
+        tryhop(4 + (4 if save else 0) + (2 if short else 5))
         ALLOC(maxargoffset);POP()
-        if reg == 7 and not saveAC:
-            DEEKV(SP);STW(R7) # faster
+        if save:
+            STW(R8)
+        if reg == 7:
+            DEEKV(SP);STW(R7)
         elif reg >= 0:
             COPYS([SP], R0+reg+reg, (8-reg)*2)
-        if short:
-            ALLOC(framesize - maxargoffset - 2)
-        else:
-            STW(R8) if saveAC else None
-            _ALLOC(framesize - maxargoffset - 2)
-            LDW(R8) if saveAC else None
+        _ALLOC(framesize - maxargoffset - 2)
+        if save:
+            LDW(R8)
         RET()
     else:
         STW(R8) if saveAC else None;

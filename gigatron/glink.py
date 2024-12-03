@@ -156,17 +156,17 @@ def check_zp(x):
         warning(f"zero page address overflow")
     return x & 0xff
 
-def check_imm8(x):
+def check_imm8(x):  # stricter than check_zp
     x = v(x)
     if final_pass and isinstance(x,int):
         if x < 0 or x > 255:
             warning(f"immediate byte argument overflow")
     return x & 0xff
 
-def check_im8s(x):
+def check_im8s(x):  # stricter than check_zp
     x = v(x)
     if final_pass and isinstance(x,int):
-        if x < -128 or x > 255:
+        if (x < -128 or x > 255) and (x < 0xff00 or x > 0xffff):
             warning(f"immediate byte argument overflow")
     return x & 0xff
 
@@ -1013,21 +1013,21 @@ def DOKEQ(d):
 @vasm
 def POKEQ(d):
     if args.cpu == 6:
-        tryhop(2);emit(0x25, check_zp(d)) # aka POKEI
+        tryhop(2);emit(0x25, check_im8s(d)) # aka POKEI
     else:
-        emit_op("POKEQ_v7", check_zp(d))
+        emit_op("POKEQ_v7", check_im8s(d))
 @vasm
 def MOVQB(imm,d):
     if args.cpu == 6:
-        tryhop(3);emit(0x16, check_zp(imm), check_zp(d))
+        tryhop(3);emit(0x16, check_im8s(imm), check_zp(d))
     else:
-        emit_op("MOVQB_v7", check_zp(d), check_zp(imm))
+        emit_op("MOVQB_v7", check_zp(d), check_im8s(imm))
 @vasm
 def MOVQW(imm,d):
     if args.cpu == 6:
-        tryhop(3);emit(0x4d, check_zp(imm), check_zp(d))
+        tryhop(3);emit(0x4d, check_imm8(imm), check_zp(d))
     else:
-        emit_op("MOVQW_v7", check_zp(d), check_zp(imm))
+        emit_op("MOVQW_v7", check_zp(d), check_imm8(imm))
 @vasm
 def JGT(d):
     tryhop(3); d=int(v(d));
@@ -1108,10 +1108,10 @@ def CMPWU(d):
     emit_op("CMPWU_v7", check_zp(d))
 @vasm
 def CMPIS(d):
-    emit_op("CMPIS_v7", check_zp(d))
+    emit_op("CMPIS_v7", check_imm8(d))
 @vasm
 def CMPIU(d):
-    emit_op("CMPIU_v7", check_zp(d))
+    emit_op("CMPIU_v7", check_imm8(d))
 @vasm
 def PEEKV(d):
     if args.cpu == 6:

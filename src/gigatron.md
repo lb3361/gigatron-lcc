@@ -368,10 +368,10 @@ con1: CNSTU2  "%a"  range(a,1,1)
 conB: CNSTI2  "%a"  range(a,0,255)
 conB: CNSTU2  "%a"  range(a,0,255)
 conB: CNSTP2  "%a"  if_zpconst(a)
-conB: CNSTI1  "%a"
 conB: CNSTU1  "%a"
 conB: zddr    "%0"
 conBn: CNSTI2 "%a"  range(a,-255,-1)
+conBs: CNSTI1 "%a"
 conBs: CNSTI2 "%a"  range(a,-128,+127)
 conBm: CNSTI2  "%a"  range(a,0,52)
 conBm: CNSTU2  "%a"  range(a,0,52)

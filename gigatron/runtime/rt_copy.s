@@ -104,6 +104,7 @@ def scope():
         label('_@_lexts')
         if args.cpu >= 7:
             LDSB(vACH);LDSB(vACH)
+            RET()
         else:
             _BLT('.m1')
             LDI(0);RET();

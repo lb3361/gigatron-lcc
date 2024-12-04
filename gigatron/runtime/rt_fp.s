@@ -556,7 +556,10 @@ def scope():
         LD(AS);ANDI(128);_BNE('.ovf')
         LD(AE);SUBI(160);_BGT('.ovf')
         label('.ok')
-        XORI(255);ANDI(255);INC(vAC)
+        if args.cpu >= 6:
+            NEGV(vAC)
+        else:
+            XORI(255);ANDI(255);INC(vAC)
         _CALLI('__@amshra')
         LD(AS);ANDI(128);_BEQ('.ret')
         _LNEG()
@@ -1067,7 +1070,7 @@ def scope():
     # ==== comparisons
 
     def code_fcmp():
-        '''_@_fcmp: Compare FAC with the float at address vAC and reeturn -1,
+        '''_@_fcmp: Compare FAC with the float at address vAC and return -1,
            0, or +1.  Note that because of the absence of subnormal
            numbers, this function might declare that two very small
            numbers are different even though subtracting one from the
@@ -1093,11 +1096,13 @@ def scope():
         label('.fcmp0')     # comparing sign
         LD(AS);ANDI(1);_BNE('.plus')
         label('.fcmp1')     # comparing exponents
-        LD(AE);SUBW(BE)     # - [AE+1] = [AM] = 0 because of _@_rndfac above
-        _BGT('.plus');_BLT('.minus')
+        LD(AE);SUBW(BE);_BGT('.plus');_BLT('.minus')
         label('.fcmp2')     # comparing mantissa
-        LDW(AM+3);_CMPWU(BM+3);_BLT('.minus');_BGT('.plus')
-        LDW(AM+1);_CMPWU(BM+1);_BLT('.minus');_BGT('.plus')
+        if args.cpu >= 6:
+            LDI(BM+1);CMPLU();_BLT('.minus');_BGT('.plus')
+        else:
+            LDW(AM+3);_CMPWU(BM+3);_BLT('.minus');_BGT('.plus')
+            LDW(AM+1);_CMPWU(BM+1);_BLT('.minus');_BGT('.plus')
         label('.zero')
         LDI(0)
         if args.cpu < 7:
@@ -1180,7 +1185,7 @@ def scope():
 
 
     def code_fscald():
-        '''_@_fscald: Given x in FAC and m >= 0 in vAC,
+        '''_@_fscald: Given x in FAC and m >= 0 in vACL,
                returns y in FAC and n >= 0 in vAC such that x and y
                have the same exponent and x * 10^m = y * 2^n.
                Calling _@_fscalb afterwards gives x * 10^m.'''
@@ -1232,13 +1237,16 @@ def scope():
         label('_@_frndz')
         PUSH()
         _CALLJ('__@fac2farg')
-        LDWI(0xffff);STW(T3);ST(AM);STW(AM+1);STW(AM+3)
+        LDWI(0xffff);ST(AM);STW(AM+1);STW(AM+3)
+        STW(T3) if args.cpu < 6 else None
         LD(AE);SUBI(128);_BLE('.fmask1')
         _CALLI('__@amshra')
         label('.fmask1')
-        LDW(T3);XORW(AM);ANDW(BM);ST(AM)
-        LDW(T3);XORW(AM+1);ANDW(BM+1);STW(AM+1)
-        LDW(T3);XORW(AM+3);ANDW(BM+3);STW(AM+3)
+        LDI(255);XORW(AM);ANDW(BM);ST(AM)
+        LDW(T3) if args.cpu < 6 else LDNI(-1)
+        XORW(AM+1);ANDW(BM+1);STW(AM+1)
+        LDW(T3) if args.cpu < 6 else LDNI(-1)
+        XORW(AM+3);ANDW(BM+3);STW(AM+3)
         _BNE('.frndz1')
         LDI(0);ST(AS);ST(AE)
         label('.frndz1')

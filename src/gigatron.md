@@ -1256,8 +1256,12 @@ static int if_zpconst(Node p)
 static int if_zpglobal(Node p)
 {
   Symbol s = p->syms[0];
-  if (s && s->type && fnqual(s->type) == NEAR)
-    return 0;
+  if (s && s->type) {
+    if (fnqual(s->type) == NEAR)
+      return 0;
+    if (isarray(s->type) && fnqual(unqual(s->type)->type) == NEAR)
+      return 0;
+  }
   return LBURG_MAX;
 }
 

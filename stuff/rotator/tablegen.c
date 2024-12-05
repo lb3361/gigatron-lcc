@@ -2,50 +2,83 @@
 #include <math.h>
 #include <stdio.h>
 
+#ifndef RADIUS
+# define RADIUS 26
+#endif
 
-#define RADIUS 19
+#ifndef ZOOM
+# define ZOOM 1.15
+#endif
 
-#define ZOOM 1.1
-#define ANGLE (-M_PI/20.0)
+#ifndef ANGLE
+# define ANGLE (-M_PI/20.0)
+#endif
+
+
+double mr, mi;
+int lastx, lasty;
 
 #define CENTERX 80
 #define CENTERY 60
+#define ADDR(x,y) ((x + CENTERX) | ((y + CENTERY + 8)<<8))
+
+
+void point(int x, int y)
+{
+	double x2f = mr * x + mi * y;
+	double y2f = mr * y - mi * x;
+	int x2 = (int)(x2f);
+	int y2 = (int)(y2f);
+	printf("\t");
+	if (x == lastx + 1 && y == lasty)
+		printf("INC(T3);");
+	else if (x == lastx && y == lasty + 1)
+		printf("INC(T3+1);");
+	else
+		printf("_MOVIW(0x%04x,T3);", ADDR(x, y));
+	lastx = x;
+	lasty = y;
+	if (fabs(x2f) < 1 && fabs(y2f) < 1)
+		printf("SYS(34);");
+	else
+		printf("LDWI(0x%04x);PEEK();", ADDR(x2, y2));
+	printf("POKE(T3)\n");
+}
+
 
 
 int main()
 {
-	int r, x, y, x2, y2;
-	double mat[2][2];
+	int r, x, y;
 
-	mat[0][0] = cos(ANGLE) / ZOOM;
-	mat[0][1] = sin(ANGLE) / ZOOM;
-	mat[1][0] = - mat[0][1];
-	mat[1][1] = mat[0][0];
-
-	
+	mr = cos(ANGLE) / ZOOM;
+	mi = sin(ANGLE) / ZOOM;
 	int i = 0;
-	printf("unsigned int table[] = {\n\t");
+
+	printf("def code():\n");
+	printf("\tlabel('table')\n");
+	printf("\tPUSH()\n");
+
 	for (r = RADIUS; r; r--) {
-		x = y = -r;
-		do {
-			x2 = (int)trunc( x * mat[0][0] + y * mat[0][1] );
-			y2 = (int)trunc( x * mat[1][0] + y * mat[1][1] );
-			printf("0x%04x,0x%04x, ",
-			       (x  + CENTERX) | ((y  + CENTERY + 8)<<8),
-			       (x2 + CENTERX) | ((y2 + CENTERY + 8)<<8) );
-			if (! (++i & 3))
-				printf(" /* r=%d x=%d y=%d */\n\t", r, x, y);
-			if (y == -r && x < r)
-				x++;
-			else if (x == r && y < r)
-				y++;
-			else if (y == r && x > -r)
-				x--;
-			else if (x == -r && y > -r)
-				y--;
-		} while (x > -r || y > -r);
+		for(x = -r, y = -r; x <= r; x++)
+			point(x, y);
+		for(x = -r, y = r; x <= r; x++)
+			point(x, y);
+		for(x = -r, y = -r + 1; y < r; y++)
+			point(x, y);
+		for(x = r, y = -r + 1; y < r; y++)
+			point(x, y);
 	}
-	printf("0 };\n");
-	fprintf(stderr, "tablesize=%d\n", ++i);
+	printf("\ttryhop(2);POP();RET()\n%s\n",
+	       "\n"
+	       "module(name='table.s',\n"
+	       "       code=[('EXPORT', 'table'),\n"
+	       "             ('CODE', 'table', code),\n"
+	       "             ('PLACE', 'table', 0x8000, 0xffff) ] )\n"
+	       "\n"
+	       "# Local Variables:\n"
+	       "# mode: python\n"
+	       "# indent-tabs-mode: ()\n"
+	       "# End:\n");
 	return 0;
 }

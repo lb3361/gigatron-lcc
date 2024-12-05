@@ -1406,7 +1406,7 @@ def _ALLOC(d):
        - May trash vAC.'''
     d = int(v(d))
     if args.cpu >= 7:
-        if d >= -128 and d < 128:
+        if d >= -128 and d < 128 and d != 0:
             assert SP == vSP
             ALLOC(d)
         elif d > 0 and d < 256:
@@ -2095,7 +2095,8 @@ def _PROLOGUE(framesize,maxargoffset,mask):
         #   LDW(SP);LOKEA(R6) # no: potentially misaligned!
         elif reg >= 0:
             COPYS(R0+reg+reg, [SP], (8-reg)*2)
-        PUSH();ALLOC(-maxargoffset)
+        PUSH()
+        _ALLOC(-maxargoffset)
     else:
         tryhop(4)
         _MOVW(vLR,T0)
@@ -2117,12 +2118,12 @@ def _EPILOGUE(framesize,maxargoffset,mask,saveAC=False):
     if args.cpu >= 7:
         assert SP == vSP
         reg = (mask & -mask).bit_length() - 1
-        short = framesize - maxargoffset - 2 < 128
+        short = framesize - maxargoffset - 2 < 256 and maxargoffset < 256
         save = saveAC and (not short or reg == 7)
         tryhop(4 + (4 if save else 0) + (2 if short else 5))
-        ALLOC(maxargoffset);POP()
         if save:
             STW(R8)
+        _ALLOC(maxargoffset);POP()
         if reg == 7:
             DEEKV(SP);STW(R7)
         elif reg >= 0:

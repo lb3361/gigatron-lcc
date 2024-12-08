@@ -2118,9 +2118,11 @@ def _EPILOGUE(framesize,maxargoffset,mask,saveAC=False):
     if args.cpu >= 7:
         assert SP == vSP
         reg = (mask & -mask).bit_length() - 1
-        short = framesize - maxargoffset - 2 < 256 and maxargoffset < 256
-        save = saveAC and (not short or reg == 7)
-        tryhop(4 + (4 if save else 0) + (2 if short else 5))
+        def allocsize(x): return 0 if x==0 else 2 if x<128 else 3 if x<256 else 5
+        asize1 = allocsize(maxargoffset)
+        asize2 = allocsize(framesize - maxargoffset - 2)
+        save = saveAC and (asize1 > 3 or asize2 > 3 or reg == 7)
+        tryhop(2 + (4 if save else 0) + (4 if reg>=0 else 0) + asize1 + asize2)
         if save:
             STW(R8)
         _ALLOC(maxargoffset);POP()

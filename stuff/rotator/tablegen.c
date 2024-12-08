@@ -41,7 +41,7 @@ void point(int x, int y)
 	if (fabs(x2f) < 1 && fabs(y2f) < 1)
 		printf("SYS(34);");
 	else
-		printf("LDWI(0x%04x);PEEK();", ADDR(x2, y2));
+		printf("LDWI(0x%04x);_PEEK1();", ADDR(x2, y2));
 	printf("POKE(T3)\n");
 }
 
@@ -55,9 +55,10 @@ int main()
 	mi = sin(ANGLE) / ZOOM;
 	int i = 0;
 
-	printf("def code():\n");
-	printf("\tlabel('table')\n");
-	printf("\tPUSH()\n");
+	printf("def code():\n%s",
+	       "\tlabel('table')\n"
+	       "\tdef _PEEK1(): PEEKA(vAC) if args.cpu >= 6 else PEEK()\n"
+	       "\tPUSH()\n");
 
 	for (r = RADIUS; r; r--) {
 		for(x = -r, y = -r; x <= r; x++)

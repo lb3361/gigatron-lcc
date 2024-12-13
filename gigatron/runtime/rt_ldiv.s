@@ -18,25 +18,18 @@ def scope():
         _MOVW(LAC,T2);_MOVW(LAC+2,T2+2)
         LDI(0);STW(LAC);STW(LAC+2)
         label('.ldiv0')
-        if args.cpu >= 7:
-            LD(T2+3);ST(LAX);LDI(1);LSLXA()
-            LSLVL(T2)
-        elif args.cpu >= 6:
+        if args.cpu >= 6:
             LSLVL(LAC)
-            LDW(T2+2);_BGE('.ldw1')
-            INC(LAC)
+            LDW(T2+2);_BGE('.ldw1');INC(LAC)
             label('.ldw1')
             LSLVL(T2)
         else:
             LDW(LAC+2);LSLW();STW(LAC+2)
-            LDW(LAC);_BGE('.ldw1')
-            LDI(1);ORW(LAC+2);STW(LAC+2);LDW(LAC)
+            LDW(LAC);_BGE('.ldw1');INC(LAC+2)
             label('.ldw1');LSLW();STW(LAC)
-            LDW(T2+2);_BGE('.ldw2')
-            LDI(1);ORW(LAC);STW(LAC);LDW(T2+2)
+            LDW(T2+2);_BGE('.ldw2');INC(LAC)
             label('.ldw2');LSLW();STW(T2+2)
-            LDW(T2);_BGE('.ldw3')
-            LDI(1);ORW(T2+2);STW(T2+2);LDW(T2)
+            LDW(T2);_BGE('.ldw3');INC(T2+2)
             label('.ldw3');LSLW();STW(T2)
         if args.cpu >= 6:
             LDI(T0);CMPLU()

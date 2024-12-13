@@ -134,35 +134,57 @@ def scope():
         PUSH()
         _MOVF(F8,FAC)
         _MOVIW(10,R10)
-        LDW(R11);ADDI(11);STW(R22);ADDI(4);STW(R9)
+        # fill buffer with zeroes
+        LDW(R11);ADDI(15);STW(R9)
+        label('.u1')
+        LDI(48);POKE(R11)
         if args.cpu >= 6:
-            POKEQ(0)
+            INCV(R11);LDW(R11)
         else:
-            LDI(0);POKE(R9)
-        LDWI('.1e8');_CALLI('_@_fmod');STW(R20)
-        LDWI('.1e4');_CALLI('_@_fmod');STW(R19)
-        _FTOU()
-        LDW(LAC);STW(R8);_CALLJ('_utoa')
-        LDW(R19);_CALLI('.sub')
+            LDI(1);ADDW(R11);STW(R11)
+        XORW(R9);_BNE('.u1')
+        LDI(0);POKE(R11)
+        # split work
+        if args.cpu < 5:
+            LDWI('_utoa');STW(R21)
+            LDWI('_@_fmod');STW(R22)
+            LDWI('.1e8');CALL(R22);STW(R20)
+            LDWI('.1e4');CALL(R22);STW(R19)
+        else:
+            LDWI('.1e8');CALLI('_@_fmod');STW(R20)
+            LDWI('.1e4');CALLI('_@_fmod');STW(R19)
+        _FTOU();_MOVW(LAC,R8)
+        if args.cpu < 5:
+            CALL(R21)
+            LDWI('.sub');STW(R22)
+            LDW(R19);CALL(R22)
+            LDW(R20);CALL(R22)
+        else:
+            CALLI('_utoa')
+            LDW(R19);CALLI('.sub')
+            LDW(R20);CALLI('.sub')
+        LDW(R9)
+        tryhop(2);POP();RET()
+
+    def code_uftoa_sub():
+        nohop()
+        label('.sub')
+        STW(R8)
         if args.cpu >= 7:
-            SUBIV(4,R22)
+            SUBIV(4, R11)
         else:
-            LDW(R22);SUBI(4);STW(R22)
-        LDW(R20)
-        tryhop(2)
-        POP()
-        label('.sub',hop=0)
-        PUSH()
-        STW(R8);_BEQ('.ret')
-        label('.loop')
-        LDW(R9);SUBW(R22);_BLE('.sub1')
-        LDW(R9);SUBI(1);STW(R9)
-        LDI(48);POKE(R9)
-        _BRA('.loop')
+            LDW(R11);SUBI(4);STW(R11)
+        LDW(R8);_BEQ('.sub1')
+        _MOVW(R11,R9)
+        if args.cpu >= 6:
+            JNE('_utoa')
+        elif args.cpu >= 5:
+            PUSH();CALLI('_utoa');POP()
+        else:
+            PUSH();CALL(R21);POP()
         label('.sub1')
-        _CALLJ('_utoa')
-        label('.ret')
-        tryhop(4);LDW(R9);POP();RET()
+        RET()
+
 
     def code_uftoa_cst():
         label('.1e4')
@@ -173,7 +195,8 @@ def scope():
     module(name='uftoa.s',
            code=[('EXPORT', '_uftoa'),
                  ('CODE', '_uftoa', code_uftoa),
-                 ('DATA', '_uftoa', code_uftoa_cst, 0, 1),
+                 ('CODE', '_uftoa.sub', code_uftoa_sub),
+                 ('DATA', '_uftoa.cst', code_uftoa_cst, 0, 1),
                  ('IMPORT', '_@_fmod'),
                  ('IMPORT', '_utoa') ] )
 

@@ -2143,14 +2143,15 @@ def _EPILOGUE(framesize,maxargoffset,mask,saveAC=False):
     else:
         STW(R8) if saveAC else None;
         _MOVIW(framesize, T0)
-        _SP(maxargoffset)
+        extern('_@_rtrn_%02x' % mask)
         if args.cpu >= 5:
-            extern('_@_rtrn_%02x' % mask)
+            tryhop(7)
+            _SP(maxargoffset);
             CALLI('_@_rtrn_%02x' % mask)
         else:
-            extern('_@_rtrn_%02x' % mask)
-            STW(T3);LDWI('_@_rtrn_%02x' % mask);CALL(vAC)
-
+            tryhop(10)
+            LDWI('_@_rtrn_%02x' % mask); STW(vLR);
+            _SP(maxargoffset); RET()
 
 # compatibility
 

@@ -26,8 +26,13 @@ def scope():
             LD(T5);ANDI(8);_BEQ('.l5')
             LDW(LAC+1);STW(LAC);LD(LAC+3);STW(LAC+2)
             label('.l5')
+            if args.cpu < 5:
+                LDWI('__@shrsysfn');STW('sysFn')
             LD(T5);ANDI(7);_BEQ('.ret')
-            _CALLI('__@shrsysfn')
+            if args.cpu < 5:
+                CALL('sysFn')
+            else:
+                CALLI('__@shrsysfn')
             LDW(LAC);SYS(52);ST(LAC)
             LDW(LAC+1);SYS(52);ST(LAC+1)
             LDW(LAC+2);SYS(52);STW(LAC+2)

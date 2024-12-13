@@ -33,8 +33,13 @@ def scope():
         LD(T5);ANDI(8);_BEQ('.shru7')
         LD(T3+1);STW(T3)
         label('.shru7')
+        if args.cpu < 5:
+            LDWI('__@shrsysfn');STW('sysFn')
         LD(T5);ANDI(7);_BEQ('.shru1');
-        _CALLI('__@shrsysfn')
+        if args.cpu < 5:
+            CALL('sysFn')
+        else:
+            CALLI('__@shrsysfn')
         LDW(T3);SYS(52)
         tryhop(2);POP();RET()
         label('.shru1')

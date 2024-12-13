@@ -372,7 +372,7 @@ def emit_long_jump(d):
         CALLI(d)          # 3 bytes
     else:
         STLW(-2); LDWI(d); STW(vLR);
-        LDLW(-2); RET()   # <10 bytes
+        LDLW(-2); RET()   # 9 bytes
 
 def hop(sz, jump):
     '''Ensure, possibly with a hop, that there are at
@@ -1761,7 +1761,7 @@ def _MOVL(s,d): # was _LMOV
     '''Move long from reg/addr s to d.
        One of s or d can be either [vAC] or [SP,offset].
        Argument d can be [T2].
-       Can trash vAC, T1-T3'''
+       Can trash vAC, LAC, T1-T3, sysArgs[2-7]'''
     s = v(s)
     d = v(d)
     if s != d:
@@ -1771,34 +1771,39 @@ def _MOVL(s,d): # was _LMOV
         elif type(d) == list and len(d) == 2 and d[0] == SP:
             _SP(d[1]); d = [vAC]
         if args.cpu >= 6:
-            if is_zeropage(d,3) and is_zeropage(s,3):
+            if d == LAC:
+                if s != [vAC]:
+                    _LDI(s)
+                LDLAC()
+            elif s == LAC:
+                if d == [T2]:
+                    LDW(T2)
+                elif d != [vAC]:
+                    _LDI(d)
+                STLAC()
+            elif is_zeropage(d,3) and is_zeropage(s,3):
                 MOVL(s,d)
             elif is_zeropage(d,3):
                 if s != [vAC]:
                     _LDI(s)
-                if d == LAC:
-                    LDLAC()
-                else:
-                    LEEKA(d)
+                LEEKA(d)
             elif is_zeropage(s,3):
                 if d == [T2]:
                     LDW(T2)
                 elif d != [vAC]:
                     _LDI(d)
-                if s == LAC:
-                    STLAC()
-                else:
-                    LOKEA(s)
+                LOKEA(s)
             else:
                 if d == [vAC]:
-                    STW(T2)
-                if s == [vAC]:
-                    STW(T3)
-                if d != [T2] and d != [vAC]:
-                    _MOVIW(d, T2)
+                    STW(T2); d = [T2]
                 if s != [vAC]:
-                    _MOVIW(s, T3)
-                COPYN(4)        # 5-9 bytes
+                    _LDI(s)
+                LDLAC()
+                if d == [T2]:
+                    LDW(T2)
+                else:
+                    _LDI(d);
+                STLAC()
         else:
             if is_zeropage(d,3) and is_zeropage(s,3):
                 if args.cpu >= 5:
@@ -1806,8 +1811,8 @@ def _MOVL(s,d): # was _LMOV
                     extern('_@_lcopyz')
                     _CALLI('_@_lcopyz')  # 6 bytes
                 else:
-                    LDW(s);STW(d)
-                    LDW(s+2);STW(d+2)     # 8 bytes
+                    LDW(s); STW(d)
+                    LDW(s+2); STW(d+2)   # 8 bytes
             else:
                 if d == [vAC]:
                     STW(T2)
@@ -1815,7 +1820,7 @@ def _MOVL(s,d): # was _LMOV
                     STW(T3)
                 if d != [vAC] and d != [T2]:
                     _LDI(d); STW(T2)
-                if s != [vAC]:            # 5-13 bytes
+                if s != [vAC]:           # 5-13 bytes
                     _LDI(s); STW(T3)
                 extern('_@_lcopy')
                 _CALLJ('_@_lcopy')
@@ -1974,8 +1979,9 @@ def _MOVF(s,d): # was _FMOV
                 extern('_@_fcopyz')
                 _CALLI('_@_fcopyz')
             else:
-                LDW(s);STW(d);LDW(s+2);STW(d+2)
-                LD(s+4);ST(d+4)
+                LDW(s); STW(d);
+                LDW(s+2); STW(d+2)
+                LD(s+4); ST(d+4)
         elif args.cpu >= 6:
             if d == [vAC]:
                 STW(T2)

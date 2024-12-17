@@ -194,34 +194,33 @@ def scope():
 
 
     # -- int console_print(const char *s, unsigned int len)
-    # -- int _console_writall(void *unused, const char *s, unsigned int len);
+    # -- int _console_writall(const char *s, unsigned int len, void *unused);
     # Function console_writall writes exactly len characters.
     # Function console_print stops on a zero char.
 
     def code_print():
         label('console_print')
-        tryhop(12)
-        bytes(v('LDWI')&0xff)      # LDWI eats LDI(0)
-        label('console_writall')
+        tryhop(16)
         LDI(0);STW(R10)
+        label('console_writall')
         # Stack:
         # - 2 bytes for console_ctrl argument
-        # - 8 bytes for R4-R7
-        # - 2 bytes for vLR
-        _PROLOGUE(12,2,0xf0) # save R4-R7
-        _MOVW(R10,R4)     # zeroterm flag
-        _MOVW(R8,R7)      # s
-        _MOVW(R9,R6)      # len
-        _MOVIW(0,R5)
+        # - 10 bytes for R3-R7, 2 bytes pad, 2 bytes vLR
+        _PROLOGUE(16,2,0xf8) # save R3-R7
+        _MOVW(R9,R6)             # len
+        LDW(R8);STW(R7);STW(R5)  # s, ssav
+        _MOVW(R10,R4)            # zeroterm flag
         _BRA('.tst1')
         label('.loop')
-        # Try _console_ctrl
+        # Addr
+        _CALLJ('_console_addr');STW(R3)
+        # optional _console_ctrl
         _PEEKV(R7);STW(R8);DOKE(SP)
         LDWI('__glink_weak__console_ctrl');_BEQ('.ctrl')
         CALL(vAC);_BNE('.add')
-        # Handle CR LF BS
+        # build int handlers for CR LF BS
         label('.ctrl')
-        _DEEKV(SP)
+        _PEEKV(R7)
         XORI(8);_BEQ('.ctrl_bs')
         XORI(13 ^ 8);_BEQ('.ctrl_cr')
         XORI(10 ^ 13);_BNE('.print')
@@ -243,29 +242,30 @@ def scope():
         LDI(1);_BNE('.add')
         # Try printchars
         label('.print')
-        _CALLJ('_console_addr');STW(R9);_BEQ('.add1')
+        LDW(R3);STW(R9);_BEQ('.add1')
         LDW(v('console_state')+0);STW(R8) # fgbg
         _MOVW(R7,R10)
         _MOVW(R6,R11)
         _CALLJ('_console_printchars');_BEQ('.add1')
-        STW(R8);ADDW(v('console_state')+3)
-        ST(v('console_state')+3)          # console_state.cx
-        LDW(R8)
+        if args.cpu >= 7:
+            ADDV(v('console_state')+3)    # won't carry into high byte!
+        else:
+            STW(R8);ADDW(v('console_state')+3)
+            ST(v('console_state')+3);LDW(R8)
         label('.add')
         if args.cpu >= 7:
-            ADDV(R7);ADDV(R5);SUBV(R6)
+            ADDV(R7);SUBV(R6)
         else:
             STW(R8);ADDW(R7);STW(R7)
-            LDW(R5);ADDW(R8);STW(R5)
             LDW(R6);SUBW(R8);STW(R6)
         # Test for more
         label('.tst1')
         LDW(R6);_BEQ('.ret')
-        LDW(R4);_BEQ('.loop')
+        LDW(R4);_BNE('.loop')
         _PEEKV(R7);_BNE('.loop')
         label('.ret')
-        LDW(R5)
-        _EPILOGUE(12,2,0xf0,saveAC=True);
+        LDW(R7);SUBW(R5)
+        _EPILOGUE(16,2,0xf8,saveAC=True);
 
 
     ctrl = []

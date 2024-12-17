@@ -2355,6 +2355,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
    |                   0 to 2 bytes              : alignment pad
    |                   2 bytes                   : saved vLR
    |                   sizesave bytes            : saved registers
+   |                   0 to 2 bytes              : alignment pad
    |             SP--> maxargoffset bytes        : argument building area
    */
 
@@ -2432,7 +2433,9 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
     framesize = (cpu < 7) ? 0 : 2;  /* are SP and vSP the same? */
     frameless = 1;
   } else if (IR->longmetric.align == 4) {
-    framesize = (framesize + 3) & ~0x3;
+    int delta = ((framesize + 3) & ~0x3) - framesize;
+    framesize += delta;
+    maxargoffset += (maxargoffset) ? delta : 0;
     frameless = 0;
   }
   /* prologue */

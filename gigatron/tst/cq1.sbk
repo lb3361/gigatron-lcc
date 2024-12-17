@@ -37,7 +37,7 @@ def code2():
 # ======== ('CODE', 'main', code3)
 def code3():
 	label('main');
-	_PROLOGUE(12,6,0x80); # save=R7
+	_PROLOGUE(12,8,0x80); # save=R7
 	LDWI(v('.3')+24);DOKEQ(1);
 	LDWI(v('.3')+26);DOKEQ(1);
 	LDWI(v('.3')+28);DOKEQ(1);
@@ -78,7 +78,7 @@ def code3():
 	label('.24');
 	LDI(0);
 	label('.1');
-	_EPILOGUE(12,6,0x80,saveAC=True);
+	_EPILOGUE(12,8,0x80,saveAC=True);
 # ======== ('DATA', '.29', code4, 0, 1)
 def code4():
 	label('.29');
@@ -436,7 +436,7 @@ def code13():
 # ======== ('CODE', 's243', code14)
 def code14():
 	label('s243');
-	_PROLOGUE(272,4,0xf0); # save=R4-7
+	_PROLOGUE(272,6,0xf0); # save=R4-7
 	MOVW(R8,R7);
 	MOVQW(0,R4);
 	MOVIW('.244',R6);
@@ -576,7 +576,7 @@ def code14():
 	label('.349');
 	LDW(R4);
 	label('.242');
-	_EPILOGUE(272,4,0xf0,saveAC=True);
+	_EPILOGUE(272,6,0xf0,saveAC=True);
 # ======== ('CODE', 'zerofill', code15)
 def code15():
 	label('zerofill');
@@ -621,7 +621,7 @@ def code18():
 # ======== ('CODE', 's244', code19)
 def code19():
 	label('s244');
-	_PROLOGUE(60,4,0xfc); # save=R2-7
+	_PROLOGUE(60,6,0xfc); # save=R2-7
 	MOVW(R8,R7);
 	MOVIW('.365',R5);
 	LDI(36);ADDW(R7);STW(R4);
@@ -677,7 +677,7 @@ def code19():
 	label('.388');
 	LDW(R2);
 	label('.363');
-	_EPILOGUE(60,4,0xfc,saveAC=True);
+	_EPILOGUE(60,6,0xfc,saveAC=True);
 # ======== ('DATA', '.393', code20, 0, 1)
 def code20():
 	label('.393');
@@ -690,7 +690,7 @@ def code21():
 # ======== ('CODE', 's25', code22)
 def code22():
 	label('s25');
-	_PROLOGUE(24,4,0xff); # save=R0-7
+	_PROLOGUE(24,6,0xff); # save=R0-7
 	MOVW(R8,R7);
 	MOVIW('.394',R3);
 	LDI(36);ADDW(R7);STW(R2);
@@ -784,7 +784,7 @@ def code22():
 	label('.433');
 	LDW(R1);
 	label('.392');
-	_EPILOGUE(24,4,0xff,saveAC=True);
+	_EPILOGUE(24,6,0xff,saveAC=True);
 # ======== ('DATA', '.438', code23, 8, 1)
 def code23():
 	label('.438');
@@ -938,7 +938,7 @@ def code28():
 # ======== ('CODE', 's4', code29)
 def code29():
 	label('s4');
-	_PROLOGUE(32,4,0xfe); # save=R1-7
+	_PROLOGUE(32,6,0xfe); # save=R1-7
 	MOVW(R8,R7);
 	MOVQW(0,R1);
 	MOVIW('.470',R3);
@@ -1019,7 +1019,7 @@ def code29():
 	label('.494');
 	LDW(R1);
 	label('.468');
-	_EPILOGUE(32,4,0xfe,saveAC=True);
+	_EPILOGUE(32,6,0xfe,saveAC=True);
 # ======== ('BSS', '.500', code30, 2, 2)
 def code30():
 	align(2);
@@ -1130,7 +1130,7 @@ def code42():
 # ======== ('CODE', 's61', code43)
 def code43():
 	label('s61');
-	_PROLOGUE(48,4,0xff); # save=R0-7
+	_PROLOGUE(48,6,0xff); # save=R0-7
 	MOVW(R8,R7);
 	MOVIW('.517',R4);
 	LDI(36);ADDW(R7);STW(R3);
@@ -1209,7 +1209,7 @@ def code43():
 	label('.551');
 	LDW(R2);
 	label('.515');
-	_EPILOGUE(48,4,0xff,saveAC=True);
+	_EPILOGUE(48,6,0xff,saveAC=True);
 # ======== ('DATA', '.558', code44, 0, 1)
 def code44():
 	label('.558');
@@ -1551,7 +1551,7 @@ def code50():
 # ======== ('CODE', 'McCarthy', code51)
 def code51():
 	label('McCarthy');
-	_PROLOGUE(8,2,0x80); # save=R7
+	_PROLOGUE(8,4,0x80); # save=R7
 	LDW(R8);STW(R7);
 	LDI(100);_CMPWS(R7);_BGE('.723');
 	LDW(R7);SUBI(10);
@@ -1563,7 +1563,7 @@ def code51():
 	CALLI('McCarthy');
 	
 	label('.722');
-	_EPILOGUE(8,2,0x80,saveAC=True);
+	_EPILOGUE(8,4,0x80,saveAC=True);
 # ======== ('CODE', 'clobber', code52)
 def code52():
 	label('clobber');
@@ -1658,7 +1658,7 @@ def code58():
 # ======== ('CODE', 's72', code59)
 def code59():
 	label('s72');
-	_PROLOGUE(44,4,0xff); # save=R0-7
+	_PROLOGUE(44,6,0xff); # save=R0-7
 	MOVW(R8,R7);
 	MOVIW('.743',R5);
 	LDI(36);ADDW(R7);STW(R4);
@@ -1817,7 +1817,7 @@ def code59():
 	label('.815');
 	LDW(R2);
 	label('.741');
-	_EPILOGUE(44,4,0xff,saveAC=True);
+	_EPILOGUE(44,6,0xff,saveAC=True);
 # ======== ('DATA', '.818', code60, 0, 1)
 def code60():
 	label('.818');
@@ -1830,7 +1830,7 @@ def code61():
 # ======== ('CODE', 's757', code62)
 def code62():
 	label('s757');
-	_PROLOGUE(84,4,0xff); # save=R0-7
+	_PROLOGUE(84,6,0xff); # save=R0-7
 	MOVW(R8,R7);
 	LDWI('.819');_STLW(-42+84);
 	LDI(36);ADDW(R7);_STLW(-44+84);
@@ -2053,7 +2053,7 @@ def code62():
 	label('.917');
 	_LDLW(-46+84);
 	label('.817');
-	_EPILOGUE(84,4,0xff,saveAC=True);
+	_EPILOGUE(84,6,0xff,saveAC=True);
 # ======== ('DATA', '.922', code63, 0, 1)
 def code63():
 	label('.922');
@@ -2072,7 +2072,7 @@ def code65():
 # ======== ('CODE', 's7813', code66)
 def code66():
 	label('s7813');
-	_PROLOGUE(52,4,0xff); # save=R0-7
+	_PROLOGUE(52,6,0xff); # save=R0-7
 	MOVW(R8,R7);
 	MOVIW('.924',R1);
 	LDI(36);ADDW(R7);STW(R0);
@@ -3262,7 +3262,7 @@ def code66():
 	label('.1375');
 	_LDLW(-2+52);
 	label('.921');
-	_EPILOGUE(52,4,0xff,saveAC=True);
+	_EPILOGUE(52,6,0xff,saveAC=True);
 # ======== ('DATA', '.1387', code67, 0, 1)
 def code67():
 	label('.1387');
@@ -3291,7 +3291,7 @@ def code70():
 # ======== ('CODE', 's81', code71)
 def code71():
 	label('s81');
-	_PROLOGUE(40,6,0xff); # save=R0-7
+	_PROLOGUE(40,8,0xff); # save=R0-7
 	MOVW(R8,R7);
 	LDI(0);_STLW(-14+40);
 	_STLW(-8+40);
@@ -3425,7 +3425,7 @@ def code71():
 	label('.1425');
 	_LDLW(-14+40);
 	label('.1386');
-	_EPILOGUE(40,6,0xff,saveAC=True);
+	_EPILOGUE(40,8,0xff,saveAC=True);
 # ======== ('CODE', 'regc', code72)
 def code72():
 	label('regc');
@@ -4249,7 +4249,7 @@ def code96():
 # ======== ('CODE', 's86', code97)
 def code97():
 	label('s86');
-	_PROLOGUE(28,4,0xff); # save=R0-7
+	_PROLOGUE(28,6,0xff); # save=R0-7
 	MOVW(R8,R7);
 	LDWI('.1693');DEEK();SUBI(-v(-2));_STLW(-4+28);
 	CALLI('one');STW(R23);
@@ -4366,7 +4366,7 @@ def code97():
 	label('.1746');
 	_LDLW(-2+28);
 	label('.1689');
-	_EPILOGUE(28,4,0xff,saveAC=True);
+	_EPILOGUE(28,6,0xff,saveAC=True);
 # ======== ('CODE', 'one', code98)
 def code98():
 	label('one');
@@ -4455,7 +4455,7 @@ def code103():
 # ======== ('CODE', 's9', code104)
 def code104():
 	label('s9');
-	_PROLOGUE(28,4,0xff); # save=R0-7
+	_PROLOGUE(28,6,0xff); # save=R0-7
 	MOVW(R8,R7);
 	MOVIW('.1774',R4);
 	LDI(36);ADDW(R7);STW(R3);
@@ -4510,7 +4510,7 @@ def code104():
 	label('.1792');
 	LDW(R2);
 	label('.1772');
-	_EPILOGUE(28,4,0xff,saveAC=True);
+	_EPILOGUE(28,6,0xff,saveAC=True);
 # ======== ('CODE', 'setev', code105)
 def code105():
 	label('setev');

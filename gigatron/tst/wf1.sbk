@@ -44,7 +44,7 @@ def code1():
 # ======== ('CODE', 'getword', code2)
 def code2():
 	label('getword');
-	_PROLOGUE(12,2,0xe0); # save=R5-7
+	_PROLOGUE(12,4,0xe0); # save=R5-7
 	MOVW(R8,R7);
 	label('.8');
 	label('.9');
@@ -78,7 +78,7 @@ def code2():
 	label('.16');
 	LDI(0);
 	label('.7');
-	_EPILOGUE(12,2,0xe0,saveAC=True);
+	_EPILOGUE(12,4,0xe0,saveAC=True);
 # ======== ('CODE', 'isletter', code3)
 def code3():
 	label('isletter');
@@ -161,7 +161,7 @@ def code4():
 # ======== ('CODE', 'tprint', code5)
 def code5():
 	label('tprint');
-	_PROLOGUE(12,6,0x80); # save=R7
+	_PROLOGUE(12,8,0x80); # save=R7
 	LDW(R8);STW(R7);
 	_BEQ('.42');
 	LDI(2);ADDW(R7);DEEKA(R8);
@@ -178,7 +178,7 @@ def code5():
 	label('.42');
 	LDI(0);
 	label('.41');
-	_EPILOGUE(12,6,0x80,saveAC=True);
+	_EPILOGUE(12,8,0x80,saveAC=True);
 # ======== ('CODE', 'strcmp', code6)
 def code6():
 	label('strcmp');

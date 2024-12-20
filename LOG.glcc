@@ -1,4 +1,9 @@
 
+
+- Improved fp and shift routines
+- Fixed minor stdio console bug
+- Better runtime for ROMv4.
+
 GLCC_RELEASE_2.5
 
 - Bug fixes

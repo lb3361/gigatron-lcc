@@ -6,6 +6,7 @@
 #ifdef STATS
 #include <conio.h>
 #include <gigatron/libc.h>
+#pragma glcc option("PRINTF_SIMPLE")
 #endif
 
 
@@ -15,6 +16,8 @@
 
 extern void table(void);
 extern char SYS_Random_34[];
+
+__near char rnd;
 
 #define CENTERX 80
 #define CENTERY 60

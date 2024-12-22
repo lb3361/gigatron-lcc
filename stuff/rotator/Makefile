@@ -1,7 +1,7 @@
 
 ROM=dev7
 GLCC=glcc -map=64k -rom=${ROM}
-GLCCFLAGS=--no-runtime-bss-initialization
+GLCCFLAGS=--no-runtime-bss-initialization -DSTATS
 
 CC=cc
 CFLAGS=
@@ -17,7 +17,7 @@ table.s: tablegen
 	./tablegen > table.s
 
 tablegen: tablegen.c Makefile
-	${CC} ${CFLAGS} -o $@ tablegen.c
+	${CC} ${CFLAGS} -DROM${ROM} -o $@ tablegen.c
 
 clean: FORCE
 	-rm tablegen table.s *.gt1

@@ -228,7 +228,7 @@ def zpMode(ins):
              'INC', 'ADDW', 'SUBW', 'CALL', 'ADDV', 'SUBV'
              'POKE', 'DOKE', 'ANDW', 'ORW',
              'INCV', 'INCVL', 'NEGV', 'NEGVL', 'LSLVL',
-             'DOKEA', 'POKEA', 'DEEKA', 'PEEKA', 'DEEKV', 'PEEKV'
+             'DOKEA', 'POKEA', 'DEEKA', 'PEEKA', 'DEEKV', 'PEEKV',
              'XORW', 'CMPHS', 'CMPHU', 'CMPWS', 'CMPWU']:
     return True
   # v6502 instructions that work on zero page

@@ -31,7 +31,7 @@ def code0():
 	label('.11');
 	CALLI('getchar');STW(R23);
 	STW(R3);
-	LDNI(-1);XORW(R23);_BNE('.10');
+	LDWI(-1);XORW(R23);_BNE('.10');
 	LDWI('.14');STW(R8);
 	_STLW(0);
 	CALLI('printf');

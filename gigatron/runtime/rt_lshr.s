@@ -55,15 +55,10 @@ def scope():
         if args.cpu >= 7:
             nohop()
             label('_@_lshrs')
-            ST(T4)
-            LDW(LAC+2);_BLT('.s1')
-            LD(T4);ANDI(0x1f);LSRXA()
-            RET()
+            ANDI(0x1f);ST(T5);LDW(LAC+2);_BLT('.s1')
+            LD(T5);LSRXA();RET()
             label('.s1')
-            MOVQB(0x80,LAX);NEGX()   # NOTVL(LAC) in fact
-            LD(T4);ANDI(0x1f);LSRXA()
-            MOVQB(0x80,LAX);NEGX()   # NOTVL(LAC) in fact
-            RET()
+            LD(T5);NOTVL(LAC);LSRXA();NOTVL(LAC);RET()
         else:
             label('_@_lshrs')
             PUSH();ST(T5)

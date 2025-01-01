@@ -11,7 +11,7 @@ def scope():
         label('utoa')
         PUSH()
         if args.cpu >= 7:
-            ADDIV(7,R9)
+            ADDSV(7,R9)
         else:
             LDI(7);ADDW(R9);STW(R9)
         LDI(0);POKE(R9);_BRA('.loop')
@@ -19,7 +19,7 @@ def scope():
         PUSH()
         label('.loop')
         if args.cpu >= 7:
-            SUBIV(1,R9)
+            ADDSV(-1,R9)
         else:
             LDW(R9);SUBI(1);STW(R9)
         LDW(R8);_MODU(R10)
@@ -62,7 +62,7 @@ def scope():
         label('ultoa')
         PUSH()
         if args.cpu >= 7:
-            ADDIV(15,R10)
+            ADDSV(15,R10)
         else:
             LDI(15);ADDW(R10);STW(R10)
         LDI(0);POKE(R10);STW(R12)
@@ -71,7 +71,7 @@ def scope():
         LDI(R11);_LMODU()
         LDW(LAC);STW(R13)
         if args.cpu >= 7:
-            SUBIV(1,R10)
+            ADDSV(-1,R10)
         else:
             LDW(R10);SUBI(1);STW(R10)
         LDW(R13);SUBI(10);_BGE('.letter')
@@ -171,7 +171,7 @@ def scope():
         label('.sub')
         STW(R8)
         if args.cpu >= 7:
-            SUBIV(4, R11)
+            ADDSV(-4, R11)
         else:
             LDW(R11);SUBI(4);STW(R11)
         LDW(R8);_BEQ('.sub1')

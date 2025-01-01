@@ -526,7 +526,7 @@ def code10():
 	CALLI('printf');
 	label('.148');
 	label('.144');
-	SUBIV(1,R7);
+	ADDSV(-1,R7);
 	LDWI(32762);_CMPWS(R7);_BLE('.143');
 	LDI(0);
 	label('.124');

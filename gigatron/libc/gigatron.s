@@ -105,12 +105,19 @@ def scope():
         LDW(R8);SYS(80);STW(R8)
         _MOVW(R9,T2)
         _MOVIW('sysArgs0',T3)
-        label('.loop')
-        LDW(T3);DEEK();DOKE(T2)
-        LDI(2);ADDW(T2);STW(T2)
-        LDI(2);ADDW(T3);STW(T3)
-        XORI(v('sysArgs0')+8)
-        _BNE('.loop')
+        if args.cpu >= 7:
+            MOVQB(4,R10)
+            label('.loop')
+            _DEEKV(T3);DOKE(T2)
+            ADDSV(2,T3);ADDSV(2,T2)
+            DBNE(R10,'.loop')
+        else:
+            label('.loop')
+            _DEEKV(T3);DOKE(T2)
+            LDI(2);ADDW(T2);STW(T2)
+            LDI(2);ADDW(T3);STW(T3)
+            XORI(v('sysArgs0')+8)
+            _BNE('.loop')
         POP();LDW(R8);RET()
 
     module(name='sys_readromdir.s',

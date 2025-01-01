@@ -50,7 +50,7 @@ def code2():
 	label('.9');
 	CALLI('getchar');STW(R23);
 	STW(R6);
-	LDNI(-1);XORW(R23);_BEQ('.11');
+	LDWI(-1);XORW(R23);_BEQ('.11');
 	LDW(R6);STW(R8);
 	_STLW(0);
 	CALLI('isletter');
@@ -85,7 +85,7 @@ def code3():
 	PUSH();
 	LDI(65);_CMPWS(R8);_BGT('.19');
 	LDI(90);_CMPWS(R8);_BLT('.19');
-	ADDIV(32,R8);
+	ADDSV(32,R8);
 	label('.19');
 	LDI(97);_CMPWS(R8);_BGT('.21');
 	LDI(122);_CMPWS(R8);_BLT('.21');
@@ -196,7 +196,7 @@ def code6():
 	PEEKV(R9);STW(R23);
 	PEEKV(R8);XORW(R23);_BEQ('.46');
 	PEEKV(R8);_BNE('.51');
-	LDNI(-1);
+	LDWI(-1);
 	_BRA('.45');
 	label('.51');
 	PEEKV(R9);_BNE('.53');

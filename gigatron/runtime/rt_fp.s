@@ -570,7 +570,9 @@ def scope():
         LDW(AM+3);ANDW(T3)
         _BLT('.faddx1')
         # carry
-        if args.cpu >= 6:
+        if args.cpu >= 7:
+            LDI(1);RORX()
+        elif args.cpu == 6:
             _LDI(0xffff);RORX(cpu6exact=False)
         else:
             LDWI('SYS_LSRW1_48');STW('sysFn');_CALLI('__@amshrx')
@@ -1142,9 +1144,8 @@ def scope():
                Calling _@_fscalb afterwards gives x * 10^m.'''
         label('_@_fscald')
         PUSH()
-        STW(T3);_MOVIW(0,T2);_BRA('.tst')
+        STW(T3);_BEQ('.ret');_MOVIW(0,T2)
         label('.loop')
-        SUBI(1);ST(T3)
         if args.cpu >= 7:
             MOVF(AM,BM)     # mantissa
             LDI(2);LSRXA()
@@ -1157,8 +1158,10 @@ def scope():
             LDWI('SYS_LSRW2_52');STW('sysFn');_CALLI('__@amshrx')
             _CALLJ('__@amaddbm40')
         LDW(AM+3);_BLT('.a1')
-        if args.cpu >= 6:
-            LDNI(-1);RORX(cpu6exact=False)
+        if args.cpu >= 7:
+            LDI(1);RORX()
+        elif args.cpu == 6:
+            _LDI(0xffff);RORX(cpu6exact=False)
         else:
             LDWI('SYS_LSRW1_48');STW('sysFn');_CALLI('__@amshrx')
             LD(AM+4);ORI(128);ST(AM+4)
@@ -1168,9 +1171,13 @@ def scope():
         label('.a2')
         ADDW(T2);STW(T2)
         label('.tst')
-        LD(T3);_BNE('.loop')
+        if args.cpu >= 6:
+            DBNE(T3,'.loop');
+        else:
+            LD(T3);SUBI(1);ST(T3);_BNE('.loop')
         _CALLJ('_@_rndfac')
         LDW(T2)
+        label('.ret')
         tryhop(2);POP();RET()
 
     module(name='rt_fscald.s',
@@ -1189,15 +1196,15 @@ def scope():
         PUSH()
         _CALLJ('__@fac2farg')
         LDWI(0xffff);ST(AM);STW(AM+1);STW(AM+3)
-        STW(T3) if args.cpu < 6 else None
         LD(AE);SUBI(128);_BLE('.fmask1')
         _CALLI('__@amshra')
         label('.fmask1')
         LDI(255);XORW(AM);ANDW(BM);ST(AM)
-        LDW(T3) if args.cpu < 6 else LDNI(-1)
-        XORW(AM+1);ANDW(BM+1);STW(AM+1)
-        LDW(T3) if args.cpu < 6 else LDNI(-1)
-        XORW(AM+3);ANDW(BM+3);STW(AM+3)
+        if args.cpu >= 6:
+            NOTVL(LAC);LDI(BM+1);ANDL();LDW(AM+3)
+        else:
+            LDWI(0xffff);XORW(AM+1);ANDW(BM+1);STW(AM+1)
+            LDWI(0xffff);XORW(AM+3);ANDW(BM+3);STW(AM+3)
         _BNE('.frndz1')
         LDI(0);ST(AS);ST(AE)
         label('.frndz1')

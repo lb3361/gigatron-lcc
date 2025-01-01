@@ -141,6 +141,18 @@ extern channel_t *channel(int c);      /* c in range 1...4           */
 extern int SYS_Lup(unsigned int addr);
 #define has_SYS_Lup() 1
 
+/* -- SYS_Fill -- */
+/* Not a sys call but a stub for the FILL opcode */
+extern int SYS_Fill(unsigned int yyxx, char vv, unsigned int hhww);
+#define has_SYS_Fill() \
+	(*(char*)vReset == 0x35) /* dev7rom marker */
+
+/* -- SYS_Fill -- */
+/* Not a sys call but a stub for the BLIT opcode */
+extern int SYS_Blit(unsigned int dydx, unsigned int sysx, unsigned int hhww);
+#define has_SYS_Blit() \
+	(*(char*)vReset == 0x35) /* dev7rom marker */
+
 /* -- SYS_Random -- */
 extern unsigned int SYS_Random(void);
 #define has_SYS_Random() 1
@@ -192,5 +204,7 @@ extern void* SYS_Sprite6y(const void *srcpix, void *dst);
 extern void* SYS_Sprite6xy(const void *srcpix, void *dst);
 #define has_SYS_Sprite6() \
 	((romType & 0xfc) >= romTypeValue_ROMv3)
+
+
 
 #endif

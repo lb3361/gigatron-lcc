@@ -26,6 +26,44 @@ def scope():
                  ('CODE', 'SYS_Lup', code0) ])
 
     # ----------------------------------------
+    # int SYS_Fill(unsigned int yyxx, char vv, unsigned int hhww)
+    # -- Not a sys call but a stub for the FILL opcode.
+
+    def code0():
+        nohop()
+        label('SYS_Fill')
+        if args.cpu >= 7:
+            MOVW(R8,T2)
+            LD(R9);STW(T3)
+            LDW(R10)
+            FILL();
+        RET()
+
+    module(name='sys_fill.s',
+           code=[('EXPORT', 'SYS_Fill'),
+                 ('CODE', 'SYS_Fill', code0) ])
+
+
+    # ----------------------------------------
+    # int SYS_Blit(unsigned dydx, unsigned sysx, unsigned hhww);
+    # -- Not a sys call but a stub for the BLIT opcode.
+    
+    def code0():
+        nohop()
+        label('SYS_Blit')
+        if args.cpu >= 7:
+            MOVW(R8,T2)
+            MOVW(R9,T3)
+            LDW(R10)
+            BLIT();
+        RET()
+
+    module(name='sys_blit.s',
+           code=[('EXPORT', 'SYS_Blit'),
+                 ('CODE', 'SYS_Blit', code0) ])
+
+    
+    # ----------------------------------------
     # unsigned int SYS_Random(void);
     def code0():
         nohop()
@@ -105,12 +143,19 @@ def scope():
         LDW(R8);SYS(80);STW(R8)
         _MOVW(R9,T2)
         _MOVIW('sysArgs0',T3)
-        label('.loop')
-        LDW(T3);DEEK();DOKE(T2)
-        LDI(2);ADDW(T2);STW(T2)
-        LDI(2);ADDW(T3);STW(T3)
-        XORI(v('sysArgs0')+8)
-        _BNE('.loop')
+        if args.cpu >= 7:
+            MOVQB(4,R10)
+            label('.loop')
+            _DEEKV(T3);DOKE(T2)
+            ADDSV(2,T3);ADDSV(2,T2)
+            DBNE(R10,'.loop')
+        else:
+            label('.loop')
+            _DEEKV(T3);DOKE(T2)
+            LDI(2);ADDW(T2);STW(T2)
+            LDI(2);ADDW(T3);STW(T3)
+            XORI(v('sysArgs0')+8)
+            _BNE('.loop')
         POP();LDW(R8);RET()
 
     module(name='sys_readromdir.s',

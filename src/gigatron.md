@@ -370,11 +370,13 @@ conB: CNSTU2  "%a"  range(a,0,255)
 conB: CNSTP2  "%a"  if_zpconst(a)
 conB: CNSTU1  "%a"
 conB: zddr    "%0"
-conBn: CNSTI2 "%a"  range(a,-255,-1)
 conBs: CNSTI1 "%a"
 conBs: CNSTI2 "%a"  range(a,-128,+127)
-conBm: CNSTI2  "%a"  range(a,0,52)
-conBm: CNSTU2  "%a"  range(a,0,52)
+conBn: CNSTI2 "%a"  range(a,-255,-1)
+conBm: CNSTI2 "%a"  range(a,0,52)
+conBm: CNSTU2 "%a"  range(a,0,52)
+conBa: CNSTI2 "%a"  range(a,-64,64)
+conBa: CNSTU2 "%a"  range(a,-64,64)
 con: CNSTI1   "%a"
 con: CNSTU1   "%a"
 con: CNSTI2   "%a"
@@ -428,7 +430,6 @@ ac:   eac   "%{=%0}%0"
 eac:  reg   "%{=%0}%{?0=~vAC::LDW(%0);}"  +if_asgnreuse(a,20,10)
 eac:  lddr  "%{=%0}%{?0=~vAC::_SP(%0);}"  41
 eac0: conB  "%{=%0}%{?0=~vAC::LDI(%0);}"  +if_asgnreuse(a,16,8)
-eac:  conBn "%{=%0}%{?0=~vAC::LDNI(%0);}" +mincpu6(if_asgnreuse(a,16,8))
 eac:  con   "%{=%0}%{?0=~vAC::LDWI(%0);}" +if_asgnreuse(a,20,10)
 
 # Loads
@@ -611,15 +612,15 @@ eac: BXORI2(iarg,eac) "%1%[0b]XORW(%0);" 28
 eac: BXORU2(iarg,eac) "%1%[0b]XORW(%0);" 28
 
 # More assignments (indirect and explicit addresses)
-asgn: ASGNP2(zddr,ac)  "\t%{=vAC}%1STW(%0);\n"       20
+asgn: ASGNP2(zddr,ac)  "\t%{=vAC}%1%{?0==vAC::STW(%0);}\n" 20
 asgn: ASGNP2(iarg,ac)  "\t%{=vAC}%1%[0b]DOKE(%0);\n" 28
-asgn: ASGNI2(zddr,ac)  "\t%{=vAC}%1STW(%0);\n"       20
+asgn: ASGNI2(zddr,ac)  "\t%{=vAC}%1%{?0==vAC::STW(%0);}\n" 20
 asgn: ASGNI2(iarg,ac)  "\t%{=vAC}%1%[0b]DOKE(%0);\n" 28
-asgn: ASGNU2(zddr,ac)  "\t%{=vAC}%1STW(%0);\n"       20
+asgn: ASGNU2(zddr,ac)  "\t%{=vAC}%1%{?0==vAC::STW(%0);}\n" 20
 asgn: ASGNU2(iarg,ac)  "\t%{=vAC}%1%[0b]DOKE(%0);\n" 28
-asgn: ASGNI1(zddr,ac)  "\t%1ST(%0);\n"        16
+asgn: ASGNI1(zddr,ac)  "\t%1%{?0==vAC::ST(%0);}\n" 16
 asgn: ASGNI1(iarg,ac)  "\t%1%[0b]POKE(%0);\n" 26
-asgn: ASGNU1(zddr,ac)  "\t%1ST(%0);\n"        16
+asgn: ASGNU1(zddr,ac)  "\t%1%{?0==vAC::ST(%0);}\n" 16
 asgn: ASGNU1(iarg,ac)  "\t%1%[0b]POKE(%0);\n" 26
 
 # Conditional branches
@@ -995,9 +996,9 @@ eac0: INDIRI1(INDIRP2(zddr)) "PEEKV(%0);" mincpu6(28)
 eac0: INDIRU1(INDIRP2(zddr)) "PEEKV(%0);" mincpu6(28)
 reg: conB              "\t%{=%0}%{?c==vAC:LDI(%0):MOVQW(%0,%c)};\n"  +mincpu7(28+4)
 reg: con               "\t%{=%0}%{?c==vAC:LDWI(%0):MOVIW(%0,%c)};\n" +mincpu7(30+4)
-reg: INDIRI2(ac)     "\t%{?*0=~vAC:STW(%c):%0%{?c==vAC:DEEK():DEEKA(%c)};}\n" mincpu6(30)
-reg: INDIRU2(ac)     "\t%{?*0=~vAC:STW(%c):%0%{?c==vAC:DEEK():DEEKA(%c)};}\n" mincpu6(30)
-reg: INDIRP2(ac)     "\t%{?*0=~vAC:STW(%c):%0%{?c==vAC:DEEK():DEEKA(%c)};}\n" mincpu6(30)
+reg: INDIRI2(ac)     "%{?*0=~vAC:%{?c==vAC::\tSTW(%c);}:\t%0%{?c==vAC:DEEK():DEEKA(%c)};}\n" mincpu6(30)
+reg: INDIRU2(ac)     "%{?*0=~vAC:%{?c==vAC::\tSTW(%c);}:\t%0%{?c==vAC:DEEK():DEEKA(%c)};}\n" mincpu6(30)
+reg: INDIRP2(ac)     "%{?*0=~vAC:%{?c==vAC::\tSTW(%c);}:\t%0%{?c==vAC:DEEK():DEEKA(%c)};}\n" mincpu6(30)
 reg: INDIRI1(ac)     "\t%0%{?c==vAC:PEEK():PEEKA(%c)};\n" mincpu6(24+5)
 reg: INDIRU1(ac)     "\t%0%{?c==vAC:PEEK():PEEKA(%c)};\n" mincpu6(24+5)
 asgn: ASGNI1(rmw, conBs) "\t%{?1=~vAC:ST(%0):MOVQB(%1,%0)};\n"  mincpu6(if_not_asgn_tmp(a,27))
@@ -1016,9 +1017,9 @@ regx: LOADP2(conB)       "\t%{=%0}%{?0=~vAC:STW(%c):MOVQW(%0,%c)};\n" mincpu6(29
 regx: LOADI2(con)        "\t%{=%0}%{?0=~vAC:STW(%c):MOVIW(%0,%c)};\n" mincpu7(31)
 regx: LOADU2(con)        "\t%{=%0}%{?0=~vAC:STW(%c):MOVIW(%0,%c)};\n" mincpu7(31)
 regx: LOADP2(con)        "\t%{=%0}%{?0=~vAC:STW(%c):MOVIW(%0,%c)};\n" mincpu7(31)
-reg: LOADI2(reg)      "\t%{=%0}%{?0=~vAC:STW(%c):%{?c==vAC:LDW(%0):MOVW(%0,%c)}};\n" mincpu7(36)
-reg: LOADU2(reg)      "\t%{=%0}%{?0=~vAC:STW(%c):%{?c==vAC:LDW(%0):MOVW(%0,%c)}};\n" mincpu7(36)
-reg: LOADP2(reg)      "\t%{=%0}%{?0=~vAC:STW(%c):%{?c==vAC:LDW(%0):MOVW(%0,%c)}};\n" mincpu7(36)
+reg: LOADI2(reg)      "%{=%0}%{?0=~vAC:%{?c==vAC::\tSTW(%c);}:\t%{?c==vAC:LDW(%0):MOVW(%0,%c)};}\n" mincpu7(36)
+reg: LOADU2(reg)      "%{=%0}%{?0=~vAC:%{?c==vAC::\tSTW(%c);}:\t%{?c==vAC:LDW(%0):MOVW(%0,%c)};}\n" mincpu7(36)
+reg: LOADP2(reg)      "%{=%0}%{?0=~vAC:%{?c==vAC::\tSTW(%c);}:\t%{?c==vAC:LDW(%0):MOVW(%0,%c)};}\n" mincpu7(36)
 eac: INDIRI2(ADDP2(reg,con)) "LDXW(%0,%1);" mincpu7(58)
 eac: INDIRU2(ADDP2(reg,con)) "LDXW(%0,%1);" mincpu7(58)
 eac: INDIRP2(ADDP2(reg,con)) "LDXW(%0,%1);" mincpu7(58)
@@ -1056,21 +1057,18 @@ asgn: ASGNI2(rmw, ADDI2(INDIRI2(rmw), con1)) "\tINCV(%0);\n" mincpu6(if_rmw(a, 2
 asgn: ASGNI2(rmw, ADDI2(INDIRI2(rmw), ac)) "\t%2ADDV(%0);\n" mincpu7(if_rmw(a, 30))
 asgn: ASGNU2(rmw, ADDU2(INDIRU2(rmw), ac)) "\t%2ADDV(%0);\n" mincpu7(if_rmw(a, 30))
 asgn: ASGNP2(rmw, ADDP2(INDIRP2(rmw), ac)) "\t%2ADDV(%0);\n" mincpu7(if_rmw(a, 30))
-asgn: ASGNI2(rmw, ADDI2(ac, INDIRI2(rmw))) "\t%1ADDV(%0);\n" mincpu7(if_rmw_a(a, 1, 30))
-asgn: ASGNU2(rmw, ADDU2(ac, INDIRU2(rmw))) "\t%1ADDV(%0);\n" mincpu7(if_rmw_a(a, 1, 30))
-asgn: ASGNP2(rmw, ADDP2(ac, INDIRP2(rmw))) "\t%1ADDV(%0);\n" mincpu7(if_rmw_a(a, 1, 30))
-asgn: ASGNI2(rmw, SUBI2(INDIRI2(rmw), ac)) "\t%2SUBV(%0);\n" mincpu7(if_rmw(a, 30))
-asgn: ASGNU2(rmw, SUBU2(INDIRU2(rmw), ac)) "\t%2SUBV(%0);\n" mincpu7(if_rmw(a, 30))
-asgn: ASGNP2(rmw, SUBP2(INDIRP2(rmw), ac)) "\t%2SUBV(%0);\n" mincpu7(if_rmw(a, 30))
-asgn: ASGNP2(rmw, ADDP2(INDIRP2(rmw), conB))  "\t%{?2=~vAC:ADDV(%0):ADDIV(%2,%0)};\n"    mincpu7(if_rmw_incr(a, 40, 10))
-asgn: ASGNU2(rmw, ADDU2(INDIRU2(rmw), conB))  "\t%{?2=~vAC:ADDV(%0):ADDIV(%2,%0)};\n"    mincpu7(if_rmw_incr(a, 40, 10))
-asgn: ASGNI2(rmw, ADDI2(INDIRI2(rmw), conB))  "\t%{?2=~vAC:ADDV(%0):ADDIV(%2,%0)};\n"    mincpu7(if_rmw_incr(a, 40, 10))
-asgn: ASGNP2(rmw, ADDP2(INDIRP2(rmw), conBn)) "\t%{?2=~vAC:ADDV(%0):SUBIV(-(%2),%0)};\n" mincpu7(if_rmw_incr(a, 40, 10))
-asgn: ASGNU2(rmw, ADDU2(INDIRU2(rmw), conBn)) "\t%{?2=~vAC:ADDV(%0):SUBIV(-(%2),%0)};\n" mincpu7(if_rmw_incr(a, 40, 10))
-asgn: ASGNI2(rmw, ADDI2(INDIRI2(rmw), conBn)) "\t%{?2=~vAC:ADDV(%0):SUBIV(-(%2),%0)};\n" mincpu7(if_rmw_incr(a, 40, 10))
-asgn: ASGNP2(rmw, SUBP2(INDIRP2(rmw), conB))  "\t%{?2=~vAC:SUBV(%0):SUBIV(%2,%0)};\n"    mincpu7(if_rmw_incr(a, 40, 10))
-asgn: ASGNU2(rmw, SUBU2(INDIRU2(rmw), conB))  "\t%{?2=~vAC:SUBV(%0):SUBIV(%2,%0)};\n"    mincpu7(if_rmw_incr(a, 40, 10))
-asgn: ASGNI2(rmw, SUBI2(INDIRI2(rmw), conB))  "\t%{?2=~vAC:SUBV(%0):SUBIV(%2,%0)};\n"    mincpu7(if_rmw_incr(a, 40, 10))
+asgn: ASGNI2(rmw, ADDI2(ac, INDIRI2(rmw))) "\t%1ADDV(%0);\n" mincpu7(if_rmw_a(a, 1, 29))
+asgn: ASGNU2(rmw, ADDU2(ac, INDIRU2(rmw))) "\t%1ADDV(%0);\n" mincpu7(if_rmw_a(a, 1, 29))
+asgn: ASGNP2(rmw, ADDP2(ac, INDIRP2(rmw))) "\t%1ADDV(%0);\n" mincpu7(if_rmw_a(a, 1, 29))
+asgn: ASGNI2(rmw, SUBI2(INDIRI2(rmw), ac)) "\t%2SUBV(%0);\n" mincpu7(if_rmw(a, 29))
+asgn: ASGNU2(rmw, SUBU2(INDIRU2(rmw), ac)) "\t%2SUBV(%0);\n" mincpu7(if_rmw(a, 29))
+asgn: ASGNP2(rmw, SUBP2(INDIRP2(rmw), ac)) "\t%2SUBV(%0);\n" mincpu7(if_rmw(a, 29))
+asgn: ASGNP2(rmw, ADDP2(INDIRP2(rmw), conBa))  "\t%{?2=~vAC:ADDV(%0):ADDSV(%2,%0)};\n"    mincpu7(if_rmw(a, 38))
+asgn: ASGNU2(rmw, ADDU2(INDIRU2(rmw), conBa))  "\t%{?2=~vAC:ADDV(%0):ADDSV(%2,%0)};\n"    mincpu7(if_rmw(a, 38))
+asgn: ASGNI2(rmw, ADDI2(INDIRI2(rmw), conBa))  "\t%{?2=~vAC:ADDV(%0):ADDSV(%2,%0)};\n"    mincpu7(if_rmw(a, 38))
+asgn: ASGNP2(rmw, SUBP2(INDIRP2(rmw), conBa))  "\t%{?2=~vAC:SUBV(%0):ADDSV(-%2,%0)};\n"   mincpu7(if_rmw(a, 38))
+asgn: ASGNU2(rmw, SUBU2(INDIRU2(rmw), conBa))  "\t%{?2=~vAC:SUBV(%0):ADDSV(-%2,%0)};\n"   mincpu7(if_rmw(a, 38))
+asgn: ASGNI2(rmw, SUBI2(INDIRI2(rmw), conBa))  "\t%{?2=~vAC:SUBV(%0):ADDSV(-%2,%0)};\n"   mincpu7(if_rmw(a, 38))
 
 
 # /*-- END RULES --/
@@ -1270,8 +1268,8 @@ static int if_incr(Node a, int cost, int bonus)
   /* Reduces the cost of an increment/decrement operation
      when there is evidence that the previous value was preserved in a
      temporary. This is used to prefer dialect LDW(r);ADDW(i);STW(r)
-     or ADDIV(i,r) over the potentially more efficient LDI(i);ADDW(r);STW(r)
-     or LDI(i);ADDV(r). This is hacky and very limited in fact. */
+     over the potentially more efficient LDI(i);ADDW(r);STW(r).
+     This is hacky and very limited in fact. */
   extern Node head; /* declared in gen.c */
   Node k;
   Symbol syma;

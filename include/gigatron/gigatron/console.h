@@ -103,7 +103,7 @@ extern int _console_printchars(int fgbg, const char *addr, const char *s, int le
 
 /* Clear with color clr from screen address addr to the end of the row.
    Repeats for nl successive lines. */
-extern void _console_clear(char *addr, int clr, int nl);
+extern void _console_clear(char *addr, int clr, char nl);
 
 /* Handle additional control characters in _console_print().
    Override this function to implement more control characters.

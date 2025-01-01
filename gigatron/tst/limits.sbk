@@ -78,7 +78,7 @@ def code0():
 	CALLI('printf');
 	LDWI('.14');STW(R8);
 	_STLW(0);
-	LDNI(-128);STW(R9);
+	LDWI(-128);STW(R9);
 	_STLW(2);
 	STW(R10);
 	_STLW(4);

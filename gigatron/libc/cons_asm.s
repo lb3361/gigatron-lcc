@@ -65,7 +65,7 @@ def scope():
                   ('CODE', '_printonechar', code_printonechar) ] )
 
 
-    # -- void _console_clear(char *addr, char clr, int nl)
+    # -- void _console_clear(char *addr, int clr, char nl)
     # Clears from addr to the end of line with color clr.
     # Repeats for nl successive lines.
 
@@ -80,10 +80,11 @@ def scope():
         _MOVW(R8,'sysArgs2')
         SYS(54)
         INC(R8+1)
-        LDW(R10)
-        SUBI(1);
-        STW(R10);
-        _BNE('.loop')
+        if args.cpu >= 6:
+            DBNE(R10,'.loop')
+        else:
+            LDW(R10);SUBI(1);STW(R10);
+            _BNE('.loop')
         tryhop(2);POP();RET()
 
     module(name='cons_clear.s',
@@ -118,26 +119,24 @@ def scope():
         LDWI(v('console_info')+4);STW(R10)       # offset
         PEEK();INC(vACH);PEEK();STW(R9)
         LDWI(v('console_info')+0);DEEK()         # nlines
-        SUBI(1);ST(v('console_state')+2)         # cy
-        _BRA('.tst1')
+        SUBI(1);ST(v('console_state')+2) # cy
         label('.loop1')
+        STW(R8)
         ADDW(R10);PEEK();INC(vACH);STW(R12)
         PEEK();ST(R13)
-        if not hires: LDI(7)
-        if hires: LDI(3)
-        _BRA('.tst2')
+        if not hires: _MOVIW(8,R14)
+        if hires: _MOVIW(4,R14)
         label('.loop2')
         LD(R9);POKE(R12)
         INC(R9)
         if hires: INC(R9)
         INC(R12);INC(R12)
-        LD(R14);SUBI(1)
-        label('.tst2')
-        ST(R14);_BGE('.loop2')
+        if args.cpu >= 6:
+            DBNE(R14, '.loop2')
+        else:
+            LD(R14);SUBI(1);ST(R14);_BNE('.loop2')
         LD(R13);ST(R9)
-        LD(R8);SUBI(1)
-        label('.tst1')
-        ST(R8);_BGE('.loop1')
+        LD(R8);SUBI(1);_BGE('.loop1')
         tryhop(2);POP();RET()
 
     module(name='cons_scroll.s',

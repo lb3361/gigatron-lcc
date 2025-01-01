@@ -140,7 +140,7 @@ def code10():
 	_MOVM('.59',[SP,-36+68],4,2);
 	_MOVM('.60',[SP,-16+68],16,2);
 	_SP(-40+68);STW(R8);
-	LDNI(-10);STW(R9);
+	LDWI(-10);STW(R9);
 	STW(R10);
 	CALLI('makepoint');
 	_SP(-44+68);STW(R8);

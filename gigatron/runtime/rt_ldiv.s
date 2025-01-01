@@ -42,8 +42,10 @@ def scope():
             _CALLJ('__@lsub_t0t1')
         INC(T2)
         label('.ldiv1')
-        INC(T4)
-        LD(T4);ORI(0xc0);XORI(0xe0);_BNE('.ldiv0')
+        if args.cpu >= 6:
+            DBNE(T4,'.ldiv0')
+        else:
+            INC(T4);LD(T4);_BNE('.ldiv0')
         if args.cpu < 6:
             tryhop(2);POP()
         RET()
@@ -62,7 +64,11 @@ def scope():
         ORW(T0);_BNE('.ldp1')
         _CALLJ('_@_raise_zdiv')
         label('.ldp1')
-        LDI(0);ST(T4)
+        if args.cpu >= 6:
+            LDI(32)
+        else:
+            LDI(256-32)
+        STW(T4)
         RET()
 
     module(name='rt_ldivprep.s',
@@ -117,8 +123,8 @@ def scope():
 
     def code_ldivsign():
         # Signed division helper
-        # T4L bit 7 : quotient sign
-        # T4L bit 6 : remainder sign
+        # T4H bit 7 : quotient sign
+        # T4H bit 6 : remainder sign
         label('__@ldivsign')
         PUSH()
         LDW(LAC+2);_BGE('.lds1')
@@ -126,14 +132,14 @@ def scope():
             NEGVL(LAC)
         else:
             _CALLJ('_@_lneg')
-        LD(T4);XORI(0xc0);ST(T4)
+        LD(T4+1);XORI(0xc0);ST(T4+1)
         label('.lds1')
         LDW(T0+2);_BGE('.lds2')
         if args.cpu >= 6:
             NEGVL(T0)
         else:
             _CALLJ('__@lneg_t0t1')
-        LD(T4);XORI(0x80);ST(T4)
+        LD(T4+1);XORI(0x80);ST(T4+1)
         label('.lds2')
         tryhop(2);POP();RET()
 
@@ -156,7 +162,7 @@ def scope():
         _CALLJ('__@ldivsign')
         CallWorker()
         _MOVW(T2,LAC);_MOVW(T2+2,LAC+2)
-        LD(T4);ANDI(0x80);_BEQ('.ret')
+        LDW(T4);_BGE('.ret')
         if args.cpu >= 6:
             NEGVL(LAC)
         else:
@@ -186,13 +192,13 @@ def scope():
         _CALLJ('__@ldivsign')
         CallWorker()
         _MOVW(T2,T0);_MOVW(T2+2,T0+2)
-        LD(T4);ANDI(0x80);_BEQ('.lms1')
+        LDW(T4);_BGE('.lms1')
         if args.cpu >= 6:
             NEGVL(T0)
         else:
             _CALLJ('__@lneg_t0t1')
         label('.lms1')
-        LD(T4);ANDI(0x40);_BEQ('.lms2')
+        LD(T4+1);ANDI(0x40);_BEQ('.lms2')
         if args.cpu >= 6:
             NEGVL(LAC)
         else:

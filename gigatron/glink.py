@@ -1085,11 +1085,18 @@ def JNE(d):
     else:
         emit_op("JNE_v7", lo(d-2), hi(d))
 @vasm
-def LDNI(d):
+def DBNE(v,d):
     if args.cpu == 6:
-        tryhop(2);emit(0x9c, check_zp(-d))
+        emit(0x9e, check_br(d), check_zp(v))
     else:
-        emit_op("LDNI_v7", check_zp(d ^ 0xff00))
+        emit_op('DBNE_v7', check_zp(v), check_br(d))
+@vasm
+def DEC(v):
+    '''Instruction DEC is synthetized using DBNE.'''
+    if args.cpu == 6:
+        emit(0x14, check_zp(v))
+    else:
+        emit_op('DBNE_v7', check_zp(v), check_br(pc()+3))
 @vasm
 def MULQ(kod):
     emit_op('MULQ_v7', check_zp(kod))
@@ -1131,8 +1138,16 @@ def ADDL():
     else:
         emit_op("ADDL_v7")
 @vasm
-def ADDX():
-    error(f"Opcode ADDX is deprecated")
+def COPYS(s,d,n):
+    n = v(n)
+    if n <= 0 or n >= 128:
+        warning(f'COPYS cannot copy {n} bytes')
+    if s == [vSP]:
+        emit_op('COPYS_v7', check_zp(d), n & 127)
+    elif d == [vSP]:
+        emit_op('COPYS_v7', check_zp(s), (n & 127) | 128)
+    else:
+        error(f"invalid arguments to COPYS")
 @vasm
 def SUBL():
     if args.cpu == 6:
@@ -1237,9 +1252,6 @@ def VSAVE():
 def VRESTORE():
     emit_op('VRESTORE_v7')
 @vasm
-def EXCH():
-    emit_op('EXCH_v7')
-@vasm
 def LEEKA(d):
     if args.cpu == 6:
         tryhop();emit(0x2f, check_zp(d), 0x3d)
@@ -1261,6 +1273,12 @@ def RDIVU(d):
 def MULW(d):
     emit_op("MULW_v7", check_zp(d))
 @vasm
+def FILL():
+    emit_op("FILL_v7")
+@vasm
+def BLIT():
+    emit_op("BLIT_v7")
+@vasm
 def DOKEI(d):
     d = int(v(d))
     if args.cpu == 6:
@@ -1268,11 +1286,8 @@ def DOKEI(d):
     else:
         emit_op("DOKEI_v7", (d>>8)&0xff, d&0xff)
 @vasm
-def ADDIV(i,d):
-    emit_op("ADDIV_v7", check_zp(i), check_zp(d))
-@vasm
-def SUBIV(i,d):
-    emit_op("SUBIV_v7", check_zp(i), check_zp(d))
+def ADDSV(i,d):
+    emit_op("ADDSV_v7", check_zp(d), check_im8s(i))
 @vasm
 def COPY():
     emit_op("COPY_v7")
@@ -1284,16 +1299,14 @@ def COPYN(n):
     else:
         emit_op("COPYN_v7", n)
 @vasm
-def COPYS(s,d,n):
-    n = v(n)
-    if n <= 0 or n >= 128:
-        warning(f'COPYS cannot copy {n} bytes')
-    if s == [vSP]:
-        emit_op('COPYS_v7', check_zp(d), n & 127)
-    elif d == [vSP]:
-        emit_op('COPYS_v7', check_zp(s), (n & 127) | 128)
+def EXBA(i):
+    emit_op('EXBA_v7', check_zp(i))
+@vasm
+def NOTVL(d):
+    if args.cpu == 6:
+        tryhop(3);emit(0x2f, check_zp(d), 0xd5)
     else:
-        error(f"invalid arguments to COPYS")
+        emit_op('NOTVL_v7', check_zp(d))
 @vasm
 def MOVL(s,d):
     if args.cpu == 6:
@@ -1308,16 +1321,17 @@ def MOVF(s,d):
         emit_op("MOVF_v7", check_zp(d), check_zp(s))
 
 @vasm
-def ADDWI(d):
+def ADDWI(x):
     '''Instruction ADDWI is both a CPU6 instruction
        and a convenient shorthand for ADDHI+ADDI on CPU7.'''
-    d = int(v(d))
+    d = int(v(x))
     if args.cpu == 6:
         tryhop(4);emit(0xc7, hi(d), 0x1b, lo(d))
     else:
-        # skipping ADDI when lo(d)==0 can
-        # send the relaxation in a loop
-        ADDHI(hi(d));ADDI(lo(d))
+        if d & 0xff00 != 0 or not isinstance(x,int):
+            ADDHI(hi(d));
+        if d & 0xff != 0 or not isinstance(x,int):
+            ADDI(lo(d))
 
 # pseudo instructions used by the compiler
 @vasm
@@ -1331,19 +1345,15 @@ def _SP(n):
     else:
         _LDI(n); ADDW(SP)
 @vasm
-def _LDI(d):
-    '''Emit LDI, LDNI or LDWI.'''
+def _LDI(x):
+    '''Emit LDI or LDWI.'''
     # Warning. In rare cases, using _LDI instead of LDWI can lead to
     # infinite relaxation loops when the argument d is an expression
     # than can construct a small address that depends on a yet unknown
     # data label.
-    d = v(d)
+    d = v(x)
     if is_zeropage(d):
         LDI(d)
-    elif args.cpu == 6 and is_zeropage(-d):
-        LDNI(d)
-    elif args.cpu > 6 and is_zeropage(-d-1):
-        LDNI(d)
     else:
         LDWI(d)
 @vasm
@@ -1402,17 +1412,13 @@ def _MOVW(s,d):
 @vasm
 def _ALLOC(d):
     '''Adds positive of negative immediate d to SP (not vSP).
-       - Emits ALLOC, ADDIV, SUBIV or a _SP based solution.
+       - Emits ALLOC, ADDV, or _SP
        - May trash vAC.'''
     d = int(v(d))
     if args.cpu >= 7:
         if d >= -128 and d < 128 and d != 0:
             assert SP == vSP
             ALLOC(d)
-        elif d > 0 and d < 256:
-            ADDIV(d,SP)
-        elif d < 0 and d > -256:
-            SUBIV(-d,SP)
         elif d != 0:
             _LDI(d);ADDV(SP)
     elif d != 0:
@@ -1885,8 +1891,11 @@ def _LNEG():
         _CALLJ('_@_lneg')       # -LAC --> LAC
 @vasm
 def _LCOM():
-    extern('_@_lcom')
-    _CALLJ('_@_lcom')           # ~LAC --> LAC
+    if args.cpu >= 6:
+        NOTVL(LAC)
+    else:
+        extern('_@_lcom')
+        _CALLJ('_@_lcom')      # ~LAC --> LAC
 @vasm
 def _LAND():
     if args.cpu >= 6:
@@ -2124,7 +2133,7 @@ def _EPILOGUE(framesize,maxargoffset,mask,saveAC=False):
     if args.cpu >= 7:
         assert SP == vSP
         reg = (mask & -mask).bit_length() - 1
-        def allocsize(x): return 0 if x==0 else 2 if x<128 else 3 if x<256 else 5
+        def allocsize(x): return 0 if x==0 else 2 if x<128 else 5
         asize1 = allocsize(maxargoffset)
         asize2 = allocsize(framesize - maxargoffset - 2)
         save = saveAC and (asize1 > 3 or asize2 > 3 or reg == 7)

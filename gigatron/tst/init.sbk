@@ -112,7 +112,7 @@ def code6():
 	LDW(R9);_STLW(2);
 	CALLI('printf');
 	label('.22');
-	ADDIV(2,R7);
+	ADDSV(2,R7);
 	label('.24');
 	DEEKV(R7);_BNE('.21');
 	LDI(0);
@@ -143,7 +143,7 @@ def code7():
 	LDW(R9);_STLW(2);
 	CALLI('printf');
 	label('.28');
-	ADDIV(12,R7);
+	ADDSV(12,R7);
 	label('.30');
 	DEEKV(R7);_BNE('.27');
 	CALLI('h');

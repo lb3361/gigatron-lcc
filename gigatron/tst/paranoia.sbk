@@ -3677,7 +3677,7 @@ def code34():
 	label('.930');
 	MOVIW('.933',R8);
 	LDW(R7);
-	ADDIV(2,R7);
+	ADDSV(2,R7);
 	DEEK();STW(R9);
 	LDW(R9);_STLW(2);
 	CALLI('printf');

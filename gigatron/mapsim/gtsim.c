@@ -482,6 +482,7 @@ void sys_printf(void)
           else
             {
               int i = 0;
+              int star = 0;
               char conv = 0;
               char lng = 0;
               char spec[64];
@@ -494,13 +495,19 @@ void sys_printf(void)
                     lng = spec[i] = fmt[i];
                   else if (strchr("#0- +0123456789.hlLjzZtq", fmt[i]))
                     spec[i] = fmt[i];
+                  else if (fmt[i] == '*')
+                    { spec[i] = fmt[i]; star++; }
                   else 
                     { conv = spec[i] = fmt[i]; break; }
                 }
               if (i+1 < sizeof(spec))
                 {
                   spec[i+1] = 0;
-                  if (strchr("eEfFgGaA", conv))
+                  if (star == 1 && strchr("sS", conv))
+                    { ap = (ap+1)&~1; n += printf(spec, deek(ap), &RAM[deek(ap+2)]); ap += 4; }
+                  else if (star)
+                    { n += printf("{{unsup:%s}}", spec); }
+                  else if (strchr("eEfFgGaA", conv))
                     { n += printf(spec, feek(ap)); ap += 5; }
                   else if (strchr("sS", conv))
                     { ap = (ap+1)&~1; n += printf(spec, &RAM[deek(ap)]); ap += 2; }

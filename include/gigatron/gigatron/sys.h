@@ -138,6 +138,7 @@ extern channel_t *channel(int c);      /* c in range 1...4           */
 /* All stubs are in gigatron/libc/gigatron.s */
 
 /* -- SYS_Lup -- */
+/* Not a sys call but a stub for the LUP opcode */
 extern int SYS_Lup(unsigned int addr);
 #define has_SYS_Lup() 1
 

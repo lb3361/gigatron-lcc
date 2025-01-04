@@ -15,7 +15,7 @@ def scope():
 
     # ----------------------------------------
     # int SYS_Lup(unsigned int addr)
-    #   Notes: This is not a real SYS call. Just the LUP instruction.
+    # -- Not a sys call but a stub for the LUP opcode.
     def code0():
         nohop()
         label('SYS_Lup')

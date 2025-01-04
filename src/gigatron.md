@@ -36,6 +36,7 @@
 #include "c.h"
 #include <ctype.h>
 #include <math.h>
+#include <float.h>
 
 #define NODEPTR_TYPE Node
 #define OP_LABEL(p) ((p)->op)
@@ -2473,11 +2474,14 @@ static void defconst(int suffix, int size, Value v)
 {
   if (suffix == F) {
     double d = v.d;
+    double m;
     int exp;
     unsigned long mantissa;
     assert(size == 5);
     assert(isfinite(d));
-    mantissa = (unsigned long)(frexp(fabs(d),&exp) * 4294967296.0 + 0.4999999995343387);
+    m = floor(frexp(fabs(d),&exp) * 4294967296.0 + 0.5 - DBL_EPSILON);
+    if (m > 0xffffffff) { m *= 0.5; exp += 1; }
+    mantissa = (unsigned long)(m);
     if (exp < -127)
       mantissa = 0;
     if (mantissa == 0)

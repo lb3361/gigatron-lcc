@@ -12,6 +12,7 @@ G=${TOP}gigatron/
 TARGET=gigatron
 CFLAGS=-g -Wno-abi
 LDFLAGS=-g
+EXTRALIBS=-lm
 PYTHON=python3
 HOSTFILE=${TOP}etc/gigatron-lcc.c
 GLCC=${B}glcc
@@ -81,6 +82,7 @@ lcc-%: FORCE
                 "TARGET=${TARGET}" \
 		"CFLAGS=${CFLAGS}" \
 		"LDFLAGS=${LDFLAGS}" \
+		"EXTRALIBS=${EXTRALIBS}" \
 		"E=${E}" \
 		`echo $@ | sed -e 's/^lcc-//'`
 

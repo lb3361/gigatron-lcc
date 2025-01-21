@@ -179,6 +179,12 @@ ${B}tst/%.s: tst/%.c FORCE
 	cmp "${B}tst/$(*F).ss2" "${G}tst/$(*F).2bk"
 	[ ! -r "${G}tst/$(*F).sbk" ] || cmp $@ "${G}tst/$(*F).sbk"
 
+${B}tst/%.s: ${G}tst/%.c FORCE
+	@test -d ${B}tst || mkdir ${B}tst
+	-${GLCC} -S -rom=${ROM} -o $@  $< 2>"${B}tst/$(*F).ss2"
+	cmp "${B}tst/$(*F).ss2" "${G}tst/$(*F).2bk"
+	[ ! -r "${G}tst/$(*F).sbk" ] || cmp $@ "${G}tst/$(*F).sbk"
+
 ${B}tst/%.gt1: tst/%.c FORCE
 	@test -d ${B}tst || mkdir ${B}tst
 	${GLCC} -map=sim,allout -rom=${ROM} ${TFLAGS} -o $@ $< 2>"${B}tst/$(*F).xx2"

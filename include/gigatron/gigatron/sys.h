@@ -2,6 +2,7 @@
 #define __GIGATRON_SYS
 
 #include <gigatron/pragma.h>
+#include <gigatron/idioms.h>
 
 /* ---- Well known constants from interface.json ---- */
 

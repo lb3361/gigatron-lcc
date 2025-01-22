@@ -72,19 +72,26 @@ def scope():
     def code_clear():
         label('_console_clear')
         PUSH()
-        _MOVIW('SYS_SetMemory_v2_54','sysFn')
-        LDI(160);SUBW(R8);ST(R11)
-        LD(R9);ANDI(0x3f);ST('sysArgs1')
-        label('.loop')
-        LD(R11);ST('sysArgs0')
-        _MOVW(R8,'sysArgs2')
-        SYS(54)
-        INC(R8+1)
-        if args.cpu >= 6:
-            DBNE(R10,'.loop')
+        if args.cpu >= 7:
+            LDW(R8);STW(T2)
+            LD(R9);ANDI(0x3f);STW(T3)
+            LDI(160);SUBW(R8);ST(R11)
+            LD(R10);ST(R11+1);LDW(R11)
+            FILL()
         else:
-            LDW(R10);SUBI(1);STW(R10);
-            _BNE('.loop')
+            _MOVIW('SYS_SetMemory_v2_54','sysFn')
+            LDI(160);SUBW(R8);ST(R11)
+            LD(R9);ANDI(0x3f);ST('sysArgs1')
+            label('.loop')
+            LD(R11);ST('sysArgs0')
+            _MOVW(R8,'sysArgs2')
+            SYS(54)
+            INC(R8+1)
+            if args.cpu >= 6:
+                DBNE(R10,'.loop')
+            else:
+                LDW(R10);SUBI(1);STW(R10)
+                _BNE('.loop')
         tryhop(2);POP();RET()
 
     module(name='cons_clear.s',

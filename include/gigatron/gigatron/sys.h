@@ -117,15 +117,14 @@ extern byte screenMemory[][256];
 
 typedef struct channel_s {
 	char wavA, wavX;
-#if STRUCT_CHANNEL_HAS_KEYW
-	word keyW;
-#else
-	char keyL, keyH;
-#endif
+	union {	word keyW;
+		struct { char keyL, keyH; }; };
 #if STRUCT_CHANNEL_HAS_OSC
-	char oscL, oscH;
+	union {	word oscW;
+		struct { char oscL, oscH; }; };
 #endif
 } channel_t;
+
 
 extern channel_t channel1 __at(0x1fa); /* differ from interface.json */
 extern channel_t channel2 __at(0x2fa); /* differ from interface.json */

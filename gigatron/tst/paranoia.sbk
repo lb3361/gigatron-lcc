@@ -2041,8 +2041,9 @@ def code17():
 	label('.455');
 	LDWI('Break');DEEK();_BEQ('.454');
 	CALLI('PrintIfNPositive');
-	LDWI('N');DEEKA(R23);
-	LDWI('N1');DOKEA(R23);
+	LDWI('N');
+	MOVIW('N1',R23);
+	DEEK();DOKE(R23);
 	LDWI('N');DOKEQ(0);
 	_MOVF('A1','Z');
 	_MOVF('W',F8);

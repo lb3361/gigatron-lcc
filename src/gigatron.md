@@ -966,6 +966,8 @@ asgn: ASGNU4(spill,reg) "\tSTW(T0);_MOVL(%1,[SP,%0]);LDW(T0) #genspill\n" 20
 asgn: ASGNF5(spill,reg) "\tSTW(T0);_MOVF(%1,[SP,%0]);LDW(T0) #genspill\n" 20
 
 # Additional rules for cpu > 5
+regx: con   "\t%{?0=~vAC:STW(%c):MOVIW(%0,%c)};\n"  +mincpu7(30)
+regx: conB  "\t%{?0=~vAC:STW(%c):MOVQW(%0,%c)};\n"  +mincpu6(28)
 ac:  ADDI2(ac,con)  "%0ADDWI(%1);"      mincpuf(6,addhi,if_incr(a,38,10))
 ac:  ADDU2(ac,con)  "%0ADDWI(%1);"      mincpuf(6,addhi,if_incr(a,38,10))
 ac:  ADDP2(ac,con)  "%0ADDWI(%1);"      mincpuf(6,addhi,if_incr(a,38,10))

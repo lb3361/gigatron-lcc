@@ -165,8 +165,8 @@ def code1():
 	LDW(LAC);POKE(R23);
 	LDWI('S');STW(R23);
 	LDW(LAC);DOKE(R23);
-	LDWI('S');DEEKA(R23);
-	LDWI('I');DOKEA(R23);
+	MOVIW('I',R22);
+	DEEKV(R23);DOKE(R22);
 	_FCVU();
 	_MOVF(FAC,'f');
 	_MOVF(FAC,'d');

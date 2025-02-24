@@ -1487,7 +1487,7 @@ def code50():
 	label('.698');
 	label('.696');
 	LDWI(1942);_STLW(-10+40);
-	MOVIW(1942,R23);
+	STW(R23);
 	_LDLW(-10+40);XORW(R23);_BNE('.706');
 	_LDLW(-10+40);STW(R23);
 	_LDLW(-10+40);XORW(R23);_BEQ('.701');

@@ -1421,8 +1421,8 @@ def code32():
 	DEEKV(R5);LSLW();LDXW(vAC,'yypact');ADDWI(256);STW(R4);
 	_BLT('.194');
 	LDI(249);_CMPWS(R4);_BLE('.194');
-	LDWI('yyact');ADDW(R4);ADDW(R4);DEEK();LSLW();ADDWI('yychk');DEEKA(R23);
-	LDWI(256);XORW(R23);_BNE('.194');
+	MOVIW(256,R23);
+	LDWI('yyact');ADDW(R4);ADDW(R4);DEEK();LSLW();LDXW(vAC,'yychk');XORW(R23);_BNE('.194');
 	LDWI('yyact');ADDW(R4);ADDW(R4);DEEKA(R6);
 	_BRA('.145');
 	label('.194');

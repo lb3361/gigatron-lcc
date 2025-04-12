@@ -20,11 +20,11 @@ char *dtoa(double x, char *buf, register int fmt, register int prec)
 {
 	char lbuf[16];
 	register int exp, nd, per;
-	register char *s, *q = buf;
-	(void) &x;
-
-	if (((char*)&x)[1] & 0x80) {
-		((char*)&x)[1] &= 0x7f;
+	register char *q = buf;
+	register char *s = (char*)&x + 1;
+	/* Sign */
+	if (*s & 0x80) {
+		*s &= 0x7f;
 		*q = '-';
 		q++;
 	}
@@ -77,13 +77,12 @@ char *dtoa(double x, char *buf, register int fmt, register int prec)
 		}
 		if ((per = per - 1) < 0)
 			prec = prec - 1;
-		if (nd <= 0 && *s) {
+		if ((nd = nd - 1) < 0 && *s) {
 			*q = *s;
 			s += 1;
 		} else
 			*q = '0';
 		q += 1;
-		nd -= 1;
 	}
 	/* Remove zeroes for g style */
 	if (fmt == 'g' && per < 0) {
@@ -105,7 +104,7 @@ char *dtoa(double x, char *buf, register int fmt, register int prec)
 		}
 		q += 1;
 		exp = _utwoa(exp);
-		*q = (exp >> 8);
+		*q = (unsigned)exp >> 8;
 		q += 1;
 		*q = exp;
 		q += 1;

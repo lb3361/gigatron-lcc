@@ -1340,7 +1340,7 @@ def _SP(n):
     n = v(n)
     if is_zero(n):
         LDW(SP);
-    elif args.cpu < 6 and is_zeropage(-n):
+    elif is_zeropage(-n):
         LDW(SP); SUBI(-n)
     else:
         _LDI(n); ADDW(SP)

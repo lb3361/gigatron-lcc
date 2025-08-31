@@ -38,13 +38,19 @@
    * `__attribute__((place(AMIN,AMAX)))`
      Variable must be allocated between addresses `AMIN` and `AMAX`.
 
-   Two attributes are recognized on extern declarations:
+   Three attributes are recognized on extern declarations:
 
    * `__attribute__((alias(STRING)))`
      Define an external variable that references the linker symbol
      `STRING` instead of a symbol whose name is equal to the variable
      name. When `STRING` starts with prefix "__glink_weak_", this is a
      weak reference.
+   * `__attribute__((regalias(STRING)))`
+     Define an  external variable that references register `STRING`
+     and prevents subsequent functions from allocating this register.
+     This only makes sense when the variable is declared `__near`
+     and can be used with to create a side channel to share information
+     between functions.
    * `__attribute__((org(ADDRESS)))`
      Define an external variable assumed in the current compilation
      unit to be located at absolute address `ADDRESS`.

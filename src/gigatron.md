@@ -118,6 +118,7 @@ static Symbol iregw, lregw, fregw;
 
 /* Misc */
 static int codenum = 0;         /* uni */
+static unsigned rmask = 0;      /* masked registers */
 static int cseg = 0;            /* segment */
 static int cpu = 5;             /* cpu version */
 
@@ -1734,6 +1735,21 @@ static Symbol rmap(int opk)
   }
 }
 
+/* Find a register by type and name */
+static Symbol findreg(const char *s)
+{
+  int i;
+#define scanregs(regs) \
+  for (i=0; i<NELEMS(regs); i++) \
+    if (regs[i] && !strcmp(s, regs[i]->x.name)) \
+      return regs[i];
+  scanregs(ireg);
+  scanregs(lreg);
+  scanregs(freg);
+#undef scanregs
+  return 0;
+}
+
 /* Return register for argument passing or zero. */
 static Symbol argreg(int argno, int ty, int sz, int *roffset)
 {
@@ -2283,7 +2299,7 @@ static const char* check_idval(Attribute a, int n)
         return 0;
     }
   }
-  return str;
+  return stringf("'%s'", str);
 }
 
 static const char *check_attributes(Symbol p)
@@ -2310,7 +2326,7 @@ static const char *check_attributes(Symbol p)
           error("incompatible placement constraints (org & place)\n");
         a->okay = (check_uintval(a,0) && !a->args[1]);
         yes = has_org = 1;
-      } else if (a->name == string("offset")) {
+      } else if (a->name == string("offset") && !is_extern) {
         if (has_off)
           error("incompatible placement constraints (multiple offsets)\n");
         a->okay = (check_uintval(a,0) && !a->args[1]);
@@ -2318,11 +2334,15 @@ static const char *check_attributes(Symbol p)
       } else if (a->name == string("nohop") && !is_extern) {
         a->okay = (!a->args[0] && !a->args[1]);
         yes = 1;
-      } else if (a->name == string("alias") && is_extern) {
+      } else if (a->name == string("alias") && is_extern && !alias) {
         alias = check_idval(a, 0);
         a->okay = (alias!=0 && !a->args[1]);
         yes = 1;
-      }      
+      } else if (a->name == string("regalias") && is_extern && !alias) {
+        alias = check_strval(a, 0);
+        a->okay = (alias!=0 && findreg(alias) && !a->args[1]);
+        yes = 1;
+      }
       if (yes && !a->okay)
         error("illegal argument in `%s` attribute\n", a->name);
     }
@@ -2491,6 +2511,8 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
     tmask[IREG] = REGMASK_TEMPS;
     vmask[IREG] = REGMASK_MOREVARS;
   }
+  tmask[IREG] &= ~rmask;
+  vmask[IREG] &= ~rmask;
   /* placement constraints */
   get_constraints(f, &place);
   /* locate incoming arguments */
@@ -2649,7 +2671,7 @@ static void import(Symbol p)
         break;
     if (a)
       lprint("('IMPORT', %s, 'AT', 0x%x)", p->x.name, uintval(a->args[0]));
-    else
+    else if (!isalpha(p->x.name[0]))
       lprint("('IMPORT', %s)", p->x.name);
   }
 }
@@ -2667,14 +2689,20 @@ static void export(Symbol p)
 static void defsymbol(Symbol p)
 {
   /* this is the time to check that attributes are meaningful */
+  Symbol r;
   const char *alias = check_attributes(p);
   if (p->scope >= LOCAL && p->sclass == STATIC)
     p->x.name = stringf("'.%d'", genlabel(1));
   else if (p->generated)
     p->x.name = stringf("'.%s'", p->name);
-  else if (alias)
-    p->x.name = stringf(stringf("'%s'", alias), p->name);
-  else if (p->scope == GLOBAL || p->sclass == EXTERN)
+  else if (alias) {
+    p->x.name = string(alias);
+    if (isalpha(alias[0]) && (r = findreg(alias))) {
+      rmask |= r->x.regnode->mask;
+      p->x.regnode = r->x.regnode;
+      r->x.regnode->vbl = p;
+    }
+  } else if (p->scope == GLOBAL || p->sclass == EXTERN)
     p->x.name = stringf("'%s'", p->name);
   else
     p->x.name = p->name;

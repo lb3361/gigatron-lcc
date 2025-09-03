@@ -10,11 +10,20 @@
 
 /* print destination */
 
-extern struct _doprint_dst_s {
+typedef struct _doprint_dst_s {
 	int cnt;
 	FILE *fp;
 	writall_t writall;
-} _doprint_dst;
+} _doprint_dst_t;
+
+
+/* the following incantation reserves register R0 which is used to hold
+   the  print destination structure used by functions _doprint_putc
+   and _doprint_puts. This pointer is set by the vxprintf functions. */
+
+extern _doprint_dst_t * __near _doprintdst __attribute__((regalias("R0")));
+
+/* low level printing routines. */
 
 extern void _doprint_putc(int, size_t);
 extern void _doprint_puts(const char*, size_t);

@@ -5,34 +5,39 @@
 
 #include "_doprint.h"
 
-typedef struct { char *x, *e; } spdata_t;
+struct _doprint_dst_ext_s {
+	struct _doprint_dst_s dd;
+	char *e;
+};
 
-static spdata_t spdata;
-
-static int _sprintf_writall(register const char *buf, register size_t sz, register FILE *fp)
+static int _sprintf_writall(register const char *buf, register size_t sz, FILE *fp)
 {
-	register char *b = ((spdata_t*)fp)->x;
-	if (b) {
-		register size_t rsz = (size_t)(((spdata_t*)fp)->e - b);
+	register char **bb = (char**)&(_doprintdst->fp);
+	register char *b;
+	if ((b = *bb)) {
+		register size_t rsz = (size_t)(bb[1]-b);
 		if (rsz > sz)
 			rsz = sz;
 		memcpy(b, buf, rsz);
-		b += rsz;
-		*b = 0;
-		((spdata_t*)fp)->x = b;
+		*bb += rsz;
+		**bb = 0;
 	}
 	return sz;
 }
 
 int vsnprintf(register char *s, size_t n, register const char *fmt, register va_list ap)
 {
-	if (n == 0)
-		s = 0;
-	_doprint_dst.writall = (writall_t)_sprintf_writall;
-	_doprint_dst.fp = (FILE*)&spdata;
-	spdata.x = s;
-	spdata.e = s + n - 1;
-	return _doprint(fmt, ap);
+	register struct _doprint_dst_s *sav = _doprintdst;
+	register int c;
+	struct _doprint_dst_ext_s de;
+	_doprintdst = &de.dd;
+	if (n == 0) { s = 0; }
+	de.dd.writall = (writall_t)_sprintf_writall;
+	de.dd.fp = (FILE*)s;
+	de.e = s + n - 1;
+	c = _doprint(fmt,ap);
+	_doprintdst = sav;
+	return c;
 }
 
 /* A snprintf relay is defined in _printf.s */

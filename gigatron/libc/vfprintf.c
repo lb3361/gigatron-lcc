@@ -6,13 +6,18 @@
 
 int vfprintf(register FILE *fp, register const char *fmt, register __va_list ap)
 {
-	_doprint_dst.fp = fp;
-	if ((_doprint_dst.writall = _schkwrite(fp))) {
-		register int c = _doprint(fmt, ap);
-		if (!ferror(fp))
-			return c;
+	register struct _doprint_dst_s *sav = _doprintdst;
+	register int c = EOF;
+	struct _doprint_dst_s dd;
+	_doprintdst = &dd;
+	dd.fp = fp;
+	if ((dd.writall = _schkwrite(fp))) {
+		c = _doprint(fmt, ap);
+		if (ferror(fp))
+			c = EOF;
 	}
-	return EOF;
+	_doprintdst = sav;
+	return c;
 }
 
 /* A fprintf relay is defined in _printf.s */

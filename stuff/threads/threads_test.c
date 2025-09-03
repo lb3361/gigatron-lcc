@@ -28,10 +28,20 @@ void safe_cprintf(int x, int y, int clr, const char *fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);
+#if 1 /* sprintf must be reentrant */
+	static char buffer[256];
+	vsnprintf(buffer, sizeof(buffer), fmt, ap);
+	gt_mutex_lock(&console_mutex);
+	textcolor(clr);
+	cputsxy(x, y, buffer);
+#else
+	va_list ap;
+	va_start(ap, fmt);
 	gt_mutex_lock(&console_mutex);
 	textcolor(clr);
 	gotoxy(x,y);
 	vcprintf(fmt, ap);
+#endif
 	gt_mutex_unlock(&console_mutex);
 }
 

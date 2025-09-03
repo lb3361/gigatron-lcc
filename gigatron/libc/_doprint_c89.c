@@ -124,17 +124,17 @@ void _doprint_num(register doprintspec_t *spec,
 		} else if (b == 16)
 			p = "0x";
 	}
-	plen = strlen(p);
+	b = strlen(p);
 	l = strlen(s);
 	z = 0;
 	if (f & DPR_PREC) {
 		if ((z = spec->prec - l) < 0)
 			z = 0;
 	} else if (f & DPR_ZEROJ) {
-		if ((z = spec->width - l - plen) < 0)
+		if ((z = spec->width - l - b) < 0)
 			z = 0;
 	}
-	b = spec->width - l - plen - z;
+	b = spec->width - l - b - z;
 	if (spec->conv - 'a' < 0) {
 		upcase(s);
 		if (p[1]=='x')
@@ -142,8 +142,8 @@ void _doprint_num(register doprintspec_t *spec,
 	}
 	if (b > 0 && !(f & DPR_LEFTJ))
 		_doprint_putc(' ', b);
-	if (plen)
-		_doprint_puts(p, plen);
+	if (*p)
+		_doprint_puts(p, strlen(p));
 	if (z > 0)
 		_doprint_putc('0', z);
 	_doprint_puts(s, l);
@@ -199,7 +199,7 @@ int _doprint_c89(register const char *fmt, __va_list ap)
 	register const char *s;
 	char tmp;
 	/* loop */
-	_doprint_dst.cnt = 0;
+	_doprintdst->cnt = 0;
 	for(; *fmt; fmt = s) {
 		s = fmt;
 		while((c = *s) && c != '%')
@@ -229,12 +229,12 @@ int _doprint_c89(register const char *fmt, __va_list ap)
 			} else if (c == 64) {
 				do_str(spec, (const char*)i, 0);
 			} else if (c == 96) {
-				*(int*)i = _doprint_dst.cnt;
+				*(int*)i = _doprintdst->cnt;
 			} else {
 				do_int(spec, c, i);
 			}
 		}
 	}
-	return _doprint_dst.cnt;
+	return _doprintdst->cnt;
 }
 

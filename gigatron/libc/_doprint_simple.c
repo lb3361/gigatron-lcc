@@ -16,7 +16,7 @@ int _doprint_simple(register const char *f, register __va_list ap)
 	register char style;
 	char buf8[8];
 
-	_doprint_dst.cnt = 0;
+	_doprintdst->cnt = 0;
 	while(*f) {
 		s = f;
 		style = ' ';
@@ -79,5 +79,5 @@ int _doprint_simple(register const char *f, register __va_list ap)
 		if (style == '-' && pad > 0)
 			_doprint_putc(' ', pad);
 	}
-	return _doprint_dst.cnt;
+	return _doprintdst->cnt;
 }

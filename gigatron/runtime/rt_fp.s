@@ -88,22 +88,18 @@ def scope():
         label('_@_clrfac')
         LDI(0);STW(AE)        # [AE,AM]
         STW(AM+1);STW(AM+3)   # [AM+1,AM+2] [AM+3,AM+4]
-        LDW(AS-1);BGE('.ret')
-        LD(AS);XORI(129);ST(AS)
-        label('.ret')
         RET()
         ## Round fac
         label('_@_rndfac')
         LD(AE);_BEQ('_@_clrfac')
-        LD(AM);ANDI(128);_BEQ('.rnd0')
+        LDW(AM-1);_BGE('.rnd0')
         if args.cpu >= 6:
             INCVL(AM+1);LDW(AM+3);_BNE('.rnd0')
         else:
             LDI(1);ADDW(AM+1);STW(AM+1);_BNE('.rnd0')
             LDI(1);ADDW(AM+3);STW(AM+3);_BNE('.rnd0')
         _MOVQB(128,AM+4);INC(AE);LD(AE);_BNE('.rnd0')
-        # overflow during rounding: just revert.
-        _LDI(0xffff);STW(AM+1);STW(AM+3);ST(AE)
+        SUBI(1);STW(AM+1);STW(AM+3);ST(AE) # overflow
         label('.rnd0')
         _MOVQB(0,AM)
         RET()
@@ -129,7 +125,8 @@ def scope():
             label('_@_fldfac')
             STW(T3)
             label('__@fldfac_t3')
-            _PEEKV(T3);ST(AE);_BEQ('.fldz')
+            MOVQB(0,AM)
+            PEEKV(T3);ST(AE);_BEQ('.fldz')
             INCV(T3);PEEKV(T3);ST(vACH);ORI(0x80);ST(AM+4)
             XORW(AS-1);_BGE('.fld1')
             LD(AS);XORI(0x81);ST(AS)
@@ -137,14 +134,15 @@ def scope():
             INCV(T3);PEEKV(T3);ST(AM+3)
             INCV(T3);PEEKV(T3);ST(AM+2)
             INCV(T3);PEEKV(T3);ST(AM+1)
-            MOVQB(0,AM);RET()
+            RET()
             label('.fldz')
-            ST(AM);STW(AM+1);STW(AM+2);RET()
+            STW(AM+1);STW(AM+2);RET()
         else:
             label('_@_fldfac')
             STW(T3)
             label('__@fldfac_t3')
-            _PEEKV(T3);ST(AE);_BEQ('.fldz')
+            LDI(0);ST(AM)
+            LDW(T3);PEEK();ST(AE);_BEQ('.fldz')
             LDI(4);ADDW(T3);PEEK();ST(AM+1)
             LDI(3);ADDW(T3);PEEK();ST(AM+2)
             LDI(2);ADDW(T3);PEEK();ST(AM+3)
@@ -152,9 +150,9 @@ def scope():
             XORW(AS-1);_BGE('.fld1')
             LD(AS);XORI(0x81);ST(AS)
             label('.fld1')
-            _MOVQB(0,AM);RET()
+            RET()
             label('.fldz')
-            ST(AM);STW(AM+1);STW(AM+2);RET()
+            STW(AM+1);STW(AM+2);RET()
 
     module(name='rt_fldfac.s',
            code=[ ('EXPORT', '_@_fldfac'),
@@ -176,30 +174,37 @@ def scope():
             label('__@fldarg')
             STW(T3)
             label('__@fldarg_t3')
-            _PEEKV(T3);STW(BE);_BEQ('.fldz')
+            MOVQB(0,BM);
+            PEEKV(T3);STW(BE);_BEQ('.fldz')
             INCV(T3);PEEKV(T3);ST(vACH);ORI(0x80);ST(BM+4)
-            LD(vACH);XORW(AS);ANDI(128);PEEK()
-            XORW(AS);ANDI(1);XORW(AS);ST(AS)
+            XORW(AS-1);_BGE('.fldp')
+            LD(AS);ORI(1);_BRA('.fldc')
+            label('.fldp')
+            LD(AS);ANDI(0xfe)
+            label('.fldc')
+            ST(AS)
             INCV(T3);PEEKV(T3);ST(BM+3)
             INCV(T3);PEEKV(T3);ST(BM+2)
             INCV(T3);PEEKV(T3);ST(BM+1)
-            MOVQB(0,BM);RET()
+            RET()
             label('.fldz')
-            ST(BM);STW(BM+1);STW(BM+2);RET()
+            STW(BM+1);STW(BM+2);RET()
         else:
             label('__@fldarg')
             STW(T3)
             label('__@fldarg_t3')
-            _PEEKV(T3);STW(BE);_BEQ('.fldz')
+            LDI(0);ST(BM)
+            LDW(T3);PEEK();STW(BE);_BEQ('.fldz')
             LDI(4);ADDW(T3);PEEK();ST(BM+1)
             LDI(3);ADDW(T3);PEEK();ST(BM+2)
             LDI(2);ADDW(T3);PEEK();ST(BM+3)
             LDI(1);ADDW(T3);PEEK();ST(vACH);ORI(0x80);ST(BM+4)
-            LD(vACH);XORW(AS);ANDI(128);PEEK()
-            XORW(AS);ANDI(1);XORW(AS);ST(AS)
-            _MOVQB(0,BM);RET()
+            XORW(AS-1);_BGE('.fldp')
+            LD(AS);ORI(1);ST(AS);RET()
             label('.fldz')
-            ST(BM);STW(BM+1);STW(BM+2);RET()
+            STW(BM+1);STW(BM+2)
+            label('.fldp')
+            LD(AS);ANDI(0xfe);ST(AS);RET()
 
     module(name='rt_fldarg.s',
            code=[ ('EXPORT', '__@fldarg'),
@@ -226,38 +231,11 @@ def scope():
             STW(T3);LD(AE);POKE(T3);_BNE('.fst1')
             STW(AM+1);STW(AM+3)
             label('.fst1')
-            LD(T3);SUBI(0xfc);_BGE('.slow');INC(T3);
-            LD(AS);ORI(0x7f);ANDW(AM+4);POKE(T3);INC(T3)
-            LD(AM+3);POKE(T3);INC(T3)
-            LD(AM+2);POKE(T3);INC(T3)
-            label('.fst2')
-            LD(AM+1);POKE(T3)
+            LDI(1);ADDW(T3);STW(T3);LD(AS);ORI(0x7f);ANDW(AM+4);POKE(T3)
+            LDI(1);ADDW(T3);STW(T3);LD(AM+3);POKE(T3)
+            LDI(1);ADDW(T3);STW(T3);LD(AM+2);POKE(T3)
+            LDI(1);ADDW(T3);STW(T3);LD(AM+1);POKE(T3)
             RET()
-            label('.slow')
-            PUSH()
-            _CALLJ('.inc')
-            if args.cpu < 5:
-                LDWI('.poke');STW(T5)
-            LD(AS);ORI(0x7f);ANDW(AM+4)
-            if args.cpu < 5:
-                CALL(T5)
-            else:
-                CALLI('.poke')
-            LD(AM+3)
-            if args.cpu < 5:
-                CALL(T5)
-            else:
-                CALLI('.poke')
-            LD(AM+2)
-            if args.cpu < 5:
-                CALL(T5)
-            else:
-                CALLI('.poke')
-            POP();_BRA('.fst2')
-            label('.poke')
-            POKE(T3);
-            label('.inc')
-            LDI(1);ADDW(T3);STW(T3);RET()
 
     module(name = 'rt_fstfac.s',
            code = [ ('EXPORT', '_@_fstfac'),
@@ -528,17 +506,19 @@ def scope():
 
     def code_amaddbm():
         nohop()
-        label('__@amaddbm40')
-        LD(BM);ADDW(AM);ST(AM);XORW(AM);_BEQ('__@amaddbm32') # :-)
         if args.cpu >= 6:
+            label('__@amaddbm40')
+            LD(BM);ADDW(AM);ST(AM);XORW(AM);_BEQ('__@amaddbm32')
             INCVL(LAC)
             label('__@amaddbm32')
             LDI(BM+1);ADDL()
             RET()
         else:
-            LDI(1);ADDW(BM+1);BRA('.a0')
+            label('__@amaddbm40')
+            LD(BM);ADDW(AM);ST(AM);XORW(AM);_BEQ('__@amaddbm32')
+            LDI(1);ADDW(BM+1);_BRA('.a0')
             label('__@amaddbm32')
-            LDW(BM+1)
+            LDW(BM+1);
             label('.a0')
             PUSH();STW(vLR)
             ADDW(AM+1);STW(AM+1);_BLT('.a2')
@@ -689,15 +669,18 @@ def scope():
         nohop()
         if args.cpu >= 7:
             warning("cpu7: use MACX instead of __@macx")
-            label('__@macx_t5')
-            LD(T5)
+            label('__@macxsha')
+            ST(T5);LDI(8);LSRXA();LD(T5)
             label('__@macx')
             MACX();RET()
         else:
+            label('__@macxsha')
+            ST(T5);PUSH()
+            _CALLJ('__@amshr8')
+            _BRA('.macx0')
             label('__@macx')
-            ST(T5)
-            label('__@macx_t5')
-            PUSH()
+            ST(T5);PUSH()
+            label('.macx0')
             _MOVQB(0,BM+4)  # BM+4 is T4L
             LDI(1);ST(T4+1) # Use T4H for mask
             label('.macx1')
@@ -707,14 +690,10 @@ def scope():
             if args.cpu >= 6:
                 LSLVL(BM+1)
             else:
-                LDW(BM+1);_BLT('.sh1')
-                LSLW();STW(BM+1)
-                LDW(BM+3);LSLW();_BRA('.sh2')
+                LDW(BM+3);LSLW();STW(BM+3)
+                LDW(BM+1);_BGE('.sh1');INC(BM+3)
                 label('.sh1')
                 LSLW();STW(BM+1)
-                LDW(BM+3);LSLW();ORI(1)
-                label('.sh2')
-                STW(BM+3)
             LD(BM);ADDW(BM);STW(BM)
             LD(T4+1);LSLW();ST(T4+1)
             LD(vACL);_BNE('.macx1')
@@ -723,77 +702,77 @@ def scope():
             POP();RET()
 
     module(name='rt_macx.s',
-           code=[ ('EXPORT', '__@macx'),
-                  ('EXPORT', '__@macx_t5'),
+           code=[ ('EXPORT', '__@macxsha'),
+                  ('EXPORT', '__@macx'),
                   ('IMPORT', '__@amaddbm40') if args.cpu < 7 else ('NOP',),
+                  ('IMPORT', '__@amshr8') if args.cpu < 7 else ('NOP',),
                   ('CODE', '__@macx', code_macx) ] )
 
     def code_fmulm():
-        nohop()
+        nohop();
         label('__@fmulm')
+        LDI(0);ST(AM);STW(AM+1);STW(AM+3)
+        if args.cpu >= 7:
+            LDI(4);ADDW(T3);PEEK();MACX();LDI(8);LSRXA()
+            LDI(3);ADDW(T3);PEEK();MACX();LDI(8);LSRXA()
+            LDI(2);ADDW(T3);PEEK();MACX();LDI(8);LSRXA()
+            LDI(1);ADDW(T3);PEEK();ORI(0x80);MACX()
+        elif args.cpu >= 5:
+            PUSH()
+            LDI(4);ADDW(T3);PEEK();_CALLI('__@macx')
+            LDI(3);ADDW(T3);PEEK();_CALLI('__@macxsha')
+            LDI(2);ADDW(T3);PEEK();_CALLI('__@macxsha')
+            LDI(1);ADDW(T3);PEEK();ORI(0x80);_CALLI('__@macxsha')
+        else:
+            PUSH()
+            LDWI('__@macx');STW('sysFn')
+            LDI(4);ADDW(T3);PEEK();CALL('sysFn')
+            LDWI('__@macxsha');STW('sysFn')
+            LDI(3);ADDW(T3);PEEK();CALL('sysFn')
+            LDI(2);ADDW(T3);PEEK();CALL('sysFn')
+            LDI(1);ADDW(T3);PEEK();ORI(0x80);CALL('sysFn')
+        LDW(AM+3);_BGE('.muln')
+        LDWI(-128)
         if args.cpu < 7:
-            PUSH();
-        ALLOC(-2)
-        _MOVW(BM+1, BM)
-        _MOVW(BM+3, BM+2)
-        _MOVW(AM+3, T3)
-        LDW(AM+1);STLW(0)
-        if args.cpu >= 6:
-            MOVQB(0,AM);MOVQW(0,AM+1);MOVQW(0,AM+3)
-        else:
-            LDI(0);ST(AM);STW(AM+1);STW(AM+3);LDLW(0)
-        if args.cpu >= 7:
-            MACX();LDI(8);LSRXA()
-        else:
-            ST(T5);_CALLJ('__@macx_t5');_CALLJ('__@amshr8')
-        LDLW(0);LD(vACH)
-        if args.cpu >= 7:
-            MACX();LDI(8);LSRXA()
-        else:
-            ST(T5);_CALLJ('__@macx_t5');_CALLJ('__@amshr8')
-        LD(T3)
-        if args.cpu >= 7:
-            MACX();LDI(8);LSRXA()
-        else:
-            ST(T5);_CALLJ('__@macx_t5');_CALLJ('__@amshr8')
-        LD(T3+1)
-        if args.cpu >= 7:
-            MACX()
-        else:
-            ST(T5);_CALLJ('__@macx_t5')
-        ALLOC(2)
-        if args.cpu < 7:
-            tryhop(2);POP()
+            POP()
         RET()
+        label('.muln')          # normalization
+        if args.cpu >= 7:
+            LDI(1);LSLXA()
+        else:
+            _CALLJ('__@amshl1')
+        LDWI(-129)
+        if args.cpu < 7:
+            POP()
+        RET()
+
 
     def code_fmul():
         '''_@_fmul: Multiply FAC by the float at address vAC.'''
         nohop()
         label('_@_fmul')
         PUSH();STW(T3)
+        ADDI(1);PEEK();XORW(AS);ST(AS)     # sign
         _CALLJ('__@fsavevsp')
-        if args.cpu >= 7:
-            LDW(T3);LDFARG()
-        else:
-            _CALLJ('__@fldarg_t3')
-        LD(AS);ANDI(1);ADDI(127);ST(AS) # sign
-        LD(BE);STW(BE);_BEQ('.zero')
+        _PEEKV(T3);STW(BE);_BEQ('.zero')   # exponent
         LD(AE);_BEQ('.zero')
         if args.cpu >= 7:
-            ADDV(BE)                    # result exponent (+128)
+            ADDV(BE)            # result exponent (+128)
         else:
             ADDW(BE);STW(BE)
-        _CALLJ('__@fmulm')              # multiply!
-        LDI(64);ST(AE);
-        _CALLJ('__@fnorm')              # normalize with dummy exponent
-        LD(AE);ADDW(BE);SUBI(128+64)    # real exponent on 16 bits
-        _BLE('.zero')                   # -> underflow
-        ST(AE);LD(vACH);_BNE('.ovf')    # -> overflow
-        label('.fin')
-        _CALLJ('_@_rndfac')             # round
-        tryhop(2);POP();RET()
-        label('.ovf')
+        if args.cpu >= 6:       # move am32 to bm
+            MOVL(AM+1,BM)
+        else:
+            LDW(AM+1);STW(BM)
+            LDW(AM+3);STW(BM+2)
+        _CALLJ('__@fmulm')      # multiply mantissa
+        ADDW(BE);ST(AE)         # exponent
+        _BLE('.zero')
+        LD(vACH);_BEQ('.fin')
         _CALLJ('__@foverflow')
+        label('.fin')
+        _CALLJ('_@_rndfac')     # round
+        tryhop(2);POP();RET()
         label('.zero')
         _CALLJ('_@_clrfac')
         tryhop(2);POP();RET()
@@ -801,14 +780,13 @@ def scope():
     module(name='rt_fmul.s',
            code=[ ('EXPORT', '_@_fmul'),
                   ('IMPORT', '__@fsavevsp'),
-                  ('IMPORT', '__@fldarg_t3') if args.cpu < 7 else ('NOP',),
-                  ('IMPORT', '__@fnorm'),
-                  ('IMPORT', '__@amshra'),
                   ('IMPORT', '__@foverflow'),
                   ('IMPORT', '_@_clrfac'),
                   ('IMPORT', '_@_rndfac'),
-                  ('IMPORT', '__@macx_t5') if args.cpu < 7 else ('NOP',),
-                  ('CODE', '__@fmulm', code_fmulm),
+                  ('IMPORT', '__@macx') if args.cpu < 7 else ('NOP',),
+                  ('IMPORT', '__@macxsha') if args.cpu < 7 else ('NOP',),
+                  ('IMPORT', '__@amshl1') if args.cpu < 7 else ('NOP',),
+                  ('CODE', '_@_fmulm', code_fmulm),
                   ('CODE', '_@_fmul', code_fmul) ] )
 
     # ==== division
@@ -820,7 +798,7 @@ def scope():
         nohop()
         label('__@fdivloop')
         qexp = 0              # - stack offset of quotient exponent
-        if args.cpu < 7 or avoid_cmpw:
+        if args.cpu < 6 or avoid_cmpw:
             qexp = 2; PUSH()
         _MOVW(BM+1, BM);      # - working with the low 32 bits of BM
         _MOVW(BM+3, BM+2)
@@ -830,27 +808,21 @@ def scope():
         LDLW(qexp);SUBI(1);_BLT('.fdl5');STLW(qexp)
         if args.cpu >= 6:
             LSLVL(CM)
+            LDW(AM+3);LSLVL(AM+1);_BLT('.fdl3')
+            label('.fdl2')
+            LDI(BM);CMPLU()
         else:
             _CALLJ('__@cmshl1')
-        LDW(AM+3);_BGE('.fdl1')
-        if args.cpu >= 7:
-            LSLVL(AM+1)
-        else:
+            LDW(AM+3);_BGE('.fdl1')
+            _CALLJ('__@amshl1');_BRA('.fdl3')
+            label('.fdl1')
             _CALLJ('__@amshl1')
-        _BRA('.fdl3')
-        label('.fdl1')
-        if args.cpu >= 7:
-            LSLVL(AM+1)
-        else:
-            _CALLJ('__@amshl1')
-        label('.fdl2')
-        if args.cpu >= 6:
-            LDI(BM);CMPLU()
-        elif avoid_cmpw:
-            _CALLJ('__@lcmpu_t0t1')
-        else:
-            LDW(AM+3);_CMPWU(BM+2);_BNE('.fdl2a')
-            LDW(AM+1);_CMPWU(BM);label('.fdl2a')
+            label('.fdl2')
+            if avoid_cmpw:
+                _CALLJ('__@lcmpu_t0t1')
+            else:
+                LDW(AM+3);_CMPWU(BM+2);_BNE('.fdl2a')
+                LDW(AM+1);_CMPWU(BM);label('.fdl2a')
         _BLT('.fdl4')
         label('.fdl3')
         INC(CM)
@@ -861,37 +833,36 @@ def scope():
         label('.fdl4')
         LDW(CM+2);_BGE('.fdl0')
         label('.fdl5')
-        if args.cpu < 7 or avoid_cmpw:
+        if args.cpu < 6 or avoid_cmpw:
             tryhop(2);POP()
         RET()
 
     def code_fdivrnd():
         nohop()
         label('__@fdivrnd')
-        if args.cpu < 7 or avoid_cmpw:
+        if args.cpu < 6 or avoid_cmpw:
             PUSH()
         LDW(AM+3);_BLT('.fdr1')
-        if args.cpu >= 7:
+        if args.cpu >= 6:
             LSLVL(AM+1)
+            LDI(BM);CMPLU()
         else:
             _CALLJ('__@amshl1')
-        if args.cpu >= 6:
-            LDI(BM);CMPLU()
-        elif avoid_cmpw:
-            _CALLJ('__@lcmpu_t0t1')
-        else:
-            LDW(AM+3);_CMPWU(BM+2);_BNE('.fdr2')
-            LDW(AM+1);_CMPWU(BM);label('.fdr2')
+            if avoid_cmpw:
+                _CALLJ('__@lcmpu_t0t1')
+            else:
+                LDW(AM+3);_CMPWU(BM+2);_BNE('.fdr2')
+                LDW(AM+1);_CMPWU(BM);label('.fdr2')
         _BLT('.fdr0')
         label('.fdr1')
-        if args.cpu >= 7:
-            INCVL(CM);LDW(CM);ORW(CM+2);_BNE('.fdr0')
+        if args.cpu >= 6:
+            INCVL(CM);LDW(CM+2);_BNE('.fdr0')
         else:
             LDI(1);ADDW(CM);STW(CM);_BNE('.fdr0')
             LDI(1);ADDW(CM+2);STW(CM+2);_BNE('.fdr0')
-        _LDI(0xffff);STW(CM);STW(CM+2)
+        SUBI(1);STW(CM);STW(CM+2)
         label('.fdr0')
-        if args.cpu < 7 or avoid_cmpw:
+        if args.cpu < 6 or avoid_cmpw:
             tryhop(2);POP()
         RET()
 
@@ -1027,39 +998,33 @@ def scope():
         label('_@_fcmp')
         if args.cpu >= 7:
             LDFARG()
+            def cPOP(): pass
         else:
             PUSH()
             STW(T3);_CALLJ('__@fldarg_t3')
+            def cPOP(): tryhop(2); POP()
         LD(BE);STW(BE);_BNE('.fcmp0')
         LD(AE);_BEQ('.zero')
-        label('.plus')
-        LD(AS);XORI(128);ANDI(128);PEEK();LSLW();SUBI(1)
-        if args.cpu < 7:
-            tryhop(2);POP()
-        RET()
-        label('.minus')
-        LD(AS);ANDI(128);PEEK();LSLW();SUBI(1)
-        if args.cpu < 7:
-            tryhop(2);POP()
-        RET()
+        label('.pm1')
+        XORW(AS-1);_BGE('.p1')
+        LDWI(-1);cPOP();RET();
+        label('.p1')
+        LDI(1);cPOP();RET();
         label('.fcmp0')     # comparing sign
-        LD(AS);ANDI(1);_BNE('.plus')
+        LD(AS);ANDI(1);_BNE('.pm1')
         label('.fcmp1')     # comparing exponents
-        LD(AE);SUBW(BE);_BGT('.plus');_BLT('.minus')
+        LD(AE);SUBW(BE);_BNE('.pm1')
         label('.fcmp2')     # comparing mantissa
         if args.cpu >= 6:
-            LDI(BM+1);CMPLU();_BLT('.minus');_BGT('.plus')
+            LDI(BM+1);CMPLU();_BNE('.pm1')
         elif avoid_cmpw:
             LDW(BM+1);STW(T0);LDW(BM+3);STW(T1)
-            _CALLJ('__@lcmpu_t0t1');_BLT('.minus');_BGT('.plus')
+            _CALLJ('__@lcmpu_t0t1');_BNE('.pm1')
         else:
-            LDW(AM+3);_CMPWU(BM+3);_BLT('.minus');_BGT('.plus')
-            LDW(AM+1);_CMPWU(BM+1);_BLT('.minus');_BGT('.plus')
+            LDW(AM+3);_CMPWU(BM+3);_BNE('.pm1')
+            LDW(AM+1);_CMPWU(BM+1);_BNE('.pm1')
         label('.zero')
-        LDI(0)
-        if args.cpu < 7:
-            tryhop(2);POP()
-        RET()
+        LDI(0);cPOP();RET()
 
     module(name='rt_fcmp.s',
            code=[ ('EXPORT', '_@_fcmp'),

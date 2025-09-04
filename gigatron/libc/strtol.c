@@ -14,10 +14,9 @@
 
 int _strtol_push(strtol_t *d, int c)
 {
-	register int f = d->flags;
-	register int base = d->base;
 	register int v = 0;
-	unsigned long *xp = & d->x;
+	register int base = d->base;
+	register int f = d->flags;
 
 	if (f == 0) {
 		if (c == '-') {
@@ -31,17 +30,17 @@ int _strtol_push(strtol_t *d, int c)
 	if (base == 0) {
 		if (f & FLG_0X) {
 			if ((c | 0x20) == 'x') {
-				d->base = base = 16;
+				base = d->base = 16;
 				goto ret;
 			} else {
 				f |= FLG_DIGIT;
-				d->base = base = 8;
+				base = d->base = 8;
 			}
 		} else if (c == '0') {
 			f |= FLG_0X;
 			goto ret;
 		} else
-			d->base = base = 10;
+			base = d->base = 10;
 	}
 	if ((v = c - '0') > 9)
 		if ((v = (c | 0x20) - 'a') >= 0)
@@ -49,18 +48,18 @@ int _strtol_push(strtol_t *d, int c)
 	if (v < 0 || v - base >= 0)
 		return 0;
 	f |= FLG_DIGIT;
-	if (*xp >= 0x00ffffff) {
-		register unsigned long lbase = (unsigned long)base;
-		register unsigned long y = ((unsigned int*)xp)[1] * lbase;
-		register unsigned long x = ((unsigned int*)xp)[0] * lbase + (unsigned)v;
-		y = y + (x >> 16);
-		if (y != (y & 0xffff)) {
-			f |= FLG_OVF;
-			*xp = ULONG_MAX;
-		} else
-			*xp = (unsigned int)x + (y << 16);
-	} else
-		*xp = *xp * base + v;
+	/* update d->x caring for overflows */
+	register unsigned long *xp = & d->x;
+	register char *xphi = (char*)xp + 3;
+	register int xhi = *xphi;
+	*xphi = 0;
+	*xp = *xp * base + v;
+	xhi = xhi * base + *xphi;
+	*xphi = (char)xhi;
+	if  (xhi != (char)xhi) {
+		f |= FLG_OVF;
+		*xp = ULONG_MAX;
+	}		
  ret:
 	return d->flags = f;
 }

@@ -43,7 +43,7 @@ int _strtod_push(strtod_t *d, int c, const char *p)
 			f |= FLG_PERIOD;
 			goto ret;
 		} else if (_isdigit(c)) {
-			double x = d->x;
+			register double x = d->x;
 			f |= FLG_DIGIT;
 			if (x < 1e16) {
 				if (f & FLG_PERIOD)
@@ -53,7 +53,7 @@ int _strtod_push(strtod_t *d, int c, const char *p)
 					d->e0 += 1;
 			goto ret;
 		} else if ((c | 0x20) == 'e') {
-			f = f & (FLG_STATE ^ 0xff) | ST_EXPSGN;
+			f = f ^ (ST_MANT ^ ST_EXPSGN);
 			if (p) {
 				c = p[1];
 				if (c == '+' || c == '-')
@@ -65,7 +65,7 @@ int _strtod_push(strtod_t *d, int c, const char *p)
 		}
 	}
 	if ((f & FLG_STATE) == ST_EXPSGN) {
-		f = f & (FLG_STATE ^ 0xff) | ST_EXPDIG;
+		f = f ^ (ST_EXPSGN ^ ST_EXPDIG);
 		if (c == '-') {
 			f |= FLG_ENEG;
 			goto ret;

@@ -60,8 +60,17 @@ void main(void) {
 
   for(y = 0; y < HEIGHT; y = y + YSTEP ) {
     for(x = 0; x < WIDTH; x = x + XSTEP ) {
+#if FASTERSCALE
+# define XA (1.0*SCALE/(WIDTH/2.0))
+# define XB (-0.7-(WIDTH/2.0)*XA)
+# define YA (0.75*SCALE/(HEIGHT/2.0))
+# define YB (-(HEIGHT/2.0)*YA)
+      sx = x * XA + XB;
+      sy = y * YA + YB;
+#else
       sx = -0.7 + (SCALE * (WIDTH/2.0 - x) / (WIDTH/2.0))*(-1);
       sy = (SCALE * (HEIGHT/2.0 - y) / (HEIGHT/2.0))*(-0.75);
+#endif
       data = mandelbrot(sx, sy);
       gotoxy(x+1, y+1);
       textcolor(((data-48)*6+1) & 0x3f);

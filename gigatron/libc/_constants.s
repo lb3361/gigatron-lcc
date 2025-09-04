@@ -70,6 +70,14 @@ def scope():
            code=[ ('EXPORT', '_ftwo'),
                   ('DATA', '_ftwo', code_ftwo, 5, 1) ] )
 
+    def code_ften():
+        label('_ften')
+        bytes(132,32,0,0,0) # 10.0F
+
+    module(name='_ften.s',
+           code=[ ('EXPORT', '_ften'),
+                  ('DATA', '_ften', code_ften, 5, 1) ] )
+
     def code_fminus():
         label('_fminus')
         bytes(129,128,0,0,0) # -1.0F

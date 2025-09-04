@@ -8,7 +8,8 @@ def scope():
     def code1():
         nohop()
         label('_vIrqHandler')
-        if args.cpu >= 6:
+        if args.cpu >= 7:
+            # Cannot be used for cpu6 because PREFX2 instructions change sysArg7
             INCV('_vIrqCounter')
         else:
             LDI(1);ADDW('_vIrqCounter');STW('_vIrqCounter')

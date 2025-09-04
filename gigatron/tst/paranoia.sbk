@@ -2313,8 +2313,8 @@ def code17():
 	label('.544');
 	LDWI('UfNGrad');DOKEQ(1);
 	LDWI('I');DEEKA(R23);
-	LDI(1);_CMPWS(R23);_BGT('.546');
-	LDI(4);_CMPWS(R23);_BLT('.546');
+	LDW(R23);_CMPIS(1);_BLT('.546');
+	LDW(R23);_CMPIS(4);_BGT('.546');
 	LDWI(v('.569')-2);ADDW(R23);ADDW(R23);DEEK();CALL(vAC);
 	label('.548');
 	_MOVF('Underflow','UfThold');
@@ -3043,8 +3043,8 @@ def code17():
 	label('.727');
 	_MOVF('F9','X');
 	LDWI('Indx');DEEKA(R23);
-	LDI(2);_CMPWS(R23);_BGT('.731');
-	LDI(5);_CMPWS(R23);_BLT('.731');
+	LDW(R23);_CMPIS(2);_BLT('.731');
+	LDW(R23);_CMPIS(5);_BGT('.731');
 	LDWI(v('.737')-4);ADDW(R23);ADDW(R23);DEEK();CALL(vAC);
 	label('.733');
 	_MOVF('One',FAC);LDWI('U2');_FADD();_MOVF(FAC,'X');

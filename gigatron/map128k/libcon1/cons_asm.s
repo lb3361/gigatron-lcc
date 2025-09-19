@@ -49,12 +49,15 @@ def scope():
         label('_console_printchars')
         PUSH()
         CALLI('_cons_save_current_bank')
-        _LDI('SYS_VDrawBits_134');STW('sysFn')   # prep sysFn
+        _MOVIW('SYS_VDrawBits_134','sysFn')      # prep sysFn
         LDW(R8);STW('sysArgs0')                  # move fgbg, freeing R8
         LDI(0);STW(R12)                          # R12: character counter
         label('.loop')
         LDW(R10);PEEK();STW(R8)                  # R8: character code
-        LDI(1);ADDW(R10);STW(R10)                # next char
+        if args.cpu >= 6:
+            INCV(R10)
+        else:
+            LDI(1);ADDW(R10);STW(R10)            # next char
         LDW(R9);STW('sysArgs4')                  # destination address
         ADDI(6);STW(R9);                         # next address
         LD(vACL);SUBI(0xA0);_BGT('.ret')         # beyond screen?
@@ -65,7 +68,10 @@ def scope():
         _LDI('font82up');STW(R13)
         label('.draw')
         CALLI('_printonechar')
-        LDI(1);ADDW(R12);STW(R12);               # increment counter
+        if args.cpu >= 6:
+            INCV(R12);LDW(R12)
+        else:
+            LDI(1);ADDW(R12);STW(R12);           # increment counter
         XORW(R11);_BNE('.loop')                  # loop
         label('.ret')
         tryhop(4);LDW(R12);POP();RET()

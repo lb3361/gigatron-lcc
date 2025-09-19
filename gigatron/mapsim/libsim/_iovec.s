@@ -16,10 +16,10 @@ def scope():
     def code_writall():
         nohop()
         label('_sim_writall');
-        LDW(R10);STW(R11);LDW(R9);STW(R10) # swap arguments 
-        LDW(R8);STW(R9);LDW(R11);STW(R8)   # for gtsim compatibility
-        LDWI('errno');STW('sysArgs0')
-        _LDI(0xff02);STW('sysFn')
+        _MOVW(R10,R11);_MOVW(R9,R10) # swap arguments
+        _MOVW(R8,R9);_MOVW(R11,R8)   # for gtsim compatibility
+        _MOVIW('errno','sysArgs0')
+        _MOVIW(0xff02,'sysFn')
         SYS(36)
         PUSH();_CALLI('_sim_setf');POP();
         RET()
@@ -27,8 +27,8 @@ def scope():
     def code_read():
         nohop()
         label('_sim_read');
-        LDWI('errno');STW('sysArgs0')
-        _LDI(0xff03);STW('sysFn')
+        _MOVIW('errno','sysArgs0')
+        _MOVIW(0xff03,'sysFn')
         SYS(36)
         PUSH();_CALLI('_sim_setf');POP();
         RET()
@@ -36,16 +36,16 @@ def scope():
     def code_flush():
         nohop()
         label('_sim_flush');
-        LDWI('errno');STW('sysArgs0')
-        _LDI(0xff05);STW('sysFn')
+        _MOVIW('errno','sysArgs0')
+        _MOVIW(0xff05,'sysFn')
         SYS(36)
         RET()
 
     def code_lseek():
         nohop()
         label('_sim_lseek');
-        LDWI('errno');STW('sysArgs0')
-        _LDI(0xff04);STW('sysFn')
+        _MOVIW('errno','sysArgs0')
+        _MOVIW(0xff04,'sysFn')
         SYS(36)
         RET()
 
@@ -74,9 +74,9 @@ def scope():
 
     def code_openf():
         label('_openf')
-        _LDI('errno');STW('sysArgs0')
-        _LDI('_sim_iovec');STW('sysArgs2')
-        _LDI(0xff06);STW('sysFn')
+        _MOVIW('errno','sysArgs0')
+        _MOVIW('_sim_iovec','sysArgs2')
+        _MOVIW(0xff06,'sysFn')
         SYS(36)
         RET()
 

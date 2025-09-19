@@ -13,8 +13,7 @@ def scope():
         if args.cpu >= 7:
             warning('cpu7: use LSRXA instead of _@_lshru')
             label('_@_lshru')
-            ANDI(0x1f);LSRXA()
-            RET()
+            ANDI(0x1f);LSRXA();RET()
         else:
             label('_@_lshru')
             ST(T5)
@@ -65,7 +64,7 @@ def scope():
             LDW(LAC+2);_BLT('.s1')
             _CALLJ('__@lshru_t5');_BRA('.sret')
             label('.s1')
-            _LDI(0xffff);STW(T4);XORW(LAC);STW(LAC)
+            LDWI(0xffff);STW(T4);XORW(LAC);STW(LAC)
             LDW(T4);XORW(LAC+2);STW(LAC+2)
             _CALLJ('__@lshru_t5')
             LDW(T4);XORW(LAC);STW(LAC)

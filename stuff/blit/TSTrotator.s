@@ -1,6 +1,6 @@
 
 # Compile with:
-# $ glink r_dev7.s -o r_dev7.gt1 --rom=dev7 --map=64k --gt1-exec-address=main --entry=main --frags
+# $ glink TSTrotator.s -o TSTrotator.gt1 --rom=dev7 --map=64k --gt1-exec-address=main --entry=main --frags
 
 def scope():
 
@@ -97,7 +97,7 @@ def scope():
         bytes(96,  16)
         bytes(112, 32)
         
-    module(name = 'r_dev7.s',
+    module(name = 'TSTrotator.s',
            code = [('EXPORT', 'main'),
                    ('CODE', 'main', code_main),
                    ('DATA', 'Table', code_table) ] )

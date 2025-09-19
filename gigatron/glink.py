@@ -3056,7 +3056,10 @@ def glink(argv):
             global new_modules
             new_modules = []
             map_modules(romtype)
-            module_list += new_modules
+            if len(new_modules) > 0:
+                for m in new_modules:
+                    m.library = id(new_modules[0])
+                module_list += new_modules
 
         # load libraries requested by the map
         global map_libraries

@@ -60,7 +60,7 @@ def map_modules(romtype):
     '''
     def code0():
         nohop() # instead of org(0x200)
-        label(args.gt1exec)
+        label('_gt1exec')
         # call SYS_regbase to inform gtsim about register locations
         LDWI(0xffff);STW('sysFn')
         LDI(FAS);ST('sysArgs0')

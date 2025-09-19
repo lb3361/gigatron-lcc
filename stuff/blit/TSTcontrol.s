@@ -1,6 +1,6 @@
 
 # Compile with:
-# $ glink r_dev7.s -o r_dev7.gt1 --rom=dev7 --map=64k --gt1-exec-address=main --entry=main --frags
+# $ glink TSTcontrol.s -o TSTcontrol.gt1 --rom=dev7 --map=64k --gt1-exec-address=main --entry=main --frags
 
 def scope():
 
@@ -19,7 +19,7 @@ def scope():
         DBNE(R9,'.loop')
         HALT()
 
-    module(name = 'r_dev7.s',
+    module(name = 'TSTcontrol.s',
            code = [('EXPORT', 'main'),
                    ('CODE', 'main', code_main) ] )
 

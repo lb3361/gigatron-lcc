@@ -9,10 +9,15 @@ def scope():
     def code0():
         nohop()
         label('_@_raise_zdiv')
+        if args.cpu >= 7:
+            POP()
+            label('_@_raise_zdiv_nopop')
         LDWI('.msg');STW(T0)
         LDWI(0x104)
-        if SP == vSP:
-            POP();JNE('__@raisem')            # preserve vSP long alignment
+        if args.cpu >= 7:
+            JNE('__@raisem')
+        elif args.cpu >= 6:
+            POP();JNE('__@raisem')
         else:
             _CALLI('__@raisem');POP();RET()
 
@@ -25,6 +30,7 @@ def scope():
     module(name='raise_zdiv.s',
            code=[ ('IMPORT', '__@raisem'),
                   ('EXPORT', '_@_raise_zdiv'),
+                  ('EXPORT', '_@_raise_zdiv_nopop') if args.cpu >= 7 else ('NOP',),
                   ('CODE', '_@_raise_zdiv', code0),
                   ('DATA', '.msg', code0m, 0, 1) ] )
 
@@ -35,7 +41,7 @@ def scope():
         label('_@_raise_ferr')
         LDWI('.msg');STW(T0)
         LDWI(0x304)
-        if SP == vSP:
+        if args.cpu >= 6:
             POP();JNE('__@raisem')
         else:
             _CALLI('__@raisem');POP();RET()
@@ -62,7 +68,7 @@ def scope():
         _MOVIW('errno',T2);LDI(2);POKE(T2);  # set errno=ERANGE on overflow.
         _MOVIW('.msg',T0)
         LDWI(0x204)
-        if SP == vSP:
+        if args.cpu >= 6:
             POP();JNE('__@raisem')
         else:
             _CALLI('__@raisem');POP();RET()

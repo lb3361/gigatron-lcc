@@ -61,12 +61,13 @@ def scope():
         label('__@ldivprep')
         STW(T3);DEEK();STW(T0);
         LDW(T3);ADDI(2);DEEK();STW(T0+2);
-        ORW(T0);_BNE('.ldp1')
-        _CALLJ('_@_raise_zdiv')
-        label('.ldp1')
         if args.cpu >= 6:
+            ORW(T0);JEQ('_@_raise_zdiv')
             LDI(32)
         else:
+            ORW(T0);_BNE('.ldp1')
+            _CALLJ('_@_raise_zdiv')
+            label('.ldp1')
             LDI(256-32)
         STW(T4)
         RET()

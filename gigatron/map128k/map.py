@@ -23,7 +23,7 @@ segments = [ (0x00fa, 0x0200, 0x0100, 0x0500, 0),
 
 initsp = 0xfffc
 libcon = "con1"
-args.lfss = 256
+args.lfss = args.lfss or 256
 
 def map_segments():
     '''

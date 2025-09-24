@@ -387,7 +387,7 @@ def hop(sz, jump):
             global the_segment, the_pc
             hops_enabled = False
             the_segment.pc = the_pc
-            lfss = args.lfss or 32
+            lfss = args.lfss or 64
             ns = find_code_segment(max(lfss, sz))
             if not ns:
                 fatal(f"map memory exhausted while fitting function `{the_fragment.name}'")

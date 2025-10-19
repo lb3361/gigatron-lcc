@@ -814,10 +814,11 @@ fac: INDIRF5(addr)  "%{?*0=~FAC::_MOVF(%0,FAC)%{!A};}"       180
 fac: ADDF5(fac,farg) "%0%1_FADD()%{!A};"          200
 fac: ADDF5(farg,fac) "%1%0_FADD()%{!A};"          200
 fac: SUBF5(fac,farg) "%0%1_FSUB()%{!A};"          200
-fac: SUBF5(farg,fac) "%1_FNEG();%0_FADD()%{!A};"  200+50
+fac: SUBF5(farg,fac) "%1%0_FSUBR()%{!A};"         200
 fac: MULF5(fac,farg) "%0%1_FMUL()%{!A};"          200
 fac: MULF5(farg,fac) "%1%0_FMUL()%{!A};"          200
 fac: DIVF5(fac,farg) "%0%1_FDIV()%{!A};"          200
+fac: DIVF5(farg,fac) "%1%0_FDIVR()%{!A};"         200
 fac: NEGF5(fac)      "%0_FNEG()%{!A};"            50
 stmt: EQF5(fac,farg) "\t%0%1_FCMP();_BEQ(%a)%{!A};\n" 200
 stmt: NEF5(fac,farg) "\t%0%1_FCMP();_BNE(%a)%{!A};\n" 200

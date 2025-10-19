@@ -39,8 +39,7 @@ def code0():
 	label('.15');
 	LDW(R5);_MULI(5);ADDWI('f');_MOVF([vAC],F21);
 	_MOVF(F21,FAC);LDWI('.4');_FCMP();_BEQ('.19');
-	LDW(R4);_STLS(LAC);_FCVI();_MOVF(FAC,F18);
-	_MOVF(F21,FAC);LDI(F18);_FDIV();_SP(-5+28);_FCMP();_BLT('.19');
+	LDW(R4);_STLS(LAC);_FCVI();LDI(F21);_FDIVR();_SP(-5+28);_FCMP();_BLT('.19');
 	LDI(32);_CMPWS(R5);_BLT('.21');
 	LDWI('.23');STW(R8);
 	_STLW(0);

@@ -550,11 +550,14 @@ def scope():
             BNE('.faddx1')
             _CALLJ('__@foverflow')
         label('.faddx1')
+        _CALLJ('_@_rndfac')
         tryhop(2);POP();RET()
 
     def code_fadd_t3():
         label('__@fadd_t3')
-        PUSH();_PEEKV(T3);STW(BE)
+        PUSH()
+        _CALLJ('__@fsavevsp')
+        _PEEKV(T3);STW(BE)
         LD(AE);_BEQ('.fadd1');SUBW(BE);_BGT('.fadd1')
         if args.cpu >= 7:
             LDW(T3);LDFARG()
@@ -600,10 +603,12 @@ def scope():
         label('.fsubx2')
         _CALLJ('__@fnorm')               # - normalize
         label('.fadd3')
+        _CALLJ('_@_rndfac')
         tryhop(2);POP();RET()
 
     module(name='rt_faddt3.s',
            code=[ ('EXPORT', '__@fadd_t3'),
+                  ('IMPORT', '__@fsavevsp'),
                   ('IMPORT', '__@foverflow'),
                   ('IMPORT', '__@amshra'),
                   ('IMPORT', '__@amneg') if args.cpu < 7 else ('NOP',),
@@ -612,6 +617,7 @@ def scope():
                   ('IMPORT', '__@fldarg_t3') if args.cpu < 7 else ('NOP',),
                   ('IMPORT', '__@amaddbm32') if args.cpu < 6 else ('NOP',),
                   ('IMPORT', '__@fnorm'),
+                  ('IMPORT', '_@_rndfac'),
                   ('CODE', '__@fadd_t3_ss', code_fadd_t3_ss),
                   ('CODE', '__@fadd_t3', code_fadd_t3) ] )
 
@@ -619,38 +625,43 @@ def scope():
         '''_@_fadd: Add the float at address vAC to FAC'''
         nohop()
         label('_@_fadd')
-        PUSH();STW(T3)
-        _CALLJ('__@fsavevsp')
-        _CALLJ('__@fadd_t3')
-        _CALLJ('_@_rndfac')
-        tryhop(2);POP();RET()
+        STW(T3)
+        if args.cpu >= 6:
+            JNE('__@fadd_t3');RET()
+        else:
+            BRA('.fa')
+        label('_@_fsubr')
+        STW(T3)
+        LD(AS);XORI(0x81);ST(AS)
+        if args.cpu >= 6:
+            JGE('__@fadd_t3')
+        else:
+            label('.fa')
+            PUSH();_CALLJ('__@fadd_t3');POP()
+            RET()
 
     module(name='rt_fadd.s',
            code=[ ('EXPORT', '_@_fadd'),
+                  ('EXPORT', '_@_fsubr'),
                   ('CODE', '_@_fadd', code_fadd),
-                  ('IMPORT', '__@fsavevsp'),
-                  ('IMPORT', '__@fadd_t3'),
-                  ('IMPORT', '_@_rndfac') ] )
+                  ('IMPORT', '__@fadd_t3') ] )
 
     def code_fsub():
         '''_@_fsub: Subtract the float at address vAC from FAC'''
         nohop()
         label('_@_fsub')
-        PUSH();STW(T3)
-        _CALLJ('__@fsavevsp')
+        STW(T3)
         LD(AS);XORI(0x81);ST(AS)
-        _CALLJ('__@fadd_t3')
+        PUSH();_CALLJ('__@fadd_t3');POP()
+        label('_@_fneg')
         LD(AS);XORI(0x81);ST(AS)
-        _CALLJ('_@_rndfac')
-        tryhop(2);POP();RET()
+        RET()
 
     module(name='rt_fsub.s',
            code=[ ('EXPORT', '_@_fsub'),
+                  ('EXPORT', '_@_fneg'),
                   ('CODE', '_@_fsub', code_fsub),
-                  ('IMPORT', '__@fsavevsp'),
-                  ('IMPORT', '_@_fneg'),
-                  ('IMPORT', '__@fadd_t3'),
-                  ('IMPORT', '_@_rndfac') ] )
+                  ('IMPORT', '__@fadd_t3') ] )
 
 
     # ==== multiplication
@@ -1077,17 +1088,6 @@ def scope():
                   ('CODE', '_@_fsign', code_fsign) ] )
 
     # ==== misc
-
-    def code_fneg():
-        '''_@_fneg: Changes the sign of FAC. Fast'''
-        nohop()
-        label('_@_fneg')
-        LD(AS);XORI(0x81);ST(AS)
-        RET()
-
-    module(name='rt_fneg.s',
-           code=[ ('EXPORT', '_@_fneg'),
-                  ('CODE', '_@_fneg', code_fneg) ] )
 
     def code_frexp():
         '''_@_frexp: Return x in FAC and exp in vAC such

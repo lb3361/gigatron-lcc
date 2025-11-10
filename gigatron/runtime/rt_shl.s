@@ -12,7 +12,10 @@ def scope():
         else:
             ST(T5);LDW(T3-1);ORI(255);XORI(255);STW(T3);LD(T5)
         label('.try4')
-        ANDI(7);STW(T5);LDWI('.ret');SUBW(T5);STW(T5)
+        if args.cpu >= 7:
+            MOVIW('.ret',T5);ANDI(7);SUBV(T5)
+        else:
+            ANDI(7);STW(T5);LDWI('.ret');SUBW(T5);STW(T5)
         LDW(T3);CALL(T5)
         for _ in range(7): LSLW()
         label('.ret')

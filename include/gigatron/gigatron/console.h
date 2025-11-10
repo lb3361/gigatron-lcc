@@ -18,16 +18,14 @@ extern const struct console_info_s {
 /* Console state: colors, cursor, wrapping and scrolling modes.
    These fields can be changed as needed between calls to console functions. */
 extern __near struct console_state_s {
-	int  fgbg;		/* fg and bg colors   */
-	char cy, cx;		/* cursor coordinates */
-	char wrapy, wrapx;	/* wrap/scroll enable */
+	union { int fgbg; struct { char bg, fg; }; };       /* fg and bg colors   */
+	union { struct { char cy, cx; }; int cxcy; };       /* cursor coordinates */
+	union { struct { char wrapy, wrapx; }; int wrap; }; /* wrap/scroll enable */
 } console_state;
 
-#define console_state_set_cycx(cycx) \
-	*(unsigned*)&console_state.cy = (cycx)
-#define console_state_set_wrap(wrap) \
-	*(unsigned*)&console_state.wrapy = (wrap)
-
+/* These macros were useful before anonymous struct/unions */
+#define console_state_set_cycx(w) do { console_state.cxcy = w; } while(0)
+#define console_state_set_wrap(w) do { console_state.wrap = w; } while(0)
 
 
 /* ---- Console output ---- */

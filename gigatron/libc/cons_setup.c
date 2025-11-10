@@ -8,8 +8,8 @@ static void console_exitm_msgfunc(int retcode, const char *s)
 {
 	if (s) {
 		console_state.fgbg = 3;
-		console_state_set_cycx(console_info.nlines);
-		console_state_set_wrap(0x101);
+		console_state.cxcy = console_info.nlines;
+		console_state.wrap = 0x101;
 		console_print(s, console_info.ncolumns);
 	}
 }

@@ -685,13 +685,13 @@ def code14():
 	LDW(R4);
 	ADDSV(-1,R4);
 	POKEQ(0);
-	DEEKV(R6);STW(R23);
+	DEEKV(R6);
 	_BEQ('.92');
-	MOVIW('yyfnd',R22);
-	LDI(4);ADDW(R23);DEEK();
-	DOKE(R22);
+	MOVIW('yyfnd',R23);
+	ADDI(4);DEEK();
+	DOKE(R23);
 	_BEQ('.92');
-	DEEKV(R22);DEEK();_BLE('.92');
+	DEEKV(R23);DEEK();_BLE('.92');
 	LDWI('yyolsp');DOKEA(R6);
 	LDWI('yyfnd');DEEK();DEEK();ADDWI('yyextra');PEEK();_BEQ('.94');
 	_BRA('.97');
@@ -1453,7 +1453,7 @@ def code32():
 	LDXW(R23,'yyr1');STW(R4);
 	LDWI('yypgo');ADDW(R4);ADDW(R4);DEEKA(R23);
 	DEEKV(R5);ADDW(R23);ADDI(1);STW(R1);
-	LDI(249);_CMPWS(R1);_BLE('.203');
+	_CMPIS(249);_BGE('.203');
 	LDWI('yyact');ADDW(R1);ADDW(R1);DEEKA(R23);
 	LDW(R23);STW(R6);
 	LDWI('yychk');ADDW(R23);ADDW(R23);DEEKA(R23);

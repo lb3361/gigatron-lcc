@@ -7,9 +7,9 @@
 def code1():
    label('__@mac32x16')
    PUSH()
-   LDI(1);STW(T4);
+   LDI(1)
    label('.mac2')
-   ANDW(T2);_BEQ('.mac3')
+   STW(T4);ANDW(T2);_BEQ('.mac3')
    if args.cpu >= 6:
       LDI(T0);ADDL()
    else:
@@ -19,7 +19,7 @@ def code1():
       LSLVL(T0)
    else:
       _CALLJ('__@lshl1_t0t1')
-   LDW(T4);LSLW();STW(T4)
+   LDW(T4);LSLW()
    _BNE('.mac2')
    tryhop(2);POP();RET()
 

@@ -36,13 +36,13 @@ def scope():
         label('_@_shru')
         ST(T5)
         label('.shr0')
-        LDI(0);STW(T4)
+        _MOVIW(0,T4)
         label('.shr1')
+        if args.cpu < 5:
+            LDWI('__@shrsysfn');STW('sysFn')
         LD(T5);ANDI(8);_BEQ('.shr2')
         LD(T3+1);STW(T3)
         label('.shr2')
-        if args.cpu < 5:
-            LDWI('__@shrsysfn');STW('sysFn')
         LD(T5);ANDI(7);_BEQ('.shr3')
         PUSH()
         if args.cpu < 5:

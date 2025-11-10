@@ -98,6 +98,7 @@ static int  if_not_asgn_tmp(Node,int);
 static int  if_cv_from(Node,int,int);
 static int  if_arg_reg_only(Node);
 static int  if_arg_stk(Node,int);
+static int  if_vac_contains(Node, Symbol);
 
 #define mincpuf(c,f,cost) ((cpu<(c)&&!cpuflags.f)?LBURG_MAX:(cost))
 #define mincpu(c,cost)    ((cpu<(c))?LBURG_MAX:(cost))
@@ -659,14 +660,14 @@ stmt: GTI2(ac,con0) "\t%0_BGT(%a);\n" 28
 stmt: GEI2(ac,con0) "\t%0_BGE(%a);\n" 28
 stmt: GTU2(ac,con0) "\t%0_BNE(%a);\n" 28
 stmt: LEU2(ac,con0) "\t%0_BEQ(%a);\n" 28
-stmt: LTI2(ac,conB) "\t%0_CMPIS(%1);_BLT(%a)%{!A};\n" ifcpu7(56,64)
-stmt: LEI2(ac,conB) "\t%0_CMPIS(%1);_BLE(%a)%{!A};\n" ifcpu7(56,64)
-stmt: GTI2(ac,conB) "\t%0_CMPIS(%1);_BGT(%a)%{!A};\n" ifcpu7(56,64)
-stmt: GEI2(ac,conB) "\t%0_CMPIS(%1);_BGE(%a)%{!A};\n" ifcpu7(56,64)
-stmt: LTU2(ac,conB) "\t%0_CMPIU(%1);_BLT(%a)%{!A};\n" ifcpu7(56,64)
-stmt: LEU2(ac,conB) "\t%0_CMPIU(%1);_BLE(%a)%{!A};\n" ifcpu7(56,64)
-stmt: GTU2(ac,conB) "\t%0_CMPIU(%1);_BGT(%a)%{!A};\n" ifcpu7(56,64)
-stmt: GEU2(ac,conB) "\t%0_CMPIU(%1);_BGE(%a)%{!A};\n" ifcpu7(56,64)
+stmt: LTI2(ac,conB) "\t%0_CMPIS(%1);_BLT(%a)%{!A};\n" if_incr(a,ifcpu7(56,64),8)
+stmt: LEI2(ac,conB) "\t%0_CMPIS(%1);_BLE(%a)%{!A};\n" if_incr(a,ifcpu7(56,64),8)
+stmt: GTI2(ac,conB) "\t%0_CMPIS(%1);_BGT(%a)%{!A};\n" if_incr(a,ifcpu7(56,64),8)
+stmt: GEI2(ac,conB) "\t%0_CMPIS(%1);_BGE(%a)%{!A};\n" if_incr(a,ifcpu7(56,64),8)
+stmt: LTU2(ac,conB) "\t%0_CMPIU(%1);_BLT(%a)%{!A};\n" if_incr(a,ifcpu7(56,64),8)
+stmt: LEU2(ac,conB) "\t%0_CMPIU(%1);_BLE(%a)%{!A};\n" if_incr(a,ifcpu7(56,64),8)
+stmt: GTU2(ac,conB) "\t%0_CMPIU(%1);_BGT(%a)%{!A};\n" if_incr(a,ifcpu7(56,64),8)
+stmt: GEU2(ac,conB) "\t%0_CMPIU(%1);_BGE(%a)%{!A};\n" if_incr(a,ifcpu7(56,64),8)
 stmt: LTI2(ac,iarg) "\t%0%[1b]_CMPWS(%1);_BLT(%a)%{!A};\n" ifcpu7(56,84)
 stmt: LEI2(ac,iarg) "\t%0%[1b]_CMPWS(%1);_BLE(%a)%{!A};\n" ifcpu7(56,84)
 stmt: GTI2(ac,iarg) "\t%0%[1b]_CMPWS(%1);_BGT(%a)%{!A};\n" ifcpu7(56,84)
@@ -1282,7 +1283,7 @@ static void nexttrees(Node tree, int n, Node trees[])
         while ((cp = cp->next))
           if (cp->kind != Defpoint)
             break;
-      if (cp && cp->kind == Gen)
+      if (cp && (cp->kind == Gen || cp->kind == Label || cp->kind == Jump))
         trees[i++] = tree = cp->u.forest;
       else
         break;
@@ -1383,28 +1384,20 @@ static int if_incr(Node a, int cost, int bonus)
 {
   /* Reduces the cost of an increment/decrement operation
      when there is evidence that the previous value was preserved in a
-     temporary. This is used to prefer dialect LDW(r);ADDW(i);STW(r)
+     temporary. This is used to prefer dialect LDW(r);ADDI(i);STW(r)
      over the potentially more efficient LDI(i);ADDW(r);STW(r).
      This is hacky and very limited in fact. */
   extern Node head; /* declared in gen.c */
   Node k;
   Symbol syma;
-  if (a && (generic(a->op)==ADD || generic(a->op)==SUB) &&
-      (k = a->kids[0]) && generic(k->op) == INDIR &&
-      k->kids[0] && specific(k->kids[0]->op) == VREG+P &&
-      (syma = k->kids[0]->syms[0]) && syma->temporary )
-    {
-      Node h;
-      int c = cost;
-      for(h = head; h; h = h->link) {
-        if (h->kids[0] == a || h->kids[1] == a)
-          return c;
-        if (generic(h->op) == ASGN &&
-            h->kids[0] && specific(h->kids[0]->op) == VREG+P &&
-            h->kids[0]->syms[0] == syma && syma->u.t.cse == h->kids[1]) 
-          c = cost - bonus;
-      }
-    }
+  int op = (a) ? generic(a->op) : 0;
+  if (op == ADD || op == SUB || op == GT || op == GE ||
+      op == LT || op == LE || op == EQ || op == NE)
+    if ((k = a->kids[0]) && generic(k->op) == INDIR &&
+        k->kids[0] && specific(k->kids[0]->op) == VREG+P &&
+        (syma = k->kids[0]->syms[0]) )
+      if (syma->temporary ||  if_vac_contains(a, syma))
+        return cost - bonus;
   return cost;
 }
 
@@ -1614,6 +1607,39 @@ static Symbol get_target_reg(Node p, int nt)
   default:
     return 0;
   }
+}
+
+/* Guess whether previous tree leaves sym into vAC.
+   This is imperfect, only used for cost predicates.
+   It fails to recognize elided temporaries. */ 
+static int if_vac_contains(Node a, Symbol sym)
+{
+  static Node cached_a;
+  static Symbol cached_target, cached_source;
+  if (a != cached_a) {
+    Node h, ph;
+    extern Node head; /* from gen.c */
+    cached_a = a;
+    cached_target = cached_source = 0;
+    for (h = head; (ph = h->link); h=ph)
+      if (ph == a || ph->kids[1] == a)
+        break;
+    if (ph && h && generic(h->op) == ASGN &&
+        h->kids[0] && specific(h->kids[0]->op) == VREG+P) {
+      /* we have one of the ASGN(VREGP,reg) rule */
+      Node p = reuse(h->kids[1], _reg_NT);
+      int rulenum = (*IR->x._rule)(p->x.state, _reg_NT);
+      short *nts = IR->x._nts[rulenum];
+      if (rulenum && get_target_reg(p, nts[0]) == ireg[31]) {
+        cached_target = get_target_reg(h, _asgn_NT);
+        while (generic(p->op) == LOAD && p->kids[0])
+          p = p->kids[0];
+        if (generic(p->op) == INDIR && specific(p->kids[0]->op) == VREG+P)
+          cached_source = p->kids[0]->syms[0];
+      }
+    }
+  }
+  return sym && (sym == cached_target || sym == cached_source);
 }
 
 

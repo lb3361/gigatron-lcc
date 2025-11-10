@@ -62,10 +62,10 @@ extern int _raise_code;
 /* ---- Numerics ---- */
 
 /* Elementary long constants */
-extern double _lzero, _lone, _ltwo, _lminus;
+extern long _lzero, _lone, _ltwo, _lminus;
 
 /* Elementary floating point constants */
-extern double _fzero, _fone, _fhalf, _ftwo, _fminus;
+extern double _fzero, _fone, _fhalf, _ftwo, _ften, _fminus;
 
 /* Value of PI assumed correct by the trigonometric functions! */
 extern double _pi, _pi_over_2, _pi_over_4;

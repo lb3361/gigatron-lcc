@@ -9,9 +9,8 @@
 
 int _doscan_next(register doscan_t *dd)
 {
-	dd->c = fgetc(dd->fp);
 	dd->cnt += 1;
-	return dd->c;
+	return (dd->c = fgetc(dd->fp));
 }
 
 static void spc(register doscan_t *dd)

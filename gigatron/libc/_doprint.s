@@ -25,9 +25,7 @@ def scope():
         label('_doprint_puts')
         PUSH();_ALLOC(-6)
         _DEEKV(R0);ADDW(R9);DOKE(R0)
-        if args.cpu >= 7:
-            LDXW(R0,2);STW(R10);LDXW(R0,4)
-        elif args.cpu >= 6:
+        if args.cpu >= 6:
             LDI(2);ADDW(R0);DEEKA(R10);ADDI(2);DEEK()
         else:
             LDI(2);ADDW(R0);DEEK();STW(R10);LDI(4);ADDW(R0);DEEK()
@@ -54,9 +52,7 @@ def scope():
             SUBI(1);STW(R7)
         _MOVW(R6,R8)
         _MOVIW(1,R9)
-        if args.cpu >= 7:
-            LDXW(R0,2);STW(R10);LDXW(R0,4)
-        elif args.cpu >= 6:
+        if args.cpu >= 6:
             LDI(2);ADDW(R0);DEEKA(R10);ADDI(2);DEEK()
         else:
             LDI(2);ADDW(R0);DEEK();STW(R10);LDI(4);ADDW(R0);DEEK()

@@ -27,6 +27,7 @@ segments = [ (0x0060, 0x2fa0, 0x0100, 0x80a0, 0),
 
 initsp = 0x2efc
 minram = 0x80
+args.lfss = args.lfss or 128
 
 def map_segments():
     '''

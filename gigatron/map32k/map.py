@@ -62,7 +62,7 @@ def map_modules(romtype):
     '''
     def code0():
         org(0x200)
-        label(args.gt1exec)
+        label('_gt1exec')
         # Set stack
         LDWI(initsp);STW(SP);
         # Check rom and ram

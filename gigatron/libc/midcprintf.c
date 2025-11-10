@@ -11,6 +11,7 @@ int midcprintf(const char *fmt, ...)
 	struct _doprint_dst_s dd;
 	register va_list ap;
 	va_start(ap, fmt);
+	_doprintdst = &dd;
 	dd.writall = (writall_t)console_writall;
 	c = _doprint_simple(fmt, ap);
 	_doprintdst = sav;

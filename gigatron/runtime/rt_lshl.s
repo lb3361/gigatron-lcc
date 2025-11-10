@@ -1,11 +1,6 @@
 
 def scope():
 
-    def _MOVQB(imm,d):
-        if args.cpu >= 6:
-            MOVQB(imm,d)
-        else:
-            LDI(imm);ST(d)
 
     # ----------------------------------------
     # LSHL1 : LAC <-- LAC << 1
@@ -70,7 +65,8 @@ def scope():
             LDW(LAC);STW(LAC+2);_MOVIW(0,LAC)
             label('.l4')
             LD(T5);ANDI(8);_BEQ('.l5')
-            LDW(LAC+1);STW(LAC+2);LD(LAC);ST(LAC+1);_MOVQB(0,LAC)
+            LDW(LAC+1);STW(LAC+2)
+            LDW(LAC-1);ORI(0xff);XORI(0xff);STW(LAC)
             label('.l5')
             LD(T5);ANDI(4);_BEQ('.l6')
             LDWI('SYS_LSLW4_46');STW('sysFn')

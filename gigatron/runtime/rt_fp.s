@@ -27,15 +27,6 @@ def scope():
     # '_@_xxxx' are the public api.  See their docstrings below.
     # '__@xxxx' are private and should not be relied upon.
 
-
-    # ==== useful macros
-
-    def _MOVQB(imm,d):
-        if args.cpu >= 6:
-            MOVQB(imm,d)
-        else:
-            LDI(imm);ST(d)
-
     avoid_cmpw = (args.cpu <= 4) or ("without_CmpOps" in rominfo)
 
     # ==== common things
@@ -51,7 +42,7 @@ def scope():
         _CALLJ('_@_raise_ferr')
         label('__@foverflow')    ### SIGFPE/overflow
         _CALLJ('__@frestorevsp')
-        _LDI(0xffff);STW(AM+1);STW(AM+3);ST(AE);_MOVQB(0,AM)
+        _LDI(0xffff);STW(AM+1);STW(AM+3);ST(AE);_MOVIB(0,AM)
         _CALLJ('_@_raise_fovf')
 
     def code_fsavevsp():
@@ -98,10 +89,10 @@ def scope():
         else:
             LDI(1);ADDW(AM+1);STW(AM+1);_BNE('.rnd0')
             LDI(1);ADDW(AM+3);STW(AM+3);_BNE('.rnd0')
-        _MOVQB(128,AM+4);INC(AE);LD(AE);_BNE('.rnd0')
+        _MOVIB(128,AM+4);INC(AE);LD(AE);_BNE('.rnd0')
         SUBI(1);STW(AM+1);STW(AM+3);ST(AE) # overflow
         label('.rnd0')
-        _MOVQB(0,AM)
+        _MOVIB(0,AM)
         RET()
 
     module(name='rt_rndfac.s',
@@ -313,7 +304,7 @@ def scope():
         label('__@amshr8')
         LDW(AM+1);STW(AM);
         LDW(AM+3);STW(AM+2)
-        _MOVQB(0,AM+4)
+        _MOVIB(0,AM+4)
         RET()
 
     module(name='rt_amshr8.s',
@@ -410,7 +401,7 @@ def scope():
             label('.norm1')
             LD(AM+4);_BNE('.norm3')
             LD(AE);SUBI(8);_BLT('.normz');ST(AE)
-            LDW(AM+2);STW(AM+3);LDW(AM);STW(AM+1);_MOVQB(0,AM)
+            LDW(AM+2);STW(AM+3);LDW(AM);STW(AM+1);_MOVIB(0,AM)
             _BRA('.norm1')
             label('.norm2')
             LD(AE);SUBI(1);_BLT('.normz');ST(AE)
@@ -442,14 +433,14 @@ def scope():
         LDI(0);ST(AM);ST(AS);_BRA('.fcv1')
         label('_@_fcvi')
         PUSH()
-        _MOVQB(0,AM)
+        _MOVIB(0,AM)
         LD(AM+4);ANDI(128);STW(AS);_BEQ('.fcv1')
         if args.cpu >= 7:
             NEGVL(AM+1)
         else:
             _CALLJ('__@amneg')
         label('.fcv1')
-        _MOVQB(160,AE)
+        _MOVIB(160,AE)
         _CALLJ('__@fnorm')
         tryhop(2);POP();RET()
 
@@ -673,7 +664,7 @@ def scope():
             label('__@macx')
             ST(T5);PUSH()
             label('.macx0')
-            _MOVQB(0,BM+4)  # BM+4 is T4L
+            _MOVIB(0,BM+4)  # BM+4 is T4L
             LDI(1)          # Use T4H for mask
             label('.macx1')
             ST(T4+1);ANDW(T5);_BEQ('.macx2')
@@ -1181,7 +1172,7 @@ def scope():
             XORI(255);ANDI(255);INC(vAC)
         PUSH()
         _CALLI('__@amshra')
-        _MOVIW(160,AE) # _MOVQB(160,AE);_MOVQB(0,AM)
+        _MOVIW(160,AE) # _MOVIB(160,AE);_MOVIB(0,AM)
         _CALLI('__@fnorm')
         POP();
         label('.ret')

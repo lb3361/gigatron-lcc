@@ -44,17 +44,13 @@ def scope():
         LD(T3+1);STW(T3)
         label('.shr2')
         LD(T5);ANDI(7);_BEQ('.shr3')
-        PUSH()
         if args.cpu < 5:
-            CALL('sysFn')
+            PUSH();CALL('sysFn');POP()
         else:
-            CALLI('__@shrsysfn')
-        POP();
-        LDW(T3);SYS(52);BRA('.shr4')
+            PUSH();CALLI('__@shrsysfn');POP()
+        LDW(T3);SYS(52);XORW(T4);RET()
         label('.shr3')
-        LDW(T3)
-        label('.shr4')
-        XORW(T4);RET()
+        LDW(T3);XORW(T4);RET()
 
     module(name='rt_shr.s',
            code=[('EXPORT', '_@_shru'),
@@ -79,12 +75,12 @@ def scope():
         else:
             label('_@_shrs1')
             _BGE('_@_shru1')
-            STW(T5);_LDI(0x8000);STW(T4)
+            STW(T5);_MOVIW(0x8000,T4)
             BRA('.shr')
             label('_@_shru1')
-            STW(T5);LDI(0);STW(T4)
+            STW(T5);_MOVIW(0,T4)
             label('.shr')
-            LDWI('SYS_LSRW1_48');STW('sysFn')
+            _MOVIW('SYS_LSRW1_48','sysFn')
             LDW(T5)
         SYS(48);ORW(T4)
         RET()

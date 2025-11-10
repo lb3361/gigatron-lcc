@@ -7,7 +7,7 @@ def scope():
            chars returned as the high and low part of vAC.'''
         nohop()
         label('_utwoa')
-        LDWI(0x2f2f);STW(R9)
+        _MOVIW(0x2f2f,R9)
         LDW(R8)
         label('.l1')
         INC(R9+1);SUBI(10);_BGE('.l1')

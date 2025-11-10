@@ -1401,6 +1401,16 @@ def _MOVIW(d,x):
     else:
         _LDI(d);STW(x)
 @vasm
+def _MOVIB(d,x):
+    '''Moves immediate d into byte var x.
+       - Emits MOVQB or a _LDI solution.
+       - May trash vAC.'''
+    d = int(v(d))
+    if args.cpu >= 6:
+        MOVQB(d, check_zp(x))
+    else:
+        _LDI(d);ST(x)
+@vasm
 def _MOVW(s,d):
     '''Moves word var s into word var d.
        - Emits MOVW or LDW+STW

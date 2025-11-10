@@ -23,17 +23,20 @@ def scope():
     # (2) the next character would not fit horizontally on the screen, or
     # (3) an unprintable character, i.e. not in [0x20-0x83], has been met.
 
-    def code_printchars():
+    def code_printchars(hires=False):
         label('_console_printchars')
-        tryhop(4);PUSH()
+        PUSH()
         _MOVIW('SYS_VDrawBits_134','sysFn')      # prep sysFn
         _MOVW(R8,'sysArgs0')                     # move fgbg, freeing R8
         _MOVIW(0,R12)                            # R12: character counter
         label('.loop')
         LDW(R10);PEEK();STW(R8)                  # R8: character code
-        LDI(1);ADDW(R10);STW(R10)                # next char
+        if args.cpu >= 6:
+            INCV(R10)
+        else:
+            LDI(1);ADDW(R10);STW(R10)            # next char
         LDW(R9);STW('sysArgs4')                  # destination address
-        ADDI(6);STW(R9);                         # next address
+        ADDI(3 if hires else 6);STW(R9);         # next address
         LD(vACL);SUBI(0xA0);_BGT('.ret')         # beyond screen?
         _LDI('font32up');STW(R13)                # R13: font address
         LDW(R8);SUBI(32);_BLT('.ret'  )          # c<32
@@ -42,7 +45,10 @@ def scope():
         _LDI('font82up');STW(R13)
         label('.draw')
         _CALLJ('_printonechar')
-        LDI(1);ADDW(R12);STW(R12);               # increment counter
+        if args.cpu >= 6:
+            INCV(R12);LDW(R12)
+        else:
+            LDI(1);ADDW(R12);STW(R12);           # increment counter
         XORW(R11);_BNE('.loop')                  # loop
         label('.ret')
         tryhop(4);LDW(R12);POP();RET()

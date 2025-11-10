@@ -11,7 +11,7 @@ def scope():
         PUSH()
         LD('channelMask_v4');ANDI(3);LSLW();LSLW();STW(R17)
         LDWI('.cp1');SUBW(R17);STW(R17)
-        _MOVIW(0x1fc,R16);LDWI(0x2177);CALL(R17)
+        _MOVIW(0x1fc,R16);LDWI(0x0752);CALL(R17)
         _MOVIW(0x1fa,R16);LDWI(0x100);CALL(R17)
         LD(R8);ST('soundTimer')
         POP();RET()

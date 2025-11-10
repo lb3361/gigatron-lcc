@@ -4,7 +4,7 @@ def scope():
     def code0():
         nohop()
         label('printf')
-        LDWI(0xff01);STW('sysFn');SYS(34)
+        _MOVIW(0xff01,'sysFn');SYS(34)
         RET();
 
     module(name='printf.s',

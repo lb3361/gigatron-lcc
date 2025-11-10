@@ -14,8 +14,8 @@ def scope():
         label('_cons_restore_saved_bank')
         LDW('sysFn');STW(R21)
         LDWI('SYS_ExpanderControl_v4_40');STW('sysFn');
-        label('.savx', pc()+2)
-        LDWI(0x00bc);SYS(40)
+        label('.savx', pc()+1)
+        LDI(0x00bc);SYS(40)
         LDW(R21);STW('sysFn')
         RET()
         ## set video bank

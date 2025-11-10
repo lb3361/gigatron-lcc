@@ -915,7 +915,7 @@ reg: LOADI1(ac)    "\t%0%{?c==vAC::ST(%c);}\n"   16
 reg: LOADU1(ac)    "\t%0%{?c==vAC::ST(%c);}\n"   16
 reg: LOADI4(reg)   "\t_MOVL(%0,%c)%{!5};\n" 120
 reg: LOADU4(reg)   "\t_MOVL(%0,%c)%{!5};\n" 120
-regx: LOADF5(regx) "\t_MOVF(%0,%c)%{!5};\n" 150
+reg: LOADF5(reg)   "\t_MOVF(%0,%c)%{!5};\n" 150
 
 # 2) extensions
 eac: CVII2(reg) "LD(%0);XORI(128);SUBI(128);" if_cv_from(a,1,66)

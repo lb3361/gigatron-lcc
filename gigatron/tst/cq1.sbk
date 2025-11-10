@@ -837,9 +837,9 @@ def code26():
 	DEEKV(R7);LSLW();STXW(R7,8);
 	DEEKV(R7);_MULI(5);STXW(R7,10);
 	DEEKV(R7);_MULI(5);STXW(R7,12);
-	_MOVF('.447',F21);
-	_MOVF(F21,[SP,-10+48]);
-	_MOVF(F21,F4);
+	_MOVF('.447',FAC);
+	_MOVF(FAC,[SP,-10+48]);
+	_MOVF(FAC,F4);
 	_MOVF('.448',[SP,-5+48]);
 	_BRA('.450');
 	label('.449');

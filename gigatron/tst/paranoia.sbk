@@ -2356,9 +2356,9 @@ def code17():
 	CALLI('printf');
 	_MOVF('Q',FAC);LDWI('Y2');_FSUB();_MOVF(FAC,F8);
 	_MOVF(F8,[SP,0]);
-	CALLI('fabs');_MOVF(FAC,F21);
+	CALLI('fabs');
 	MOVIW('.559',R8);
-	_MOVF(F21,F9);
+	_MOVF(FAC,F9);
 	_MOVF(F9,[SP,2]);
 	CALLI('printf');
 	_MOVF('Q','UfThold');
@@ -2656,9 +2656,9 @@ def code17():
 	_MOVF(F8,[SP,0]);
 	_MOVF('Z',F11);
 	_MOVF(F11,[SP,5]);
-	CALLI('pow');_MOVF(FAC,F21);
+	CALLI('pow');
 	MOVIW('.624',R8);
-	_MOVF(F21,F9);
+	_MOVF(FAC,F9);
 	_MOVF(F9,[SP,2]);
 	CALLI('printf');
 	MOVIW('.625',R8);
@@ -3835,8 +3835,8 @@ def code43():
 	_MOVF(F8,[SP,0]);
 	_SP(-19+44);STW(R11);
 	_STLW(6);
-	CALLI('modf');_MOVF(FAC,F21);
-	_MOVF(F21,F2);
+	CALLI('modf');
+	_MOVF(FAC,F2);
 	_MOVF(F2,FAC);LDWI('.6');_FCMP();_BEQ('.1011');
 	_MOVF(F5,F8);
 	_MOVF(F8,[SP,0]);
@@ -3853,8 +3853,8 @@ def code43():
 	_MOVF(F8,[SP,0]);
 	_SP(-6+44);STW(R11);
 	_STLW(6);
-	CALLI('frexp');_MOVF(FAC,F21);
-	_MOVF(F21,F5);
+	CALLI('frexp');
+	_MOVF(FAC,F5);
 	_MOVF([SP,-19+44],FAC);_FTOI();
 	_MOVL(LAC,[SP,-4+44]);
 	LDWI('.1015');_LCMPX();_BEQ('.1013');

@@ -6,10 +6,15 @@
 
 int vprintf(register const char *fmt, register __va_list ap)
 {
-	_doprint_dst.fp = stdout;
-	if ((_doprint_dst.writall = _schkwrite(stdout)))
-		return _doprint(fmt, ap);
-	return EOF;
+	register struct _doprint_dst_s *sav = _doprintdst;
+	register int c = EOF;
+	struct _doprint_dst_s dd;
+	_doprintdst = &dd;
+	dd.fp = stdout;
+	if ((dd.writall = _schkwrite(stdout)))
+		c = _doprint(fmt, ap);
+	_doprintdst = sav;
+	return c;
 }
 
 /* A printf relay is defined in _printf.s */

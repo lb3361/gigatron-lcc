@@ -185,7 +185,7 @@ opcodes35 = {
   0x25: ('STFAC', 0),  0x27: ('LDFAC',   0),  0x29: ('LDFARG',0),
   0x2b: ('VSAVE', 0),  0x2d: ('VRESTORE',0),
   0x32: ('LEEKA', 1),  0x34: ('LOKEA',   1),
-  0x38: ('RDIVS', 1),  0x3b: ('RDIVU',   1),  0x3d: ('MULW',  1),
+  0x39: ('RDIVS', 1),  0x3b: ('RDIVU',   1),  0x3d: ('MULW',  1),
   0x3f: ('BEQ',   1),  0x48: ('BLIT',    0),  0x4a: ('FILL',  0),
   0x4d: ('BGT',   1),  0x50: ('BLT',     1),
   0x53: ('BGE',   1),  0x56: ('BLE',     1),

@@ -2040,6 +2040,10 @@ def _FSUB():
     extern('_@_fsub')
     _CALLI('_@_fsub')               # FAC-[vAC] --> FAC
 @vasm
+def _FSUBR():
+    extern('_@_fsubr')
+    _CALLI('_@_fsubr')              # [vAC]-FAC --> FAC
+@vasm
 def _FMUL():
     extern('_@_fmul')
     _CALLI('_@_fmul')               # FAC*[vAC] --> FAC

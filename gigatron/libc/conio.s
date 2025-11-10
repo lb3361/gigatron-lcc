@@ -31,7 +31,7 @@ def scope():
   def code_cputs():
     nohop()
     label('cputs')
-    _MOVIW(0x7fff,R9)
+    LDWI(0x7fff);STW(R9)
     if args.cpu >= 6:
       JNE('console_print')
     else:

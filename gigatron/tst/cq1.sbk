@@ -416,7 +416,7 @@ def code11():
 	_MOVL('.74',L18);
 	_BRA('.240');
 	label('.239');
-	_MOVL(L18,LAC);LDI(1);_LSHL();_MOVL(LAC,L18);
+	LSLVL(L18);
 	label('.240');
 	_MOVL(L8,L22);
 	_MOVL(L22,LAC);LDWI('.74');_LSUB();_MOVL(LAC,L8);

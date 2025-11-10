@@ -64,13 +64,19 @@ def scope():
             May raise zdiv signal.
             Trashes sysArgs[0-7], T[013]. """
         label('_@_divu')
-        PUSH()
-        _BNE('.divu1')
-        _CALLJ('_@_raise_zdiv')  # divide by zero error
-        label('.divu1')
         if args.cpu >= 7:
+            nohop()
+            JEQ('_@_raise_zdiv_nopop')       # divide by zero error
             RDIVU(T3)
+            RET()
         else:
+            PUSH()
+            if args.cpu >= 6:
+                JEQ('_@_raise_zdiv')         # divide by zero error
+            else:
+                _BNE('.divu1')
+                _CALLJ('_@_raise_zdiv')      # divide by zero error
+                label('.divu1')
             STW(YV)
             if needbig:
                 _BLT('.bigy')
@@ -81,7 +87,7 @@ def scope():
             CallWorker()
             if needbig:
                 LDW(XV)
-        tryhop(2);POP();RET()
+            tryhop(2);POP();RET()
         # special cases
         if needbig:
             label('.bigx')                          # x >= 0x8000
@@ -102,7 +108,8 @@ def scope():
 
     module(name='rt_divu.s',
            code=[ ('CODE', '_@_divu', code2),
-                  ('IMPORT', '_@_raise_zdiv'),
+                  ('IMPORT', '_@_raise_zdiv_nopop') if args.cpu >= 7 else ('NOP',),
+                  ('IMPORT', '_@_raise_zdiv') if args.cpu < 7 else ('NOP',),
                   ('EXPORT', '_@_divu') ] + morecode )
 
 
@@ -116,16 +123,24 @@ def scope():
         """ Computes unsigned T3%vAC into vAC. Saves quotient in T1
             May raise zdiv signal. Trashes sysArgs[0-7], T[013]. """
         label('_@_modu')
-        PUSH()
-        _CALLI('_@_divu')
+        nohop()
+        if args.cpu >= 7:
+            JEQ('_@_raise_zdiv_nopop')
+            RDIVU(T3)
+        else:
+            PUSH()
+            _CALLI('_@_divu')
+            tryhop(6);POP();
         STW(T1)         # quotient
         LDW(RV)         # remainder
-        tryhop(2);POP();RET()
+        RET()
 
     module(name='rt_modu.s',
            code=[ ('CODE', '_@_modu', code2),
                   ('EXPORT', '_@_modu'),
-                  ('IMPORT', '_@_divu') ] )
+                  ('IMPORT', '_@_raise_zdiv_nopop') if args.cpu >= 7 else ('NOP',),
+                  ('IMPORT', '_@_divu') if args.cpu < 7 else ('NOP',)
+                 ] )
 
     # ----------------------------------------
     # DIVS:  T3/vAC -> vAC
@@ -137,14 +152,19 @@ def scope():
         """ Computes signed T3/vAC into vAC.
             May raise zdiv signal. Trashes sysArgs[0-7], T[0123]. """
         label('_@_divs')
-        PUSH()
-        _BNE('.divs0')
-        _CALLJ('_@_raise_zdiv') # divide by zero error (no return)
-        label('.divs0')
         if args.cpu >= 7:
+            nohop()
+            JEQ('_@_raise_zdiv_nopop')       # divide by zero error
             RDIVS(T3)
-            tryhop(2);POP();RET()
+            RET()
         else:
+            PUSH()
+            if args.cpu >= 6:
+                JEQ('_@_raise_zdiv')         # divide by zero error
+            else:
+                _BNE('.divs0')
+                _CALLJ('_@_raise_zdiv')      # divide by zero error
+                label('.divs0')
             STW(YV)
             if args.cpu >= 6:
                 MOVQB(0,T2)
@@ -180,7 +200,8 @@ def scope():
 
     module(name='rt_divs.s',
            code=[ ('CODE', '_@_divs', code2),
-                  ('IMPORT', '_@_raise_zdiv'),
+                  ('IMPORT', '_@_raise_zdiv_nopop') if args.cpu >= 7 else ('NOP',),
+                  ('IMPORT', '_@_raise_zdiv') if args.cpu < 7 else ('NOP',),
                   ('EXPORT', '_@_divs') ] + morecode )
 
     # ----------------------------------------
@@ -193,16 +214,23 @@ def scope():
         label('_@_mods')
         """ Computes signed T3%vAC into vAC. Saves quotient in T1
             May raise zdiv signal. Trashes sysArgs[0-7], T[0123]. """
-        PUSH()
-        _CALLI('_@_divs')
-        STW(T1)               # quotient
-        LDW(RV)               # remainder
-        tryhop(2);POP();RET()
+        if args.cpu >= 7:
+            JEQ('_@_raise_zdiv_nopop')
+            RDIVS(T3)
+        else:
+            PUSH()
+            _CALLI('_@_divs')
+            tryhop(6);POP();
+        STW(T1)         # quotient
+        LDW(RV)         # remainder
+        RET()
 
     module(name='rt_mods.s',
            code=[ ('CODE', '_@_mods', code2),
                   ('EXPORT', '_@_mods'),
-                  ('IMPORT', '_@_divs') ] )
+                  ('IMPORT', '_@_raise_zdiv_nopop') if args.cpu >= 7 else ('NOP',),
+                  ('IMPORT', '_@_divs') if args.cpu < 7 else ('NOP',)
+                 ] )
 
 scope()
 

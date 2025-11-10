@@ -77,6 +77,8 @@ def scope():
     def code_ddab_sys():
         ''' vAC: (input) binary number
             R10: (input,preserved) end of string
+            T1:  (inout) start of string (decremented)
+            T4:  (input,preserved) base
             R11/R12: (used)'''
         nohop()
         label('_itoa.ddab')
@@ -95,6 +97,8 @@ def scope():
     def code_ddab_vcpu():
         ''' vAC: (input) binary number
             R10: (input,preserved) end of string
+            T1:  (inout) start of string (decremented)
+            T4:  (input,preserved) base
             R11/R12: (used)'''
         nohop()
         label('_itoa.ddab')
@@ -277,8 +281,11 @@ def scope():
             LDW(LAC+2);CALLI('_itoa.ddab')
             LDW(LAC);CALLI('_itoa.ddab')
         LD(LAX);ANDI(0x80);POKE(R10)
-        _CALLJ('_itoa.asc')
-        tryhop(2);POP();RET()
+        if args.cpu >= 6:
+            POP();JGE('_itoa.asc')
+        else:
+            _CALLJ('_itoa.asc')
+            tryhop(2);POP();RET()
 
     module(name='ftoa.s',
            code=[('EXPORT', '_ftoa'),

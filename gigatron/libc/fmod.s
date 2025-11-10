@@ -4,10 +4,15 @@ def scope():
     def code0():
         nohop()
         label('fmod')
-        PUSH()
-        _MOVF(F8, FAC)
-        LDI(F11);_CALLI('_@_fmod')
-        POP();RET()
+        nohop()
+        if args.cpu >= 7:
+            LDI(F8);LDFAC()
+            LDI(F11);JNE('_@_fmod')
+        else:
+            PUSH()
+            _MOVF(F8, FAC)
+            LDI(F11);_CALLI('_@_fmod')
+            POP();RET()
 
     module(name='fmod.s',
            code=[ ('EXPORT', 'fmod'),

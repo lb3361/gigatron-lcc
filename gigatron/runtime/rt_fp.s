@@ -440,9 +440,12 @@ def scope():
         else:
             _CALLJ('__@amneg')
         label('.fcv1')
-        _MOVIB(160,AE)
-        _CALLJ('__@fnorm')
-        tryhop(2);POP();RET()
+        _LDI(160);ST(AE)
+        if args.cpu >= 6:
+            tryhop(4);POP();JNE('__@fnorm')
+        else:
+            _CALLJ('__@fnorm')
+            tryhop(2);POP();RET()
 
     module(name='rt_fcv.s',
            code=[ ('EXPORT', '_@_fcvi'),
@@ -540,8 +543,12 @@ def scope():
         else:
             LDWI('SYS_LSRW1_48');STW('sysFn');_CALLI('__@amshrx')
             LD(AM+4);ORI(128);ST(AM+4)
-        INC(AE);LD(AE);_BNE('.faddx1')
-        _CALLJ('__@foverflow')
+        INC(AE);LD(AE)
+        if args.cpu >= 6:
+            JEQ('__@foverflow')
+        else:
+            BNE('.faddx1')
+            _CALLJ('__@foverflow')
         label('.faddx1')
         tryhop(2);POP();RET()
 
@@ -566,8 +573,12 @@ def scope():
         ST(AE)                           # - assume arg exponent
         SUBW(T3)
         _CALLI('__@amshra')              # - align fac mantissa
-        LD(AS);ANDI(1);_BNE('.fsubx1')   # - are signs different?
-        _CALLJ('__@fadd_t3_ss')          # > same sign branch (no return)
+        LD(AS);ANDI(1)
+        if args.cpu >= 6:
+            JEQ('__@fadd_t3_ss')         # > same sign branch
+        else:
+            _BNE('.fsubx1')              # - are signs different?
+            _CALLJ('__@fadd_t3_ss')      # > same sign branch (no return)
         # different sign
         label('.fsubx1')
         if args.cpu >= 6:
@@ -762,14 +773,21 @@ def scope():
         _CALLJ('__@fmulm')      # multiply mantissa
         ADDW(BE);ST(AE)         # exponent
         _BLE('.zero')
-        LD(vACH);_BEQ('.fin')
-        _CALLJ('__@foverflow')
-        label('.fin')
-        _CALLJ('_@_rndfac')     # round
-        tryhop(2);POP();RET()
-        label('.zero')
-        _CALLJ('_@_clrfac')
-        tryhop(2);POP();RET()
+        LD(vACH)
+        if args.cpu >= 6:
+            JNE('__@foverflow')
+            POP();JEQ('_@_rndfac')
+            label('.zero')
+            POP();JLE('_@_clrfac')
+        else:
+            BNE('.ovf')
+            _CALLJ('_@_rndfac')
+            tryhop(2);POP();RET()
+            label('.ovf')
+            _CALLJ('__@foverflow')
+            label('.zero')
+            _CALLJ('_@_clrfac')
+            tryhop(2);POP();RET()
 
     module(name='rt_fmul.s',
            code=[ ('EXPORT', '_@_fmul'),
@@ -887,9 +905,12 @@ def scope():
         LD(BE)
         if args.cpu >= 7:
             STW(BE)
-        _BNE('.fdiv0')
-        _CALLJ('__@fexception')          # - divisor is zero -> exception
-        label('.fdiv0')
+        if args.cpu >= 6:
+            JEQ('__@fexception')         # - divisor is zero -> exception
+        else:
+            _BNE('.fdiv0')
+            _CALLJ('__@fexception')      # - divisor is zero -> exception
+            label('.fdiv0')
         LD(AE);_BEQ('.zero')             # - dividend is zero -> result is zero
         SUBW(BE);ADDI(160)
         _BLE('.zero')                    # - hopeless underflow
@@ -897,17 +918,25 @@ def scope():
         _CALLJ('__@fdivloop')
         _CALLJ('__@fdivrnd')
         LDLW(0);ALLOC(2)
-        ST(AE);_BLE('.zero')             # - copy exponent
-        LD(vACH);_BNE('.ovf')            #   and test for overflow
+        ST(AE);_BLE('.zero')             # - copy exponent and test for overflow
+        LD(vACH)
+        if args.cpu >= 6:
+            JNE('__@foverflow')
+        else:
+            _BNE('.ovf')
         ST(AM)                           # - copy quotient into AM
         _MOVW(CM, AM+1)
         _MOVW(CM+2, AM+3)
         tryhop(2);POP();RET()
-        label('.ovf')
-        _CALLJ('__@foverflow')
-        label('.zero')
-        _CALLJ('_@_clrfac')
-        tryhop(2);POP();RET()
+        if args.cpu >= 6:
+            label('.zero')
+            POP();JLE('_@_clrfac')
+        else:
+            label('.ovf')
+            _CALLJ('__@foverflow')
+            label('.zero')
+            _CALLJ('_@_clrfac')
+            tryhop(2);POP();RET()
 
     module(name='rt_fdiv.s',
            code=[ ('EXPORT', '_@_fdiv'),
@@ -1081,15 +1110,22 @@ def scope():
         '''_@_fscalb: Multiplies FAC by 2^vAC'''
         nohop()
         label('_@_fscalb')
-        PUSH();STW(T3)
+        STW(T3);LD(AE);ADDW(T3)
+        if args.cpu >= 6:
+            JLE('_@_clrfac')
+        else:
+            _BLE('.zero')
+        ST(AE);LD(vACH);_BEQ('.ret')
+        PUSH()
         _CALLJ('__@fsavevsp')
-        LD(AE);ADDW(T3);_BLE('.fscal1')
-        ST(AE);LD(vACH);_BEQ('.fscal0')
         _CALLJ('__@foverflow')
-        label('.fscal1')
-        _CALLJ('_@_clrfac')
-        label('.fscal0')
-        tryhop(2);POP();RET()
+        if args.cpu < 6:
+            label('.zero')
+            PUSH()
+            _CALLJ('_@_clrfac')
+            tryhop(2);POP()
+        label('.ret')
+        RET()
 
     module(name='rt_fscalb.s',
            code=[ ('IMPORT', '__@fsavevsp'),
@@ -1172,9 +1208,11 @@ def scope():
             XORI(255);ANDI(255);INC(vAC)
         PUSH()
         _CALLI('__@amshra')
-        _MOVIW(160,AE) # _MOVIB(160,AE);_MOVIB(0,AM)
-        _CALLI('__@fnorm')
-        POP();
+        LDI(160);STW(AE) # AE=160 and AM=0
+        if args.cpu >= 6:
+            POP();JNE('__@fnorm')
+        else:
+            _CALLI('__@fnorm');POP()
         label('.ret')
         RET()
 

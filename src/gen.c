@@ -315,6 +315,7 @@ static void dumpcover(Node p, int nt, int in) {
 	fprint(stderr, "dumpcover(%x) = ", p);
 	for (i = 0; i < in; i++)
 		fprint(stderr, " ");
+	fprintf(stderr, "{%d} ", ((short*)(p->x.state))[nt]);
 	dumprule(rulenum);
 	(*IR->x._kids)(p, rulenum, kids);
 	for (i = 0; nts[i]; i++)

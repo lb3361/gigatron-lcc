@@ -352,6 +352,7 @@ static Symbol dclglobal(int sclass, char *id, Type ty, Coordinate *pos, Attribut
 		} else {
 			p = install(id, &globals, GLOBAL, PERM);
 			p->sclass = sclass;
+			p->type = ty;
 			merge_attributes(&(p->attr), *pa, 0);
 			(*IR->defsymbol)(p);
 			*pa = p->attr;

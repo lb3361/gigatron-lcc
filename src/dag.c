@@ -203,7 +203,8 @@ Node listnodes(Tree tp, int tlab, int flab) {
 		      l = listnodes(tp->kids[0], 0, 0);
 		      list(newnode(JUMP+V, l, NULL, NULL));
 		      reset(); } break;
-	case CALL:  { Tree save = firstarg;
+	case CALL:  { Tree tp0 = tp->kids[0];
+		      Tree save = firstarg;
 		      firstarg = NULL;
 		      assert(tlab == 0 && flab == 0);
 		      if (tp->op == CALL+B && !IR->wants_callb) {
@@ -223,9 +224,13 @@ Node listnodes(Tree tp, int tlab, int flab) {
 		      	p = newnode(tp->op == CALL+B ? tp->op : op, l, r, NULL);
 		      }
 		      NEW0(p->syms[0], FUNC);
-		      assert(isptr(tp->kids[0]->type));
-		      assert(isfunc(tp->kids[0]->type->type));
-		      p->syms[0]->type = tp->kids[0]->type->type;
+		      assert(isptr(tp0->type));
+		      assert(isfunc(tp0->type->type));
+		      p->syms[0]->type = tp0->type->type;
+		      if (generic(tp0->op) == RIGHT)
+			tp0 = tp0->kids[1];
+		      if (tp0->op == ADDRG+P && tp0->node && tp0->node->syms[0])
+			p->syms[0]->attr = tp0->node->syms[0]->attr;
 		      list(p);
 		      reset();
 		      cfunc->u.f.ncalls++;

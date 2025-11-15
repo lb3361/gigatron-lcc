@@ -130,7 +130,7 @@ extern channel_t channel1 __at(0x1fa); /* differ from interface.json */
 extern channel_t channel2 __at(0x2fa); /* differ from interface.json */
 extern channel_t channel3 __at(0x3fa); /* differ from interface.json */
 extern channel_t channel4 __at(0x4fa); /* differ from interface.json */
-extern channel_t *channel(int c);      /* c in range 1...4           */
+extern channel_t *channel(int c) __quickcall;    /* c in range 1...4 */
 
 
 /* ---- Calling SYS functions ---- */
@@ -139,45 +139,45 @@ extern channel_t *channel(int c);      /* c in range 1...4           */
 
 /* -- SYS_Lup -- */
 /* Not a sys call but a stub for the LUP opcode */
-extern int SYS_Lup(unsigned int addr);
+extern int SYS_Lup(unsigned int addr) __quickcall;
 #define has_SYS_Lup() 1
 
 /* -- SYS_Fill -- */
 /* Not a sys call but a stub for the FILL opcode */
-extern int SYS_Fill(unsigned int yyxx, char vv, unsigned int hhww);
+extern int SYS_Fill(unsigned int yyxx, char vv, unsigned int hhww) __quickcall;
 #define has_SYS_Fill() \
 	(*(char*)vReset == 0x35) /* dev7rom marker */
 
-/* -- SYS_Fill -- */
+/* -- SYS_Blit -- */
 /* Not a sys call but a stub for the BLIT opcode */
-extern int SYS_Blit(unsigned int dydx, unsigned int sysx, unsigned int hhww);
+extern int SYS_Blit(unsigned int dydx, unsigned int sysx, unsigned int hhww) __quickcall;
 #define has_SYS_Blit() \
 	(*(char*)vReset == 0x35) /* dev7rom marker */
 
 /* -- SYS_Random -- */
-extern unsigned int SYS_Random(void);
+extern unsigned int SYS_Random(void) __quickcall;
 #define has_SYS_Random() 1
 
 /* -- SYS_VDrawBits -- */
-extern void SYS_VDrawBits(int fgbg, int bits, char *address);
+extern void SYS_VDrawBits(int fgbg, int bits, char *address) __quickcall;
 #define has_SYS_VDrawBits() 1
 
 /* -- SYS_Exec
    Note: Returns if argument vlr is (void*)(-1). */
-extern void SYS_Exec(void *romptr, void *vlr);
+extern void SYS_Exec(void *romptr, void *vlr) __quickcall;
 #define has_SYS_Exec() 1
 
 /* -- SYS_SetMode */
-extern void SYS_SetMode(int);
+extern void SYS_SetMode(int) __quickcall;
 #define has_SYS_SetMode 1
 
 /* -- SYS_SetMemory */
-extern void SYS_SetMemory(int count, int val, void *addr);
+extern void SYS_SetMemory(int count, int val, void *addr) __quickcall;
 #define has_SYS_SetMemory 1
 
 /* -- SYS_ReadRomDir
    Notes: the name is copied into buf8 */
-extern void* SYS_ReadRomDir(void *romptr, char *buf8);
+extern void* SYS_ReadRomDir(void *romptr, char *buf8) __quickcall;
 #define has_SYS_ReadRomDir() \
 	((romType & 0xfc) >= romTypeValue_ROMv5)
 
@@ -185,7 +185,7 @@ extern void* SYS_ReadRomDir(void *romptr, char *buf8);
    Notes: Calling this from C is risky.
    Notes: This exists in v4 but overwrites 0x81 with ctrlBits. 
    Notes: We depend on ctrlBits being nonzero when an expansion card is present. */
-extern int SYS_ExpanderControl(unsigned int ctrl);
+extern int SYS_ExpanderControl(unsigned int ctrl) __quickcall;
 #define has_SYS_ExpanderControl() \
 	(((romType & 0xfc) >= romTypeValue_ROMv5) && (ctrlBits_v5 != 0))
 
@@ -193,16 +193,16 @@ extern int SYS_ExpanderControl(unsigned int ctrl);
    Notes: This exists in v4 but depends on 0x81 containing ctrlBits.
    Notes: only the high 8 bits of `dst` are used.
    Notes: only the low 8 bits of `srcend` are used. */
-extern void SYS_SpiExchangeBytes(void *dst, void *src, void *srcend);
+extern void SYS_SpiExchangeBytes(void *dst, void *src, void *srcend) __quickcall;
 #define has_SYS_SpiExchangeBytes() \
 	(((romType & 0xfc) >= romTypeValue_ROMv5) && (ctrlBits_v5 != 0))
 
 /* -- SYS_Sprite6[x][y] --
    Notes: This is best called from a subroutine to perform general blits */
-extern void* SYS_Sprite6(const void *srcpix, void *dst);
-extern void* SYS_Sprite6x(const void *srcpix, void *dst);
-extern void* SYS_Sprite6y(const void *srcpix, void *dst);
-extern void* SYS_Sprite6xy(const void *srcpix, void *dst);
+extern void* SYS_Sprite6(const void *srcpix, void *dst) __quickcall;
+extern void* SYS_Sprite6x(const void *srcpix, void *dst) __quickcall;
+extern void* SYS_Sprite6y(const void *srcpix, void *dst) __quickcall;
+extern void* SYS_Sprite6xy(const void *srcpix, void *dst) __quickcall;
 #define has_SYS_Sprite6() \
 	((romType & 0xfc) >= romTypeValue_ROMv3)
 

@@ -54,7 +54,12 @@
    * `__attribute__((org(ADDRESS)))`
      Define an external variable assumed in the current compilation
      unit to be located at absolute address `ADDRESS`.
-
+   * '__attribute__((quickcall))'
+     Declares that an external function can be called by passing all its
+     arguments by register and without need to spill the caller-saved
+     registers. This reduces the cost of the call and occasionally
+     makes it possible to treat the calling function as a leaf
+     function or a frameless one.
 
    ==== Attribute macros ====
 
@@ -120,6 +125,17 @@
    | extern struct vCpuContext_s context __offset(0xe0); */
 
 #define __offset(x) __attribute__((offset(x)))
+
+/* `__quickcall` --
+   Declares that an external function can be called by passing
+   all its arguments by register and without need to spill
+   the caller-saved registers. This reduces the cost of the
+   call and occasionally makes it possible to treat the
+   calling function as a leaf function or a frameless one.
+   Example:
+   | extern int SYS_Lup(unsigned int addr) __quickcall; */
+
+#define __quickcall __attribute__((quickcall))
 
 
 /* Note that the keywords `__near` and `__far` are not attributes but

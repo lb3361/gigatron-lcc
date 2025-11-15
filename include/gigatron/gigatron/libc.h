@@ -85,11 +85,11 @@ extern double _ldexp10p(const double *x, int n);
 extern int _frexp10p(double *x);
 
 /* Like the C99 function remquo but with fmod-style remainder. */
-extern double _fmodquo(double x, double y, int *quo);
+extern double _fmodquo(double x, double y, int *quo) __attribute__((quickcall));
 
 /* Evaluate polynomials */
-extern double _polevl(double x, double *coeff, int n);
-extern double _p1evl(double x, double *coeff, int n);
+extern double _polevl(double x, double *coeff, int n) __attribute__((quickcall));
+extern double _p1evl(double x, double *coeff, int n) __attribute__((quickcall));
 
 
 /* ---- Stdio ---- */
@@ -184,9 +184,9 @@ extern void _memswp(void *a, void *b, size_t n);
    but only contains 24 bits numbers (0 to 16M). The alternative
    entry point _clock() returns a 16 bits integer which is often
    sufficient and avoids long int overhead. */
-extern unsigned int _clock(void);
+extern unsigned int _clock(void) __attribute__((quickcall));
 
 /* Wait for n vertical blanks (or n clocks) */
-extern void _wait(int n);
+extern void _wait(int n) __attribute__((quickcall));
 
 #endif

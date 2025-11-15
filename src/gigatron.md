@@ -114,7 +114,7 @@ static Symbol iregw, lregw, fregw;
 
 #define REGMASK_SAVED           0x000000ff
 #define REGMASK_ARGS            0x0000ff00
-#define REGMASK_MOREVARS        0x000fffff
+#define REGMASK_MOREVARS        0x000fff00
 #define REGMASK_TEMPS           0x00ffff00
 
 /* Misc */
@@ -1815,13 +1815,12 @@ static void target(Node p)
     }
 }
 
-static int inst_contains_call(Node p)
+static Attribute check_quickcall(Attribute a)
 {
-  if ((generic(p->op) == CALL) ||
-      (p->kids[0] && !p->kids[0]->x.inst && inst_contains_call(p->kids[0])) ||
-      (p->kids[1] && !p->kids[1]->x.inst && inst_contains_call(p->kids[1])) )
-    return 1;
-  return 0;
+  const char *qc = string("quickcall");
+  while (a && a->name != qc)
+    a = a->link;
+  return a;
 }
 
 /* lcc callback: mark caller-saved registers as clobbered. */
@@ -1841,7 +1840,7 @@ static void clobber(Node p)
       freemask[0] &= ~r->x.regnode->mask;
     }
   }
-  if (inst_contains_call(p)) {
+  if (generic(p->op) == CALL && !check_quickcall(p->syms[1]->attr)) {
     /* Clobber all caller-saved registers before a call. */
     unsigned mask =  REGMASK_TEMPS & ~REGMASK_SAVED;
     if (p->x.registered && p->syms[2] && p->syms[2]->x.regnode->set == IREG)
@@ -1849,7 +1848,7 @@ static void clobber(Node p)
     if (mask)
       spill(mask, IREG, p);
   }
-  if (argmask && p->x.next && inst_contains_call(p->x.next)) {
+  if (argmask && p->x.next && generic(p->x.next->op) == CALL) {
     /* Free all argument registers before the call */
     freemask[0] |= argmask;
     argmask = 0;
@@ -2333,6 +2332,28 @@ static const char* check_idval(Attribute a, int n)
   return stringf("'%s'", str);
 }
 
+static const int check_quickcall_proto(Type ty)
+{
+  int i;
+  int rnum = 0;
+  if (isptr(ty)) ty = ty->type;
+  assert(isfunc(ty));
+  if (!ty->u.f.proto)
+    error("extern quickcall declaration without prototype\n");
+  for (i=0; ty->u.f.proto[i]; i++)
+    switch(optype(ty->u.f.proto[i]->op)) {
+    default:
+      error("cannot pass quickcall argument %d by register\n", i+1);
+    case I: case U: case P: case F:
+      rnum += roundup(ty->u.f.proto[i]->size,2)/2;
+      if (rnum > 8)
+        error("too many arguments in quickcall declaration\n");
+      break;
+    }
+  /* return mask with registers being used */
+  return REGMASK_ARGS & ~(REGMASK_ARGS << rnum);
+}
+
 static const char *check_attributes(Symbol p)
 {
   Attribute a;
@@ -2372,6 +2393,11 @@ static const char *check_attributes(Symbol p)
       } else if (a->name == string("regalias") && is_extern && !alias) {
         alias = check_strval(a, 0);
         a->okay = (alias!=0 && findreg(alias) && !a->args[1]);
+        yes = 1;
+      } else if (a->name == string("quickcall") && is_extern &&
+                 p->type && isfunc(p->type) ) {
+        check_quickcall_proto(p->type);
+        a->okay = (!a->args[0] && !a->args[1]);
         yes = 1;
       }
       if (yes && !a->okay)
@@ -2456,8 +2482,7 @@ static void doarg(Node p)
   Symbol r;
   Node c;
   if (argoffset == 0) {
-    argno = 0;
-    argmaxno = 0;
+    argno = argmaxno = 0;
     for (c=p; c; c=c->link)
       if (generic(c->op) == CALL ||
           (generic(c->op) == ASGN && generic(c->kids[1]->op) == CALL &&
@@ -2509,6 +2534,27 @@ static void printregmask(unsigned mask) {
     print("None");
 }
 
+/* Utility for counting quick calls */
+static int count_quickcalls(int *mask) {
+  int count = 0;
+  Code cp;
+  Node n,c;
+  for (cp=&codehead; cp; cp=cp->next)
+    if  (cp->kind == Gen) // || cp->kind == Jump || cp->kind == Label)
+      for (n=cp->u.forest; n; n = n->link) {
+        c = n;
+        if (generic(c->op) == ASGN)
+          c = c->kids[1];
+        if (c && generic(c->op) == CALL && check_quickcall(c->syms[0]->attr)) {
+          count += 1;
+          if (mask)
+            *mask &= ~check_quickcall_proto(c->syms[0]->type);
+        }
+      }
+  return count;
+}
+
+
 /* lcc callback: compile a function. */
 static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
 {
@@ -2528,6 +2574,8 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   char frameless;
   struct constraints place;
   Symbol r;
+  int morevars = REGMASK_MOREVARS;
+  int nqcalls = count_quickcalls(&morevars);
 
   usedmask[0] = usedmask[1] = 0;
   freemask[0] = freemask[1] = ~(unsigned)0;
@@ -2535,13 +2583,10 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   maxargoffset = 0;
   assert(f->type && f->type->type);
   ty = ttob(f->type->type);
-  if (ncalls) {
-    tmask[IREG] = REGMASK_TEMPS;
-    vmask[IREG] = REGMASK_SAVED;
-  } else {
-    tmask[IREG] = REGMASK_TEMPS;
-    vmask[IREG] = REGMASK_MOREVARS;
-  }
+  tmask[IREG] = REGMASK_TEMPS;
+  vmask[IREG] = REGMASK_SAVED;
+  if (ncalls == nqcalls)
+    vmask[IREG] |= morevars;
   tmask[IREG] &= ~rmask;
   vmask[IREG] &= ~rmask;
   /* placement constraints */
@@ -2558,8 +2603,8 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
     p->x.name = q->x.name = stringd(offset);
     r = argreg(i, optype(ttob(q->type)), q->type->size, &roffset);
     offset += q->type->size;
-    if (r) {
-      if (ncalls == 0 && !p->addressed && p->ref > 0) {
+    if (r && p->ref > 0) {
+      if (!p->addressed && ncalls == nqcalls && !(r->x.regnode->mask & ~morevars)) {
         /* Leaf function: leave register arguments in place */
         p->sclass = q->sclass = REGISTER;
         askregvar(p, r);
@@ -2568,7 +2613,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
         q->type = p->type;
       } else {
         /* Aggressively ask new registers for args passed in registers */
-        if (!p->addressed && p->ref > 0)
+        if (!p->addressed)
           p->sclass = REGISTER;
         /* Let gencode know args were passed in register */
         q->sclass = REGISTER;
@@ -2587,7 +2632,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
   /* compute framesize */
   savemask = usedmask[IREG] & REGMASK_SAVED;
   sizesave = 2 * bitcount(savemask);
-  maxargoffset = (maxargoffset + 1) & ~0x1;
+  maxargoffset = (nqcalls == ncalls) ? 0 : (maxargoffset + 1) & ~0x1;
   maxoffset = (maxoffset + 1) & ~0x1;
   framesize = maxargoffset + sizesave + maxoffset + 2;
   assert(framesize >= 2);
@@ -2595,7 +2640,7 @@ static void function(Symbol f, Symbol caller[], Symbol callee[], int ncalls)
     error("%s() framesize (%d) too large for a gigatron\n",
           f->name, framesize);
   /* can we make a frameless leaf function */
-  if (ncalls == 0 && framesize == 2 && (tmask[IREG] & ~usedmask[IREG])) {
+  if (ncalls == nqcalls && framesize == 2 && (tmask[IREG] & ~usedmask[IREG])) {
     framesize = (cpu < 7) ? 0 : 2;  /* are SP and vSP the same? */
     frameless = 1;
   } else if (IR->longmetric.align == 4) {

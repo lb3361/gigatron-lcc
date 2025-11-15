@@ -1,8 +1,6 @@
 #ifndef __CONIO
 #define __CONIO
 
-
-
 /* This file provides a semi-standard conio interface to the gigatron
    console. The output routines are thin wrappers to the
    gigatron/console.h ones. Both the conio.h input routines and the
@@ -29,14 +27,14 @@ extern void cputs(const char *s);
    address the top left screen corner as (1,1).
    The wherex/wherey functions return the current coordinates.
    The gotoxy function sets the current coordinates. */
-void gotoxy(int x, int y);
-int wherex(void);
-int wherey(void);
+extern void gotoxy(int x, int y) __attribute__((quickcall));
+extern int wherex(void) __attribute__((quickcall));
+extern int wherey(void) __attribute__((quickcall));
 
 /* Color functions.
    Either use one of the macros or use six bit gigatron colors. */
-void textcolor(int color);
-void textbackground(int color);
+extern void textcolor(int color) __attribute__((quickcall));
+extern void textbackground(int color) __attribute__((quickcall));
 
 #define BLACK		(0x00)
 #define BLUE		(0x20)
@@ -56,13 +54,13 @@ void textbackground(int color);
 #define WHITE		(0x3f)
 
 /* Clear screen and reset cursor */
-void clrscr(void);
+extern void clrscr(void);
 
 /* Clear from the cursor to the end of line */
-void clreol(void);
+extern void clreol(void);
 
 /* Print at specific cursor position without moving the cursor. */
-void cputsxy(int x, int y, const char *s);
+extern void cputsxy(int x, int y, const char *s);
 
 
 /* ---- Formatted output functions ----*/

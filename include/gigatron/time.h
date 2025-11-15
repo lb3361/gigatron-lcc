@@ -40,7 +40,7 @@ struct tm {
 	int	tm_yday;
 	int	tm_isdst;
 };
-extern clock_t clock(void);
+extern clock_t clock(void) __attribute__((quickcall));
 extern double difftime(time_t, time_t);
 extern time_t mktime(struct tm *);
 extern time_t time(time_t *);

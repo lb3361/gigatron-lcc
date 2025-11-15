@@ -14,18 +14,18 @@ extern double cosh(double);
 extern double sinh(double);
 extern double tanh(double);
 extern double exp(double);
-extern double frexp(double, int *);
-extern double ldexp(double, int);
+extern double frexp(double, int *) __attribute__((quickcall));
+extern double ldexp(double, int) __attribute__((quickcall));
 extern double log(double);
 extern double log10(double);
 extern double modf(double, double *);
 extern double pow(double, double);
 extern double sqrt(double);
-extern double ceil(double);
-extern double fabs(double);
-extern double floor(double);
-extern double fmod(double, double);
-extern double copysign(double, double);
+extern double ceil(double) __attribute__((quickcall));
+extern double fabs(double) __attribute__((quickcall));
+extern double floor(double) __attribute__((quickcall));
+extern double fmod(double, double) __attribute__((quickcall));
+extern double copysign(double, double) __attribute__((quickcall));
 
 
 /* Not C89 */

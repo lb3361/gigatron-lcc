@@ -34,7 +34,12 @@ def scope():
         nohop()
         # calculate current tick count
         label('gt_clock')
-        LD('frameCount');MOVQB(0xff,vACH)
+        # make sure that no interrupt intervenes
+        LD('frameCount');INC(vAC);BNE('.clock')
+        LD('videoY');ORI(3);XORI(0xee);BEQ('gt_clock')
+        # now we can subtract framecount from _gt_clk
+        label('.clock')
+        LD('frameCount');ADDHI(0xff)
         label('_gt_adjclock')
         STW(LAC);LDSB(vACH);LDSB(vACH);STW(LAC+2)
         _LDI('_gt_clk');ADDL();

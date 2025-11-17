@@ -31,6 +31,7 @@ echo '@py -3 "%~dp0\\'"$cmd_to_lib"'\\%~n0" %*' > "${bindir}/glcc.cmd"
 echo '@py -3 "%~dp0\\'"$cmd_to_lib"'\\%~n0" %*' > "${bindir}/glink.cmd"
 echo '@py -3 "%~dp0\\'"$cmd_to_lib"'\\%~n0" %*' > "${bindir}/gtprof.cmd"
 echo '@py -3 "%~dp0\\'"$cmd_to_lib"'\\%~n0" %*' > "${bindir}/gt1dump.cmd"
+echo '@py -3 "%~dp0\\'"$cmd_to_lib"'\\%~n0" %*' > "${bindir}/gtmid2c.cmd"
 echo '@"%~dp0\\'"$cmd_to_lib"'\\gtsim.exe" %*'  > "${bindir}/gtsim.cmd"
 
 # add useful programs to the bin directory

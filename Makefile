@@ -22,7 +22,7 @@ TFLAGS=
 SUBDIRS=${G}runtime ${G}libc \
         ${G}map32k ${G}map64k ${G}mapsim ${G}mapconx \
         ${G}map128k ${G}map512k
-GFILES=${B}glcc ${B}glink ${B}gt1dump \
+GFILES=${B}glcc ${B}glink ${B}gt1dump ${B}gtmid2c \
        ${B}glink.py ${B}glccver.py ${B}interface.json \
        ${B}interface-dev.json ${B}roms.json ${GFILES_W}
 ROMFILES=${wildcard ${G}roms/*.rom}
@@ -127,6 +127,7 @@ ifndef MSYSTEM
 	${LN_S} "${libdir}/glcc" "${bindir}/glcc"
 	${LN_S} "${libdir}/glink" "${bindir}/glink"
 	${LN_S} "${libdir}/gt1dump" "${bindir}/gt1dump"
+	${LN_S} "${libdir}/gtmid2c" "${bindir}/gtmid2c"
 endif
 
 gigatron-include: FORCE

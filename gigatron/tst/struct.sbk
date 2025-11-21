@@ -93,8 +93,7 @@ def code4():
 # ======== ('DATA', 'y', code5, 3, 1)
 def code5():
 	label('y');
-	bytes(97,98);
-	bytes(0);
+	bytes(97,98,0);
 # ======== ('CODE', 'odd', code6)
 def code6():
 	label('odd');

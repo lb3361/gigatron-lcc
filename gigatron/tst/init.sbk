@@ -12,8 +12,7 @@ def code0():
 	words(4); # 4
 	words(5); # 5
 	space(2);
-	bytes(102,111);
-	bytes(114);
+	bytes(102,111,114);
 	space(3);
 	words(6); # 6
 	words(7); # 7
@@ -23,9 +22,7 @@ def code0():
 	words(9); # 9
 	words(10); # 10
 	words(11); # 11
-	bytes(119,104);
-	bytes(105,108);
-	bytes(101);
+	bytes(119,104,105,108,101);
 	space(1);
 	words(0); # 0
 	space(4);

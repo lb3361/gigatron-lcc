@@ -96,8 +96,8 @@ static int initchar(int len, Type ty) {
 
 	do {
 		*s++ = initvalue(ty)->u.v.i;
-		if (++n%inttype->size == 0) {
-			(*IR->defstring)(inttype->size, buf);
+		if (++n % sizeof(buf) == 0) {
+			(*IR->defstring)(s - buf, buf);
 			s = buf;
 		}
 		if (len > 0 && n >= len || t != ',')

@@ -3,6 +3,8 @@
 #include "gigatron/console.h"
 #include "gigatron/sys.h"
 
+#pragma glcc option("PRINTF_SIMPLE")
+
 int main()
 {
   // Display a red line at the top of the screen

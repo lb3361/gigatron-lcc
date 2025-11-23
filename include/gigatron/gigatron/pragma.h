@@ -81,7 +81,7 @@
    Example:
    | void somebankingwork(int args) __lomem { ... } */
 
-#define __lomem __attribute__((place(0x0200,0x07ff)))
+#define __lomem __attribute__((place(0x0200,0x7fff)))
 
 /* `__himem` --
    Mark a variable or a function that should be allocated

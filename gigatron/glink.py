@@ -2517,7 +2517,7 @@ def find_code_segment(size):
     for (i,s) in enumerate(segment_list):
         if amin == None and s.flags & 0x1:  # not a code segment
             continue
-        if amin and amax and amin < 0x100 and amax >= 0x100:
+        if amin != None and amax != None and amin < 0x100 and amax >= 0x100:
             amin = 0x100                    # do not place code in page zero
         addr = s.pc
         if aoff != None and aoff >= addr & 0xff:

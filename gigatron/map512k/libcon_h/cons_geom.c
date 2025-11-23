@@ -19,31 +19,12 @@ const struct console_info_s {
                       160, 168, 176, 184, 192, 200, 208, 216, 224, 232  } };
 
 
-void _console_reset(int fgbg)
-{
-	int i;
-	int *table = (int*)videoTable;
+//// Linear addresses
+//// - Even pixels of row Y at location 0x70800 + 0xYY00 + [0..159]
+//// - Odd pixels of row Y at  location 0x60800 + 0xYY00 + [0..159]
+//// Bank information
+//// - Banks 14 and 15 for even pixels
+//// - Banks 12 and 13 for odd pixels
 
-        // Setup display mode
-        SYS_ExpanderControl(0x0ee0u);
-        *(char*)0xb |= 1;
-        
-        // Clear screen
-	if (fgbg >= 0)
-          {
-            _console_clear((char*)0x0800u, fgbg, 120);
-            _console_clear((char*)0x8000u, fgbg, 120);
-          }
-
-        // Reset video table (one entry for two lines)
-
-        //// Linear addresses
-        //// - Even pixels of row Y at location 0x70800 + 0xYY00 + [0..159]
-        //// - Odd pixels of row Y at  location 0x60800 + 0xYY00 + [0..159]
-        //// Bank information
-        //// - Banks 14 and 15 for even pixels
-        //// - Banks 12 and 13 for odd pixels
-	for (i=0x08; i != 0xf8; i += 2)
-          *table++ = i;
-}
+extern void _console_reset(int fgbg);
 

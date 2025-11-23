@@ -2,6 +2,60 @@
 
 def scope():
 
+    # ------------------------------------------------------------
+    # BANKING (WIP)
+    # ------------------------------------------------------------
+
+    cons_128k = 'MAP128K' in args.opts
+    cons_512k = 'MAP512K' in args.opts
+    cons_dblwidth = cons_512k and ('MAP512K_DBLWIDTH' in args.opts)
+    cons_dblheight = cons_512k and ('MAP512K_DBLHEIGHT' in args.opts)
+
+    more_imports = []
+    def more_code(*args):
+        return [('IMPORT',x) for x in more_imports ] \
+            +  [('PLACE',x,0x200,0x7fff) for x in args ]
+
+    if cons_512k or cons_128k:
+        # bamked framebuffer
+        more_imports.append('_cons_save_current_bank')
+        more_imports.append('_cons_restore_saved_bank')
+        def save_bank():
+            CALLI('_cons_save_current_bank')
+        def restore_bank():
+            CALLI('_cons_restore_saved_bank')
+        if cons_512k:
+            more_imports.append('_cons_set_bank_even')
+            more_imports.append('_cons_set_bank_odd')
+            def set_bank(row, even=True):
+                if even:
+                    LDW(row);CALLI('_cons_set_bank_even')
+                else:
+                    LDW(row);CALLI('_cons_set_bank_odd')
+        else:
+            def set_bank(row=None):
+                CALLI('_cons_set_bank')
+    else:
+        # direct framebuffer
+        def save_bank():
+            pass
+        def restore_bank():
+            pass
+        def set_bank(row=None):
+            pass
+        def code_dummy_bank():
+            nohop()
+            label('_cons_save_current_bank')
+            label('_cons_restore_saved_bank')
+            label('_cons_set_bank')
+            RET()
+        module(name='cons_dummy_bank.s',
+               code=[('EXPORT','_cons_save_current_bank'),
+                     ('EXPORT','_cons_restore_saved_bank'),
+                     ('EXPORT','_cons_set_bank'),
+                     ('CODE', '_cons_set_bank', code_dummy_bank) ] )
+
+
 
     # ------------------------------------------------------------
     # LOW LEVEL SCREEN ACCESS
@@ -23,9 +77,10 @@ def scope():
     # (2) the next character would not fit horizontally on the screen, or
     # (3) an unprintable character, i.e. not in [0x20-0x83], has been met.
 
-    def code_printchars(hires=False):
+    def code_printchars():
         label('_console_printchars')
         PUSH()
+        save_bank()
         _MOVIW('SYS_VDrawBits_134','sysFn')      # prep sysFn
         _MOVW(R8,'sysArgs0')                     # move fgbg, freeing R8
         _MOVIW(0,R12)                            # R12: character counter
@@ -35,16 +90,20 @@ def scope():
             INCV(R10)
         else:
             LDI(1);ADDW(R10);STW(R10)            # next char
-        LDW(R9);STW('sysArgs4')                  # destination address
-        ADDI(3 if hires else 6);STW(R9);         # next address
-        LD(vACL);SUBI(0xA0);_BGT('.ret')         # beyond screen?
+        if not cons_512k:
+            LDW(R9);STW('sysArgs4')              # destination address
+            LD(R9);ADDI(6);ST(R9)                # next address
+        else:
+            LDWI(0x8000);ORW(R9);STW('sysArgs4')
+            LD(R9);ADDI(3 if cons_dblwidth else 6);ST(R9)
+        SUBI(0xA0);_BGT('.ret')                  # beyond screen?
         _LDI('font32up');STW(R13)                # R13: font address
         LDW(R8);SUBI(32);_BLT('.ret'  )          # c<32
         STW(R8);SUBI(50);_BLT('.draw')           # 32 <= c < 82
         STW(R8);SUBI(50);_BGE('.ret')            # >= 132
         _LDI('font82up');STW(R13)
         label('.draw')
-        _CALLJ('_printonechar')
+        _CALLJ('_console_printonechar')
         if args.cpu >= 6:
             INCV(R12);LDW(R12)
         else:
@@ -55,20 +114,37 @@ def scope():
 
     def code_printonechar():
         nohop()
-        label('_printonechar')
-        LDW(R8);LSLW();LSLW();ADDW(R8);ADDW(R13)
-        STW(R13);LUP(0);ST('sysArgs2');SYS(134);INC('sysArgs4')
-        LDW(R13);LUP(1);ST('sysArgs2');SYS(134);INC('sysArgs4')
-        LDW(R13);LUP(2);ST('sysArgs2');SYS(134);INC('sysArgs4')
-        LDW(R13);LUP(3);ST('sysArgs2');SYS(134);INC('sysArgs4')
-        LDW(R13);LUP(4);ST('sysArgs2');SYS(134);INC('sysArgs4')
-        LDI(0);ST('sysArgs2');SYS(134)
+        label('_console_printonechar')
+        PUSH() if cons_512k or cons_128k else None
+        if not cons_dblwidth:
+            set_bank(R9)
+            LDW(R8);LSLW();LSLW();ADDW(R8);ADDW(R13)
+            STW(R13);LUP(0);ST('sysArgs2');SYS(134);INC('sysArgs4')
+            LDW(R13);LUP(1);ST('sysArgs2');SYS(134);INC('sysArgs4')
+            LDW(R13);LUP(2);ST('sysArgs2');SYS(134);INC('sysArgs4')
+            LDW(R13);LUP(3);ST('sysArgs2');SYS(134);INC('sysArgs4')
+            LDW(R13);LUP(4);ST('sysArgs2');SYS(134);INC('sysArgs4')
+            LDI(0);ST('sysArgs2');SYS(134)
+        else:
+            set_bank(R9, True)
+            LDW(R8);LSLW();LSLW();ADDW(R8);ADDW(R13)
+            STW(R13);LUP(0);ST('sysArgs2');SYS(134);INC('sysArgs4')
+            LDW(R13);LUP(2);ST('sysArgs2');SYS(134);INC('sysArgs4')
+            LDW(R13);LUP(4);ST('sysArgs2');SYS(134)
+            set_bank(R9, False)
+            LDW('sysArgs4');SUBI(2);STW('sysArgs4')
+            LDW(R13);LUP(1);ST('sysArgs2');SYS(134);INC('sysArgs4')
+            LDW(R13);LUP(3);ST('sysArgs2');SYS(134);INC('sysArgs4')
+            LDI(0);ST('sysArgs2');SYS(134)
+        restore_bank()
+        POP() if cons_512k or cons_128k else None
         RET()
 
     module(name='cons_printchar.s',
            code=[ ('EXPORT', '_console_printchars'),
                   ('CODE', '_console_printchars', code_printchars),
-                  ('CODE', '_printonechar', code_printonechar) ] )
+                  ('CODE', '_console_printonechar', code_printonechar) ] \
+              + more_code('_console_printonechar') )
 
 
     # -- void _console_clear(char *addr, int clr, char nl)
@@ -78,7 +154,9 @@ def scope():
     def code_clear():
         label('_console_clear')
         PUSH()
-        if args.cpu >= 7:
+        save_bank()
+        if args.cpu >= 7 and not cons_512k:
+            set_bank()
             LDW(R8);STW(T2)
             LD(R9);ANDI(0x3f);STW(T3)
             LDI(160);SUBW(R8);ST(R11)
@@ -89,20 +167,31 @@ def scope():
             LDI(160);SUBW(R8);ST(R11)
             LD(R9);ANDI(0x3f);ST('sysArgs1')
             label('.loop')
-            LD(R11);ST('sysArgs0')
-            _MOVW(R8,'sysArgs2')
-            SYS(54)
+            if not cons_512k:
+                LD(R11);ST('sysArgs0')
+                _MOVW(R8,'sysArgs2')
+                set_bank();SYS(54)
+            else:
+                LD(R11);ST('sysArgs0')
+                LDWI(0x8000);ORW(R8);STW('sysArgs2')
+                set_bank(R8,True);SYS(54)
+                if cons_dblwidth:
+                    LD(R11);ST('sysArgs0')
+                    LDWI(0x8000);ORW(R8);STW('sysArgs2')
+                    set_bank(R8,False);SYS(54)
             INC(R8+1)
             if args.cpu >= 6:
                 DBNE(R10,'.loop')
             else:
                 LDW(R10);SUBI(1);STW(R10)
                 _BNE('.loop')
+        restore_bank()
         tryhop(2);POP();RET()
 
     module(name='cons_clear.s',
            code=[ ('EXPORT', '_console_clear'),
-                  ('CODE', '_console_clear', code_clear) ] )
+                  ('CODE', '_console_clear', code_clear) ] \
+              + more_code('_console_clear') )
 
 
 
@@ -117,7 +206,7 @@ def scope():
 
     # -- char *_console_scroll(void)
 
-    def code_scroll(hires = False):
+    def code_scroll():
         nohop()
         label('_console_scroll')
         PUSH()
@@ -137,12 +226,11 @@ def scope():
         STW(R8)
         ADDW(R10);PEEK();INC(vACH);STW(R12)
         PEEK();ST(R13)
-        if not hires: _MOVIW(8,R14)
-        if hires: _MOVIW(4,R14)
+        _MOVIW(4 if cons_dblheight else 8, R14)
         label('.loop2')
         LD(R9);POKE(R12)
-        INC(R9)
-        if hires: INC(R9)
+        INC(R9);
+        INC(R9) if cons_dblheight else None
         INC(R12);INC(R12)
         if args.cpu >= 6:
             DBNE(R14, '.loop2')
@@ -167,7 +255,7 @@ def scope():
     # Return zero if still outside the screen.
     # Warning: depends on the layout of console_state and console_info
 
-    def code_addr(hires = False):
+    def code_addr():
         nohop()
         label('_console_addr')
         PUSH()
@@ -189,7 +277,7 @@ def scope():
         LDWI(v('console_info')+2);DEEK()                # ncolumns
         SUBW(R8);_BLE('.ret0')
         LDW(R8);LSLW();ADDW(R8)                         # times 6 for std
-        if not hires: LSLW()                            # times 3 for hires
+        LSLW() if not cons_dblwidth else None           # times 3 for hires
         STW(R10)
         LD(v('console_state')+2);ADDW(R9)               # cy + offset
         PEEK();INC(vACH);PEEK();ST(R10+1)               # page

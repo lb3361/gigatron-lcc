@@ -86,6 +86,10 @@ def map_modules(romtype):
 # Specify an onload function to reorganize the memory
 args.onload.insert(0,'_map128ksetup')
 
+# Provide an option to identify the map and enable specific
+# code that switches banks to access the framebuffer.
+args.opts.append('MAP128K')
+
 # Warn if the rom is not marked as compatible with this map
 if not "may_work_with_map128k" in rominfo:
     warning(f"The specified ROM may not support map128k")

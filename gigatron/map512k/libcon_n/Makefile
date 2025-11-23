@@ -13,9 +13,10 @@ GTSIM_CFLAGS=-g -O3
 GLCC=${B}glcc
 E=
 
+MAPDIR=map512k
 LIBNAME=libcon_n
 SFILES=$(wildcard *.s)
-CFILES=$(wildcard *.c)
+CFILES=$(filter-out test.c,$(wildcard *.c))
 O5FILES=${patsubst %.c,${B}${LIBNAME}/%_5.o,${CFILES}}
 O7FILES=${patsubst %.c,${B}${LIBNAME}/%_7.o,${CFILES}}
 OFILES=${O5FILES} ${O7FILES}
@@ -36,7 +37,8 @@ ${B}${LIBNAME}/%_7.o: %.c ${B}rcc${E}
 
 
 ${B}${LIBNAME}/test.gt1: test.c ${B}${MAPDIR}/${LIBNAME}.a
-	${GLCC} -rom=v5a -o $@ test.c ${B}${MAPDIR}/${LIBNAME}.a
+	-@mkdir -p ${B}${LIBNAME}
+	${GLCC} -rom=v5a -o $@ -map=512k,nr test.c
 
 clean: FORCE
 	-rm 2>/dev/null ${B}${MAPDIR}/${LIBNAME}.a ${OFILES} ${B}${LIBNAME}/test.gt1

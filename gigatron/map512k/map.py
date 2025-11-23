@@ -30,6 +30,9 @@ segments = [ (0x00fa, 0x0200, 0x0100, 0x0500, 0),
 initsp = 0xfffc
 libcon = "con_b"
 check512krom = True
+args.lfss = args.lfss or 256
+args.onload.insert(0,'_map512ksetup')
+args.opts.append('MAP512K')
 
 def map_segments():
     '''

@@ -34,14 +34,18 @@ def code0():
     label('_exitm_msgfunc', pc()+1)
     LDWI(0);_BEQ('.halt')  # _exitm_msgfunc is LDWI's argument here
     CALL(vAC)              # arguments in R8 and R9 are already correct
-    # If _exitm_msgfunc is zero or returns
-    # we just Flash a pixel with a position indicative of the return code
+    # flash a pixel
     label('.halt')
-    LDWI(0x100);DEEK();ST(R7+1)
-    LD(vACH);ADDW(R0);ST(R7)
-    label('.loop')
-    POKE(R7);ADDW(0x80)
-    BRA('.loop')
+    if 'MAP128K' in args.opts:
+        LDWI('__glink_weak__map128khalt');_BEQ('.halt');CALL(vAC)
+    elif 'MAP512K' in args.opts:
+        LDWI('__glink_weak__map512khalt');_BEQ('.halt');CALL(vAC)
+    else:
+        LDWI(0x100);DEEK();ST(R7+1)
+        LD(vACH);ADDW(R0);ST(R7)
+        label('.loop')
+        POKE(R7);ADDW(0x80)
+        BRA('.loop')
 
 def code1():
     # subroutine to call a chain of init/fini functions

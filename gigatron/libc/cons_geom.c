@@ -12,13 +12,4 @@ const struct console_info_s console_info = { 15, 26,
 						80,  96,  112, 128, 144,
 						160, 176, 192, 208, 224  } };
 
-void _console_reset(int fgbg)
-{
-	int i;
-	int *table = (int*)videoTable;
-	if (fgbg >= 0)
-		_console_clear(screenMemory[0], fgbg, 120);
-	for (i=8; i!=128; i++)
-		*table++ = i;
-}
 

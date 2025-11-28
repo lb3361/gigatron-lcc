@@ -242,19 +242,27 @@ class Module:
                 if tp[0] == 'NOHOP' and len(tp) == 2:
                     match.nohop = True        #('NOHOP', "pattern")
                 elif tp[0] == 'OFFSET' and len(tp) == 3 and isinstance(tp[2], int):
-                    conflict = not match.aoff is None
+                    conflict = match.aoff != None
                     if not conflict:          #('OFFSET', "pattern", addr)
                         match.aoff = tp[2]
                 elif tp[0] == 'ORG' and len(tp) == 3 and isinstance(tp[2],int):
-                    conflict = not match.amin is None
+                    if match.amin != None and match.amax == None:
+                        conflict = match.amin != tp[2]
                     if not conflict:          #('ORG', "pattern", addr)
                         match.amin = tp[2]
                         match.amax = None
                 elif tp[0] == 'PLACE' and len(tp) == 4 and isinstance(tp[2],int) and isinstance(tp[3],int):
-                    conflict = not match.amin is None
-                    if not conflict:          #('PLACE', "pattern", minaddr, maxaddr)
-                        match.amin = tp[2]
-                        match.amax = tp[3]
+                    if match.amin != None and match.amax == None:
+                        pass # org takes precedence
+                    else:
+                        (amin,amax) = tp[2:4]
+                        if match.amin != None and match.amax != None:
+                            amin = max(amin, match.amin)
+                            amax = min(amax, match.amax)
+                            conflict = amax < amin
+                        if not conflict:       #('PLACE', "pattern", minaddr, maxaddr)
+                            match.amin = amin
+                            match.amax = amax
                 else:
                     error(f"Invalid placement constraints {tp}")
                 if conflict and len(matches) <= 1:
@@ -291,6 +299,11 @@ class Module:
                         debug(f"map_place directive {tp} matches {n} fragment(s)")
                 elif tp[0] != 'NOP':
                     error(f"Unrecognized map_place() specification {tp}")
+        # placement patterns
+        for tp in args.place:
+            if tp[0] in ('ORG', 'PLACE', 'NOHOP', 'OFFSET'):
+                placement(tp)
+
     def __repr__(self):
         return f"Module('{self.fname or self.name}',...)"
     def label(self, sym, val):
@@ -726,7 +739,7 @@ def hi(x):
     return (v(x) >> 8) & 0xff
 
 @vasm
-def org(addr1, addr2=None):
+def org(addr):
     '''Force a code fragment to be placed at a specific location.
        The fragment must fit in the page and the required space
        must be available. This currently piggybacks on nohop()
@@ -735,9 +748,14 @@ def org(addr1, addr2=None):
     global short_function
     # this information is collected in measure_code_fragment()
     if the_pass == 0:
+        addr = int(addr)
         the_fragment.nohop = True
-        the_fragment.amin = int(addr1)
-        the_fragment.amax = int(addr2) if addr2 else None
+        if the_fragment.amin != None and the_fragment.amax == None:
+            if addr != the_fragment.amin:
+                error(f"Conflicting org constraints")
+        else:
+            the_fragment.amin = int(addr)
+            the_fragment.amax = None
 @vasm
 def nohop():
     '''Force a code fragment to be fit in a single page.
@@ -804,6 +822,11 @@ def pragma_option(opt):
     assert type(opt) == str
     if not opt in args.opts:
         args.opts.append(opt)
+@vasm
+def pragma_lomem(fn):
+    assert type(fn) == str
+    if not fn in args.l:
+        args.place.append(('PLACE',fn,0x200,0x7fff))
 @vasm
 def pragma_lib(fn):
     assert type(fn) == str
@@ -2485,9 +2508,9 @@ def find_data_segment(size, align=None):
             if not (amin >= s.saddr and amin < s.eaddr):
                 continue
             if amin < s.pc:
-                raise Stop(f"Requested address for fragment {the_fragment.name}@{hex(amin)} is busy")
+                raise Stop(f"Requested address {the_fragment.name}@{hex(amin)} is busy")
             if addr > amin:
-                raise Stop(f"Requested address for fragment {the_fragment.name}@{hex(amin)} is misaligned")
+                raise Stop(f"Requested address {the_fragment.name}@{hex(amin)} is misaligned")
             if addr + size > s.eaddr:
                 raise Stop(f"Fragment {the_fragment.name}@{hex(amin)} does not fit at the requested address")
         if addr + size > s.eaddr:
@@ -2990,6 +3013,7 @@ def glink(argv):
         args.cpuflags = args.cpu[1:]
         args.cpu = int(args.cpu[0])
         args.files = args.files or []
+        args.place = []
 
         read_interface()
         create_zpage_map()

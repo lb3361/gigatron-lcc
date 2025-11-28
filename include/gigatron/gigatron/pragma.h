@@ -13,8 +13,17 @@
 
    * #pragma glcc option("OPTION")
      Passes argument --option=OPTION to the linker.
+
    * #pragma glcc lib("LIB")
      Passes argument -lLIB to the linker.
+
+  * #pragma glcc lowmem("PATTERN")
+     Forces the placement of any fragment in low memory, that is
+     between addresses 0x200 and 0x7fff. Arguement PATTERN if a
+     glob patterm (e.g. "SYS_*") and can match any function or
+     data fragment linked into the executable. This can be used
+     to ensure that functions can be executed while swapping
+     high memory banks.
 
 
    ==== Declaration attributes ====

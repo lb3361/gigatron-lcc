@@ -1675,6 +1675,7 @@ static int do_pragma()
   unsigned char *s;
   static const char *patterns[] = {
     "option ( \"%*[^\"]\" ) %n",
+    "lomem ( \"%*[^\"]\" ) %n",
     "lib ( \"%*[^\"]\" ) %n",
     0
   };

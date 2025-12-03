@@ -148,6 +148,8 @@ control(Tokenrow *trp)
 		break;
 
 	case KPRAGMA:
+		trp->tp = tp+1;
+		expandrow(trp, "<pragma>", Notinmacro);
 		return;
 
 	case KIFDEF:

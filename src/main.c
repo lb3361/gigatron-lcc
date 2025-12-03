@@ -53,8 +53,8 @@ int main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 	init(argc, argv);
-	t = gettok();
 	(*IR->progbeg)(argc, argv);
+	t = gettok();
 	for (i = 1; i < argc; i++)
 		if (strcmp(argv[i], "-n") == 0) {
 			if (!YYnull) {

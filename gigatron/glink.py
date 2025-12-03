@@ -33,7 +33,6 @@
 
 import argparse, json, string, functools, fnmatch
 import os, sys, traceback, copy, builtins
-import builtins
 import glccver
 
 args = None
@@ -325,16 +324,30 @@ class Module:
 class Segment:
     '''Represent memory segments to be populated with code/data'''
     __slots__ = ('saddr', 'eaddr', 'pc', 'flags', 'buffer', 'nbss')
-    def __init__(self, saddr, eaddr, flags=False):
+    def __init__(self, saddr, eaddr, flags=0):
         self.saddr = saddr
         self.eaddr = eaddr
         self.pc = saddr
-        self.flags = flags or False # 0x1: no code, 0x2 : no data, 0x4 : no heap
         self.buffer = None
         self.nbss = None
+        if type(flags) == str:
+            # Flags is now a string with letters:
+            # - 'C' if the segment can contain code
+            # - 'D' if it can contain data
+            # - 'H' if it can be used for the malloc heap.
+            # Using lowercase letters instead mean that use is permitted
+            # when an explicit placement constraint is provided.
+            if not set(flags) <= set("CDHcd"):
+                error(f'invalid character in segment flags \"{flags}\"')
+            self.flags = flags
+        else:
+            # Compatibility
+            self.flags =  'c' if flags & 1 else 'C';
+            self.flags += 'd' if flags & 2 else 'D';
+            self.flags += ''  if flags & 8 else 'H';
+
     def __repr__(self):
-        d = f",flags={hex(self.flags)}" if self.flags else ''
-        return f"Segment({hex(self.saddr)},{hex(self.eaddr)}{d})"
+        return f"Segment({hex(self.saddr)},{hex(self.eaddr)},\'{self.flags}\')"
 
 def emit(*args):
     global final_pass, the_pc, the_segment
@@ -522,7 +535,7 @@ def zpage_reserve(rng, lbl, error_on_conflict=True):
     for i in rng:
         if i < 0 or i >= 256:
             fatal(f"Cannot reserve address {hex(i)} in page zero")
-        elif zpage_map[i] and zpage_map[i] != lbl:
+        elif zpage_map[i] != None and zpage_map[i] != lbl:
             if error_on_conflict:
                 fatal(f"Zero page address {hex(i)} is both {zpage_map[i]} and {lbl}")
         else:
@@ -539,26 +552,24 @@ def create_zpage_map():
         zpage_reserve(range(0xd0,0x100), "STACK")
     else:
         zpage_reserve(range(0xf0,0x100), "STACK")
-    zpage_reserve(range(0,0x30), "V4")
+    zpage_reserve(range(0x00,0x30), "V4")
     zpage_reserve(range(0x80,0x81), "V4")
-    if args.cpu < 7:
-        zpage_reserve(range(0x30,0x42), "LOADER")
-    elif args.cpu >= 5:
-        zpage_reserve(range(0x30,0x36), "VIRQ")
-    if args.cpu == 6:
-        zpage_reserve(range(0xc0,0xd0), "VX0")
+    zpage_reserve(range(0x30,0x36), "LOADER" if args.cpu < 5 else "VIRQ")
+    zpage_reserve(range(0x36,0x42), "LOADER" if args.cpu < 7 else None)
     if args.cpu >= 7:
         zpage_reserve(range(0x81,0x8c), "V7")
+    elif args.cpu == 6:
+        zpage_reserve(range(0xc0,0xd0), "VX0")
 
 def create_zpage_segments():
     segs = []
-    last = None
+    lasti = None
     for i in range(256):
-        if last and zpage_map[i]:
-            segs.append(Segment(last, i, 7))
-            last = None
-        elif not last and not zpage_map[i]:
-            last = i
+        if lasti and zpage_map[i]:
+            segs.append(Segment(lasti, i, 'd'))
+            lasti = None
+        if not lasti and not zpage_map[i]:
+            lasti = i
     return segs
 
 # ------------- usable vocabulary for .s/.o/.a files
@@ -2490,13 +2501,14 @@ def aligned(addr, align):
         addr = align * ((addr + align - 1) // align)
     return addr
 
-def find_data_segment(size, align=None):
+def find_data_segment(size, align, cseg):
     amin = the_fragment.amin
     amax = the_fragment.amax
     aoff = the_fragment.aoff
     for (i,s) in enumerate(segment_list):
-        if amin == None and (s.flags & 0x2):  # not a data segment
-            continue
+        if not 'D' in s.flags:
+            if amin == None or not 'd' in s.flags:
+                continue
         addr = aligned(s.pc, align)
         if aoff != None and aoff & 0xff >= addr & 0xff:
             addr = aligned((addr & 0xff00)|(aoff & 0xff), align)
@@ -2538,10 +2550,9 @@ def find_code_segment(size):
     amax = the_fragment.amax
     aoff = the_fragment.aoff
     for (i,s) in enumerate(segment_list):
-        if amin == None and s.flags & 0x1:  # not a code segment
-            continue
-        if amin != None and amax != None and amin < 0x100 and amax >= 0x100:
-            amin = 0x100                    # do not place code in page zero
+        if not 'C' in s.flags:
+            if amin == None or not 'c' in s.flags:
+                continue
         addr = s.pc
         if aoff != None and aoff >= addr & 0xff:
             addr = (addr & 0xff00) | (aoff & 0xff)
@@ -2635,7 +2646,7 @@ def assemble_data_fragments(m, cseg, placed=False):
             continue
         if frag.segment == cseg:
             hops_enabled = False
-            the_segment = find_data_segment(frag.size, align=frag.align)
+            the_segment = find_data_segment(frag.size, frag.align, cseg)
             if not the_segment:
                 raise Stop(f"cannot fit {cseg} fragment '{frag.name}'")
             elif args.d >= 2 or final_pass:
@@ -2742,7 +2753,7 @@ def process_magic_bss(s, head_module, head_addr):
 def process_magic_heap(s, head_module, head_addr):
     '''Construct a linked list of heap segments.'''
     for s in segment_list:
-        if s.flags & 0x4:
+        if not 'H' in s.flags:
             continue
         a0 = (s.pc + 3) & ~0x3
         a1 = s.eaddr &  ~0x3

@@ -1,8 +1,11 @@
 
 # ------------size----addr----step----end---- flags (1=nocode, 2=nodata)
 
-segments = segments + [(0x7a00, 0x8200, None, None, 0)]
+segments = segments +  [ (0x0100, 0x8100, None,   None,   'CDH'),
+                         (0x79c0, 0x8240, None,   None,   'CDH')  ]
+
 initsp = 0xfffc
+
 minram = 0x100
 
 # Local Variables:

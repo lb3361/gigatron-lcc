@@ -17,12 +17,20 @@ def map_describe():
     ''')
 
 
-# ------------size----addr----step----end---- flags (1=nocode, 2=nodata, 4=noheap)
-segments = [ (0x0060, 0x08a0, 0x0100, 0x80a0, 0),
-             (0x00fa, 0x0200, 0x0100, 0x0500, 0),
-             (0x0200, 0x0500, None,   None,   0),
-             (0x0100, 0x8100, None,   None,   0),
-             (0x79c0, 0x8240, None,   None,   0) ]
+# Flags is now a string with letters:
+# - 'C' if the segment can contain code
+# - 'D' if it can contain data
+# - 'H' if it can be used for the malloc heap.
+# Using lowercase letters instead mean that use is permitted
+# when an explicit placement constraint is provided.
+#
+# ------------size----addr----step----end------flags
+segments = [ (0x0060, 0x08a0, 0x0100, 0x80a0, 'CDH'),
+             (0x00fa, 0x0200, 0x0100, 0x0500, 'CDH'),
+             (0x0200, 0x0500, None,   None,   'CDH'),
+             (0x0100, 0x8100, None,   None,   'CDH'),
+             (0x79c0, 0x8240, None,   None,   'CDH')  ]
+
 
 initsp = 0xfffc
 minram = 0x100

@@ -4,11 +4,19 @@
 # least 64KB of RAM.  It also avoids loading anything in 0x8200-0x823f
 # in order to keep the stub intact on a 32KB machine.
 
-segments = [ (0x0060, 0x08a0, 0x0100, 0x80a0, 7),
-             (0x00fa, 0x0200, 0x0100, 0x0500, 7),
-             (0x0200, 0x0500, None,   None,   7),
-             (0x0100, 0x8100, None,   None,   0),
-             (0x79c0, 0x8240, None,   None,   0) ]
+# Flags is now a string with letters:
+# - 'C' if the segment can contain code
+# - 'D' if it can contain data
+# - 'H' if it can be used for the malloc heap.
+# Using lowercase letters instead mean that use is permitted
+# when an explicit placement constraint is provided.
+#
+# ------------size----addr----step----end------flags
+segments = [ (0x0060, 0x08a0, 0x0100, 0x80a0, 'cd'),
+             (0x00fa, 0x0200, 0x0100, 0x0500, 'cd'),
+             (0x0200, 0x0500, None,   None,   'cd'),
+             (0x0100, 0x8100, None,   None,   'CDH'),
+             (0x79c0, 0x8240, None,   None,   'CDH')  ]
 
 # Use new segments for long functions
 args.lfss = args.lfss or 256

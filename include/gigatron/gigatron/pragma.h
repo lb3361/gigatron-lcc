@@ -14,16 +14,56 @@
    * #pragma glcc option("OPTION")
      Passes argument --option=OPTION to the linker.
 
-   * #pragma glcc lib("LIB")
-     Passes argument -lLIB to the linker.
+   * #pragma glcc lomem("MODNAME","FRAGNAME")
+     Causes fragment "FRAGNAME" from module "MODNAME" to be placed in
+     the lower half of the Gigatron address space, making it
+     accessible regardless of the selected bank.  Usually "FRAGNAME"
+     is a source file name, and "MODNAME" is a function name or a
+     variable name. However, both "FRAGNAME" and "MODNAME" can be
+     patterns similar to the shell filename pattere. For instance,
+         #pragma glcc lomem("lomem.c","*")
+     causes everything defined in file "lomem.c" to be
+     placed in low memory, whereas
+         #pragma glcc lomem("*", "SYS_*")
+     causes all functions whose name starts with "SYS_" to be placed
+     in low memory regardless of their module name. Unlike the
+     placement attributes discussed later in this documeet, the lomem
+     pragma can affect the placement of code and functions defined in
+     other modules (e.g. 'memset' above).
 
-  * #pragma glcc lowmem("PATTERN")
-     Forces the placement of any fragment in low memory, that is
-     between addresses 0x200 and 0x7fff. Arguement PATTERN if a
-     glob patterm (e.g. "SYS_*") and can match any function or
-     data fragment linked into the executable. This can be used
-     to ensure that functions can be executed while swapping
-     high memory banks.
+   * #pragma glcc segment(SADDR, EADDR, "USES")
+     Redefines which uses are permitted for a segment of the Gigatron
+     address space. Integers SADDR and EADDR define the start address
+     (inclusive) and the end address (exclusive) of the segment.
+     String "USES" may contain any combination of the following letters:
+     - "C" for a segment that can be used for vcpu code,
+     - "D" for a segment that can be used for data variables,
+     - "H" for a segment that can be used for the malloc heap,
+     - "c" for a segment that can be used for code with only when
+       explicit placement constraints have been provided.
+     - "d" for a segment that can be used for code with only when
+       explicit placement constraints have been provided.
+     This segment specification overrides any overlapping segment
+     definition provided by the map of by a map overlay. The linker
+     option --segments can be used to examine the resulting segment list.
+
+   * #pragma initsp(ADDR)
+     Defines the initial value of the stack pointer,
+     overriding that value specified in the map file.
+
+   * #pragma glcc lib("LIB")
+     Causes library LIB to be linked with the program
+     by passing argument -lLIB to the linker
+
+   * #pragma glcc onload("FUNCNAME")
+     Defines an early initialization function by passing
+     argument --onload=FUNCNAME to the linker.
+
+   Pragma arguments must be constants defined at compile time.
+   Limited support is offered for simple expressions as long as they
+   are legal in both C and Python and produce a constant result.  For
+   instance, numbers can be expressed in decimal or in hexadecimal
+   (but not in octal because python and C disagree on the proper syntax).
 
 
    ==== Declaration attributes ====
@@ -41,7 +81,8 @@
    * `__attribute__((nohop))`
      Variable cannot cross a page boundary.
    * `__attribute__((org(ADDRESS)))
-     Variable must be allocated at the specified address
+     Variable must be allocated at the specified address.
+     This attribute overrides all other placement constraints.
    * `__attribute__((offset(ADDRESS)))
      Variable must be allocated at page offset ADDRESS&0xff.
    * `__attribute__((place(AMIN,AMAX)))`
@@ -108,11 +149,6 @@
    zero. */
 
 #define __weakref(x) __attribute__((alias("__glink_weak_" x)))
-
-/* `__weak` --
-   Deprecated. */
-
-#define __weak  __attribute__((alias("__glink_weak_%s")))
 
 /* `__at(ADDRESS)` --
    Indicate that a variable lives at a fixed address.

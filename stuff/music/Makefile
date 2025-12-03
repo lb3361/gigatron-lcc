@@ -4,7 +4,7 @@ ROM=dev7
 
 CC=${BINDIR}glcc
 GTMID2C=${BINDIR}build/gtmid2c
-CFLAGS=-map=64k,./music.ovl --no-runtime-bss
+CFLAGS=-map=64k --no-runtime-bss
 
 PGMS=music.gt1
 

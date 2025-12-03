@@ -1668,35 +1668,79 @@ static void progend(void)
         "\n# End:\n");
 }
 
+
+/* helper to validate pragma syntax,
+   parsing an intersection of c and python. */
+int validate_pragma(const char *s, const char *tpl)
+{
+  int si,ti;
+  for (si=ti=0; tpl[ti]; ti++)
+    if (tpl[ti]==' ') {
+      while (s[si]!='\n' && isspace(s[si])) { si++; }
+    } else if (tpl[ti]=='%' && tpl[ti+1]=='s') {
+      if (s[si++] != '\"') { return -si; }
+      while (s[si++] != '\"') {
+        if (s[si-1] == '\\') { si++; }
+        if (s[si-1] == '\n') { return -si; }
+      }
+      ti++;
+    } else if (tpl[ti]=='%' && tpl[ti+1]=='i') {
+      for(;;) {
+        while (s[si]!='\n' && isspace(s[si])) { si++; }
+        if (s[si] == '(') {
+          int n = validate_pragma(s+si+1, " %i ");
+          if (n < 0) { return n-si-1; } else { si += n+1; }
+          if (s[si++] != ')') { return -si; }
+        } else if (s[si] == '0') {
+          if (s[++si] == 'x' || s[si] == 'X')
+            while (isxdigit(s[++si])) {}
+        } else if (isdigit(s[si])) {
+          while (isdigit(s[si])) { si++; }
+        } else
+          return -si-1;
+        while (s[si]!='\n' && isspace(s[si])) { si++; }
+        if (strchr("><", s[si]) && s[si+1]==s[si]) { si+=2; }
+        else if (!strchr("+-*/&|", s[si++])) { si--; break; }
+      }
+      ti++;
+    } else {
+      if (tpl[ti]=='%' && tpl[ti+1]=='%') { ti++; }
+      if (tpl[ti] != s[si++]) { return -si; }
+    }
+  return si;
+}
+
+
 /* lcc callback: pragma */
 static int do_pragma()
 {
   int i;
-  unsigned char *s;
+  int mn=0;
+  char *s = (char*)cp;
+  char buf[10];
   static const char *patterns[] = {
-    "option ( \"%*[^\"]\" ) %n",
-    "lomem ( \"%*[^\"]\" ) %n",
-    "lib ( \"%*[^\"]\" ) %n",
+    " option ( %s ) ",
+    " lomem ( %s , %s ) ",
+    " lib ( %s ) ",
+    " initsp ( %i ) ",
+    " onload ( %s ) ",
+    " segment ( %i , %i , %s ) ",
     0
   };
-
-  while (*cp == ' ' || *cp == '\t')
-    cp++;
-  for(s = cp; *s; s++)
-    if (*s == '\n')
-      break;
+  while (*s!='\n' && isspace(*s)) { s++; }
   for (i=0; patterns[i]; i++) {
-    int n = -1;
-    int c = *s;
-    *s = 0;
-    sscanf((char*)cp, patterns[i], &n);
-    *s = c;
-    if (n >= 0 && cp + n == s) {
-      xprint("# ======== pragma\npragma_%S\n\n", cp, n);
+    int n = validate_pragma(s, patterns[i]);
+    if (n > 0 && s[n] == '\n') {
+      xprint("# ======== pragma\npragma_%S\n\n", s, n);
       return 1;
+    } else if (n < mn) {
+      mn = n;
     }
   }
-  return 0;
+  strncpy(buf, s-mn-1, sizeof(buf));
+  buf[sizeof(buf)-1] = 0;
+  warning("#pragma glcc: parsing error near '%s'\n", buf);
+  return 1;
 }
 
 
@@ -2329,8 +2373,9 @@ static const char* check_idval(Attribute a, int n)
       else if (!isalpha(s[0]) && s[0] != '_')
         return 0;
     }
+    return stringf("'%s'", str);
   }
-  return stringf("'%s'", str);
+  return 0;
 }
 
 static const int check_quickcall_proto(Type ty)
@@ -2367,36 +2412,46 @@ static const char *check_attributes(Symbol p)
   if (p->scope == GLOBAL || is_static || is_extern) {
     for (a = p->attr; a; a = a->link) {
       char yes = 0;
-      if (a->name == string("place") && !is_extern) {
+      a->okay = 0;
+      if (a->name == string("place")) {
+        if (is_extern)
+          error("external symbols do not obey placement constraint\n");
         if (has_org)
-          error("incompatible placement constraints (org & place)\n");
+          warning("org attribute overrides placement constraints\n");
         a->okay = (check_uintval(a,0) &&  check_uintval(a,1));
         yes = has_place = 1;
       } else if (a->name == string("org")) {
         if (has_org)
-          error("incompatible placement constraints (multiple org)\n");
-        else if (has_place)
-          error("incompatible placement constraints (org & place)\n");
+          error("multiple org attributes\n");
+        else if (has_place || has_off)
+          warning("org attribute overrides placement constraints\n");
         a->okay = (check_uintval(a,0) && !a->args[1]);
         yes = has_org = 1;
-      } else if (a->name == string("offset") && !is_extern) {
+      } else if (a->name == string("offset")) {
+        if (is_extern)
+          error("external symbols do not obey placement constraint\n"); 
         if (has_off)
-          error("incompatible placement constraints (multiple offsets)\n");
+          warning("multiple offset contraints");
+        if (has_org)
+          warning("org attribute overrides all placement constraints\n");
         a->okay = (check_uintval(a,0) && !a->args[1]);
         yes = has_off = 1;
-      } else if (a->name == string("nohop") && !is_extern) {
+      } else if (a->name == string("nohop")) {
+        if (is_extern)
+          error("external symbols do not obey nohop constraints\n");
         a->okay = (!a->args[0] && !a->args[1]);
         yes = 1;
-      } else if (a->name == string("alias") && is_extern && !alias) {
+      } else if (a->name == string("alias") && !alias && is_extern) {
         alias = check_idval(a, 0);
         a->okay = (alias!=0 && !a->args[1]);
         yes = 1;
-      } else if (a->name == string("regalias") && is_extern && !alias) {
+      } else if (a->name == string("regalias") && !alias && is_extern) {
         alias = check_strval(a, 0);
         a->okay = (alias!=0 && findreg(alias) && !a->args[1]);
         yes = 1;
-      } else if (a->name == string("quickcall") && is_extern &&
-                 p->type && isfunc(p->type) ) {
+      } else if (a->name == string("quickcall") && p->type && isfunc(p->type)) {
+        if (!is_extern)
+          error("a function written in C cannot be declared quickcall\n");
         check_quickcall_proto(p->type);
         a->okay = (!a->args[0] && !a->args[1]);
         yes = 1;

@@ -4,7 +4,7 @@
 segments = segments +  [ (0x0100, 0x8100, None,   None,   'CDH'),
                          (0x79c0, 0x8240, None,   None,   'CDH')  ]
 
-initsp = 0xfffc
+args.initsp = 0xfffc
 
 minram = 0x100
 

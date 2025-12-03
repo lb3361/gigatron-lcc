@@ -36,7 +36,7 @@ def map_modules(romtype):
     def code0():
         org(0x200)
         label('_gt1exec')
-        LDWI(initsp);STW(SP);
+        LDWI(args.initsp);STW(SP);
         LDWI(v(args.e));CALL(vAC)
         label('exit')
         label('_exit')

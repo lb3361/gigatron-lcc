@@ -32,7 +32,7 @@ segments = [ (0x0060, 0x08a0, 0x0100, 0x80a0, 'CDH'),
              (0x79c0, 0x8240, None,   None,   'CDH')  ]
 
 
-initsp = 0xfffc
+args.initsp = 0xfffc
 minram = 0x100
 args.lfss = args.lfss or 128
 
@@ -79,7 +79,7 @@ def map_modules(romtype):
         LDI(SP); ST('sysArgs4')
         LDI(R0); SYS(40)
         # init stack pointer
-        LDWI(initsp);STW(SP)
+        LDWI(args.initsp);STW(SP)
         # LDWI(0xfe08);STW(vSP)
         # rom test;
         if romtype and romtype >= 0x80:

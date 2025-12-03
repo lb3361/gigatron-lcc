@@ -28,7 +28,7 @@ segments = [ (0x00fa, 0x0200, 0x0100, 0x0500, 'CDH'),
              (0x0100, 0x8100, None,   None,   'CDH'),
              (0x79c0, 0x8240, None,   None,   'CDH')  ]
 
-initsp = 0xfffc
+args.initsp = 0xfffc
 libcon = "con1"
 args.lfss = args.lfss or 256
 
@@ -67,7 +67,7 @@ def map_modules(romtype):
         org(0x200)
         label('_gt1exec')
         # Set stack
-        LDWI(initsp);STW(SP);
+        LDWI(args.initsp);STW(SP);
         # Check ram>64k and expansion present
         LD('memSize');BNE('.err')
         LDWI(0x1f8);PEEK();BEQ('.err')

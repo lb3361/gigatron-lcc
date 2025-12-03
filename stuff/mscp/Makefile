@@ -8,8 +8,8 @@ ASMS=onload.s
 
 all: ${PGMS}
 
-mscp.gt1: ${OBJS} ${ASMS} mscp.ovl
-	${GLCC} -rom=${ROM} -map=${MAP},./mscp.ovl ${OBJS} ${ASMS} -o $@
+mscp.gt1: ${OBJS} ${ASMS}
+	${GLCC} -rom=${ROM} -map=${MAP} ${OBJS} ${ASMS} -o $@
 	${PYTHON} addbook.py $@ book.bin
 
 mscp.o: mscp.c core.h

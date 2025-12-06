@@ -77,6 +77,22 @@ static void merge_attributes(Attribute *dst, Attribute src, int copy)
 	}
 }
 
+static Attribute filter_attributes(Attribute *pa)
+{
+	Attribute a;
+	Attribute nk = 0, *pnk = &nk;
+	Attribute *pok = pa;
+	for (a = *pa; a; a=a->link)
+		if (a->okay) {
+			*pok = a; pok = &(a->link);
+		} else {
+			*pnk = a; pnk =&(a->link);
+		}
+	*pok = 0;
+	*pnk = *pa;
+	return nk;
+}
+
 static void attribute(Attribute *pa) {
 	struct attribute attr;
 	static char stop[] = { CHAR, STATIC, IF, 0 };
@@ -338,8 +354,6 @@ static Symbol dclglobal(int sclass, char *id, Type ty, Coordinate *pos, Attribut
 		    ||  p->sclass == STATIC && sclass == AUTO
 		    ||  p->sclass == AUTO   && sclass == STATIC)
 			warning("inconsistent linkage for `%s' previously declared at %w\n", p->name, &p->src);
-		merge_attributes(&(p->attr), *pa, 0);
-		*pa = p->attr;
 	}
 	if (p == NULL || p->scope != GLOBAL) {
 		Symbol q = lookup(id, externals);
@@ -355,7 +369,7 @@ static Symbol dclglobal(int sclass, char *id, Type ty, Coordinate *pos, Attribut
 			p->type = ty;
 			merge_attributes(&(p->attr), *pa, 0);
 			(*IR->defsymbol)(p);
-			*pa = p->attr;
+			*pa = filter_attributes(&(p->attr));
 		}
 		if (p->sclass != STATIC) {
 			static int nglobals;
@@ -363,8 +377,12 @@ static Symbol dclglobal(int sclass, char *id, Type ty, Coordinate *pos, Attribut
 			if (Aflag >= 2 && nglobals == 512)
 				warning("more than 511 external identifiers\n");
 		}
-	} else if (p->sclass == EXTERN)
+	} else if (p->sclass == EXTERN) {
 		p->sclass = sclass;
+		merge_attributes(&(p->attr), *pa, 0);
+		(*IR->defsymbol)(p);
+		*pa = filter_attributes(&(p->attr));
+	}
 	p->type = ty;
 	p->src = *pos;
 	if (t == '=' && isfunc(p->type)) {

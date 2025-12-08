@@ -2498,17 +2498,16 @@ class Stop(Exception):
     def __init__(self, msg):
         self.msg = msg
 
-def round_used_segments():
-    '''Split all segments containing code or data into
-       a used segment and a free segment starting on
-       a page boundary. Marks used segment as non-BSS.'''
+def split_used_segments():
+    '''Split all partially full segments into a used and a free segment.
+       Mark all used segment as non-BSS.'''
     for (i,s) in enumerate(segment_list):
-        epage = (s.pc + 0xff) & ~0xff
+        epage = (s.pc + 0x3) & ~3
         if s.pc > s.saddr and s.eaddr > epage:
             segment_list.insert(i+1, Segment(epage, s.eaddr, s.flags))
             s.eaddr = epage
             if args.d >= 2:
-                debug(f"rounding {segment_list[i:i+2]}")
+                debug(f"splitting {segment_list[i:i+2]}")
         if s.pc > s.saddr:
             s.nbss = True
 
@@ -2738,7 +2737,7 @@ def run_pass():
         # data segments
         for m in module_list:
             assemble_data_fragments(m, 'DATA')
-        round_used_segments()
+        split_used_segments()
         # bss segments
         for m in module_list:
             assemble_data_fragments(m, 'BSS')
@@ -2787,7 +2786,7 @@ def doke_gt1(addr, val):
 def process_magic_bss(s, head_module, head_addr):
     '''Construct a linked list of sizeable bss segments to be cleared at runtime.'''
     for s in segment_list:
-        if s.pc > s.saddr + 4 and not s.nbss:
+        if s.pc > s.saddr + 4 and not s.nbss and hi(s.saddr) != 0:
             debug(f"BSS segment {hex(s.saddr)}-{hex(s.pc)} will be cleared at runtime")
             size = s.pc - s.saddr
             s.buffer = bytearray(4)
@@ -2797,20 +2796,21 @@ def process_magic_bss(s, head_module, head_addr):
 
 def process_magic_heap(s, head_module, head_addr):
     '''Construct a linked list of heap segments.'''
-    for s in segment_list:
+    for (i,s) in enumerate(segment_list):
         if not 'H' in s.flags:
             continue
         a0 = (s.pc + 3) & ~0x3
         a1 = s.eaddr &  ~0x3
         if a1 - a0 >= max(24, args.mhss or 24):
-            s.pc = a0 + 4
-            if not s.buffer:
-                s.buffer = bytearray(4)
+            if a0 > s.saddr:
+                segment_list.insert(i+1, Segment(a0, s.eaddr, s.flags))
+                s.eaddr = a0
             else:
-                s.buffer.extend(bytearray(s.pc - s.saddr - len(s.buffer)))
-            doke_gt1(a0, a1 - a0)
-            doke_gt1(a0 + 2, deek_gt1(head_addr))
-            doke_gt1(head_addr, a0)
+                s.buffer = bytearray(4)
+                s.pc += 4
+                doke_gt1(a0, a1 - a0)
+                doke_gt1(a0 + 2, deek_gt1(head_addr))
+                doke_gt1(head_addr, a0)
 
 def process_magic_list(s, head_module, head_addr):
     '''Constructs a linked list of structures defined in modules.'''
@@ -2885,32 +2885,45 @@ def process_magic_symbols():
         debug(f"Last GT1 segments ends at address {hex(egt1)}\n")
         doke_gt1(egt1_addr, egt1)
 
+
+def collapse_segments(seglist):
+    seglist = sorted(segment_list, key = lambda x : x.saddr)
+    cseglist = []
+    nseglist = []
+    for s in seglist + [ None ]:
+        if s and s.buffer:
+            if len(cseglist) == 0 or \
+               hi(s.saddr) == 0 or \
+               s.saddr <= cseglist[-1].saddr + len(cseglist[-1].buffer) + 3:
+                cseglist.append(s)
+                continue
+        if s and hi(s.saddr) == 0:
+            continue
+        if len(cseglist) == 1:
+            nseglist.append(cseglist[0])
+        elif len(cseglist) > 1:
+            buffer = bytearray(0)
+            pc = cseglist[0].saddr
+            ns = Segment(pc, cseglist[-1].eaddr, '')
+            for cs in cseglist:
+                if pc < cs.saddr:
+                    buffer += builtins.bytes(cs.saddr - pc)
+                    if pc <= 0x80 and cs.saddr > 0x80:
+                        buffer[0x80 - cs.saddr] = 0x01
+                    pc = cs.saddr
+                buffer += cs.buffer
+                pc += len(cs.buffer)
+            ns.buffer = buffer
+            nseglist.append(ns)
+        cseglist = []
+        if s and s.buffer:
+            cseglist.append(s)
+    return nseglist
+
 def save_gt1(fname, start):
     with open(fname,"wb") as fd:
-        seglist = segment_list.copy()
-        seglist.sort(key = lambda x : x.saddr)
-        # collapse zeropage segments
-        zpseg = None
-        for s in seglist:
-            if not s.buffer:
-                continue
-            elif s.saddr & 0xff00:
-                break
-            elif not zpseg:
-                zpseg = s
-            else:
-                pc = zpseg.saddr + len(zpseg.buffer)
-                assert s.saddr >= pc
-                zpseg.buffer += builtins.bytes(s.saddr - pc)
-                if pc < 0x80 and s.saddr > 0x80:
-                    zpseg.buffer[0x80 - zpseg.saddr] = 1
-                zpseg.buffer += s.buffer
-                zpseg.eaddr = s.eaddr
-                s.buffer = None
-        # save segments
-        for s in seglist:
-            if not s.buffer:
-                continue
+        for s in collapse_segments(segment_list):
+            assert(s.buffer)
             a0 = s.saddr
             pc = s.saddr + len(s.buffer)
             while a0 < pc:

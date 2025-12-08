@@ -17,6 +17,3 @@ segments = [ (0x0060, 0x08a0, 0x0100, 0x80a0, 'cd'),
              (0x0200, 0x0500, None,   None,   'cd'),
              (0x0100, 0x8100, None,   None,   'CDH'),
              (0x79c0, 0x8240, None,   None,   'CDH')  ]
-
-# Use new segments for long functions
-args.lfss = args.lfss or 256

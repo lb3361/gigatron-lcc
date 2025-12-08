@@ -203,9 +203,10 @@ def resolve(s, ignore=None):
 
 class Fragment:
     "Class for representing the code/data fragments in a module"
-    __slots__ = ('segment', 'name','func', 'size', 'align', 'nohop', 'amin', 'amax', 'aoff')
-    def __init__(self, segment, name, func, size = None, align = None):
-        self.segment = segment     # CODE, DATA, BSS, COMMON
+    __slots__ = ('cseg', 'name','func', 'size', 'align',
+                 'nohop', 'amin', 'amax', 'aoff', 'passed')
+    def __init__(self, cseg, name, func, size = None, align = None):
+        self.cseg = cseg           # CODE, DATA, BSS, COMMON
         self.name = name           # fragment name
         self.func = func           # fragment code
         self.size = size           # fragment size (data)
@@ -214,8 +215,9 @@ class Fragment:
         self.aoff = None           # required page offset
         self.amin = None           # min address range
         self.amax = None           # max address range
+        self.passed = -1           # successfully assembled in that pass
     def __repr__(self):
-        return f"Fragment({self.segment},'{self.name}',...)"
+        return f"Fragment({self.cseg},'{self.name}',...)"
 
 class Module:
     '''Class for assembly modules read from .s/.o/.a files.'''
@@ -308,7 +310,7 @@ class Module:
     def label(self, sym, val):
         '''Define a label within a module.
            Increment counter when label value has changed relative to the previous pass.'''
-        if the_pass > 0:
+        if the_pass > 0 and not isinstance(val,Unk):
             if sym in self.symdefs and val == self.symdefs[sym]:
                 self.sympass[sym] = the_pass
             elif sym in self.symdefs and self.sympass[sym] == the_pass:
@@ -329,7 +331,7 @@ class Segment:
         self.eaddr = eaddr
         self.pc = saddr
         self.buffer = None
-        self.nbss = None
+        self.nbss = 0
         if type(flags) == str:
             # Flags is now a string with letters:
             # - 'C' if the segment can contain code
@@ -403,8 +405,8 @@ def emit_long_jump(d):
 def hop(sz, jump):
     '''Ensure, possibly with a hop, that there are at
        least sz bytes left in the segment. '''
+    global hops_enabled
     if bytes_left() < sz:
-        global hops_enabled
         if not hops_enabled:
             error(f"internal error: cannot honor hop({sz}) because hops are disabled")
         elif jump and bytes_left() < size_long_jump():
@@ -413,8 +415,9 @@ def hop(sz, jump):
             global the_segment, the_pc
             hops_enabled = False
             the_segment.pc = the_pc
-            lfss = args.lfss or 64
-            ns = find_code_segment(max(lfss, sz))
+            ns = find_continuation_code_segment(min(256, args.lfss or 48))
+            if not ns:
+                ns = find_continuation_code_segment(min(256, sz))
             if not ns:
                 fatal(f"map memory exhausted while fitting function `{the_fragment.name}'")
             if jump:
@@ -756,9 +759,8 @@ def org(addr):
        must be available. This currently piggybacks on nohop()
        and does not work for code fragments. I have to find
        a better way of doing this.'''
-    global short_function
-    # this information is collected in measure_code_fragment()
     if the_pass == 0:
+        # this information is collected in measure_code_fragment()
         addr = int(addr)
         the_fragment.nohop = True
         if the_fragment.amin != None and the_fragment.amax == None:
@@ -771,9 +773,8 @@ def org(addr):
 def nohop():
     '''Force a code fragment to be fit in a single page.
        An error will be signaled if no page can fit it.'''
-    global short_function
-    # this information is collected in measure_code_fragment()
     if the_pass == 0:
+        # this information is collected in measure_code_fragment()
         the_fragment.nohop = True
 @vasm
 def tryhop(sz=None, jump=True):
@@ -824,7 +825,7 @@ def label(sym, val=None, hop=None):
         referenced = False
         if sym in the_module.symrefs:
             referenced = (the_module.symrefs[sym] == the_pass)
-        if hop != 0 and not referenced:
+        if the_fragment.cseg == 'CODE' and hop != 0 and not referenced:
             tryhop(hop or 12)
         the_module.label(sym, v(val) if val != None else the_pc)
 
@@ -2351,7 +2352,7 @@ def find_exporters(sym):
         for m in module_list:
             if not m.library:
                 for f in m.code:
-                    if f.segment == 'COMMON' and f.name == sym:
+                    if f.cseg == 'COMMON' and f.name == sym:
                         return [ m ]
     return elist
 
@@ -2389,9 +2390,9 @@ def measure_code_fragment(m, frag):
 
 def measure_fragments(m):
     for frag in m.code:
-        if frag.segment in ('DATA', 'BSS') and not frag.size:
+        if frag.cseg in ('DATA', 'BSS') and not frag.size:
             measure_data_fragment(m, frag)
-        elif frag.segment in ('CODE'):
+        elif frag.cseg in ('CODE'):
             measure_code_fragment(m, frag)
     the_module = None
     the_fragment = None
@@ -2463,13 +2464,13 @@ def convert_common_symbols():
        and referenced by the other modules.'''
     for m in module_list:
         for decl in m.code:
-            if decl.segment == 'COMMON':
+            if decl.cseg == 'COMMON':
                 sym = decl.name
                 if sym in exporters:
                     pass
                 else:
                     debug(f"instantiating common '{sym}' in '{m.fname}'")
-                    decl.segment = 'BSS'
+                    decl.cseg = 'BSS'
                     exporters[sym] = m
 
 def check_undefined_symbols():
@@ -2498,175 +2499,138 @@ class Stop(Exception):
     def __init__(self, msg):
         self.msg = msg
 
-def round_used_segments():
-    '''Split all segments containing code or data into
-       a used segment and a free segment starting on
-       a page boundary. Marks used segment as non-BSS.'''
-    for (i,s) in enumerate(segment_list):
-        epage = (s.pc + 0xff) & ~0xff
-        if s.pc > s.saddr and s.eaddr > epage:
-            segment_list.insert(i+1, Segment(epage, s.eaddr, s.flags))
-            s.eaddr = epage
-            if args.d >= 2:
-                debug(f"rounding {segment_list[i:i+2]}")
-        if s.pc > s.saddr:
-            s.nbss = True
-
 def aligned(addr, align):
     if align and align > 1:
         addr = align * ((addr + align - 1) // align)
     return addr
 
-def find_data_segment(size, align, cseg):
+def find_segment(size, cseg, align=1, firstgo=True):
+    # This is surprisingly complex already
+    iscode = (cseg == 'CODE')
+    isbss =  (cseg == 'BSS')
+    tflag = "Cc" if iscode else "Dd"
+    tnbss = -1 if isbss else +1
     amin = the_fragment.amin
     amax = the_fragment.amax
     aoff = the_fragment.aoff
+    nohop = the_fragment.nohop or iscode
     for (i,s) in enumerate(segment_list):
-        if not 'D' in s.flags:
-            if amin == None or not 'd' in s.flags:
+        # check flags
+        if not tflag[0] in s.flags:
+            if amin == None or not tflag[1] in s.flags:
                 continue
+        # try constructing an address which may or may not fit
         addr = aligned(s.pc, align)
-        if aoff != None and aoff & 0xff >= addr & 0xff:
-            addr = aligned((addr & 0xff00)|(aoff & 0xff), align)
+        epage = (addr | 0xff) + 1
+        if aoff != None and aoff >= addr & 0xff:
+            addr = (addr & 0xff00) | (aoff & 0xff)
         if amin != None and amin > addr:
-            addr = aligned(amin, align)
-        if the_fragment.nohop and (addr ^ (addr + size - 1)) & 0xff00 != 0:
-            addr = aligned(addr, 256)
+            addr = amin
+        if nohop and addr + size > epage:
+            addr = epage
+        # handle hard placement
         if amin != None and amax == None:
             if not (amin >= s.saddr and amin < s.eaddr):
                 continue
             if amin < s.pc:
                 raise Stop(f"Requested address {the_fragment.name}@{hex(amin)} is busy")
-            if addr > amin:
+            if addr > amin and align > 1:
                 raise Stop(f"Requested address {the_fragment.name}@{hex(amin)} is misaligned")
-            if addr + size > s.eaddr:
+            if addr > amin or addr + size > s.eaddr:
                 raise Stop(f"Fragment {the_fragment.name}@{hex(amin)} does not fit at the requested address")
+        # avoid mixing bss and not bss in the same page
+        if firstgo and tnbss * s.nbss < 0:
+            addr = epage
+        # final validation.
         if addr + size > s.eaddr:
             continue
         if amax != None and addr + size > amax + 1:
             continue
         if aoff != None and addr & 0xff != aoff:
             continue
-        while addr > s.pc and s.pc > s.saddr and addr < s.pc + 4:
-            while s.pc < addr:                  # not worth splitting
-                s.buffer.append(0) if s.buffer else None
-                s.pc += 1
+        # pad segment if s.pc < addr < s.pc + 4 and no nbss change
+        if s.pc < addr < s.pc + 4 and s.nbss * tnbss >= 0:
+            s.buffer = s.buffer + builtins.bytes(addr - s.pc) if s.buffer != None else None
             s.pc = addr
-        if addr > s.pc:                         # split the segment
+        # carve a new segment when there is an unused part or when nbss conflicts
+        if addr > s.pc or s.nbss * tnbss < 0:
             ns = Segment(addr, s.eaddr, s.flags)
             s.eaddr = addr
             segment_list.insert(i+1, ns)
             s = ns
             i = i+1
-        return s
-
-def find_code_segment(size):
-    size = min(256, size)
-    amin = the_fragment.amin
-    amax = the_fragment.amax
-    aoff = the_fragment.aoff
-    for (i,s) in enumerate(segment_list):
-        if not 'C' in s.flags:
-            if amin == None or not 'c' in s.flags:
-                continue
-        addr = s.pc
-        if aoff != None and aoff >= addr & 0xff:
-            addr = (addr & 0xff00) | (aoff & 0xff)
-        if amin != None and amin > addr:
-            addr = amin
+        # make sure code segment does not extend beyond page boundary
         epage = (addr | 0xff) + 1
-        if amin != None and amax == None:
-            if not (amin >= s.saddr and amin < s.eaddr):
-                continue
-            if amin >= s.saddr and amin < s.pc:
-                raise Stop(f"Requested address for fragment {the_fragment.name}@{hex(amin)} is busy")
-            if amin < s.eaddr and amin + size > min(epage, s.eaddr):
-                raise Stop(f"Fragment {the_fragment.name}@{hex(amin)} does not fit at the requested address")
-        if addr + size > epage:
-            addr = epage
-            epage = (addr | 0xff) + 1
-        if addr + size > min(epage, s.eaddr):
-            continue
-        if amax != None and addr + size > amax + 1:
-            continue
-        if aoff != None and addr & 0xff != aoff:
-            continue
-        # possibly carve segment before address addr
-        if addr > s.pc:
-            ns = Segment(addr, s.eaddr, s.flags)
-            s.eaddr = addr
-            segment_list.insert(i+1, ns)
-            s = ns
-            i = i+1
-        # since code segments cannot cross page boundaries
-        # it is sometimes necessary to carve a code segment from a larger one
-        if s.eaddr > epage:
+        if iscode and s.eaddr > epage:
             ns = Segment(epage, s.eaddr, s.flags)
             s.eaddr = epage
             segment_list.insert(i+1, ns)
+        # mark nbss
+        s.nbss = s.nbss or tnbss
+        # validate and return
+        assert s.pc == addr
+        assert tnbss == s.nbss
+        assert amin == None or amin <= addr
+        assert amax == None or amax >= addr
+        assert amin == None or amax != None or amin == addr
+        assert aoff == None or addr & 0xff == aoff
+        assert s.eaddr <= epage or not iscode
+        assert addr + size <= epage or not nohop
         return s
-    # not found
     return None
 
-def assemble_code_fragments(m, placed=False, absolute=False):
-    global the_module, the_fragment, the_segment, the_pc
-    global hops_enabled, short_function
-    the_module = m
-    for frag in m.code:
-        the_fragment = frag
-        if frag.segment == 'CODE':
-            if bool(frag.amin) != bool(placed):
-                continue
-            if placed and bool(frag.amax) == absolute:
-                continue
-            funcsize = frag.size
-            the_segment = None
-            sfst = min(256, args.sfst or 96)
-            if frag.nohop or funcsize <= sfst:
-                short_function = True
-                hops_enabled = False
-                the_segment = find_code_segment(funcsize)
-                if frag.nohop and not the_segment:
-                    error(f"cannot find a segment for short code fragment '{frag.name}' of length {funcsize}")
-                if the_segment and (args.d >= 2 or final_pass):
-                    debug(f"assembling code fragment '{frag.name}' at {hex(the_segment.pc)} in {the_segment}")
-            if not the_segment:
-                short_function = False
-                hops_enabled = True
-                lfss = args.lfss or 64
-                the_segment = find_code_segment(min(lfss, 256))
-                if not the_segment:
-                    raise Stop(f"cannot fit code fragment '{frag.name}'")
-                if the_segment and (args.d >= 2 or final_pass):
-                    debug(f"assembling code fragment '{frag.name}' at {hex(the_segment.pc)} in {the_segment}")
-            the_pc = the_segment.pc
-            if args.fragments and final_pass:
-                record_fragment_address(the_pc)
-            try:
-                frag.func()
-            except Exception as err:
-                fatal(str(err), exc=True)
-            the_segment.pc = the_pc
-            if args.fragments and final_pass:
-                record_fragment_address(the_pc)
-            if args.rpth and labelchange_counter > args.rpth and not final_pass:
-                raise Stop(f"{labelchange_counter} changed labels already: restarting a new pass.")
+def find_continuation_code_segment(size):
+    # this is called to find a continuation segment
+    return find_segment(size, cseg='CODE', firstgo=True) \
+        or find_segment(size, cseg='CODE', firstgo=False)
 
-def assemble_data_fragments(m, cseg, placed=False):
-    global the_module, the_fragment, the_segment, hops_enabled, the_pc
-    global labelchange_counter
-    the_module = m
-    for frag in m.code:
-        the_fragment = frag
-        if bool(frag.amin) != bool(placed):
-            continue
-        if frag.segment == cseg:
+def find_first_code_segment(frag, firstgo=True):
+    global the_segment, hops_enabled, short_function
+    funcsize = frag.size
+    sfst = min(256, args.sfst or 256)
+    lfss = min(256, funcsize, args.lfss or 96)
+    the_segment = None
+    if frag.nohop or funcsize <= sfst:
+        the_segment = find_segment(funcsize, cseg='CODE', firstgo=firstgo)
+        if frag.nohop and not the_segment and not firstgo:
+            raise Stop(f"cannot fit short code fragment '{frag.name}' of length {funcsize}")
+        if the_segment:
+            short_function = True
             hops_enabled = False
-            the_segment = find_data_segment(frag.size, frag.align, cseg)
+            if args.d >= 2 or final_pass:
+                debug(f"assembling code fragment '{frag.name}' at {hex(the_segment.pc)} in {the_segment}")
+    if not the_segment:
+        the_segment = find_segment(lfss, cseg='CODE', firstgo=firstgo)
+        if not the_segment and not firstgo:
+            raise Stop(f"cannot fit code fragment '{frag.name}'")
+        if the_segment:
+            short_function = False
+            hops_enabled = True
+            if args.d >= 2 or final_pass:
+                debug(f"assembling code fragment '{frag.name}' at {hex(the_segment.pc)} in {the_segment}")
+    return the_segment
+    
+def assemble_fragments(firstgo, predicate=None):
+    global the_module, the_fragment, the_segment, the_pc, hops_enabled
+    for m in module_list:
+        the_module = m
+        for frag in m.code:
+            the_fragment = frag
+            if frag.passed >= the_pass:
+                continue
+            if predicate and not predicate(frag):
+                continue
+            if frag.cseg == 'CODE':
+                the_segment = find_first_code_segment(frag, firstgo)
+            else:
+                the_segment = find_segment(frag.size, frag.cseg, align=frag.align, firstgo=firstgo)
+                if the_segment and (args.d >= 2 or final_pass):
+                    debug(f"assembling {frag.cseg} fragment '{frag.name}' at {hex(the_segment.pc)} in {the_segment}")
+                hops_enabled = False
+            if firstgo and not the_segment:
+                continue
             if not the_segment:
-                raise Stop(f"cannot fit {cseg} fragment '{frag.name}'")
-            elif args.d >= 2 or final_pass:
-                debug(f"assembling {cseg} fragment '{frag.name}' at {hex(the_segment.pc)} in {the_segment}")
+                raise Stop(f"cannot fit {frag.cseg} fragment '{frag.name}'")
             the_pc = the_segment.pc
             if args.fragments and final_pass:
                 record_fragment_address(the_pc)
@@ -2678,10 +2642,13 @@ def assemble_data_fragments(m, cseg, placed=False):
             except Exception as err:
                 fatal(str(err), exc=True)
             the_segment.pc = the_pc
+            frag.passed = the_pass
             if args.fragments and final_pass:
                 record_fragment_address(the_pc)
+            if args.rpth and labelchange_counter > args.rpth and not final_pass:
+                raise Stop(f"{labelchange_counter} changed labels already: restarting a new pass.")
 
-def check_overlaps(segments, message):
+def check_segment_overlaps(segments, message):
     sl = sorted(segments, key=lambda s: s.saddr)
     for i in range(len(sl)-1):
         if sl[i].eaddr > sl[i+1].saddr:
@@ -2693,8 +2660,8 @@ def make_segments():
     for (s,e,d) in map_segments():
         segments.append(Segment(s,e,d))
     if the_pass == 0:
-        check_overlaps(segments, "map-defined segments")
-        check_overlaps(args.pragsegs, "pragma-defined segments")
+        check_segment_overlaps(segments, "map-defined segments")
+        check_segment_overlaps(args.pragsegs, "pragma-defined segments")
     # subtract pragma-defined segments from map-defined segments
     for ps in args.pragsegs:
         nsegments = []
@@ -2723,25 +2690,29 @@ def run_pass():
     genlabel_counter = 0
     debug(f"pass {the_pass}")
     try:
-        # code segments with explicit address or placement constraints
-        for m in module_list:
-            assemble_code_fragments(m, placed=True, absolute=True)
-        for m in module_list:
-            assemble_code_fragments(m, placed=True, absolute=False)
-        for m in module_list:
-            assemble_data_fragments(m, 'DATA', placed=True)
-        for m in module_list:
-            assemble_data_fragments(m, 'BSS', placed=True)
-        # remaining code segments
-        for m in module_list:
-            assemble_code_fragments(m, placed=False)
-        # data segments
-        for m in module_list:
-            assemble_data_fragments(m, 'DATA')
-        round_used_segments()
-        # bss segments
-        for m in module_list:
-            assemble_data_fragments(m, 'BSS')
+        # Heuristic ordering of the fragment placement
+        # -- fragments with explicit addresses
+        assemble_fragments(False, lambda f: f.amin and not f.amax)
+        # -- large data fragments (placing BSS here makes the engine hard to predict)
+        assemble_fragments(False, lambda f: f.cseg=='DATA' and f.size>256 and f.amin)
+        assemble_fragments(False, lambda f: f.cseg=='DATA' and f.size>256)
+        # -- placed code and data
+        assemble_fragments(True, lambda f: f.cseg=='CODE' and f.aoff)
+        assemble_fragments(True, lambda f: f.cseg!='CODE' and f.aoff)
+        assemble_fragments(True, lambda f: f.cseg=='CODE' and f.amin)
+        assemble_fragments(True, lambda f: f.cseg!='CODE' and f.amin)
+        assemble_fragments(False, lambda f: f.cseg=='CODE' and f.amin)
+        assemble_fragments(False, lambda f: f.cseg!='CODE' and f.amin)
+        # -- all code and data
+        assemble_fragments(True, lambda f: f.cseg=='CODE' )
+        assemble_fragments(True, lambda f: f.cseg=='DATA')
+        assemble_fragments(True, lambda f: f.cseg=='BSS')
+        # -- last call
+        assemble_fragments(False, lambda f: f.cseg=='CODE' )
+        assemble_fragments(False, lambda f: f.cseg=='DATA')
+        assemble_fragments(False, lambda f: f.cseg=='BSS')
+        # done
+        assemble_fragments(False)
     except Stop as stop:
         if final_pass or not labelchange_counter:
             fatal(stop.msg)
@@ -2787,7 +2758,7 @@ def doke_gt1(addr, val):
 def process_magic_bss(s, head_module, head_addr):
     '''Construct a linked list of sizeable bss segments to be cleared at runtime.'''
     for s in segment_list:
-        if s.pc > s.saddr + 4 and not s.nbss:
+        if s.pc > s.saddr + 4 and s.nbss < 0 and hi(s.saddr) != 0:
             debug(f"BSS segment {hex(s.saddr)}-{hex(s.pc)} will be cleared at runtime")
             size = s.pc - s.saddr
             s.buffer = bytearray(4)
@@ -2797,20 +2768,21 @@ def process_magic_bss(s, head_module, head_addr):
 
 def process_magic_heap(s, head_module, head_addr):
     '''Construct a linked list of heap segments.'''
-    for s in segment_list:
+    for (i,s) in enumerate(segment_list):
         if not 'H' in s.flags:
             continue
         a0 = (s.pc + 3) & ~0x3
         a1 = s.eaddr &  ~0x3
         if a1 - a0 >= max(24, args.mhss or 24):
-            s.pc = a0 + 4
-            if not s.buffer:
-                s.buffer = bytearray(4)
+            if a0 > s.saddr:
+                segment_list.insert(i+1, Segment(a0, s.eaddr, s.flags))
+                s.eaddr = a0
             else:
-                s.buffer.extend(bytearray(s.pc - s.saddr - len(s.buffer)))
-            doke_gt1(a0, a1 - a0)
-            doke_gt1(a0 + 2, deek_gt1(head_addr))
-            doke_gt1(head_addr, a0)
+                s.buffer = bytearray(4)
+                s.pc += 4
+                doke_gt1(a0, a1 - a0)
+                doke_gt1(a0 + 2, deek_gt1(head_addr))
+                doke_gt1(head_addr, a0)
 
 def process_magic_list(s, head_module, head_addr):
     '''Constructs a linked list of structures defined in modules.'''
@@ -2819,7 +2791,7 @@ def process_magic_list(s, head_module, head_addr):
             if s in m.symdefs:
                 cons_addr = m.symdefs[s]
                 for frag in m.code:
-                    if frag.name == s and frag.segment == 'DATA':
+                    if frag.name == s and frag.cseg == 'DATA':
                         break
                 if not frag or frag.size < 4 or frag.align < 2:
                     return warning(f"ignoring magic symbol '{s}' in {m.fname} (wrong type)")
@@ -2860,7 +2832,7 @@ def process_magic_symbols():
             head_module = exporters[s]
             head_addr = head_module.symdefs[s]
             for frag in head_module.code:
-                if frag.name == s and frag.segment == 'DATA':
+                if frag.name == s and frag.cseg == 'DATA':
                     if frag.size != 2 or frag.align != 2:
                         return warning(f"ignoring magic symbol '{s}' (list head not a pointer)")
                 if deek_gt1(head_addr) != 0xBEEF:
@@ -2873,32 +2845,45 @@ def process_magic_symbols():
             else:
                 process_magic_list(s, head_module, head_addr)
 
+
+def collapse_segments(seglist):
+    seglist = sorted(segment_list, key = lambda x : x.saddr)
+    cseglist = []
+    nseglist = []
+    for s in seglist + [ None ]:
+        if s and s.buffer:
+            if len(cseglist) == 0 or \
+               hi(s.saddr) == 0 or \
+               s.saddr <= cseglist[-1].saddr + len(cseglist[-1].buffer) + 3:
+                cseglist.append(s)
+                continue
+        if s and hi(s.saddr) == 0:
+            continue
+        if len(cseglist) == 1:
+            nseglist.append(cseglist[0])
+        elif len(cseglist) > 1:
+            buffer = bytearray(0)
+            pc = cseglist[0].saddr
+            ns = Segment(pc, cseglist[-1].eaddr, '')
+            for cs in cseglist:
+                if pc < cs.saddr:
+                    buffer += builtins.bytes(cs.saddr - pc)
+                    if pc <= 0x80 and cs.saddr > 0x80:
+                        buffer[0x80 - cs.saddr] = 0x01
+                    pc = cs.saddr
+                buffer += cs.buffer
+                pc += len(cs.buffer)
+            ns.buffer = buffer
+            nseglist.append(ns)
+        cseglist = []
+        if s and s.buffer:
+            cseglist.append(s)
+    return nseglist
+
 def save_gt1(fname, start):
     with open(fname,"wb") as fd:
-        seglist = segment_list.copy()
-        seglist.sort(key = lambda x : x.saddr)
-        # collapse zeropage segments
-        zpseg = None
-        for s in seglist:
-            if not s.buffer:
-                continue
-            elif s.saddr & 0xff00:
-                break
-            elif not zpseg:
-                zpseg = s
-            else:
-                pc = zpseg.saddr + len(zpseg.buffer)
-                assert s.saddr >= pc
-                zpseg.buffer += builtins.bytes(s.saddr - pc)
-                if pc < 0x80 and s.saddr > 0x80:
-                    zpseg.buffer[0x80 - zpseg.saddr] = 1
-                zpseg.buffer += s.buffer
-                zpseg.eaddr = s.eaddr
-                s.buffer = None
-        # save segments
-        for s in seglist:
-            if not s.buffer:
-                continue
+        for s in collapse_segments(segment_list):
+            assert(s.buffer)
             a0 = s.saddr
             pc = s.saddr + len(s.buffer)
             while a0 < pc:
@@ -2930,7 +2915,7 @@ def print_fragments():
     print("\nFragment map")
     for rng in addrs:
         (part, frag, m) = addrinfo[rng]
-        cseg = frag.segment
+        cseg = frag.cseg
         name = frag.name
         if cseg == 'CODE':
             nparts = fraginfo[id(frag)][0]

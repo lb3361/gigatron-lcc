@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <gigatron/sys.h>
+#include <gigatron/libc.h>
 #include <gigatron/console.h>
 
 

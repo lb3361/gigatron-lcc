@@ -100,6 +100,7 @@ extern double _p1evl(double x, double *coeff, int n) __attribute__((quickcall));
    and fp->_file set to -1 or set to a desired file descriptor. */
 extern int _openf(FILE *fp, const char *fname);
 
+
 /* ---- Bitsets ---- */
 
 extern void _bitset_clear(char *set, size_t sz);
@@ -137,7 +138,6 @@ extern char *_ultoa(unsigned long value, char *bufend, int radix);
 
 extern char *dtoa(double x, char *buf, int format, int prec);
 
-
 /* Converts a number in range 0 to 99 into decimal,
    two ascii digits packed in the returned integer.
    This is a compact self-contained function. */
@@ -145,6 +145,22 @@ extern char *dtoa(double x, char *buf, int format, int prec);
 extern int _utwoa(int);
 
 
+/* ---- Banking ---- */
+
+/* Return an opaque result that summarizes the banking state. */
+extern void *_membank_save(void) __attribute__((quickcall));
+
+/* Restore previously saved banking state. */
+extern void _membank_restore(void *saved) __attribute__((quickcall));
+
+/* Sets a particular memory bank in address range 0x8000-0xffff.
+   Bank is truncated to range 0..3 on 128k gigatrons.
+   Bank may be in range 0..15 when the 512k map is active. */
+extern void _membank_set(int bank) __attribute__((quickcall));
+
+/* Return the bank currently mapped in address range 0x8000-0xffff.
+   This function requires a 512k rom when the 512k map is active. */
+extern int _membank_get(void) __attribute__((quickcall));
 
 
 /* ---- Misc ---- */

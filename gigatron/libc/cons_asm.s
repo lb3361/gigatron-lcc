@@ -17,7 +17,7 @@ def scope():
             +  [('PLACE',x,0x200,0x7fff) for x in args ]
 
     if cons_512k or cons_128k:
-        # bamked framebuffer
+        # banked framebuffer
         more_imports.append('_cons_save_current_bank')
         more_imports.append('_cons_restore_saved_bank')
         def save_bank():
@@ -37,23 +37,9 @@ def scope():
                 CALLI('_cons_set_bank')
     else:
         # direct framebuffer
-        def save_bank():
-            pass
-        def restore_bank():
-            pass
-        def set_bank(row=None):
-            pass
-        def code_dummy_bank():
-            nohop()
-            label('_cons_save_current_bank')
-            label('_cons_restore_saved_bank')
-            label('_cons_set_bank')
-            RET()
-        module(name='cons_dummy_bank.s',
-               code=[('EXPORT','_cons_save_current_bank'),
-                     ('EXPORT','_cons_restore_saved_bank'),
-                     ('EXPORT','_cons_set_bank'),
-                     ('CODE', '_cons_set_bank', code_dummy_bank) ] )
+        def save_bank(): pass
+        def restore_bank(): pass
+        def set_bank(row=None): pass
 
 
 

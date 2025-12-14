@@ -1,10 +1,11 @@
 
 BINDIR=../../build/
 ROM=dev7
+MAP=64k
 
 CC=${BINDIR}glcc
 GTMID2C=${BINDIR}build/gtmid2c
-CFLAGS=-map=64k --no-runtime-bss
+CFLAGS=-map=${MAP} --no-runtime-bss
 
 PGMS=music.gt1
 

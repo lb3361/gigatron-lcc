@@ -44,7 +44,7 @@ def scope():
             nohop()
             label('_vIrqHandler')
             LDWI('__glink_weak__vIrqAltHandler');BEQ('.rti0')
-            PUSH();CALL(vAC);POP()
+            PUSH();CALL(vAC);POP()  ## stack must be in low memory!!!
             label('.rti0')
             INC(v('_vIrqTicks')+1);LD(v('_vIrqTicks')+1);BNE('.rti1')
             if args.cpu >= 7:

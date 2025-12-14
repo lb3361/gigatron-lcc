@@ -155,6 +155,10 @@ def scope():
                      ('CODE','midi_play',code_midi_play)] )
     else:
 
+        ctrlBits_v5 = 0x1f8
+        cons_128k = 'MAP128K' in args.opts
+        cons_512k = 'MAP512K' in args.opts
+
         def code_midi_ivars():
             label('_midi.p')
             words(0)
@@ -174,6 +178,11 @@ def scope():
             space(2)
             label('_midi.cmd')
             space(2)
+            if cons_128k or cons_512k:
+                label('_midi.sysfn')
+                space(2)
+                label('_midi.bank')
+                space(1)
 
         def code_midi_note():
             nohop()
@@ -204,10 +213,12 @@ def scope():
             ANDI(3);INC(vACL);ST(v('_midi.tmp')+1)
             # delay
             LDW('_midi.cmd');SUBI(0x80);_BGE('.xcmd')
+            LD('_midi.cmd')
+            label('.dly')
             if args.cpu >= 7:
-                LD('_midi.cmd');ADDV('_midi.t')
+                ADDV('_midi.t')
             else:
-                LD('_midi.cmd');ADDW('_midi.t');STW('_midi.t')
+                ADDW('_midi.t');STW('_midi.t')
             POP();RET();
             # note off
             label('.xcmd')
@@ -223,15 +234,32 @@ def scope():
                 _BGE('.fin');CALLI('.midi_note')
             # end
             label('.fin')
-            POP();POP() # pop one more level
-            LDI(0);ST('soundTimer');STW('_midi.q')
-            label('.ret')
-            RET()
+            LDI(0);STW('_midi.q')
+            LDI(0x80);_BRA('.dly')
+
+
+        def midi_set_bank():
+            # Ensure the program bank is set while processing irq
+            if cons_128k or cons_512k:
+                LDW('sysFn');STW('_midi.sysfn')
+                LDWI('SYS_ExpanderControl_v4_40');STW('sysFn')
+                LDWI(ctrlBits_v5);PEEK();ST('_midi.bank')
+                ANDI(0x3c);ORI(0x80 if cons_128k else 0x40);SYS(40)
+
+        def midi_restore_bank():
+            # Restore the saved bank after irq
+            if cons_128k or cons_512k:
+                STW('_midi.tmp')
+                LDWI('SYS_ExpanderControl_v4_40');STW('sysFn')
+                LD('_midi.bank');SYS(40)
+                LDW('_midi.sysfn');STW('sysFn')
+                LDW('_midi.tmp')
 
         def code_midi_irq():
             nohop()
             label('_vIrqAltHandler')
             LDW('_midi.q');_BEQ('.rti0')
+            midi_set_bank()
             PUSH()
             LDI(255);ST('soundTimer')
             _BRA('.irq1')
@@ -240,8 +268,9 @@ def scope():
             CALLI('_vBlnAvoid')
             label('.irq1')
             LD('frameCount');ADDW('_vIrqTicks');SUBW('_midi.t');_BGE('.irq0')
-            label('.rti')
+            label('.irqfin')
             POP()
+            midi_restore_bank()
             ST('frameCount')
             LDW('_midi.t');ST('_vIrqTicks')
             XORW('_vIrqTicks');_BNE('.rti0') # return to carry in virqticks
@@ -285,11 +314,9 @@ def scope():
                      ('BSS',   'midi_tvars', code_midi_tvars, 6, 1),
                      ('PLACE', 'midi_tvars', 0x0000, 0x00ff),
                      ('CODE',  'midi_note', code_midi_note),
-                     ('PLACE', 'midi_note', 0x0100, 0x7fff),
                      ('CODE',  'midi_tick', code_midi_tick),
-                     ('PLACE', 'midi_tick', 0x0100, 0x7fff),
                      ('CODE',  '_vIrqAltHandler', code_midi_irq),
-                     ('PLACE', '_vIrqAltHandler', 0x0100, 0x7fff),
+                     ('PLACE', '_vIrqAltHandler', 0x0200, 0x7fff),
                      ('CODE',  'midi.play', code_midi_play) ] )
 
         def code_midi_playing():

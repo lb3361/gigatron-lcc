@@ -3,11 +3,26 @@
 def scope():
 
 
+    ctrlBits_v5 = 0x1f8
+    cons_128k = 'MAP128K' in args.opts
+    cons_512k = 'MAP512K' in args.opts
+    cons_dblwidth = cons_512k and ('MAP512K_DBLWIDTH' in args.opts)
+    cons_dblheight = cons_512k and ('MAP512K_DBLHEIGHT' in args.opts)
+
+
+    def _JMP(addr):
+        # Portable way to jump to addr without touching vLR
+        # Trashes T0 and vAC. Takes 9 code bytes.
+        addr = v(addr)
+        LDI(vPC);STW(T0)
+        LDWI((addr&0xff00)|((addr-2)&0xff))
+        DOKE(T0)
+
+
     # ------------------------------------------------------------
     # BANKING
     # ------------------------------------------------------------
-
-    ctrlBits_v5 = 0x1f8
+    
     
     def code_save():
         nohop()
@@ -25,8 +40,9 @@ def scope():
         nohop()
         label('_membank_restore')
         _MOVIW('SYS_ExpanderControl_v4_40','sysFn')
-        LDWI(ctrlBits_v5);PEEK()
+        LDWI(ctrlBits_v5);PEEK();_BEQ('.ret')
         XORW(R8);ANDI(0x3f);XORW(R8);SYS(40)
+        label('.ret')
         RET()
 
     module(name='_membank_restore.s',
@@ -42,7 +58,7 @@ def scope():
         if args.cpu >= 6:
             JGE('_membank_restore')
         else:
-            PUSH();_CALLI('_membank_restore');POP();RET()
+            _JMP('_membank_restore')
             
     module(name='_membank_set.s',
            code=[('EXPORT','_membank_set'),
@@ -62,6 +78,53 @@ def scope():
                  ('CODE','_membank_get',code_get),
                  ('PLACE', '_membank_get', 0x0200, 0x7fff) ] )
 
+
+    if not cons_128k and not cons_512k:
+
+        def code_set_bank():
+            label('_membank_set_program_bank')
+            label('_membank_set_framebuffer_bank')
+            RET()
+
+        module(name='_membank_set_bank',
+               code=[('EXPORT','_membank_set_program_bank'),
+                     ('EXPORT','_membank_set_framebuffer_bank'),
+                     ('CODE','_membank_set_bank', code_set_bank) ])
+            
+    else:
+
+        def code_set_bank():
+            label('_membank_set_program_bank')
+            if cons_128k:
+                _MOVIW(2<<6,R8)
+            else:
+                _MOVIW(1<<6,R8)
+            if args.cpu >= 6:
+                JGE('_membank_restore')
+            else:
+                BRA('.jmp')
+            label('_membank_set_framebuffer_bank')
+            if not cons_512k:
+                _MOVIW(1<<6,R8)
+            elif cons_dblwidth or cons_dblheight:
+                error("_membank_set_framebuffer_bank() cannot work with double resolution")
+            else:
+                warning("using _membank_set_framebuffer_bank() with map=512k is tricky")
+                _MOVIW(0xe03c,R8)
+            if args.cpu >= 6:
+                JNE('_membank_restore')
+            else:
+                label('.jmp')
+                _JMP('_membank_restore')
+
+        module(name='_membank_set_bank.s',
+               code=[('EXPORT','_membank_set_program_bank'),
+                     ('EXPORT','_membank_set_framebuffer_bank'),
+                     ('IMPORT','_membank_restore'),
+                     ('CODE','_membank_set_bank', code_set_bank),
+                     ('PLACE','_membank_set_bank', 0x0200, 0x7fff) ] )
+            
+            
 scope()
 
 # Local Variables:

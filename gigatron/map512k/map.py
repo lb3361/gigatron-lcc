@@ -28,19 +28,29 @@ def map_describe():
 # when an explicit placement constraint is provided.
 #
 # ------------size----addr----step----end------flags
-segments = [ (0x00fa, 0x0200, 0x0100, 0x0500, 'CDH'),
+segments = [ (0x7dc0, 0x8240, None,   None,   'CDH'),
+             (0x00fa, 0x0200, 0x0100, 0x0500, 'CDH'),
              (0x0200, 0x0500, None,   None,   'CDH'),
-             (0x7800, 0x0800, None,   None,   'CDH'),
-             (0x0100, 0x8100, None,   None,   'CDH'),
-             (0x79c0, 0x8240, None,   None,   'CDH')  ]
+             (0x7000, 0x0800, None,   None,   'CDH'),
+             (0x01b8, 0x8048, None,   None,   'CDH') ]
 
+# initial stack
+args.initsp = 0x7ffc
 
-args.initsp = 0xfffc
+# tweak long fonction placement
+args.lfss = args.lfss or 256
+
+# Specify an onload function to reorganize the memory
+args.onload.append('_map512ksetup')
+
+# Provide an option to identify the map and enable specific
+# code that switches banks to access the framebuffer.
+args.opts.append('MAP512K')
+
+# redefined by overlays
 libcon = "con_b"
 check512krom = True
-args.lfss = args.lfss or 256
-args.onload.insert(0,'_map512ksetup')
-args.opts.append('MAP512K')
+
 
 def map_segments():
     '''

@@ -2,50 +2,46 @@
 
 def scope():
 
-    screenStart=130
+    screenStart=0x88
     screenEnd=screenStart+120
 
     def code_setup():
         nohop()
         label('_map128ksetup')
-        # copy himem gt1 data into bank2
+        LDWI(0x8000);STW(R9);STW(R8)
+        # copy all upper memory from current bank to bank 2
         PUSH()
-        LDWI('SYS_LSRW2_52');STW('sysFn')
-        LDI(0);STW(R8)
+        _MOVIW('SYS_LSRW2_52','sysFn')
         LDWI('ctrlBits_v5');PEEK();SYS(52);ANDI(0x30);ORI(0x80);ST(R8+1)
-        LDWI('SYS_CopyMemoryExt_v6_100');STW('sysFn')
-        LDWI('_egt1');DEEK();SUBI(1);ORI(255);XORI(255);STW(R9)
-        _BRA('.m128copytest')
+        _MOVIW('SYS_CopyMemoryExt_v6_100','sysFn')
         label('.m128copyloop')
         STW('sysArgs0');STW('sysArgs2')
         LDW(R8);SYS(100)
-        LDWI(-256);ADDW(R9);STW(R9)
-        label('.m128copytest')
-        BLT('.m128copyloop')
+        INC(R9+1);LDW(R9);_BNE('.m128copyloop')
         POP()
+        # move to bank 2
         LDWI('SYS_ExpanderControl_v4_40');STW('sysFn')
         LDWI('ctrlBits_v5');PEEK();ANDI(0x3c);ORI(0x80);SYS(40)
-        # reset screen
+        # reset screen in black
         _MOVIW(0,R8)
+        # new implementation of console_reset
         label('_console_reset')
         LDWI('videoTable');STW(R10)
         LDI(screenStart);STW(R9)
         label('.c128loop')
         LDW(R9);DOKE(R10)
         INC(R10);INC(R10)
-        INC(R9);LD(R9);XORI(screenEnd)
+        INC(R9);LD(R9)
+        XORI(screenEnd) if screenEnd < 256 else None
         BNE('.c128loop')
+        # clear screen (black)
+        _MOVW(R8,R9)
         _MOVIW(120,R10)
-        LDW(R8);STW(R9)
-        if args.cpu >= 7:
-            MOVIW(screenStart << 8,R8)
-            JGE('_console_clear')
+        LDWI(screenStart<<8);STW(R8)
+        if args.cpu >= 6:
+            JNE('_console_clear')
         else:
-            _BLT('.ret')
-            LDWI(screenStart << 8);STW(R8)
-            PUSH();_CALLJ('_console_clear');POP()
-        label('.ret')
-        RET()
+            PUSH();_CALLJ('_console_clear');POP();RET()
 
     def code_halt():
         nohop()
@@ -64,13 +60,12 @@ def scope():
                   ('EXPORT', '_map128khalt'),
                   ('EXPORT', '_console_reset'),
                   ('IMPORT', '_console_clear'),
-                  ('IMPORT', '_egt1'),
                   ('CODE', '_map128ksetup', code_setup),
                   ('PLACE', '_map128ksetup', 0x0200, 0x7fff),
                   ('CODE', '_map128khalt', code_halt),
                   ('PLACE', '_map128khalt', 0x0200, 0x7fff) ] )
-                  
-    
+
+
 scope()
 
 # Local Variables:

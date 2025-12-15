@@ -4,13 +4,15 @@ GLCC=../../build/glcc
 PYTHON=python3
 PGMS=mscp.gt1
 OBJS=mscp.o core.o
-ASMS=onload.s
 
 all: ${PGMS}
 
-mscp.gt1: ${OBJS} ${ASMS}
+mscp.gt1: mscp1.gt1 book.bin
+	booklen=`ls -ln book.bin | awk '{ print($$5); }'` ;\
+	${PYTHON} gt1merge.py $< --raw=book.bin@0x4000 --doke=$$booklen@0x42 -o $@
+
+mscp1.gt1: ${OBJS} ${ASMS}
 	${GLCC} -rom=${ROM} -map=${MAP} ${OBJS} ${ASMS} -o $@
-	${PYTHON} addbook.py $@ book.bin
 
 mscp.o: mscp.c core.h
 	${GLCC} -rom=${ROM} -c $<

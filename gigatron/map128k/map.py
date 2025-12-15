@@ -22,15 +22,29 @@ def map_describe():
 # when an explicit placement constraint is provided.
 #
 # ------------size----addr----step----end------flags
-segments = [ (0x00fa, 0x0200, 0x0100, 0x0500, 'CDH'),
+segments = [ (0x7dc0, 0x8240, None,   None,   'CDH'),
+             (0x00fa, 0x0200, 0x0100, 0x0500, 'CDH'),
              (0x0200, 0x0500, None,   None,   'CDH'),
-             (0x7800, 0x0800, None,   None,   'CDH'),
-             (0x0100, 0x8100, None,   None,   'CDH'),
-             (0x79c0, 0x8240, None,   None,   'CDH')  ]
+             (0x7000, 0x0800, None,   None,   'CDH'),
+             (0x01b8, 0x8048, None,   None,   'CDH') ]
 
-args.initsp = 0xfffc
-libcon = "con1"
+# initial stack
+args.initsp = 0x7ffc
+
+# tweak long fonction placement
 args.lfss = args.lfss or 256
+
+# Specify an onload function to reorganize the memory
+args.onload.append('_map128ksetup')
+
+# Provide an option to identify the map and enable specific
+# code that switches banks to access the framebuffer.
+args.opts.append('MAP128K')
+
+# Warn if the rom is not marked as compatible with this map
+if not "may_work_with_map128k" in rominfo:
+    warning(f"The specified ROM may not support map128k")
+
 
 def map_segments():
     '''
@@ -54,7 +68,7 @@ def map_libraries(romtype):
     '''
     Returns a list of extra libraries to scan before the standard ones
     '''
-    return [ libcon ]
+    return [ "con1" ]
 
 def map_modules(romtype):
     '''
@@ -91,18 +105,6 @@ def map_modules(romtype):
                   ('CODE', '_gt1exec', code0) ] )
 
     debug(f"synthetizing module '_gt1exec.s' at address 0x200")
-
-# Specify an onload function to reorganize the memory
-args.onload.insert(0,'_map128ksetup')
-
-# Provide an option to identify the map and enable specific
-# code that switches banks to access the framebuffer.
-args.opts.append('MAP128K')
-
-# Warn if the rom is not marked as compatible with this map
-if not "may_work_with_map128k" in rominfo:
-    warning(f"The specified ROM may not support map128k")
-
 
 # Local Variables:
 # mode: python

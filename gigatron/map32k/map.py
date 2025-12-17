@@ -29,7 +29,7 @@ def map_describe():
 # ------------size----addr----step----end-----flags
 segments = [ (0x0060, 0x08a0, 0x0100, 0x80a0, 'CDH'),
              (0x00fa, 0x0200, 0x0100, 0x0500, 'CDH'),
-             (0x0100, 0x0500, None,   None,   'CDH')   ]
+             (0x0100, 0x0500, None,   None,   'cDH')   ]
 
 args.initsp = 0x6fc
 minram = 0x80

@@ -11,7 +11,7 @@ mscp.gt1: mscp1.gt1 book.bin
 	booklen=`ls -ln book.bin | awk '{ print($$5); }'` ;\
 	${PYTHON} gt1merge.py $< --raw=book.bin@0x4000 --doke=$$booklen@0x42 -o $@
 
-mscp1.gt1: ${OBJS} ${ASMS}
+mscp1.gt1: ${OBJS}
 	${GLCC} -rom=${ROM} -map=${MAP} ${OBJS} ${ASMS} -o $@
 
 mscp.o: mscp.c core.h
@@ -20,10 +20,8 @@ mscp.o: mscp.c core.h
 core.o: core.c core.h
 	${GLCC} -rom=${ROM} -c $<
 
-dumpbook: mscp.c
+book.bin: book.txt mscp.c Makefile
 	${CC} -DSAVE_BOOK_BIN=1 -DSUBTRACTIVE_RND=1 mscp.c -o dumpbook
-
-book.bin: dumpbook book.txt mscp.c Makefile
 	./dumpbook
 
 clean:
@@ -38,10 +36,10 @@ CFILES=${OBJS:.o=.c}
 prof.txt: mscp-sim.prf
 	${GTPROF} mscp-sim.prf mscp-sim.frg | sort -nr > $@
 
-mscp-sim.gt1: ${CFILES} ${ASMS} mscp.ovl
-	${GLCC} -rom=${ROM} -map=sim,allout,./mscp.ovl \
+mscp-sim.gt1: ${CFILES}
+	${GLCC} -rom=${ROM} -map=sim,allout \
 	    -DREPEATABLE_RND=1 ${CFILES} ${ASMS} -o $@ --frags > mscp-sim.frg
-	${PYTHON} addbook.py $@ book.bin
+	${PYTHON} gt1merge.py $< --raw=book.bin@0x4000 --doke=$$booklen@0x42 -o $@
 
 mscp-sim.prf: mscp-sim.gt1 prof.in
 	${GTSIM} -prof $@ mscp-sim.gt1 < prof.in

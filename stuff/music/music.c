@@ -5,7 +5,6 @@
 #include <gigatron/sound.h>
 
 #pragma glcc option("PRINTF_SIMPLE")
-#pragma glcc segment(0x8240,0xfe00,"CDH")
 
 extern const byte* agony[];
 extern const byte* bath[];

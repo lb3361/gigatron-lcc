@@ -4,7 +4,7 @@ ROM=dev7
 MAP=64k
 
 CC=${BINDIR}glcc
-GTMID2C=${BINDIR}build/gtmid2c
+GTMID2C=${BINDIR}gtmid2c
 CFLAGS=-map=${MAP} --no-runtime-bss
 
 PGMS=music.gt1
@@ -20,6 +20,12 @@ music.gt1: music.c ${MIDIS}
 
 clean: FORCE
 	rm -rf ${PGMS}
+
+midi/bath.c: midi/bath.gtmid
+	${GTMID2C} -s 96 $< $@
+
+midi/freedom.c: midi/freedom.gtmid
+	${GTMID2C} -s 96 $< $@
 
 midi/%.c: midi/%.gtmid
 	${GTMID2C} -s 256 $< $@

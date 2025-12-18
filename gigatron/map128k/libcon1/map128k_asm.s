@@ -5,6 +5,9 @@ def scope():
     screenStart=0x88
     screenEnd=screenStart+120
 
+    if not "has_SYS_CopyMemoryExt" in rominfo:
+        error("this rom cannot run map128k because it lacks SYS_CopyMemoryExt")
+
     def code_setup():
         nohop()
         label('_map128ksetup')

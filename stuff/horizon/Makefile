@@ -1,8 +1,9 @@
 # compile c programs with GLCC
 CC=../../build/glcc
+MAP=32k
 
 # use 32k map modified by overlay horizon.ovl
-CFLAGS=-map=32k,./horizon.ovl
+CFLAGS=-map=${MAP}
 
 # avoid runtime bss initialization to save code.
 LDFLAGS=--no-runtime-bss-init

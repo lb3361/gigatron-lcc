@@ -37,6 +37,8 @@ def scope():
             LD(R9);STW(T3)
             LDW(R10)
             FILL();
+        else:
+            error('SYS_Fill is not available with cpu < 7')
         RET()
 
     module(name='sys_fill.s',
@@ -56,6 +58,8 @@ def scope():
             MOVW(R9,T3)
             LDW(R10)
             BLIT();
+        else:
+            error('SYS_Blit is not available with cpu < 7')
         RET()
 
     module(name='sys_blit.s',

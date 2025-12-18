@@ -25,11 +25,13 @@
      causes everything defined in file "lomem.c" to be
      placed in low memory, whereas
          #pragma glcc lomem("*", "SYS_*")
-     causes all functions whose name starts with "SYS_" to be placed
-     in low memory regardless of their module name. Unlike the
-     placement attributes discussed later in this documeet, the lomem
-     pragma can affect the placement of code and functions defined in
-     other modules (e.g. 'memset' above).
+         #pragma glcc lomem("rt_*.s", "_*@*")
+     does the same for all functions whose name starts with "SYS_"
+     and all functions defined in files matching pattern "rt_*.s"
+     and whose name starts with "_" and contain a "@". This matches
+     in fact the C runtime functions that glcc uses to implement C.
+     There are useful to keep in low memory when bank switching
+     is involved.
 
    * #pragma glcc segment(SADDR, EADDR, "USES")
      Redefines which uses are permitted for a segment of the Gigatron

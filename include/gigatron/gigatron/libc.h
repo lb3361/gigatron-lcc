@@ -140,9 +140,15 @@ extern char *dtoa(double x, char *buf, int format, int prec);
 
 /* Converts a number in range 0 to 99 into decimal,
    two ascii digits packed in the returned integer.
-   This is a compact self-contained function. */
+   This is a fast and compact self-contained function. */
 
-extern int _utwoa(int);
+extern int _utwoa(int) __attribute__((quickcall));
+
+/* Converts an integer into decimal ascii.
+   Buffer must contain at least seven characters.
+   This is a fast and compact self-contained function. */
+
+extern char *_itwoa(int, char buffer[7]) __attribute__((quickcall));
 
 
 /* ---- Banking ---- */

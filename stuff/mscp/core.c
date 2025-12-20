@@ -50,10 +50,7 @@ void set_computing_mode(int enabled)
 #endif
 }
 
-/* The following functions operate with bank3 selected.
-   Since the stack grows down from 0xfffc, it is important
-   to make sure that these functions do not touch the 
-   stack while bank3 is selected. */
+/* The following functions operate with bank3 selected. */
 
 void clr_ttable(void)
 {

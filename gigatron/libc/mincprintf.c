@@ -26,7 +26,7 @@ int mincprintf(const char *fmt, ...)
 				l = 32767;
 			} else if (l == 'd') {
 				char buf[8];
-				s = itoa(va_arg(ap, int), buf, 10);
+				s = _itwoa(va_arg(ap, int), buf);
 				l = 8;
 			} else
 				continue;

@@ -160,12 +160,14 @@ extern void *_membank_save(void) __attribute__((quickcall));
 extern void _membank_restore(void *saved) __attribute__((quickcall));
 
 /* Sets a particular memory bank in address range 0x8000-0xffff.
-   Bank is truncated to range 0..3 on 128k gigatrons.
-   Bank may be in range 0..15 when the 512k map is active. */
+   The default routine only uses the two least significant bits, allowing for four 32KB banks.
+   The routine that comes with the 512k map uses four bits, allowing sixteen banks. */
 extern void _membank_set(int bank) __attribute__((quickcall));
 
 /* Return the bank currently mapped in address range 0x8000-0xffff.
-   This function requires a 512k rom when the 512k map is active. */
+   The default routine relies on the ctrlBits and always returns a bank number in 0..3.
+   The routine that comes with the 512k map is only guaranteed to work when the
+   bank selection was performed with _membank_set(). */
 extern int _membank_get(void) __attribute__((quickcall));
 
 /* These two functions only do something with -map=128k or -map=512k.

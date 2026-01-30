@@ -1,5 +1,18 @@
 def scope():
 
+
+    def _DEEKA(r):
+        if args.cpu >= 6:
+            DEEKA(r)
+        else:
+            DEEK();STW(r)
+
+    def _LDXW(d,i):
+        if args.cpu >= 7:
+            LDXW(d,i)
+        else:
+            LDI(i);ADDW(d);DEEK()
+
     # The tree rebalancing function is frameless
     # but contains a lot of redundant code that
     # can be compressed in low level calls.
@@ -26,16 +39,16 @@ def scope():
     # 	} while(0)
 
     def code_geth():
+        nohop()
         label('.geth')
-        PUSH()
         LDI(0);STW(R13);STW(R14)
-        LDI(2);ADDW(R10);DEEK();_BEQ('.geth1')
-        DEEK();STW(R13)
+        _LDXW(R10,2);_BEQ('.geth1')
+        _DEEKA(R13)
         label('.geth1')
-        LDI(4);ADDW(R10);DEEK();_BEQ('.geth2')
-        DEEK();STW(R14)
+        _LDXW(R10,4);_BEQ('.geth2')
+        _DEEKA(R14)
         label('.geth2')
-        tryhop(2);POP();RET()
+        RET()
 
     # #define CALC do {\
     # 		GETH;\
@@ -84,7 +97,7 @@ def scope():
         LDW(R9)
         label('.l1')
         STW(R11);DEEK();ADDI(4);STW(R22)
-        DEEK();STW(R12);LDI(2)
+        _DEEKA(R12);LDI(2)
         _BRA('.end')
         label('.lrotl')   # r = &(*pelt)->left; LROT
         PUSH()
@@ -97,10 +110,10 @@ def scope():
         LDW(R9)
         label('.r1')
         STW(R11);DEEK();ADDI(2);STW(R22)
-        DEEK();STW(R12);LDI(4)
+        _DEEKA(R12);LDI(4)
         label('.end')
         ADDW(R12);STW(R21);DEEK();DOKE(R22)
-        LDW(R11);DEEK();DOKE(R21)
+        _DEEKV(R11);DOKE(R21)
         STW(R10);_CALLJ('.calc')
         _MOVW(R12,R10);_CALLJ('.calc')
         LDW(R12);DOKE(R11)
@@ -114,23 +127,26 @@ def scope():
         # 	if (! (elt = *pelt))
         # 		continue;
         LDW(R8);DEEK();STW(R9)
-        LDI(2);ADDW(R8);STW(R8)
-        LDW(R9);_BNE('.rebal0')
+        if args.cpu >= 7:
+            ADDSV(2,R8)
+        elif args.cpu >= 6:
+            INCV(R8);INCV(R8)
+        else:
+            LDI(2);ADDW(R8);STW(R8);LDW(R9)
+        _BNE('.rebal0')
         tryhop(2);POP();RET()
         label('.rebal0')
-        DEEK();STW(R10)
-        _BEQ('.loop')
+        DEEK();STW(R10);_BEQ('.loop')
         #	CALC;
         #	if (rh - lh == -2) {
         _CALLJ('.calc')
-        LDW(R14);SUBW(R13)
-        ADDI(2);_BNE('.rebal2')
+        LDW(R14);SUBW(R13);ADDI(2);_BNE('.rebal2')
         # 		elt = elt->left;
         # 		GETH;
         # 		if (rh - lh > 0)
         # 			{ r = &((*pelt)->left); LROT; }
         # 		r = pelt; RROT;
-        LDI(2);ADDW(R10);DEEK();STW(R10)
+        LDI(2);ADDW(R10);_DEEKA(R10)
         _CALLJ('.geth')
         LDW(R14);SUBW(R13);_BLE('.rebal1')
         _CALLJ('.lrotl')
@@ -145,7 +161,7 @@ def scope():
         # 		if (rh - lh < 0)
         # 			{ r = &((*pelt)->right); RROT; }
         # 		r = pelt; LROT;
-        LDI(4);ADDW(R10);DEEK();STW(R10)
+        LDI(4);ADDW(R10);_DEEKA(R10)
         _CALLJ('.geth')
         LDW(R14);SUBW(R13);_BGE('.rebal3')
         _CALLJ('.rrotr')
@@ -155,9 +171,9 @@ def scope():
 
     module(name='_avl_bal.s',
            code=[('EXPORT', '__avl_rebal'),
-                 ('CODE', '.geth', code_geth),
-                 ('CODE', '.calc', code_calc),
-                 ('CODE', '.rotate', code_rotate),
+                 ('CODE', '__avl_rebal.geth', code_geth),
+                 ('CODE', '__avl_rebal.calc', code_calc),
+                 ('CODE', '__avl_rebal.rotate', code_rotate),
                  ('CODE', '__avl_rebal', code_rebal) ] )
 
 scope()

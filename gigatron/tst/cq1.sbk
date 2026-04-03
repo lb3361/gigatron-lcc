@@ -420,7 +420,7 @@ def code11():
 	label('.240');
 	_MOVL(L8,L22);
 	_MOVL(L22,LAC);LDWI('.74');_LSUB();_MOVL(LAC,L8);
-	_MOVL(L22,LAC);LDWI('.75');_LCMPX();_BNE('.239');
+	_MOVL(L22,LAC);LDW(LAC+2);ORW(LAC);_BNE('.239');
 	_MOVL(L18,LAC);
 	label('.238');
 	tryhop(2);POP();RET()

@@ -266,12 +266,12 @@ struct symbol {
 	List uses;
 	int sclass;
 	unsigned structarg:1;
-
 	unsigned addressed:1;
 	unsigned computed:1;
 	unsigned temporary:1;
 	unsigned generated:1;
 	unsigned defined:1;
+	unsigned oolconst:1;
 	Type type;
 	Attribute attr;
 	float ref;

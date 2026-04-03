@@ -415,8 +415,11 @@ Tree cvtconst(Tree p) {
 	Symbol q = constant(p->type, p->u.v);
 	Tree e;
 
-	if (q->u.c.loc == NULL)
+	if (q->u.c.loc == NULL) {
 		q->u.c.loc = genident(STATIC, p->type, GLOBAL);
+		q->u.c.loc->oolconst = 1;
+		q->u.c.loc->u.c.loc = q;
+	}
 	if (isarray(p->type)) {
 		e = simplify(ADDRG, atop(p->type), NULL, NULL);
 		e->u.sym = q->u.c.loc;

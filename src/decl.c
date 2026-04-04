@@ -129,7 +129,7 @@ static void attribute(Attribute *pa) {
 					attr.args[i] = constant(tsym->type, v);
 					t = gettok();
 				} else {
-					p = constexpr(0);
+					p = const_expr(0);
 					if (p->op != CNST+I && p->op != CNST+U)
 						error("attribute arguments must be constants\n");
 					else

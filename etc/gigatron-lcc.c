@@ -1,4 +1,9 @@
-// Gigatron-1
+/* Gigatron-1 */
+
+/* This file is part of the traditional LCC compiler driver 'lcc'.
+   The GLCC compiler driver is now a pure python program that
+   bypasses 'lcc'. It still gets compiled as part of the build
+   process, but it is not installed. */
 
 #include <stdlib.h>
 #include <stdio.h>

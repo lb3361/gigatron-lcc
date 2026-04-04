@@ -23,7 +23,7 @@ SUBDIRS=${G}runtime ${G}libc \
         ${G}map32k ${G}map64k ${G}mapsim ${G}mapconx \
         ${G}map128k ${G}map512k
 GFILES=${B}glcc ${B}glink ${B}gt1dump ${B}gtmid2c \
-       ${B}glink.py ${B}glccver.py ${B}interface.json \
+       ${B}glink.py ${B}glcc.py ${B}glccver.py ${B}interface.json \
        ${B}interface-dev.json ${B}roms.json ${GFILES_W}
 ROMFILES=${wildcard ${G}roms/*.rom}
 ROMS=${patsubst ${G}roms/%.rom,%,${ROMFILES}}
@@ -110,7 +110,6 @@ gigatron-install: FORCE
 	${INSTALL} -d "${libdir}"
 	${INSTALL} -m 755 "${B}cpp${E}" "${libdir}/cpp${E}"
 	${INSTALL} -m 755 "${B}rcc${E}" "${libdir}/rcc${E}"
-	${INSTALL} -m 755 "${B}lcc${E}" "${libdir}/lcc${E}"
 	for n in ${GFILES}; do \
 	    mode=644; test -x "$$n" && mode=755 ; \
 	    ${INSTALL} -m $$mode "$$n" "${libdir}/" ; done
@@ -141,6 +140,10 @@ ${B}glink: ${G}glink
 ${B}glink.py: ${G}glink.py
 	cp ${G}glink.py ${B}glink.py
 	${PYTHON} -m compileall -b ${B}glink.py
+
+${B}glcc.py: ${G}glcc.py
+	cp ${G}glcc.py ${B}glcc.py
+	${PYTHON} -m compileall -b ${B}glcc.py
 
 ${B}glcc: ${G}glcc
 	cp ${G}glcc ${B}glcc

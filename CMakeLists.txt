@@ -108,7 +108,7 @@ add_executable(gtsim
 # --- Stage binary directory to make glcc usable
 
 set(gigatron_targets
-  glcc glink glink.py gt1dump gtmid2c gtprof
+  glcc glink glink.py glcc.py gt1dump gtmid2c gtprof
   interface.json interface-dev.json roms.json)
 
 foreach(fn ${gigatron_targets})
@@ -152,7 +152,7 @@ endif()
 add_custom_target(glcc-ready ALL
   COMMAND "${CMAKE_COMMAND}" "-E" "copy_directory" "${srcrel}/include/gigatron/" "include"
   WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-  DEPENDS "cpp" "rcc" "lcc" ${gigatron_targets}
+  DEPENDS "cpp" "rcc" ${gigatron_targets}
   VERBATIM)
 
 function(copy_target_to_bindir target)
@@ -164,7 +164,6 @@ endfunction()
 
 copy_target_to_bindir(cpp)
 copy_target_to_bindir(rcc)
-copy_target_to_bindir(lcc)
 copy_target_to_bindir(gtsim)
 
 
@@ -311,7 +310,7 @@ endforeach()
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/glccver.py"
   DESTINATION "${glcc_install_libdir}")
 
-foreach(dn include cpu4 cpu5 cpu6 ${gigatron_maps})
+foreach(dn include cpu4 cpu5 cpu6 cpu7 ${gigatron_maps})
   install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${dn}"
     DESTINATION "${glcc_install_libdir}")
 endforeach()

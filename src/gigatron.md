@@ -45,15 +45,15 @@
 #define STATE_LABEL(p) ((p)->x.state)
 
 static void address(Symbol, Symbol, long);
-static void blkfetch(/* int, int, int, int */) {}
-static void blkloop(/* int, int, int, int, int, int[] */) {}
-static void blkstore(/* int, int, int, int */) {}
+static void blkfetch(int k, int o, int r, int t) {}
+static void blkloop(int d, int o, int s, int p, int z, int t[]){}
+static void blkstore(int k, int o, int r, int t) {}
 static void defaddress(Symbol);
 static void defconst(int, int, Value);
 static void defstring(int, char *);
 static void defsymbol(Symbol);
 static void doarg(Node);
-static void emit2(/* Node */) {}
+static void emit2(Node n) {}
 static void emit3(const char*, int, Node, int, Node*, short*);
 static void emitfmt1(const char*, Node, int, Node*, short*);
 static void export(Symbol);

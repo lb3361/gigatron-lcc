@@ -193,7 +193,7 @@ static int initstruct(int len, Type ty, int lev) {
 	return n;
 }
 
-/* initializer - constexpr | { constexpr ( , constexpr )* [ , ] } */
+/* initializer - const_expr | { const_expr ( , const_expr )* [ , ] } */
 Type initializer(Type ty, int lev) {
 	int n = 0;
 	Tree e;

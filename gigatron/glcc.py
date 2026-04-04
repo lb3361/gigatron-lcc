@@ -59,7 +59,6 @@ rccname = path.join(lccdir,"rcc")
 lnkname = path.join(lccdir,"glink")
 os.putenv("LCCDIR", lccdir)
 
-
 # Compute vernum from glccver (exactly as in old glcc.backup)
 import glccver
 vernum = None
@@ -304,7 +303,6 @@ def glcc(argv) -> int:
                 glink_args.extend(["-lc", "-o", haso] if haso else ["-lc"])
                 if hasv: print(" ".join([ lnkname ] + glink_args))
                 return glink(glink_args)
-            
     except FileNotFoundError as err:
         error(str(err))
     except KeyboardInterrupt as err:
@@ -473,7 +471,6 @@ def print_help():
                         help='''preserve intermediate files instead of
                         deleting them after the compilation. Use
                         option `-v` to find out their names.''')
-    
     # Format
     parser.print_help()
     print()

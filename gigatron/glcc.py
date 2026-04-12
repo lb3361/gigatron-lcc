@@ -167,10 +167,14 @@ def glcc(argv) -> int:
                 haskeep = True
             elif optz("-help"):
                 hashelp = True
+            elif optz("-version"):
+                hasver = True
             else:
                 arg = oarg      # no longer accept double dashes
                 if optz("-v"):
                     hasv += 1
+                elif optz("-h"):
+                    hashelp = True
                 elif optz("-V"):
                     hasver = True
                 elif optz("-E", dup=hasc):

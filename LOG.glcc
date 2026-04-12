@@ -1,10 +1,31 @@
 
-- Adapted for dev7 backward incompatible changes
-- Added gigatron/idioms.h
-- Support for opcodes FILL and BLIT
-- Redesigned binary to ascii routines 
-- Improved fp and shift routines
-- Fixed minor stdio console bug
+- Rewrote compiler driver glcc in python (only).
+- Updated code to make it work with C23 compiler.
+- Improved atan2 and test in TSTtrig.
+- Removed ledTempo_v7 from interface-dev.json
+- Various codegen optimizations.
+
+GLCC_RELEASE_2.7
+
+- Various codegen optimizations.
+- Reworked glink placement engine.
+- Added support and demos for sound and midi.
+- Added pragma segment etc to largely replace overlays.
+- Added quickcall attribute.
+- Added regalias attribute.
+- Made doprint reentrant again.
+
+GLCC_RELEASE_2.6
+
+- Added support and demos for the BLIT and FILL ops.
+- Added include file idioms.h with compiler support.
+- Reworked binary-to-decimal conversion with double dabble.
+- Adapted for dev7 backward incompatible changes.
+- Added gigatron/idioms.h.
+- Support for opcodes FILL and BLIT.
+- Redesigned binary to ascii routines. 
+- Improved fp and shift routines.
+- Fixed minor stdio console bug.
 - Better runtime for ROMv4.
 
 GLCC_RELEASE_2.5

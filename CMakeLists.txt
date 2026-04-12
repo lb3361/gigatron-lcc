@@ -90,15 +90,6 @@ if (HAVE_LIB_M)
    target_link_libraries(rcc PUBLIC m)
 endif (HAVE_LIB_M)
 
-# --- Compile lcc
-
-add_executable(lcc
-  etc/lcc.c etc/gigatron-lcc.c )
-
-target_compile_definitions(lcc PUBLIC
-  "-DTARGET=gigatron")
-
-
 # --- Compile gtsim
 
 add_executable(gtsim
@@ -293,7 +284,7 @@ add_glcc_library("libc-cpu7" "cpu7/libc.a" CPU 7 "gigatron/libc/*.c" "gigatron/l
 set(glcc_install_libdir "lib/gigatron-lcc")
 set(glcc_install_bindir "bin")
 
-install(TARGETS cpp rcc lcc gtsim
+install(TARGETS cpp rcc gtsim
   RUNTIME DESTINATION "${glcc_install_libdir}")
 
 foreach(fn ${gigatron_targets})

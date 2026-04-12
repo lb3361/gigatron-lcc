@@ -382,7 +382,7 @@ conBn: CNSTI2 "%a"  range(a,-255,-1)
 conBm: CNSTI2 "%a"  range(a,0,52)
 conBm: CNSTU2 "%a"  range(a,0,52)
 conBa: CNSTI2 "%a"  range(a,-64,64)
-conBa: CNSTU2 "%a"  range(a,-64,64)
+conBa: CNSTU2 "%a"  range(a,0,64)
 con: CNSTI1   "%a"
 con: CNSTU1   "%a"
 con: CNSTI2   "%a"
@@ -718,14 +718,16 @@ larg: INDIRI4(eac) "%0"
 larg: INDIRU4(eac) "%0"
 lzero: INDIRI4(c0dr) "%0"
 lzero: INDIRU4(c0dr) "%0"
-reg:  lac          "\t%{=LAC}%0%{?c==LAC::_MOVL(LAC,%c);}%{!5}\n" 119
+reg: lac           "\t%{=LAC}%0%{?c==LAC::_MOVL(LAC,%c);}%{!5}\n" 80
+lac: lzero         "LDI(0);STW(LAC);STW(LAC+2)%{!A};"   56
+reg: lzero         "\tLDI(0);STW(%c);STW((%c)+2)%{!A};\n" 56 
 reg: INDIRI4(ac)   "\t%0_MOVL([vAC],%c)%{!A};\n" 120
 reg: INDIRU4(ac)   "\t%0_MOVL([vAC],%c)%{!A};\n" 120
 reg: INDIRI4(lddr) "\t_MOVL([SP,%0],%c)%{!A};\n" 160
 reg: INDIRU4(lddr) "\t_MOVL([SP,%0],%c)%{!A};\n" 160
 reg: INDIRI4(addr) "\t_MOVL(%0,%c)%{!A};\n" 120
 reg: INDIRU4(addr) "\t_MOVL(%0,%c)%{!A};\n" 120
-lac: reg           "%{=%0}%{?0=~LAC::_MOVL(%0,LAC);}%{!5}" 120
+lac: reg           "%{=%0}%{?0=~LAC::_MOVL(%0,LAC);}%{!5}" 80
 lac: INDIRI4(ac)   "%{?*0=~LAC::%0_MOVL([vAC],LAC)%{!A};}" 120
 lac: INDIRU4(ac)   "%{?*0=~LAC::%0_MOVL([vAC],LAC)%{!A};}" 120
 lac: INDIRU4(lddr) "%{?*0=~LAC::_MOVL([SP,%0],LAC)%{!A};}" 160
@@ -774,22 +776,31 @@ stmt: LEI4(lac,larg) "\t%0%1_LCMPS();_BLE(%a)%{!A};\n" 200
 stmt: GTI4(lac,larg) "\t%0%1_LCMPS();_BGT(%a)%{!A};\n" 200
 stmt: GEI4(lac,larg) "\t%0%1_LCMPS();_BGE(%a)%{!A};\n" 200
 stmt: LTI4(lac,lzero) "\t%0LDW(LAC+2);_BLT(%a)%{!A};\n" 48
-stmt: LEI4(lac,lzero) "\t%0LDW(LAC+2);_BLT(%a);ORW(LAC);_BEQ(%a)%{!A};\n" 92
+stmt: LEI4(lac,lzero) "\t%0_LSGN();_BLE(%a)%{!A};\n" 48
 stmt: GEI4(lac,lzero) "\t%0LDW(LAC+2);_BGE(%a)%{!A};\n" 48
+stmt: GTI4(lac,lzero) "\t%0_LSGN();_BGT(%a)%{!A};\n" 48
+stmt: LTI4(reg,lzero) "\tLDW((%0)+2);_BLT(%a)%{!A};\n"  48
+stmt: GEI4(reg,lzero) "\tLDW((%0)+2);_BGE(%a)%{!A};\n"  48
 stmt: LTU4(lac,larg) "\t%0%1_LCMPU();_BLT(%a)%{!A};\n" 200
 stmt: LEU4(lac,larg) "\t%0%1_LCMPU();_BLE(%a)%{!A};\n" 200
 stmt: GTU4(lac,larg) "\t%0%1_LCMPU();_BGT(%a)%{!A};\n" 200
 stmt: GEU4(lac,larg) "\t%0%1_LCMPU();_BGE(%a)%{!A};\n" 200
 stmt: GTU4(lac,lzero) "\t%0LDW(LAC+2);ORW(LAC);_BNE(%a)%{!A};\n" 72
 stmt: LEU4(lac,lzero) "\t%0LDW(LAC+2);ORW(LAC);_BEQ(%a)%{!A};\n" 72
-stmt: NEI4(lac,larg) "\t%0%1_LCMPX();_BNE(%a)%{!A};\n" 100
-stmt: EQI4(lac,larg) "\t%0%1_LCMPX();_BEQ(%a)%{!A};\n" 100
-stmt: NEU4(lac,larg) "\t%0%1_LCMPX();_BNE(%a)%{!A};\n" 100
-stmt: EQU4(lac,larg) "\t%0%1_LCMPX();_BEQ(%a)%{!A};\n" 100
+stmt: GTU4(reg,lzero) "\tLDW((%0)+2);ORW(%0);_BNE(%a)%{!A};\n"   72
+stmt: LEU4(reg,lzero) "\tLDW((%0)+2);ORW(%0);_BEQ(%a)%{!A};\n"   72
+stmt: NEI4(lac,larg) "\t%0%1_LCMPX();_BNE(%a)%{!A};\n" 140
+stmt: EQI4(lac,larg) "\t%0%1_LCMPX();_BEQ(%a)%{!A};\n" 140
+stmt: NEU4(lac,larg) "\t%0%1_LCMPX();_BNE(%a)%{!A};\n" 140
+stmt: EQU4(lac,larg) "\t%0%1_LCMPX();_BEQ(%a)%{!A};\n" 140
 stmt: NEI4(lac,lzero) "\t%0LDW(LAC+2);ORW(LAC);_BNE(%a)%{!A};\n" 72
 stmt: EQI4(lac,lzero) "\t%0LDW(LAC+2);ORW(LAC);_BEQ(%a)%{!A};\n" 72
 stmt: NEU4(lac,lzero) "\t%0LDW(LAC+2);ORW(LAC);_BNE(%a)%{!A};\n" 72
 stmt: EQU4(lac,lzero) "\t%0LDW(LAC+2);ORW(LAC);_BEQ(%a)%{!A};\n" 72
+stmt: NEI4(reg,lzero) "\tLDW((%0)+2);ORW(%0);_BNE(%a)%{!A};\n"   72
+stmt: EQI4(reg,lzero) "\tLDW((%0)+2);ORW(%0);_BEQ(%a)%{!A};\n"   72
+stmt: NEU4(reg,lzero) "\tLDW((%0)+2);ORW(%0);_BNE(%a)%{!A};\n"   72
+stmt: EQU4(reg,lzero) "\tLDW((%0)+2);ORW(%0);_BEQ(%a)%{!A};\n"   72
 stmt: LTI4(larg,lac) "\t%1%0_LCMPS();_BGT(%a)%{!A};\n" 200
 stmt: LEI4(larg,lac) "\t%1%0_LCMPS();_BGE(%a)%{!A};\n" 200
 stmt: GTI4(larg,lac) "\t%1%0_LCMPS();_BLT(%a)%{!A};\n" 200
@@ -798,10 +809,10 @@ stmt: LTU4(larg,lac) "\t%1%0_LCMPU();_BGT(%a)%{!A};\n" 200
 stmt: LEU4(larg,lac) "\t%1%0_LCMPU();_BGE(%a)%{!A};\n" 200
 stmt: GTU4(larg,lac) "\t%1%0_LCMPU();_BLT(%a)%{!A};\n" 200
 stmt: GEU4(larg,lac) "\t%1%0_LCMPU();_BLE(%a)%{!A};\n" 200
-stmt: NEI4(larg,lac) "\t%1%0_LCMPX();_BNE(%a)%{!A};\n" 100
-stmt: EQI4(larg,lac) "\t%1%0_LCMPX();_BEQ(%a)%{!A};\n" 100
-stmt: NEU4(larg,lac) "\t%1%0_LCMPX();_BNE(%a)%{!A};\n" 100
-stmt: EQU4(larg,lac) "\t%1%0_LCMPX();_BEQ(%a)%{!A};\n" 100
+stmt: NEI4(larg,lac) "\t%1%0_LCMPX();_BNE(%a)%{!A};\n" 140
+stmt: EQI4(larg,lac) "\t%1%0_LCMPX();_BEQ(%a)%{!A};\n" 140
+stmt: NEU4(larg,lac) "\t%1%0_LCMPX();_BNE(%a)%{!A};\n" 140
+stmt: EQU4(larg,lac) "\t%1%0_LCMPX();_BEQ(%a)%{!A};\n" 140
 asgn: ASGNI4(vdst,lac)           "\t%{=LAC}%1%[0b]_MOVL(LAC,%0)%{!A};\n"   120
 asgn: ASGNI4(vdst,reg)           "\t%[0b]_MOVL(%1,%0)%{!A};\n"             120
 asgn: ASGNI4(addr,INDIRI4(asrc)) "\t%[1b]_MOVL(%1,%0)%{!A};\n"             120
@@ -937,9 +948,9 @@ reg: LOADI1(reg)   "\t%{?0=~vAC::LD(%0);}{?c==vAC::ST(%c);}%{!A}\n"   38
 reg: LOADU1(reg)   "\t%{?0=~vAC::LD(%0);}{?c==vAC::ST(%c);}%{!A}\n"   38
 reg: LOADI1(ac)    "\t%0%{?c==vAC::ST(%c);}\n"   16
 reg: LOADU1(ac)    "\t%0%{?c==vAC::ST(%c);}\n"   16
-reg: LOADI4(reg)   "\t_MOVL(%0,%c)%{!5};\n" 120
-reg: LOADU4(reg)   "\t_MOVL(%0,%c)%{!5};\n" 120
-reg: LOADF5(reg)   "\t_MOVF(%0,%c)%{!5};\n" 150
+reg: LOADI4(reg)   "\t%{=%0}_MOVL(%0,%c)%{!5};\n" 120
+reg: LOADU4(reg)   "\t%{=%0}_MOVL(%0,%c)%{!5};\n" 120
+reg: LOADF5(reg)   "\t%{=%0}_MOVF(%0,%c)%{!5};\n" 150
 
 # 2) extensions
 eac: CVII2(reg) "LD(%0);XORI(128);SUBI(128);" if_cv_from(a,1,66)

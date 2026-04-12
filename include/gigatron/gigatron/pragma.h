@@ -109,9 +109,9 @@
    * '__attribute__((quickcall))'
      Declares that an external function can be called by passing all its
      arguments by register and without need to spill the caller-saved
-     registers. This reduces the cost of the call and occasionally
-     makes it possible to treat the calling function as a leaf
-     function or a frameless one.
+     registers or ensure that the stack is long-aligned.  This reduces
+     the cost of the call and occasionally makes it possible to treat
+     the calling function as a leaf function or a frameless one.
 
    ==== Attribute macros ====
 

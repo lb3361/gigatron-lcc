@@ -5,6 +5,10 @@
 
 #include "_doscan.h"
 
+/* See _support.s for the actual _doscan_double
+   and the machinery that only links this when
+   floating point is used in the program. */
+
 int _doscan_double_imp(doscan_t *dd, double *p)
 {
 	strtod_t dobj;

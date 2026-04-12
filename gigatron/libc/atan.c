@@ -26,10 +26,13 @@ static double Q[5] = {
 
 double atan(double x)
 {
-	double sign = copysign(_fone, x);
-	double z;
-	double y = 0;
-	x = fabs(x);
+	register char sgn = 0;
+	register double y = _fzero;
+	register double z;
+	if (x < _fzero) {
+		x = -x;
+		sgn++;
+	}
 	if (x > 2.4) {
 		y = _pi_over_2;
 		x = _fminus / x;
@@ -39,8 +42,10 @@ double atan(double x)
 	}
 	z = x * x;
 	z = z * _polevl(z, P, 4) / _p1evl(z, Q, 5);
-	x = x * z + x;
-	return copysign(y + x, sign);
+	x = x * z + x + y;
+	if (sgn)
+		x = -x;
+	return x;
 }
 
 

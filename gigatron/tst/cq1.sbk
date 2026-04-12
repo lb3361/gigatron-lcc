@@ -264,7 +264,7 @@ def code10():
 	ADDSV(2,R6);
 	label('.70');
 	LDI(39);_CMPWS(R6);_BGT('.69');
-	_MOVL('.75',LAC);
+	LDI(0);STW(LAC);STW((LAC)+2);
 	_MOVL(LAC,[SP,-156+488]);
 	_MOVL(LAC,[SP,-312+488]);
 	_MOVL(LAC,[SP,-468+488]);
@@ -420,7 +420,7 @@ def code11():
 	label('.240');
 	_MOVL(L8,L22);
 	_MOVL(L22,LAC);LDWI('.74');_LSUB();_MOVL(LAC,L8);
-	_MOVL(L22,LAC);LDW(LAC+2);ORW(LAC);_BNE('.239');
+	LDW((L22)+2);ORW(L22);_BNE('.239');
 	_MOVL(L18,LAC);
 	label('.238');
 	tryhop(2);POP();RET()

@@ -104,11 +104,11 @@ extern __near word vT2_v7;
 extern __near word vT3_v7;
 
 extern byte videoTable[];
-extern void vReset(void);
-extern byte ledTempo_v7;
-extern word vIRQ_c5;
-extern byte ctrlBits_v5 __at(0x1f8);  /* not in interface.json */
-extern byte videoTop_v5;
+extern void vReset(void);	     /* v4   */
+extern word vIRQ_c5;		     /* v5a  */
+extern byte vIrqCtx_v7;		     /* dev7 */
+extern byte ctrlBits_v5 __at(0x1f8); /* v5a  */
+extern byte videoTop_v5;	     /* v5a  */
 extern byte userCode[];
 extern byte soundTable[];
 extern byte screenMemory[][256];

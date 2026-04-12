@@ -37,7 +37,8 @@ extern void (*_exitm_msgfunc)(int ret, const char *msg);
 /* ----- Raising signals ----- */
 
 /* Raising signal with an error message */
-extern void _raisem(int signo, const char *msg);
+extern void _raisem(int signo, const char *msg)
+	__attribute__((quickcall));
 
 /* The following vector changes what raise() does
    without requiring all the context saving that
@@ -73,8 +74,10 @@ extern double _pi, _pi_over_2, _pi_over_4;
 /* Raise a SIGFPE exception and return defval if the exception is ignored.
    If a signal handler for SIGFPE has been setup, these functions
    return what the signal handler returns. */
-extern double _fexception(double defval);
-extern double _foverflow(double defval);
+extern double _fexception(double defval)
+	__attribute__((quickcall));
+extern double _foverflow(double defval)
+	__attribute__((quickcall));
 
 /* Multiply x by 10^n. */
 extern double _ldexp10p(const double *x, int n);
@@ -85,11 +88,14 @@ extern double _ldexp10p(const double *x, int n);
 extern int _frexp10p(double *x);
 
 /* Like the C99 function remquo but with fmod-style remainder. */
-extern double _fmodquo(double x, double y, int *quo) __attribute__((quickcall));
+extern double _fmodquo(double x, double y, int *quo)
+	__attribute__((quickcall));
 
 /* Evaluate polynomials */
-extern double _polevl(double x, double *coeff, int n) __attribute__((quickcall));
-extern double _p1evl(double x, double *coeff, int n) __attribute__((quickcall));
+extern double _polevl(double x, double *coeff, int n)
+	__attribute__((quickcall));
+extern double _p1evl(double x, double *coeff, int n)
+	__attribute__((quickcall));
 
 
 /* ---- Stdio ---- */
@@ -142,41 +148,47 @@ extern char *dtoa(double x, char *buf, int format, int prec);
    two ascii digits packed in the returned integer.
    This is a fast and compact self-contained function. */
 
-extern int _utwoa(int) __attribute__((quickcall));
+extern int _utwoa(int)
+	__attribute__((quickcall));
 
 /* Converts an integer into decimal ascii.
    Buffer must contain at least seven characters.
    This is a fast and compact self-contained function. */
 
-extern char *_itwoa(int, char buffer[7]) __attribute__((quickcall));
+extern char *_itwoa(int, char buffer[7])
+	__attribute__((quickcall));
 
 
 /* ---- Banking ---- */
 
 /* Return an opaque result that summarizes the banking state. */
-extern void *_membank_save(void) __attribute__((quickcall));
+extern void *_membank_save(void)
+	__attribute__((quickcall));
 
 /* Restore previously saved banking state. */
-extern void _membank_restore(void *saved) __attribute__((quickcall));
+extern void _membank_restore(void *saved)
+	__attribute__((quickcall));
 
 /* Sets a particular memory bank in address range 0x8000-0xffff.
    The default routine only uses the two least significant bits, allowing for four 32KB banks.
    The routine that comes with the 512k map uses four bits, allowing sixteen banks. */
-extern void _membank_set(int bank) __attribute__((quickcall));
+extern void _membank_set(int bank)
+	__attribute__((quickcall));
 
 /* Return the bank currently mapped in address range 0x8000-0xffff.
    The default routine relies on the ctrlBits and always returns a bank number in 0..3.
    The routine that comes with the 512k map is only guaranteed to work when the
    bank selection was performed with _membank_set(). */
-extern int _membank_get(void) __attribute__((quickcall));
+extern int _membank_get(void)
+	__attribute__((quickcall));
 
-/* These two functions only do something with -map=128k or -map=512k.
-   They can be used to temporarily access the frame buffer.
-   - with -map=128k, the videotable gives the row addresses.
-   - with -map=512k, add 0x8000 to the videotable row addresses.
-   Beware where the stack is located! */
-extern void _membank_set_framebuffer_bank(void) __attribute__((quickcall));    
-extern void _membank_set_program_bank(void) __attribute__((quickcall));
+/* These two functions only do something with -map=128k.
+   and can be used to temporarily access the frame buffer.
+   They do not work with map=512k. */
+extern void _membank_set_framebuffer_bank(void)
+	__attribute__((quickcall));
+extern void _membank_set_program_bank(void)
+	__attribute__((quickcall));
 
 
 /* ---- Misc ---- */
@@ -188,8 +200,10 @@ extern void _srand(void);
 /* Scans memory region [s,s+n) and return a pointer to the first byte 
    equal to either c0 or c1. Return zero if not found. 
    This is fast when there is a SYS call. */
-extern void *_memchr2(const void *s, char c0, char c1, size_t n);
-extern void *__memchr2(const void *s, int c0c1, size_t n);
+extern void *_memchr2(const void *s, char c0, char c1, size_t n)
+	__attribute__((quickcall));
+extern void *__memchr2(const void *s, int c0c1, size_t n)
+	__attribute__((quickcall));
 
 /* Scans memory region [s,s+n) in bank given by bits 6 and 7 of bank.
    Return a pointer to the first byte equal to either c0 or c1.
@@ -216,9 +230,11 @@ extern void _memswp(void *a, void *b, size_t n);
    but only contains 24 bits numbers (0 to 16M). The alternative
    entry point _clock() returns a 16 bits integer which is often
    sufficient and avoids long int overhead. */
-extern unsigned int _clock(void) __attribute__((quickcall));
+extern unsigned int _clock(void)
+	__attribute__((quickcall));
 
 /* Wait for n vertical blanks (or n clocks) */
-extern void _wait(int n) __attribute__((quickcall));
+extern void _wait(int n)
+	__attribute__((quickcall));
 
 #endif

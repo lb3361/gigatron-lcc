@@ -28,12 +28,11 @@ def scope():
 
     def code_restore():
         nohop()
-        label('_membank_set_program_bank')
-        LDI(0x80);_BRA('.r0')
-        label('_membank_set_framebuffer_bank')
-        LDI(0x40)
-        label('.r0')
-        STW(R8)
+        if cons_128k:
+            label('_membank_set_program_bank')
+            LDI(0x80);_BRA('.r0')
+            label('_membank_set_framebuffer_bank')
+            LDI(0x40);label('.r0');STW(R8)
         label('_membank_restore')
         _MOVIW('SYS_ExpanderControl_v4_40','sysFn')
         LDWI(ctrlBits_v5);PEEK();_BEQ('.ret')
@@ -49,17 +48,15 @@ def scope():
                  ('PLACE', '_membank_restore', 0x0200, 0x7fff) ] )
 
     if not cons_128k:
-        def code_set_bank():
-            if cons_512k:
-                error("_membank_set_framebuffer_bank() cannot work with -map=512k")
+        def code_set_framebuffer_bank():
             label('_membank_set_program_bank')
             label('_membank_set_framebuffer_bank')
             RET()
 
-        module(name='_membank_set_bank',
+        module(name='_membank_set_framebuffer_bank',
                code=[('EXPORT','_membank_set_program_bank'),
                      ('EXPORT','_membank_set_framebuffer_bank'),
-                     ('CODE','_membank_set_bank', code_set_bank) ])
+                     ('CODE','_membank_set_bank', code_set_framebuffer_bank) ] )
 
     def code_set():
         nohop()

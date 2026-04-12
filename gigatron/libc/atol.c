@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <gigatron/libc.h>
 
 long atol(register const char *s)
 {
-	register long x = 0;
+	register long x = _lzero;
 	register int n = 0;
 	register int c = *s;
 	while (_isspace(c))

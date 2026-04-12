@@ -44,8 +44,10 @@ static double k_acos(double x) 	/* For x > 0.5 */
 
 double asin(double x)
 {
-	double sign = copysign(_fone, x);
-	x = fabs(x);
+	register char sgn = 0;
+	if (x < _fzero) {
+		x = -x; sgn++;
+	}
 	if (x > _fone) {
 		errno = EDOM;
 		return _fexception(_fzero);
@@ -53,13 +55,17 @@ double asin(double x)
 		x = _pi_over_2 - k_acos(x);
 	} else 
 		x = k_asin(x);
-	return copysign(x, sign);
+	if (sgn)
+		x = -x;
+	return x;
 }
 
 double acos(double x)
 {
-	int sign = (x < _fzero);
-	x = fabs(x);
+	register char sgn = 0;
+	if (x < _fzero) {
+		x = -x; sgn++;
+	}
 	if (x > _fone) {
 		errno = EDOM;
 		return _fexception(_fzero);
@@ -67,7 +73,7 @@ double acos(double x)
 		x = k_acos(x);
 	} else
 		x = _pi_over_2 - k_asin(x);
-	if (sign)
+	if (sgn)
 		x = _pi - x;
 	return x;
 }

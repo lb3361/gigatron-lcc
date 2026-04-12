@@ -18,7 +18,7 @@ extern double frexp(double, int *) __attribute__((quickcall));
 extern double ldexp(double, int) __attribute__((quickcall));
 extern double log(double);
 extern double log10(double);
-extern double modf(double, double *);
+extern double modf(double, double *) __attribute__((quickcall));
 extern double pow(double, double);
 extern double sqrt(double);
 extern double ceil(double) __attribute__((quickcall));

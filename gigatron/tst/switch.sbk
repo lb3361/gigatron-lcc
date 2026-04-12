@@ -408,7 +408,7 @@ def code9():
 	label('.118');
 	_MOVL(L5,LAC);LDWI('.121');_LCMPX();_BEQ('.113');
 	LDWI('.122');_LCMPX();_BEQ('.113');
-	LDW(LAC+2);ORW(LAC);_BEQ('.113');
+	LDW((L5)+2);ORW(L5);_BEQ('.113');
 	_BRA('.109');
 	label('.119');
 	_MOVL(L5,LAC);LDWI('.123');_LCMPX();_BEQ('.116');

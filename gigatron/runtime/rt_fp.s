@@ -550,8 +550,11 @@ def scope():
             BNE('.faddx1')
             _CALLJ('__@foverflow')
         label('.faddx1')
-        _CALLJ('_@_rndfac')
-        tryhop(2);POP();RET()
+        if args.cpu >= 6:
+            tryhop(4);POP();JNE('_@_rndfac')
+        else:
+            _CALLJ('_@_rndfac')
+            tryhop(2);POP();RET()
 
     def code_fadd_t3():
         label('__@fadd_t3')
@@ -603,8 +606,11 @@ def scope():
         label('.fsubx2')
         _CALLJ('__@fnorm')               # - normalize
         label('.fadd3')
-        _CALLJ('_@_rndfac')
-        tryhop(2);POP();RET()
+        if args.cpu >= 7:
+            tryhop(4);POP();JMP('_@_rndfac')
+        else:
+            _CALLJ('_@_rndfac')
+            tryhop(2);POP();RET()
 
     module(name='rt_faddt3.s',
            code=[ ('EXPORT', '__@fadd_t3'),

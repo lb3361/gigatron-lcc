@@ -125,13 +125,16 @@ def glcc(argv) -> int:
             if not arg.startswith(a):
                 return False
             elif dup:
-                error(f"Option {arg} conflicts with option: {dup}")
+                error(f"Option '{arg}' conflicts with option: '{dup}'")
             elif arg != a:
-                error(f"Unrecognized option: {arg}")
+                error(f"Unrecognized option '{arg}'")
             optarg = None
             return True
 
         def opt1(a, dup=False, styles="-+"):
+            # style +:  -D DEBUG or -o file.gt1
+            # style -:  -DDEBUG or -lm or -DDEBUG=1.
+            # style =:  -map=64k, possibly incompatible with style =.
             nonlocal arg, argi, optarg
             if not arg.startswith(a):
                 return False
@@ -145,6 +148,9 @@ def glcc(argv) -> int:
                 optarg = arg[len(a):]
             else:
                 error(f"Unrecognized option: {arg}")
+            if dup:
+                dup = dup if dup.startswith('-') else f"{a} {dup}"
+                error(f"Option '{arg}' conflicts with option '{dup}'")
             return True
 
         # First process arguments whose meaning is not order dependent
@@ -258,9 +264,8 @@ def glcc(argv) -> int:
         # Create temporary directory for intermediate files
         with tempfile.TemporaryDirectory(delete=not haskeep) as tmpdirname:
 
-            # Now process arguments whose meaning is order dependent
-            # This includes all files to be compiled and all arguments
-            # to be passed to the linker.
+            # Maintain order of remaining linker arguments and options.
+            # This does not matter to glink but might someday.
             argi = 0
             while argi < len(argv):
                 arg = argv[argi]

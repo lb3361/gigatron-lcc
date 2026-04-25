@@ -28,8 +28,8 @@ Some useful things to know:
   the C language always promotes `char` values into `int` values to
   perform arithmetic. Promoting a signed byte involves a clumsy sign
   extension. Promoting an unsigned byte comes for free with most
-  VCPU opcodes. If you really want signed chars, use `signed char`
-  or maybe use the compiler option `-Wf-unsigned_char=0`. This
+  VCPU opcodes. If you really want signed chars, use type `signed char`.
+  Alternatively, use compiler option `-Wf-unsigned_char=0`. This
   is not recommended. 
 
 * The nonstandard type qualifier `__near` can be used to indicate

@@ -4,9 +4,8 @@
 def code0():
     ### _start()
     label('_start');
-    # ensure stack alignment
-    # create stack headroom for argc and argv
-    LDWI(0xfffc);ANDW(SP);SUBI(4);STW(SP)
+    # ensure stack alignment with space for argc and argv
+    LDI(3);ORW(SP);SUBI(7);STW(SP)
     # call onload functions
     for f in args.onload:
         _CALLJ(f)
@@ -19,24 +18,22 @@ def code0():
     LDI(0); STW(R8); STW(R9); _CALLI('main'); STW(R8)
     ### exit()
     label('exit')
-    LDW(R8); STW(R0)
+    _MOVW(R8,R0)
     # call fini chain
     LDWI('__glink_magic_fini'); _CALLI('_callchain')
-    LDW(R0); STW(R8)
+    _MOVW(R0,R8)
     ### _exit()
     label('_exit')
-    LDW(R8);STW(R0)
-    LDI(0); STW(R9)
+    _MOVIW(0,R9)
     label('_exitm');
-    label('_exitm_msgfunc', pc()+1)
-    LDWI(0)                # _exitm_msgfunc is LDWI's argument here
-    #####
     ##### Here diverge from the standard start function
     ##### We ignore _exitm_msgfunc and just call the
     ##### gtsim pseudo sys function.
     #####
     LDWI(0xff00);STW('sysFn');SYS(34)
     HALT()
+    label('_exitm_msgfunc')
+    words(0) # unused
 
 def code1():
     # subroutine to call a chain of init/fini functions

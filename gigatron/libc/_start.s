@@ -14,7 +14,10 @@ def code0():
     if not args.no_runtime_bss_initialization:
         _CALLJ('_init_bss')
     # call init chain
-    _CALLJ('_callchain_init')
+    if args.cpu < 5:
+        _CALLJ('_callchain_init')
+    else:
+        LDWI('__glink_magic_init'); CALLI('_callchain')
     # call main
     LDI(0); STW(R8); STW(R9); _CALLJ('main'); STW(R8)
     ### exit()
@@ -53,8 +56,8 @@ def code1():
     if args.cpu < 5:
         label('_callchain_fini')
         LDWI('__glink_magic_fini'); _BRA('_callchain')
-    label('_callchain_init')
-    LDWI('__glink_magic_init')
+        label('_callchain_init')
+        LDWI('__glink_magic_init')
     label('_callchain')
     DEEK(); STW(R7); _MOVW(vLR,R6)
     LDWI(0xBEEF);XORW(R7);_BEQ('.callchaindone')

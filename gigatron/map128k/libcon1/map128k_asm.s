@@ -23,28 +23,32 @@ def scope():
         INC(R9+1);LDW(R9);_BNE('.m128copyloop')
         POP()
         # move to bank 2
-        LDWI('SYS_ExpanderControl_v4_40');STW('sysFn')
+        _MOVIW('SYS_ExpanderControl_v4_40','sysFn')
         LDWI('ctrlBits_v5');PEEK();ANDI(0x3c);ORI(0x80);SYS(40)
         # reset screen in black
         _MOVIW(0,R8)
         # new implementation of console_reset
         label('_console_reset')
-        LDWI('videoTable');STW(R10)
-        LDI(screenStart);STW(R9)
+        _MOVIW('videoTable',R10)
+        _MOVIW(screenStart,R9)
         label('.c128loop')
         LDW(R9);DOKE(R10)
         INC(R10);INC(R10)
         INC(R9);LD(R9)
         XORI(screenEnd) if screenEnd < 256 else None
         BNE('.c128loop')
-        # clear screen (black)
+        # clear screen
         _MOVW(R8,R9)
         _MOVIW(120,R10)
-        LDWI(screenStart<<8);STW(R8)
-        if args.cpu >= 6:
-            JNE('_console_clear')
+        if args.cpu >= 7:
+            MOVIW(screenStart<<8,R8)
+            JGE('_console_clear')
         else:
-            PUSH();_CALLJ('_console_clear');POP();RET()
+            BLT('.ret')
+            LDWI(screenStart << 8);STW(R8)
+            PUSH();_CALLJ('_console_clear');POP()
+        label('.ret')
+        RET()
 
     def code_halt():
         nohop()

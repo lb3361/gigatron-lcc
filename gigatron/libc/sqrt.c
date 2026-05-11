@@ -12,12 +12,12 @@ double sqrt(double x)
 	} else {
 		int e;
 		register double z = frexp(x, &e);
-		register int i;
-		z = 4.173075996388649989089E-1 + 5.9016206709064458299663E-1 * z;
-		if (e & 1)
-			z = z * 1.41421356237309504880;
+		register char i;
+		if (! (e & 1))
+			z *= _fhalf;
+		z += _fhalf;
 		z = ldexp(z, (e >> 1));
-		for (i=3; i; i--)
+		for (i=(char)-3; i; i++)
 			z = (z + x / z) * _fhalf;
 		return z;
 	}

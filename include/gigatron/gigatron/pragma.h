@@ -41,9 +41,9 @@
      - "C" for a segment that can be used for vcpu code,
      - "D" for a segment that can be used for data variables,
      - "H" for a segment that can be used for the malloc heap,
-     - "c" for a segment that can be used for code with only when
+     - "c" for a segment that can be used for code but only when
        explicit placement constraints have been provided.
-     - "d" for a segment that can be used for code with only when
+     - "d" for a segment that can be used for code but only when
        explicit placement constraints have been provided.
      This segment specification overrides any overlapping segment
      definition provided by the map of by a map overlay. The linker
@@ -146,7 +146,7 @@
 
 /* `__weakref(x)` --
    Causes an external variable to be a weak reference to linker symbol
-   `s`.  If no module defines this variable, no compilation error will
+   `x`.  If no module defines this variable, no compilation error will
    be reported, and the address of the variable will be set to
    zero. */
 

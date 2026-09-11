@@ -17,6 +17,10 @@
 # include <gigatron/libc.h>
 #endif
 
+#if VMODE
+extern void SYS_SetMode(int) __attribute__((quickcall));
+#endif
+
 #define HEIGHT 15
 #define WIDTH 26
 #define SCALE 1.6
@@ -53,9 +57,12 @@ int mandelbrot(float x, float y) {
 void main(void) {
   int x, y, data;
   float sx, sy;
-   
+
 #if TIMER
   unsigned int ticks = _clock();
+#endif
+#if VMODE
+  SYS_SetMode(VMODE);
 #endif
 
   for(y = 0; y < HEIGHT; y = y + YSTEP ) {

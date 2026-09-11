@@ -39,7 +39,7 @@ endif
 
 default: all
 
-all: build-dir lcc-all gigatron-all
+all: build-dir lcc-cpp lcc-rcc lcc-bprint gigatron-all
 	${MAKE} subdirs-all
 	@echo "+----------------------------------+"
 	@echo "|   Compilation ran successfully!  |"

@@ -2,8 +2,8 @@
 
 /* This file is part of the traditional LCC compiler driver 'lcc'.
    The GLCC compiler driver is now a pure python program that
-   bypasses 'lcc'. It still gets compiled as part of the build
-   process, but it is not installed. */
+   bypasses 'lcc'. Therefore it is no longer used but
+   kept for documentation. */
 
 #include <stdlib.h>
 #include <stdio.h>

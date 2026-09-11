@@ -1383,6 +1383,13 @@ def ADDWI(x):
             ADDHI(hi(d));
         if d & 0xff != 0 or not isinstance(x,int):
             ADDI(lo(d))
+@vasm
+def JMP(d):
+    '''Shorthand for MOVIW into vPC.
+       This is slower than using Jcc with a well chosen condtion. '''
+    d=int(v(d))
+    emit_op('MOVIW_v7', v('vPC'), hi(d), lo(d-2));
+
 
 # pseudo instructions used by the compiler
 @vasm

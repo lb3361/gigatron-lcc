@@ -28,7 +28,7 @@ typedef void (*sig_handler_t)(int);
 #define FPE_FLTRES      6       /* (not impl.) floating point inexact result */
 #define FPE_FLTINV      7       /* (not impl.) floating point invalid operation */
 
-sig_handler_t signal(int, sig_handler_t);
-int raise(int);
+extern sig_handler_t signal(int, sig_handler_t);
+extern int raise(int);
 
 #endif /* __SIGNAL */

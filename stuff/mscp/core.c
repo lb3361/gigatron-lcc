@@ -7,6 +7,13 @@
 
 #include "core.h"
 
+#pragma glcc onload("mscp_onload")
+
+#pragma glcc lomem("core.c", "*")
+#pragma glcc lomem("*", "memset")
+#pragma glcc lomem("*", "SYS_Exec")
+#pragma glcc lomem("*", "SYS_ExpanderControl")
+
 int prebooksize = 0;
 near int booksize = 0;         /* Number of opening book entries */
 near int bkindex = -1;         /* Current book table index */

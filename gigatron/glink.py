@@ -298,10 +298,10 @@ class Module:
                         debug(f"map_place directive {tp} matches {n} fragment(s)")
                 elif tp[0] != 'NOP':
                     error(f"Unrecognized map_place() specification {tp}")
-        # placement patterns
+        # placement pragmas
         for tp in args.place:
-            if tp[0] in ('ORG', 'PLACE', 'NOHOP', 'OFFSET'):
-                placement(tp)
+            if fnmatch.fnmatch(self.name, tp[0]):
+                placement(tp[1:])
 
     def __repr__(self):
         return f"Module('{self.fname or self.name}',...)"
@@ -834,15 +834,31 @@ def pragma_option(opt):
     if not opt in args.opts:
         args.opts.append(opt)
 @vasm
-def pragma_lomem(fn):
-    assert type(fn) == str
-    if not fn in args.l:
-        args.place.append(('PLACE',fn,0x200,0x7fff))
+def pragma_lomem(modname,fragname):
+    assert type(modname) == str
+    assert type(fragname) == str
+    args.place.append((modname,'PLACE',fragname,0x200,0x7fff))
 @vasm
 def pragma_lib(fn):
     assert type(fn) == str
     if not fn in args.l:
         args.l.append(fn)
+@vasm
+def pragma_initsp(addr):
+    if args.initspsrc == 'p' and args.initsp != addr:
+        error(f"conflicting initsp pragmas")
+    args.initspsrc = 'p'
+    args.initsp = addr
+@vasm
+def pragma_onload(fn):
+    assert type(fn) == str
+    if not fn in args.onload:
+        args.onload.insert(0,fn)
+@vasm
+def pragma_segment(saddr,eaddr,flags):
+    assert 0 <= saddr < eaddr <= 0x10000
+    assert type(flags) == str
+    args.pragsegs.append(Segment(saddr, eaddr, flags))
 
 @vasm
 def ST(d):
@@ -2665,17 +2681,46 @@ def assemble_data_fragments(m, cseg, placed=False):
             if args.fragments and final_pass:
                 record_fragment_address(the_pc)
 
+def check_overlaps(segments, message):
+    sl = sorted(segments, key=lambda s: s.saddr)
+    for i in range(len(sl)-1):
+        if sl[i].eaddr > sl[i+1].saddr:
+            error(f"{message} overlap near address {hex(sl[i+1].saddr)}")
+
+def make_segments():
+    # zp and map segments
+    segments = create_zpage_segments()
+    for (s,e,d) in map_segments():
+        segments.append(Segment(s,e,d))
+    if the_pass == 0:
+        check_overlaps(segments, "map-defined segments")
+        check_overlaps(args.pragsegs, "pragma-defined segments")
+    # subtract pragma-defined segments from map-defined segments
+    for ps in args.pragsegs:
+        nsegments = []
+        for s in segments:
+            if s.eaddr <= ps.saddr or s.saddr >= ps.eaddr:
+                nsegments.append(s)
+            else:
+                if s.saddr < ps.saddr and s.eaddr > ps.saddr:
+                    nsegments.append(Segment(s.saddr,ps.saddr,s.flags))
+                if s.eaddr > ps.eaddr and s.saddr < ps.eaddr:
+                    nsegments.append(Segment(ps.eaddr,s.eaddr,s.flags))
+        segments = nsegments
+    # plus pragma defined segments
+    for s in args.pragsegs:
+        segments.append(Segment(s.saddr,s.eaddr,s.flags))
+    return segments
+
 def run_pass():
     global the_pass, the_module, the_fragment
     global labelchange_counter, genlabel_counter
     global segment_list, symdefs
     # initialize
+    segment_list = make_segments()
     the_pass += 1
     labelchange_counter = 0
     genlabel_counter = 0
-    segment_list = create_zpage_segments()
-    for (s,e,d) in map_segments():
-        segment_list.append(Segment(s,e,d))
     debug(f"pass {the_pass}")
     try:
         # code segments with explicit address or placement constraints
@@ -2885,10 +2930,11 @@ def print_symbols(allsymbols=False):
                 syms.append((m.symdefs[s], s, exported, m.fname))
     syms.sort(key = lambda x : x[0] )
     syms.sort(key = lambda x : x[1] )
-    print("\nSymbol table")
+    print("Symbol table")
     for s in syms:
         pp="public" if s[2] else "private"
-        print(f"\t{s[0]:04x} {pp:<8s}  {s[1]:<24s}  {s[3]:<24s}")
+        print(f"  {s[0]:04x} {pp:<8s}  {s[1]:<24s}  {s[3]:<24s}")
+    print()
 
 def print_fragments():
     addrs = list(addrinfo.keys())
@@ -2905,7 +2951,30 @@ def print_fragments():
         plen = rng[1] - rng[0]
         if plen > 0:
             blen = f"({plen} byte{'s' if plen > 1 else ''})"
-            print(f"\t{rng[0]:04x}-{rng[1]-1:04x} {blen:<14s} {cseg:<5s} {name:<28s} {m.fname:<22s}")
+            print(f"  {rng[0]:04x}-{rng[1]-1:04x} {blen:<14s} {cseg:<5s} {name:<28s} {m.fname:<22s}")
+    print()
+
+def print_segments():
+    i = j = 0
+    segments = make_segments()
+    while i < len(segments):
+        s = segments[i]
+        a = s.saddr
+        l = s.eaddr - s.saddr
+        while True:
+            j = j+1
+            if j >= len(segments): break;
+            sj = segments[j]
+            if sj.saddr != a + 0x100: break
+            if sj.eaddr - sj.saddr != l: break
+            if (sj.flags != s.flags): break
+            a = sj.saddr
+        if j > i+1:
+            print(f"  {s} ... {segments[j-1]}")
+        else:
+            print(f"  {s}")
+        i = j
+    print(f"  InitSP({hex(args.initsp)})")
 
 
 # ------------- main function
@@ -2967,6 +3036,8 @@ def glink(argv):
                                     to get information about the selected map.''')
         parser.add_argument('-info', "--info", action='store_true',
                             help='describe the selected map, cpu, rom')
+        parser.add_argument('-segments', "--segments", action='store_true',
+                            help='print the segment list derived from map and pragmas')
         parser.add_argument('-V', "--version", action='store_true',
                             help='report glcc/glink version')
         parser.add_argument('-l', type=str, action='append', metavar='LIB',
@@ -3024,7 +3095,10 @@ def glink(argv):
         args.cpuflags = args.cpu[1:]
         args.cpu = int(args.cpu[0])
         args.files = args.files or []
+        args.initsp = None
+        args.initspsrc = None
         args.place = []
+        args.pragsegs = []
 
         read_interface()
         create_zpage_map()
@@ -3064,21 +3138,21 @@ def glink(argv):
                         else:
                             print(f"  - {k} = {'{...}'}")
             else:
-                print(f" No information found on rom '{args.rom}'")
+                print(f"  No information found on rom '{args.rom}'")
             print()
             print('================= CPU INFO')
             if args.cpu == 7:
                 print('  vCPU 7 comes with the DEV7 roms and adds new opcodes to vCPU 5.\n'
-                      ' See https://github.com/lb3361/gigatron-rom/blob/master/Docs/vCPU7.md.')
+                      '  See https://github.com/lb3361/gigatron-rom/blob/master/Docs/vCPU7.md.')
             elif args.cpu == 6:
                 print('  vCPU 6 comes with at67'"'"'s ROMvX0 and contains many new opcodes\n'
-                      ' whose encoding might change from release to release. vCPU 6 is not\n'
-                      ' backward compatible with vCPU 5 because it gives different encoding\n'
-                      ' to the CMPHU and CMPHS opcodes. Program compiled for vCPU 5 do not\n'
-                      ' run reliably on ROMvX0 and programs compiled for vCPU 6 only run\n'
-                      ' on ROMvX0. Programs compiled with -rom=vx0 -cpu=5 try to navigate\n'
-                      ' these constraints and might run on the dev6 rom (proposed v6)\n'
-                      ' and later if one disables the rom check. Your mileage can vary.')
+                      '  whose encoding might change from release to release. vCPU 6 is not\n'
+                      '  backward compatible with vCPU 5 because it gives different encoding\n'
+                      '  to the CMPHU and CMPHS opcodes. Program compiled for vCPU 5 do not\n'
+                      '  run reliably on ROMvX0 and programs compiled for vCPU 6 only run\n'
+                      '  on ROMvX0. Programs compiled with -rom=vx0 -cpu=5 try to navigate\n'
+                      '  these constraints and might run on the dev6 rom (proposed v6)\n'
+                      '  and later if one disables the rom check. Your mileage can vary.')
             elif args.cpu == 5:
                 print('  vCPU 5 was introduced in ROMv5a with opcodes CALLI, CMPHU, CMPHS.')
             elif args.cpu == 4:
@@ -3089,6 +3163,10 @@ def glink(argv):
                 map_describe()
             else:
                 print(f"  No information found on map '{args.map}'")
+            print('================= SEGMENT LIST')
+            print(f"  Segment list defined by option -map='{','.join(sm)}':\n")
+            print_segments()
+            print()
             return 0
 
         # load all .s/.o/.a files
@@ -3099,6 +3177,10 @@ def glink(argv):
         for m in module_list:
             if m.cpu > args.cpu and not m.library:
                 warning(f"module '{m.name}' was compiled for cpu {m.cpu} > {args.cpu}")
+        if args.segments:
+            print("Segment list (from map, overlays, and pragmas):")
+            print_segments()
+            print()
 
         # load modules synthetized by the map
         if map_modules:

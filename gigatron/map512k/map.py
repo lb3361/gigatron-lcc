@@ -35,7 +35,7 @@ segments = [ (0x00fa, 0x0200, 0x0100, 0x0500, 'CDH'),
              (0x79c0, 0x8240, None,   None,   'CDH')  ]
 
 
-initsp = 0xfffc
+args.initsp = 0xfffc
 libcon = "con_b"
 check512krom = True
 args.lfss = args.lfss or 256
@@ -77,7 +77,7 @@ def map_modules(romtype):
         org(0x200)
         label('_gt1exec')
         # Set stack
-        LDWI(initsp);STW(SP);
+        LDWI(args.initsp);STW(SP);
         if check512krom:
             # Check presence of patched rom
             LD(0xa);ANDI(0xfc);XORI(0xfc);BNE('.err')

@@ -32,7 +32,7 @@ segments = [ (0x0060, 0x2fa0, 0x0100, 0x80a0, 'CDH'),
              (0x2300, 0x0800, None,   None,   'CDH')
 ]
 
-initsp = 0x2efc
+args.initsp = 0x2efc
 minram = 0x80
 args.lfss = args.lfss or 128
 
@@ -71,7 +71,7 @@ def map_modules(romtype):
         org(0x200)
         label('_gt1exec')
         # Set stack
-        LDWI(initsp);STW(SP);
+        LDWI(args.initsp);STW(SP);
         # Check rom and ram
         if romtype and romtype >= 0x80:
             LD('romType');ANDI(0xfc);XORI(romtype);BNE('.err')

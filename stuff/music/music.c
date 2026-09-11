@@ -5,6 +5,8 @@
 #include <gigatron/sound.h>
 
 #pragma glcc option("PRINTF_SIMPLE")
+#pragma glcc segment(0x8000,0x8100,"")
+#pragma glcc segment(0x8240,0xfe00,"CDH")
 
 extern const byte* agony[];
 extern const byte* bath[];
@@ -59,11 +61,11 @@ void header_time(void)
 
 /* SAMPLE WINDOW */
 
-/* This locates the buffers in an area that we usually avoid
-   because we do not want to crash 32k machines. */
+/* This locates the buffers in an area that we
+   avoid loading because we do not want to
+   crash 32k machines. */
 extern byte sample1[128] __at(0x8000);
 extern byte sample2[128] __at(0x8080);
-
 byte * __near sb1 = sample1;
 byte * __near sb2 = sample2;
 

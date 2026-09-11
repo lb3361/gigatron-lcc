@@ -21,23 +21,28 @@
      is a source file name, and "MODNAME" is a function name or a
      variable name. However, both "FRAGNAME" and "MODNAME" can be
      patterns similar to the shell filename pattere. For instance,
+     
          #pragma glcc lomem("lomem.c","*")
+
      causes everything defined in file "lomem.c" to be
      placed in low memory, whereas
+
          #pragma glcc lomem("*", "SYS_*")
          #pragma glcc lomem("rt_*.s", "_*@*")
-     does the same for all functions whose name starts with "SYS_"
-     and all functions defined in files matching pattern "rt_*.s"
-     and whose name starts with "_" and contain a "@". This matches
-     in fact the C runtime functions that glcc uses to implement C.
-     There are useful to keep in low memory when bank switching
-     is involved.
+
+     does the same for all functions whose name starts with "SYS_" and
+     all functions defined in files matching pattern "rt_*.s" and
+     whose name starts with "_" and contain a "@". These two
+     conditions match the C runtime functions that glcc uses to
+     implement C.  Keeping them in low memory is wise when bank
+     switching is involved.
 
    * #pragma glcc segment(SADDR, EADDR, "USES")
      Redefines which uses are permitted for a segment of the Gigatron
      address space. Integers SADDR and EADDR define the start address
      (inclusive) and the end address (exclusive) of the segment.
      String "USES" may contain any combination of the following letters:
+     
      - "C" for a segment that can be used for vcpu code,
      - "D" for a segment that can be used for data variables,
      - "H" for a segment that can be used for the malloc heap,
@@ -45,6 +50,7 @@
        explicit placement constraints have been provided.
      - "d" for a segment that can be used for code but only when
        explicit placement constraints have been provided.
+
      This segment specification overrides any overlapping segment
      definition provided by the map of by a map overlay. The linker
      option --segments can be used to examine the resulting segment list.
@@ -82,11 +88,14 @@
 
    * `__attribute__((nohop))`
      Variable cannot cross a page boundary.
+
    * `__attribute__((org(ADDRESS)))
      Variable must be allocated at the specified address.
      This attribute overrides all other placement constraints.
+
    * `__attribute__((offset(ADDRESS)))
      Variable must be allocated at page offset ADDRESS&0xff.
+
    * `__attribute__((place(AMIN,AMAX)))`
      Variable must be allocated between addresses `AMIN` and `AMAX`.
 
@@ -97,26 +106,29 @@
      `STRING` instead of a symbol whose name is equal to the variable
      name. When `STRING` starts with prefix "__glink_weak_", this is a
      weak reference.
+
    * `__attribute__((regalias(STRING)))`
      Define an  external variable that references register `STRING`
      and prevents subsequent functions from allocating this register.
      This only makes sense when the variable is declared `__near`
      and can be used with to create a side channel to share information
      between functions.
+
    * `__attribute__((org(ADDRESS)))`
      Define an external variable assumed in the current compilation
      unit to be located at absolute address `ADDRESS`.
+
    * '__attribute__((quickcall))'
      Declares that an external function can be called by passing all its
-     arguments by register and without need to spill the caller-saved
-     registers or ensure that the stack is long-aligned.  This reduces
+     arguments by register and without need to preserve the caller-saved
+     registers or ensure that the stack is long-aligned. This reduces
      the cost of the call and occasionally makes it possible to treat
      the calling function as a leaf function or a frameless one.
 
    ==== Attribute macros ====
 
    The following definitions are provided as convenience
-   and also to protect programs against possible changes
+   and also protect programs against possible changes
    in attribute syntax or semantics: */
 
 /*  `__nohop` --

@@ -109,6 +109,8 @@ extern int _openf(FILE *fp, const char *fname);
 
 /* ---- Bitsets ---- */
 
+/* Deprecated: Functions to manage contiguous bitsets. */
+
 extern void _bitset_clear(char *set, size_t sz);
 extern void _bitset_compl(char *set, size_t sz);
 extern void _bitset_set(char *set, unsigned int i);
@@ -120,18 +122,19 @@ extern int  _bitset_test(char *set, unsigned int i);
 
 /* Using these functions help avoiding the bulky printf */
 
-/* Functions to convert integers to strings. Variable <bufend> points
-   to the last byte of a long enough buffer, which will be overwritten
-   by the zero terminator. The generated digits will be stored backwards
-   and the returned value will be smaller than <bufend>. */
-
+/* Functions to convert integers to strings. Variable bufend points
+   to the last byte of a long enough buffer. This function returns a
+   pointer to zero-terminated string representing integer value.
+   Address bufend is in fact the address of the final zero character
+   in this string. */
 extern char *_itoa(int value, char *bufend, int radix);
 extern char *_utoa(unsigned int value, char *bufend, int radix);
 extern char *_ltoa(long value, char *bufend, int radix);
 extern char *_ultoa(unsigned long value, char *bufend, int radix);
 
-/* Compat */
-
+/* Deprecated: Compatibility functions that take as input the first
+   character in a buffer of lenght 8 ot 16 depending on the
+   lenght of the integer. */
 #define itoa(v,b,r)  _itoa((v),(b)+7,r)
 #define utoa(v,b,r)  _utoa((v),(b)+7,r)
 #define ltoa(v,b,r)  _ltoa((v),(b)+15,r)
@@ -141,20 +144,17 @@ extern char *_ultoa(unsigned long value, char *bufend, int radix);
    style of the printf function. The buffer should be large enough for
    the required precision and number. Using the 'f' style with 
    large numbers can generate long strings. */
-
 extern char *dtoa(double x, char *buf, int format, int prec);
 
-/* Converts a number in range 0 to 99 into decimal,
-   two ascii digits packed in the returned integer.
-   This is a fast and compact self-contained function. */
-
+/* Converts a number in range 0 to 99 into decimal, two ascii digits
+   packed in the returned integer.  This is a fast and compact
+   self-contained function. */
 extern int _utwoa(int)
 	__attribute__((quickcall));
 
-/* Converts an integer into decimal ascii.
-   Buffer must contain at least seven characters.
-   This is a fast and compact self-contained function. */
-
+/* Converts an integer into decimal ascii. Argument buffer must
+   point to a seven characters buffer. This self-contained function is
+   used by mincprintf. */
 extern char *_itwoa(int, char buffer[7])
 	__attribute__((quickcall));
 
@@ -199,7 +199,9 @@ extern void _srand(void);
 
 /* Scans memory region [s,s+n) and return a pointer to the first byte 
    equal to either c0 or c1. Return zero if not found. 
-   This is fast when there is a SYS call. */
+   This is fast when there is a SYS call. The double underscore
+   variant stores both c0 and c1 into the low and high bytes
+   of an integer c0c1. */
 extern void *_memchr2(const void *s, char c0, char c1, size_t n)
 	__attribute__((quickcall));
 extern void *__memchr2(const void *s, int c0c1, size_t n)

@@ -105,10 +105,10 @@ extern __near word vT3_v7;
 
 extern byte videoTable[];
 extern void vReset(void);	     /* v4   */
-extern word vIRQ_c5;		     /* v5a  */
-extern byte vIrqCtx_v7;		     /* dev7 */
+extern byte vIrqCtx_v7  __at(0x1f5); /* dev7 */
+extern word vIRQ_v5     __at(0x1f6); /* v5a  */
 extern byte ctrlBits_v5 __at(0x1f8); /* v5a  */
-extern byte videoTop_v5;	     /* v5a  */
+extern byte videoTop_v5 __at(0x1f9); /* v5a  */
 extern byte userCode[];
 extern byte soundTable[];
 extern byte screenMemory[][256];

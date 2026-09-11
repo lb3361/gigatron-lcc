@@ -13,10 +13,10 @@
 #define _h2h(w) (((unsigned)(w))&0xff00u)
 
 
-/* Return the high of an integer or pointer */
+/* Return the high byte of an integer or pointer */
 #define hi(w) _h2l(w)
 
-/* Return the low of an integer or pointer */
+/* Return the low byte of an integer or pointer */
 #define lo(w) _l2l(w)
 
 /* Make a word using the specified high and low bytes */
@@ -30,7 +30,7 @@
 /* Make a pointer using the specified high and low bytes */
 #define mashp(hh,lo)   ((void*)mashw(hh,lo))
 
-/* Copy the low of high byte of `v` into `var` */
+/* Copy the low or high byte of `v` into `var` */
 #define copylo(var,v)  do {(var)=(__typeof(var))(_h2h(var)+_l2l(v));} while(0)
 #define copyhi(var,v)  do {(var)=(__typeof(var))(_l2l(var)+_h2h(v));} while(0)
 

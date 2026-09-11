@@ -284,3 +284,6 @@ $B1rcc$E:	$Brcc$E $Blcc$E $Bcpp$E
 		$C -o $@ -B$B $(RCCSRCS)
 $B2rcc$E:	$B1rcc$E
 		$C -o $@ -B$B1 $(RCCSRCS)
+
+# disable implicit bison rule
+.SUFFIXES:

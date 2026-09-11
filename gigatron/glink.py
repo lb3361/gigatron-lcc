@@ -853,7 +853,7 @@ def pragma_initsp(addr):
 def pragma_onload(fn):
     assert type(fn) == str
     if not fn in args.onload:
-        args.onload.insert(0,fn)
+        args.onload.append(fn)
 @vasm
 def pragma_segment(saddr,eaddr,flags):
     assert 0 <= saddr < eaddr <= 0x10000
@@ -2854,10 +2854,7 @@ def process_magic_symbols():
        for the malloc() function. Each list record occupies
        the first 4 bytes of a segment. The first pointer contains
        the segment size.
-     * '__glink_magic_egt1' is not a list but merely a pointer
-       that marks the end of the highest gt1 segment.
     '''
-    egt1_addr = None
     for s in exporters:
         if s.startswith("__glink_magic_"):
             head_module = exporters[s]
@@ -2873,17 +2870,8 @@ def process_magic_symbols():
                 process_magic_bss(s, head_module, head_addr)
             elif s == '__glink_magic_heap':
                 process_magic_heap(s, head_module, head_addr)
-            elif s == '__glink_magic_egt1':
-                egt1_addr = head_addr
             else:
                 process_magic_list(s, head_module, head_addr)
-    if egt1_addr != None:
-        egt1 = 0
-        for s in segment_list:
-            if s.buffer and s.saddr + len(s.buffer) > egt1:
-                egt1 = s.saddr + len(s.buffer)
-        debug(f"Last GT1 segments ends at address {hex(egt1)}\n")
-        doke_gt1(egt1_addr, egt1)
 
 def save_gt1(fname, start):
     with open(fname,"wb") as fd:

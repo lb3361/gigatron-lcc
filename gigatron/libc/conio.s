@@ -117,7 +117,7 @@ def scope():
     _MOVIW(0,v('console_state')+2)
     LDW(v('console_state')+0);STW(R8)
     if args.cpu >= 6:
-      JGE('_console_reset')
+      JGE('_console_reset');RET()
     else:
       PUSH();_CALLJ('_console_reset')
       tryhop(2);POP();RET()

@@ -33,6 +33,7 @@ def scope():
                 else:
                     LDW(row);_CALLI('_cons_set_bank_odd')
         else:
+            more_imports.append('_cons_set_bank')
             def set_bank(row=None):
                 _CALLJ('_cons_set_bank')
     else:

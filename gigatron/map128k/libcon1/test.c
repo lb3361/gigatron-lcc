@@ -3,12 +3,16 @@
 #include "gigatron/console.h"
 #include "gigatron/sys.h"
 
+
+#pragma glcc segment(0x8000,0x10000,"")
+
+
 int main()
 {
   // Display a red line at the top of the screen
   byte savedCtrlBits = ctrlBits_v5;
   SYS_ExpanderControl(0x7c);
-  memset((void*)0x8200u, 0x3, 160);
+  memset((void*)0x8a00u, 0x3, 160);
   SYS_ExpanderControl(savedCtrlBits);
   
   // Print something

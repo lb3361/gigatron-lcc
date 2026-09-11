@@ -66,7 +66,7 @@ def scope():
         if args.cpu >= 6:
             JGE('_membank_restore')
         else:
-            _JMP('_membank_restore')
+            PUSH();_CALLJ('_membank_restore');POP();RET()
             
     module(name='_membank_set.s',
            code=[('EXPORT','_membank_set'),

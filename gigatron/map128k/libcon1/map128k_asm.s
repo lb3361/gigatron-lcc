@@ -17,6 +17,7 @@ def scope():
         _MOVIW('SYS_LSRW2_52','sysFn')
         LDWI('ctrlBits_v5');PEEK();SYS(52);ANDI(0x30);ORI(0x80);ST(R8+1)
         _MOVIW('SYS_CopyMemoryExt_v6_100','sysFn')
+        LDW(R9)
         label('.m128copyloop')
         STW('sysArgs0');STW('sysArgs2')
         LDW(R8);SYS(100)

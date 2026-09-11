@@ -18,21 +18,15 @@ def scope():
     if not cons_512k:
         error("This file only makes sense with -map=512k")
 
-    # to be set to True in a little while.
-    futureproofed = False
 
     def code_membank_save():
         nohop()
         label('_membank_save')
-        if futureproofed:
-            LDWI(ctrlBits_v5);PEEK()
-            RET()
-        else:
-            LDWI(ctrlBits_v5);PEEK();ANDI(0xf0);STW(T3)
-            LD(videoModeB);ANDI(0xfc);XORI(0xfc);_BNE('.s1') # no 512k rom
-            LD(videoModeC);ST(T3+1)
-            label('.s1')
-            LDW(T3);RET()
+        LDWI(ctrlBits_v5);PEEK();ANDI(0xf0);STW(T3)
+        LD(videoModeB);ANDI(0xfc);XORI(0xfc);_BNE('.s1') # no 512k rom
+        LD(videoModeC);ST(T3+1)
+        label('.s1')
+        LDW(T3);RET()
 
     module(name='_membank_save.s',
            code=[ ('EXPORT', '_membank_save'),
@@ -45,11 +39,8 @@ def scope():
         _MOVIW('SYS_ExpanderControl_v4_40','sysFn')
         LDWI(ctrlBits_v5);PEEK();_BEQ('.ret')
         XORW(R8);ANDI(0xf);XORW(R8)
-        if futureproofed:
-            LD(vACL);SYS(40)
-        else:
-            ST(R8);ORI(0xff);XORI(0xf);SYS(40)
-            LD(R8);SYS(40)
+        ST(R8);ORI(0xff);XORI(0xf);SYS(40)
+        LD(R8);SYS(40)
         label('.ret')
         RET()
 
@@ -73,34 +64,19 @@ def scope():
         nohop()
         label('_membank_set')
         _MOVIW('SYS_LSLW4_46','sysFn')
-        if not futureproofed:
-            _MOVIW(v('_membank_get')+1,T2);
-            LDW(R8);ANDI(0xf);POKE(T2)
+        _MOVIW(v('_membank_get')+1,T2);
+        LDW(R8);ANDI(0xf);POKE(T2)
         LDW(R8-1);ORI(0xff);SYS(46);STW(R8)
         _MOVIW('SYS_ExpanderControl_v4_40','sysFn')
         LDW(R8);SYS(40)
-        if not futureproofed:
-            label('_membank_get')
-            LDI(0);RET()
+        label('_membank_get')
+        LDI(0);RET()
 
     module(name='_membank_set',
            code=[ ('EXPORT', '_membank_set'),
-                  ('EXPORT', '_membank_get') if not futureproofed else ('NOP',),
+                  ('EXPORT', '_membank_get'),
                   ('CODE', '_membank_set', code_membank_set),
                   ('PLACE', '_membank_set', 0x0200, 0x7fff) ] )
-
-    if futureproofed:
-        def code_membank_get():
-            nohop()
-            _MOVIW('SYS_LSRW4_50','sysFn')
-            LDWI(ctrlBits_v5);PEEK();LSLW();LSLW();STW(T3)
-            SYS(50);ST(T3);LD(T3+1);XORW(T3);ORI(0xc);XORW(T3)
-            RET()
-
-        module(name='_membank_get',
-               code=[ ('EXPORT', '_membank_get'),
-                      ('CODE', '_membank_get', code_membank_get) ] )
-
 
     def code_cons_bank():
         nohop()
@@ -142,6 +118,7 @@ def scope():
             LDW(R22)
         else:
             MOVW('sysFn',R21)
+            MOVIW('SYS_ExpanderControl_v4_40','sysFn')
         SYS(40)
         _MOVW(R21,'sysFn')
         RET()

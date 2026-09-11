@@ -2,24 +2,81 @@
 
 def scope():
 
+    ## Fast self-contained routines
+
     def code_utwoa():
-        '''Internal: _utwoa(int) converts a number in range 0..99 into two
+        '''_utwoa(int) converts a number in range 0..99 into two
            chars returned as the high and low part of vAC.'''
         nohop()
         label('_utwoa')
-        _MOVIW(0x2f2f,R9)
+        LDI(47);ST(T3+1)
         LDW(R8)
         label('.l1')
-        INC(R9+1);SUBI(10);_BGE('.l1')
-        ADDI(10)
-        label('.l2')
-        INC(R9);SUBI(1);_BGE('.l2')
-        LDW(R9)
+        INC(T3+1);SUBI(10);_BGE('.l1')
+        ADDI(10+48);ST(T3)
+        LDW(T3)
         RET()
 
     module(name='utwoa.s',
            code=[('EXPORT', '_utwoa'),
                  ('CODE', '_utwoa', code_utwoa)  ] )
+
+    def code_itwoa():
+        '''_utwoa(int) converts a signed integer into decimal.'''
+        nohop()
+        label('_itwoa')
+        PUSH()
+        _MOVW(R9,T2)
+        if args.cpu >= 6:
+            _MOVIW(0,T4)
+            LDW(R8);_BGE('.itoa0')
+            NEGV(R8)
+        else:
+            LDI(0);STW(T4)
+            SUBW(R8);_BLE('.itoa0')
+            STW(R8)
+        if args.cpu >= 5:
+            LDI(45);CALLI('.poke')
+            label('.itoa0')
+            for x in (10000,1000,100,10):
+                _LDI(x);CALLI('.digit')
+            LDI(0x30);ADDW(R8);_CALLI('.poke')
+        else:
+            LDWI('.poke');STW(T5)
+            LDI(45);CALL(T5)
+            label('.itoa0')
+            LDWI('.digit');STW(T5)
+            for x in (10000,1000,100,10):
+                _LDI(x); CALL(T5)
+            LDWI('.poke');STW(T5)
+            LDI(0x30);ADDW(R8);CALL(T5)
+        LDI(0);POKE(T2)
+        LDW(R9)
+        tryhop(2);POP();RET()
+
+    def code_itwoa_sub():
+        nohop()
+        label('.digit')
+        STW(T3);SUBW(R8);ORW(T4);_BGT('.ret')
+        _MOVIW(0xff2f,T4);LDW(R8)
+        label('.digit1')
+        INC(T4);STW(R8);SUBW(T3);_BGE('.digit1')
+        LD(T4)
+        label('.poke')
+        if args.cpu >= 6:
+            POKE(T2);INCV(T2)
+        else:
+            POKE(T2);LDI(1);ADDW(T2);STW(T2)
+        label('.ret')
+        RET()
+
+    module(name='_itwoa.s',
+           code=[('EXPORT', '_itwoa'),
+                 ('CODE', '_itwoa', code_itwoa),
+                 ('CODE', '_itwoa.sub', code_itwoa_sub)  ] )
+
+
+    ## Arbitrary base and integer size routines
 
     def code_asc():
         ''' T0:  (input) end of string

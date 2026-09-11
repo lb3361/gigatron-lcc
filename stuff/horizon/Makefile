@@ -16,11 +16,11 @@ all: $(PGMS)
 clean:
 	-rm $(PGMS)
 
-horizon-v4.gt1: horizon.c horizon.ovl
+horizon-v4.gt1: horizon.c
 	${CC} ${CFLAGS} ${LDFLAGS} -rom=v4 horizon.c -o $@
 
-horizon-v5a.gt1: horizon.c horizon.ovl
+horizon-v5a.gt1: horizon.c
 	${CC} ${CFLAGS} ${LDFLAGS} -rom=v5a horizon.c -o $@
 
-horizon-dev7.gt1: horizon.c horizon.ovl
+horizon-dev7.gt1: horizon.c
 	${CC} ${CFLAGS} ${LDFLAGS} -rom=dev7 horizon.c -o $@

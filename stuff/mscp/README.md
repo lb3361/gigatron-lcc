@@ -27,8 +27,3 @@ defined in core.c copies this data into bank3 before the bss region
 gets cleared.
 
 
-
-# Loading process
-
-The book
-

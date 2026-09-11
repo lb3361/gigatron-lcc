@@ -18,19 +18,19 @@ This project provides a complete toolchain and C library for ANSI C 1989.
 
 Some useful things to know:
 
-  * Types `short` and `int` are 16 bits long.  Type `long` is 32 bits
-	long. Types `float` and `double` are 40 bits long, using the
-	Microsoft Basic floating point format. Both long arithmetic or
-	floating point arithmetic incur a substantial speed penalty, 
-	vastly improved with the dev7 rom.
+* Types `short` and `int` are 16 bits long.  Type `long` is 32 bits
+  long. Types `float` and `double` are 40 bits long, using the
+  Microsoft Basic floating point format. Both long arithmetic or
+  floating point arithmetic incur a substantial speed penalty, 
+  vastly improved with the dev7 rom.
 	
-  * Type `char` is unsigned by default. This is more efficient because
-	the C language always promotes `char` values into `int` values to
-	perform arithmetic. Promoting a signed byte involves a clumsy sign
-	extension. Promoting an unsigned byte comes for free with most
-	VCPU opcodes. If you really want signed chars, use `signed char`
-	or maybe use the compiler option `-Wf-unsigned_char=0`. This
-	is not recommended. 
+* Type `char` is unsigned by default. This is more efficient because
+  the C language always promotes `char` values into `int` values to
+  perform arithmetic. Promoting a signed byte involves a clumsy sign
+  extension. Promoting an unsigned byte comes for free with most
+  VCPU opcodes. If you really want signed chars, use `signed char`
+  or maybe use the compiler option `-Wf-unsigned_char=0`. This
+  is not recommended. 
 
 * The nonstandard type qualifier `__near` can be used to indicate
   that the data lives in page zero. This allows the compiler to
@@ -63,7 +63,18 @@ Some useful things to know:
 * The include file [`<gigatron/sys.h>`](include/gigatron/gigatron/sys.h)
   provides declarations to access the gigatron hardware and wrappers
   to call native SYS routines.
-  
+
+* The include file [`<gigatron/pragma.h>`](include/gigatron/gigatron/pragma.h)
+  defines Gigatron-specific extensions (pragmas and attribute). In particular
+  several pragmas provide the means to control the placement of functions
+  and variables in the gigatron memory: explicit placement,
+  placement constraints, and segment definitions.
+
+* The include file [`<gigatron/idioms.h>`](include/gigatron/gigatron/idioms.h)
+  provides useful macros to construct 16 bits words from 8 bits components
+  and vice-versa. These macros expand into idioms recognized by the compiler
+  to create more efficient code.
+
 * Many parts of the main library can be overriden to provide special 
   functionalities. For instance the console has the usual 15x26 characters, 
   but this can be changed by linking with a library that redefines 
@@ -171,48 +182,31 @@ is preserved.
 
 ### 2.3 Windows notes
 
-#### 2.3.1 Cygwin GLCC
+There are several ways to use GLCC under windows.
 
-Thanks to the feedback of axelb, you can use the `make` method
-to compile gigatron-lcc under cygwin. For this, you must first
-install cygwin >= 3.2 from http://cygwin.org, make sure to 
-select the packages `gcc-core`, `make`, `bison`, `git`, and `python3`, 
-then issue the `make`, `make install`, or `make test` 
-command from the cygwin shell.
+* **WSL** The safest option is to use WSL, Windows System for Linux.
+  Just follow the `make` approach above.
+
+* **Cygwin** Thanks to the feedback of axelb, you can use the `make` method
+to compile gigatron-lcc under cygwin >= 3.2 from http://cygwin.org.
+Make sure to select packages `gcc-core`, `make`, `bison`, `git`, 
+and `python3`. Then use `make` from the cygwin shell.
 The main drawback of building `gigatron-lcc` under cygwin is
 that you have to execute it from the cygwin shell as well since
 it depends on the cygwin infrastructure.
 
-#### 2.3.2 Native Windows GLCC 
-
-For this, you need a native version of Python (https://python.org).
-It is also highly recommended to install Git-for-Windows (https://gitforwindows.org/)
-and a version of GNU make for windows, for instance using 
-Chocolatey (https://community.chocolatey.org/packages/make).
-
-* A first option is to use the mingw64 compiler (https://mingw-w64.org).
-  This compiler comes in various guises. After a bit of experimentation,
-  the recommended approach is to download the 32 bits version of 
-  [Git for Windows SDK](https://github.com/git-for-windows/build-extra/releases/latest).
-  This is certainly an overkill, but a very reliable one.
-  You can then start the Git for Windows SDK shell, clone the Gigatron LCC repository,
-  and use the `make` method discussed above. A precompiled version with installation 
-  and usage instructions can be found in the forum 
-  post https://forum.gigatron.io/viewtopic.php?p=2484#p2484.
+* **Native GLCC with MINGW** You can create a native windows glcc using the mingw
+  compiler as well as a native version of Python (https://python.org).
+  It is also highly recommended to install Git-for-Windows (https://gitforwindows.org/)
+  and a version of GNU make for windows, for instance using 
+  Chocolatey (https://community.chocolatey.org/packages/make).
+  The forum post https://forum.gigatron.io/viewtopic.php?p=2484#p2484
+  provices more information
   
-* A second option is to use the CMake approach with any supported toolchain.
-  For this you need to create a build directory and run the CMake program
-  to generate project files. Please follow the instructions that come
+* **Native GLCC with CMake** You can also create a native windows glcc
+  using the cmake route. Please follow the instructions that come
   with CMake to select the proper toolchain, compile the project, and
-  optionally set CMAKE_INSTALL_PREFIX and trigger the installation target.
-
-Both options create a `bin` directory with Window batch files, e.g
-`glcc.cmd`, etc., that can be used to invoke GLCC from the DOS command
-line, from PowerShell, or from the Git Bash. These batch files rely on
-the `py` launcher that is installed by default with recent versions of
-Python for windows. Just add this directory to the executable search
-path, e.g.  `PATH=/c/glcc/bin;%PATH%` at the DOS command line or
-`PATH=/c/glcc/bin:$PATH` at the Git Bash command line. T
+  optionally set CMAKE_INSTALL_PREFIX for installation.
 
 ## 3 Compiler invocation
 
@@ -241,10 +235,13 @@ are documented by typing `glink -h`
     and specifya memory layout for the generated code. The default
     map, `32k` uses all little bits of memory available on a 32KB
     Gigatron, starting with the video memory holes `[0x?a0-0x?ff]`,
-    the low memory `[0x200-0x6ff]`. There is also a `64k` map, a `128k` map, 
-    and a `conx` map which uses a reduced console to save memory.
+    the low memory `[0x200-0x6ff]`. The `conx` map uses a reduced
+    console to offer more memory than the 32k map. There is also
+    a `64k` map that takes advantage of memory above 0x8000, and
+    a `128k` map that offers close to 64k for program and data
+    by relocating the framebuffer into a different bank. 
     Additional information about each map can be displayed by 
-    using option `-info` as in `glcc -map=sim -info`
+    using option `-info` as in `glcc -map=32k -info`
 	
     Maps can also manipulate the linker arguments, insert libraries,
     and define the initialization function that checks the rom type
@@ -256,7 +253,7 @@ are documented by typing `glink -h`
 
 ## 3. Examples
 
-### 3.1. Running the LCC 8 queens program:
+### 3.1. Running the LCC 8 queens program
 
 ```
 $ ./build/glcc -map=sim tst/8q.c 
@@ -279,7 +276,7 @@ $ ./build/gtsim -rom gigatron/roms/dev.rom a.gt1
 ...
 ```
 
-### 3.2. Running Marcel's simple chess program in gtsim:
+### 3.2. Running Marcel's simple chess program in gtsim
 
 I found this program when studying the previous incarnation 
 of LCC for the Gigatron, with old forums posts where Marcel
@@ -352,6 +349,11 @@ book: (88)c5
 ```
 This slows down a lot when we leave the opening book.
 But it plays!
+
+### 3.3. More examples
+
+A growing collection of examples are offered in directory 
+[`gigatron-lcc/stuff`](https://github.com/lb3361/gigatron-lcc/tree/master/stuff)
 
 ## 4. Internals
 

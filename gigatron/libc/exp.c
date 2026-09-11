@@ -25,13 +25,13 @@ static double LOG2E = 1.4426950408889634073599;   /* 1/log(2) */
 double exp(register double x)
 {
 	double xx;
-	double px = floor( LOG2E * x + 0.5 );
+	double px = floor( LOG2E * x + _fhalf );
 	register int n = px;
 	if (px >= 256) {
 		return _foverflow(HUGE_VAL);
 	}
 	if (px < -256)
-		return 0;
+		return _fzero;
 	x -= px * C1;
 	x -= px * C2;
 	xx = x * x;

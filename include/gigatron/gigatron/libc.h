@@ -162,6 +162,14 @@ extern void _membank_set(int bank) __attribute__((quickcall));
    This function requires a 512k rom when the 512k map is active. */
 extern int _membank_get(void) __attribute__((quickcall));
 
+/* These two functions only do something with -map=128k or -map=512k.
+   They can be used to temporarily access the frame buffer.
+   - with -map=128k, the videotable gives the row addresses.
+   - with -map=512k, add 0x8000 to the videotable row addresses.
+   Beware where the stack is located! */
+extern void _membank_set_framebuffer_bank(void) __attribute__((quickcall));    
+extern void _membank_set_program_bank(void) __attribute__((quickcall));
+
 
 /* ---- Misc ---- */
 

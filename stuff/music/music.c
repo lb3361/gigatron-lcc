@@ -5,7 +5,6 @@
 #include <gigatron/sound.h>
 
 #pragma glcc option("PRINTF_SIMPLE")
-#pragma glcc segment(0x8000,0x8100,"")
 #pragma glcc segment(0x8240,0xfe00,"CDH")
 
 extern const byte* agony[];
@@ -64,38 +63,54 @@ void header_time(void)
 /* This locates the buffers in an area that we
    avoid loading because we do not want to
    crash 32k machines. */
+
+#pragma glcc segment(0x8000,0x8100,"")
+
 extern byte sample1[128] __at(0x8000);
 extern byte sample2[128] __at(0x8080);
 byte * __near sb1 = sample1;
 byte * __near sb2 = sample2;
 
-#define SAMPLEY 32+64
+#define SAMPLEY (32+64)
 
-void clear_sample_display(void)
+#pragma glcc lomem("*","SYS_*")
+
+void clear_sample_display(void) __lomem
 {
   register int i;
-  register byte *s = &screenMemory[SAMPLEY-63][16];
+  register byte *s = makep(videoTable[(SAMPLEY-63)*2],16);
+
+  _membank_set_framebuffer_bank();
+
   for(i=0; i!=64; i++) {
     SYS_SetMemory(128, 0, s);
     s += 256;
   }
+
+  _membank_set_program_bank();
 }
 
-void sample_display(void)
+void sample_display(void) __lomem
 {
   register int i;
   register byte *s;
   register byte *p = sb1;
   register byte *e = sb1 + 128;
+
+  _membank_set_framebuffer_bank();
+  
   do { *p = *(volatile byte*)0x13; } while (++p != e);
-    s = &screenMemory[SAMPLEY][16];
+  s = makep(videoTable[SAMPLEY*2],16);
   p = sb2; e = sb2 + 128;
-  do { *(s - ((*p & 0xf0) << 6)) = 0; s++; } while (++p != e);
-  s = &screenMemory[SAMPLEY][16];
+  do { *(s - ((*p & 0xfc) << 6)) = 0; s++; } while (++p != e);
+  s = makep(videoTable[SAMPLEY*2],16);
   p = sb1; e = sb1 + 128;
-  do { *(s - ((*p & 0xf0) << 6)) = 0x2f; s++; } while (++p != e);
+  do { *(s - ((*p & 0xfc) << 6)) = 0x2f; s++; } while (++p != e);
   p = sb1; sb1 = sb2; sb2 = p;
+
+  _membank_set_program_bank();
 }
+
 
 /* KEYS */
 

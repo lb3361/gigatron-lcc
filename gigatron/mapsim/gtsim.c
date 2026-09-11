@@ -177,12 +177,12 @@ void sim(void)
         S.PC = 0;
 
       // cycle
-      CpuState T = cpuCycle(S); 
+      CpuState T = cpuCycle(S);
 
       // vga timing check
       int hSync = (T.OUT & 0x40) - (S.OUT & 0x40);
       int vSync = (T.OUT & 0x80) - (S.OUT & 0x80);
-      if (vSync < 0) 
+      if (vSync < 0)
         vgaY = -36;
       vgaX++;
       if (hSync > 0) {
@@ -197,7 +197,7 @@ void sim(void)
                 fprintf(stderr, " %02x", RAM[i+j]);
               fprintf(stderr, "\n");
             } }
-#endif     
+#endif
         }
         vgaX = 0;
         vgaY++;
@@ -252,42 +252,49 @@ typedef int8_t    sbyte;
 typedef int32_t   squad;
 
 word peek(word a) {
-  return RAM[a & 0xffff];
+  uint32_t aa = (a & 0x8000) ? (a & 0x7fff) | bank : (a & 0x7fff);
+  return RAM[aa];
 }
 
 void poke(word a, quad x) {
-  RAM[a & 0xffff] = (x & 0xff);
+  uint32_t aa = (a & 0x8000) ? (a & 0x7fff) | bank : (a & 0x7fff);
+  RAM[aa] = x & 0xff;
 }
 
 word deek(word a) {
-  if ((a & 0xff) > 0xfe)
+  uint32_t aa = (a & 0x8000) ? (a & 0x7fff) | bank : (a & 0x7fff);
+  if ((aa & 0xff) > 0xfe)
     fprintf(stderr, "(gtsim) deek crosses page boundary\n");
-  return (word)RAM[a & 0xffff] | (word)(RAM[(a+1) & 0xffff] << 8);
+  return (word)RAM[aa] | (word)(RAM[(aa+1)&0x1ffff] << 8);
 }
 
 void doke(word a, quad x) {
-  if ((a & 0xff) > 0xfe)
+  uint32_t aa = (a & 0x8000) ? (a & 0x7fff) | bank : (a & 0x7fff);
+  if ((aa & 0xff) > 0xfe)
     fprintf(stderr, "(gtsim) doke crosses page boundary\n");
-  RAM[a & 0xffff] = (x & 0xff);
-  RAM[(a+1) & 0xffff] = ((x >> 8) & 0xff);
+  RAM[aa] = (x & 0xff);
+  RAM[(aa+1)&0x1ffff] = ((x >> 8) & 0xff);
 }
 
 quad leek(word a) {
-  if ((a & 0xff) > 0xfe)
+  uint32_t aa = (a & 0x8000) ? (a & 0x7fff) | bank : (a & 0x7fff);
+  if ((aa & 0xff) > 0xfe)
     fprintf(stderr, "(gtsim) leek crosses page boundary\n");
-  return ((quad)RAM[a & 0xffff] | ((quad)RAM[(a+1) & 0xffff]<<8) |
-          ((quad)RAM[(a+2) & 0xffff]<<16) | ((quad)RAM[(a+3) & 0xffff]<<24) );
+  return ((quad)RAM[aa] | ((quad)RAM[(aa+1)&0x1ffff]<<8) |
+          ((quad)RAM[(aa+2)&0x1ffff]<<16) | ((quad)RAM[(aa+3)&0x1ffff]<<24) );
 }
 
 void loke(word a, quad x) {
-  doke(a, x & 0xffff);
-  doke(a+2, (x>>16) & 0xffff);
+  uint32_t aa = (a & 0x8000) ? (a & 0x7fff) | bank : (a & 0x7fff);
+  doke(aa, x & 0xffff);
+  doke(aa+2, (x>>16) & 0xffff);
 }
 
 double feek(word a) {
-  int exp = RAM[a & 0xffff];
-  quad mant = ((quad)RAM[(a+4) & 0xffff] | ((quad)RAM[(a+3) & 0xffff]<<8) |
-               ((quad)RAM[(a+2) & 0xffff]<<16) | ((quad)(RAM[(a+1) & 0xffff])<<24) );
+  uint32_t aa = (a & 0x8000) ? (a & 0x7fff) | bank : (a & 0x7fff);
+  int exp = RAM[aa];
+  quad mant = ((quad)RAM[(aa+4)&0x1ffff] | ((quad)RAM[(aa+3)&0x1ffff]<<8) |
+               ((quad)RAM[(aa+2)&0x1ffff]<<16) | ((quad)(RAM[(aa+1)&0x1ffff])<<24) );
   double sign = (mant & 0x80000000UL) ? -1 : +1;
   if (exp)
     return sign * ldexp((double)(mant|0x80000000UL)/0x100000000UL, exp-128);
@@ -363,7 +370,7 @@ void setup_profile(const char *f)
   atexit(save_profile);
 #ifndef WIN32
   signal(SIGINT, (void*)exit);
-#endif  
+#endif
 
 }
 
@@ -373,7 +380,7 @@ void setup_profile(const char *f)
 
 #define SYS_Exec_88       0x00ad
 #define SYS_SetMode_v2_80 0x0b00
-          
+
 
 void debugSysFn(void)
 {
@@ -497,7 +504,7 @@ void sys_printf(void)
                     spec[i] = fmt[i];
                   else if (fmt[i] == '*')
                     { spec[i] = fmt[i]; star++; }
-                  else 
+                  else
                     { conv = spec[i] = fmt[i]; break; }
                 }
               if (i+1 < sizeof(spec))
@@ -693,7 +700,7 @@ void sys_io_openf(void)
 {
   int flg = deek(deek(R8) + G_IOBUF_FLAG_OFFSET);
   int err = 0;
-  
+
   if (okopen)
     {
       int fd = 0;
@@ -814,7 +821,7 @@ int disassemble(word addr, char **pm, char *operand)
 {
   switch(peek(addr))
     {
-    case 0x5e:  *pm = "ST"; goto oper8;  
+    case 0x5e:  *pm = "ST"; goto oper8;
     case 0x2b:  *pm = "STW"; goto oper8;
     case 0xec:  *pm = "STLW"; goto oper8;
     case 0x1a:  *pm = "LD"; goto oper8;
@@ -877,7 +884,7 @@ int disassemble(word addr, char **pm, char *operand)
         case 0x2d:  *pm = "VRESTORE"; return 2;    /* v7 */
         case 0x2f:  *pm = "EXCH";  return 2;       /* v7 */
         case 0x32:  *pm = "LEEKA"; goto operx8;    /* v7 */
-        case 0x34:  *pm = "LOKEA"; goto operx8;    /* v7 */          
+        case 0x34:  *pm = "LOKEA"; goto operx8;    /* v7 */
         case 0x39:  *pm = "RDIVS"; goto operx8;    /* v7 */
         case 0x3b:  *pm = "RDIVU"; goto operx8;    /* v7 */
         case 0x3d:  *pm = "MULW";  goto operx8;    /* v7 */
@@ -922,7 +929,7 @@ int disassemble(word addr, char **pm, char *operand)
       sbyte b = peek(addlo(addr,1));
       if (b > -128 && b <= 0) {
         *pm = "SYS"; sprintf(operand, "%d", 2*(14-b));
-      } else 
+      } else
         *pm = (b > 0) ? "S??" : "HALT";
       return 2;
     }
@@ -1030,7 +1037,7 @@ void print_trace(CpuState *S)
     int64_t bm = leek(T0) + ((int64_t)peek(T0+4) << 32);
     fprintf(stderr,
             "\n\t FAC=%02x/%02x/%010llx (%.8g) FARG=%02x/%010llx (%.8g)",
-            as, ae, (long long)am, 
+            as, ae, (long long)am,
             ((as&0x80) ? -1.0 : +1.0) * ((ae) ? ldexp((double)am, ae-168) : 0.0),
             be, (long long)bm,
             ((as&0x80)^((as&1)<<7) ? -1.0 : +1.0) * ((be) ? ldexp((double)bm, be-168) : 0.0) );
@@ -1100,7 +1107,7 @@ void usage(int exitcode)
             "  -vmode=<mode>   set video mode 0,1,2,3,1975\n"
             "  -t<letters>     trace VCPU execution\n"
             "  -prof=<fn>      writes profiling information into file <fn>\n");
-    
+
   }
   exit(exitcode);
 }
@@ -1207,7 +1214,7 @@ int main(int argc, char *argv[])
   if (fread(ROM, 1, sizeof(ROM), fp) != sizeof(ROM))
     fatal("Failed to read enough data from rom file '%s'\n", rom);
   fclose(fp);
-  
+
   // Simulate
   sim();
   return 0;

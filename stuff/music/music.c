@@ -72,7 +72,8 @@ byte * __near sb2 = sample2;
 
 #define SAMPLEY (32+64)
 
-#pragma glcc lomem("*","SYS_*")
+#pragma glcc lomem("rt_*.s", "_*@*")
+#pragma glcc lomem("*.s", "SYS_*")
 
 void clear_sample_display(void) __lomem
 {

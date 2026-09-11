@@ -21,20 +21,20 @@ def scope():
         more_imports.append('_cons_save_current_bank')
         more_imports.append('_cons_restore_saved_bank')
         def save_bank():
-            CALLI('_cons_save_current_bank')
+            _CALLJ('_cons_save_current_bank')
         def restore_bank():
-            CALLI('_cons_restore_saved_bank')
+            _CALLJ('_cons_restore_saved_bank')
         if cons_512k:
             more_imports.append('_cons_set_bank_even')
             more_imports.append('_cons_set_bank_odd')
             def set_bank(row, even=True):
                 if even:
-                    LDW(row);CALLI('_cons_set_bank_even')
+                    LDW(row);_CALLI('_cons_set_bank_even')
                 else:
-                    LDW(row);CALLI('_cons_set_bank_odd')
+                    LDW(row);_CALLI('_cons_set_bank_odd')
         else:
             def set_bank(row=None):
-                CALLI('_cons_set_bank')
+                _CALLJ('_cons_set_bank')
     else:
         # direct framebuffer
         def save_bank(): pass

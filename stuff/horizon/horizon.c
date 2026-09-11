@@ -9,6 +9,13 @@
 #include <stdio.h>
 #include <gigatron/sys.h>
 
+#pragma glcc segment(0x200,0x2fa,"CDH")
+#pragma glcc segment(0x300,0x3fa,"CDH")
+#pragma glcc segment(0x400,0x4fa,"CDH")
+#pragma glcc segment(0x500,0x600,"CDH")
+#pragma glcc initsp(0x6fc)
+#pragma glcc segment(0x600,0x10000,"")
+
 #define screenWidth 160
 #define screenHeight 120
 #define horizonY 32
@@ -62,7 +69,7 @@ int main(void)
     }
 
     // Change speed by game controller or keys
-    switch (buttonState) {
+    switch (buttonState ^ 0xff) {
       case buttonRight: if (++v >  maxV) v =  maxV; break;
       case buttonLeft:  if (--v < -maxV) v = -maxV; break;
       case buttonA: case buttonB:        v =     0; break;

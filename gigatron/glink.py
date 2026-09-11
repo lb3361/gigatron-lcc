@@ -415,7 +415,7 @@ def hop(sz, jump):
             global the_segment, the_pc
             hops_enabled = False
             the_segment.pc = the_pc
-            ns = find_continuation_code_segment(min(256, args.lfss or 48))
+            ns = find_continuation_code_segment(min(256, max(sz, args.lfss or 48)))
             if not ns:
                 ns = find_continuation_code_segment(min(256, sz))
             if not ns:

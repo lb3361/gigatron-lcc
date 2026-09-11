@@ -897,6 +897,7 @@ def scope():
                   ('EXPORT', '__@fdivrnd'),
                   ('IMPORT', '__@amshl1') if args.cpu < 7 else ('NOP',),
                   ('IMPORT', '__@cmshl1') if args.cpu < 6 else ('NOP',),
+                  ('IMPORT', '__@bmshr8') if args.cpu < 6 else ('NOP',),
                   ('IMPORT', '__@lsub_t0t1') if args.cpu < 6 else ('NOP',),
                   ('IMPORT', '__@lcmpu_t0t1') if avoid_cmpw else ('NOP',),
                   ('CODE', '__@fdivloop', code_fdivloop),

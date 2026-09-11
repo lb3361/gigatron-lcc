@@ -15,6 +15,7 @@
 #pragma glcc lomem("*", "memset")
 #pragma glcc lomem("*", "memcpy")
 #pragma glcc lomem("*", "SYS_*")
+#pragma glcc lomem("rt_*.s", "_*@*")
 
 #pragma glcc onload("mscp_onload")
 
@@ -58,7 +59,7 @@ void clr_ttable(void)
 {
   register byte cb = ctrlBits_v5;
   SYS_ExpanderControl(cb | 0xc0);
-  memset((void*)TTPTR, 0, CORE * sizeof(struct tt)); /* memset does not PUSH */
+  memset((void*)TTPTR, 0, CORE * sizeof(struct tt));
   SYS_ExpanderControl(cb);
 }
 

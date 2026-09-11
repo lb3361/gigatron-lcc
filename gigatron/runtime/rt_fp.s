@@ -1085,7 +1085,6 @@ def scope():
 
     module(name='rt_fsign.s',
            code=[ ('EXPORT', '_@_fsign'),
-                  ('IMPORT', '_@_rndfac'),
                   ('CODE', '_@_fsign', code_fsign) ] )
 
     # ==== misc

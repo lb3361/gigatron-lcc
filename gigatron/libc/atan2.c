@@ -5,19 +5,19 @@
 
 double atan2(double y, double x)
 {
-	double sx = copysign(_fone, x);
-	double sy = copysign(_fone, y);
-	x = fabs(x);
-	y = fabs(y);
-	if (x == 0 && y == 0)
-		x = 0;
-	else if (y <= x)
+	register char nx = 0;
+	register char ny = 0;
+	if (x < _fzero)
+		{ nx++; x = -x; }
+	if (y < _fzero)
+		{ ny++; y = -y; }
+	if (x != _fzero && x >= y)
 		x = atan(y / x);
-	else
+	else if (y != _fzero)
 		x = _pi_over_2 - atan(x / y);
-	if (sx < _fzero)
+	if (nx)
 		x = _pi - x;
-	if (sy < _fzero)
+	if (ny)
 		x = -x;
 	return x;
 }

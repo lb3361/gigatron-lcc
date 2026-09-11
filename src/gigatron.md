@@ -88,6 +88,7 @@ static int  if_zpconst(Node);
 static int  if_zlconst(Node);
 static int  if_zhconst(Node);
 static int  if_zpglobal(Node);
+static int  if_caddr(Node, int);
 static int  if_incr(Node,int,int);      /* cost hint */
 static int  if_zoffset(Node,int,int);   /* cost hint */
 static int  if_asgnreuse(Node,int,int); /* cost hint */
@@ -412,6 +413,8 @@ addr: con "%0"
 addr: zddr "%0"
 zddr: ADDRGP2 "%a" if_zpglobal(a)
 zddr: conB "%0"
+c0dr: ADDRGP2 "%a" if_caddr(a, 0)
+c1dr: ADDRGP2 "%a" if_caddr(a, 1)
 
 # -- expressions
 # All the following nonterminals represent expressions in the tree grammar.
@@ -713,6 +716,8 @@ stmt: lac          "\t%0\n"
 larg: regx         "LDI(%0)%{!A};" 21
 larg: INDIRI4(eac) "%0"
 larg: INDIRU4(eac) "%0"
+lzero: INDIRI4(c0dr) "%0"
+lzero: INDIRU4(c0dr) "%0"
 reg:  lac          "\t%{=LAC}%0%{?c==LAC::_MOVL(LAC,%c);}%{!5}\n" 119
 reg: INDIRI4(ac)   "\t%0_MOVL([vAC],%c)%{!A};\n" 120
 reg: INDIRU4(ac)   "\t%0_MOVL([vAC],%c)%{!A};\n" 120
@@ -768,14 +773,23 @@ stmt: LTI4(lac,larg) "\t%0%1_LCMPS();_BLT(%a)%{!A};\n" 200
 stmt: LEI4(lac,larg) "\t%0%1_LCMPS();_BLE(%a)%{!A};\n" 200
 stmt: GTI4(lac,larg) "\t%0%1_LCMPS();_BGT(%a)%{!A};\n" 200
 stmt: GEI4(lac,larg) "\t%0%1_LCMPS();_BGE(%a)%{!A};\n" 200
+stmt: LTI4(lac,lzero) "\t%0LDW(LAC+2);_BLT(%a)%{!A};\n" 48
+stmt: LEI4(lac,lzero) "\t%0LDW(LAC+2);_BLT(%a);ORW(LAC);_BEQ(%a)%{!A};\n" 92
+stmt: GEI4(lac,lzero) "\t%0LDW(LAC+2);_BGE(%a)%{!A};\n" 48
 stmt: LTU4(lac,larg) "\t%0%1_LCMPU();_BLT(%a)%{!A};\n" 200
 stmt: LEU4(lac,larg) "\t%0%1_LCMPU();_BLE(%a)%{!A};\n" 200
 stmt: GTU4(lac,larg) "\t%0%1_LCMPU();_BGT(%a)%{!A};\n" 200
 stmt: GEU4(lac,larg) "\t%0%1_LCMPU();_BGE(%a)%{!A};\n" 200
+stmt: GTU4(lac,lzero) "\t%0LDW(LAC+2);ORW(LAC);_BNE(%a)%{!A};\n" 72
+stmt: LEU4(lac,lzero) "\t%0LDW(LAC+2);ORW(LAC);_BEQ(%a)%{!A};\n" 72
 stmt: NEI4(lac,larg) "\t%0%1_LCMPX();_BNE(%a)%{!A};\n" 100
 stmt: EQI4(lac,larg) "\t%0%1_LCMPX();_BEQ(%a)%{!A};\n" 100
 stmt: NEU4(lac,larg) "\t%0%1_LCMPX();_BNE(%a)%{!A};\n" 100
 stmt: EQU4(lac,larg) "\t%0%1_LCMPX();_BEQ(%a)%{!A};\n" 100
+stmt: NEI4(lac,lzero) "\t%0LDW(LAC+2);ORW(LAC);_BNE(%a)%{!A};\n" 72
+stmt: EQI4(lac,lzero) "\t%0LDW(LAC+2);ORW(LAC);_BEQ(%a)%{!A};\n" 72
+stmt: NEU4(lac,lzero) "\t%0LDW(LAC+2);ORW(LAC);_BNE(%a)%{!A};\n" 72
+stmt: EQU4(lac,lzero) "\t%0LDW(LAC+2);ORW(LAC);_BEQ(%a)%{!A};\n" 72
 stmt: LTI4(larg,lac) "\t%1%0_LCMPS();_BGT(%a)%{!A};\n" 200
 stmt: LEI4(larg,lac) "\t%1%0_LCMPS();_BGE(%a)%{!A};\n" 200
 stmt: GTI4(larg,lac) "\t%1%0_LCMPS();_BLT(%a)%{!A};\n" 200
@@ -803,6 +817,7 @@ asgn: ASGNU4(lddr,INDIRU4(lsrc)) "\t_MOVL(%1,[SP,%0])%{!A};\n"             160
 stmt: fac "\t%0\n"
 farg: regx "LDI(%0)%{!A};" 21
 farg: INDIRF5(eac) "%0"
+fzero: INDIRF5(c0dr) "%0"
 reg:  fac           "\t%{=FAC}%0%{?c==FAC::_MOVF(FAC,%c);}%{!A}\n" 179
 reg: INDIRF5(ac)    "\t%0_MOVF([vAC],%c)%{!A};\n" 150
 reg: INDIRF5(lddr)  "\t_MOVF([SP,%0],%c)%{!A};\n" 190
@@ -832,6 +847,12 @@ stmt: LTF5(farg,fac) "\t%1%0_FCMP();_BGT(%a)%{!A};\n" 200
 stmt: LEF5(farg,fac) "\t%1%0_FCMP();_BGE(%a)%{!A};\n" 200
 stmt: GTF5(farg,fac) "\t%1%0_FCMP();_BLT(%a)%{!A};\n" 200
 stmt: GEF5(farg,fac) "\t%1%0_FCMP();_BLE(%a)%{!A};\n" 200
+stmt: EQF5(fac,fzero) "\t%0_FSGN();_BEQ(%a)%{!A};\n" 50
+stmt: NEF5(fac,fzero) "\t%0_FSGN();_BNE(%a)%{!A};\n" 50
+stmt: LTF5(fac,fzero) "\t%0_FSGN();_BLT(%a)%{!A};\n" 50
+stmt: LEF5(fac,fzero) "\t%0_FSGN();_BLE(%a)%{!A};\n" 50
+stmt: GTF5(fac,fzero) "\t%0_FSGN();_BGT(%a)%{!A};\n" 50
+stmt: GEF5(fac,fzero) "\t%0_FSGN();_BGE(%a)%{!A};\n" 50
 asgn: ASGNF5(vdst,fac) "\t%{=FAC}%1%[0b]_MOVF(FAC,%0)%{!A};\n"             180
 asgn: ASGNF5(vdst,reg) "\t%[0b]_MOVF(%1,%0)%{!A};\n"                       150
 asgn: ASGNF5(addr,INDIRF5(asrc)) "\t%[1b]_MOVF(%1,%0)%{!A};\n"             150
@@ -1070,6 +1091,8 @@ stmt: ARGP2(reg) "\t%{?0=~vAC::LDW(%0);%{!A}}_STLW(%c);\n"  mincpu7(if_arg_stk(a
 # Read-modify-write
 rmw: VREGP "%a"
 rmw: zddr "%0"
+lone: INDIRI4(c1dr) "%0"
+lone: INDIRU4(c1dr) "%0"
 asgn: ASGNU1(rmw, LOADU1(ADDI2(CVUI2(INDIRU1(rmw)), con1))) "\tINC(%0);\n" if_rmw(a,16)
 asgn: ASGNI1(rmw, LOADI1(ADDI2(CVII2(INDIRI1(rmw)), con1))) "\tINC(%0);\n" if_rmw(a,16)
 asgn: ASGNI2(rmw, NEGI2(INDIRI2(rmw))) "\tNEGV(%0);\n" mincpu6(if_rmw(a, 26))
@@ -1081,6 +1104,8 @@ asgn: ASGNI4(rmw, BCOMU4(INDIRU4(rmw))) "\tNOTVL(%0);\n" mincpu6(if_rmw(a, 58))
 asgn: ASGNP2(rmw, ADDP2(INDIRP2(rmw), con1)) "\tINCV(%0);\n" mincpu6(if_rmw(a, 22))
 asgn: ASGNU2(rmw, ADDU2(INDIRU2(rmw), con1)) "\tINCV(%0);\n" mincpu6(if_rmw(a, 22))
 asgn: ASGNI2(rmw, ADDI2(INDIRI2(rmw), con1)) "\tINCV(%0);\n" mincpu6(if_rmw(a, 22))
+asgn: ASGNU4(rmw, ADDU4(INDIRU4(rmw), lone)) "\tINCVL(%0);\n" mincpu6(if_rmw(a, 46))
+asgn: ASGNI4(rmw, ADDI4(INDIRI4(rmw), lone)) "\tINCVL(%0);\n" mincpu6(if_rmw(a, 46))
 asgn: ASGNI2(rmw, ADDI2(INDIRI2(rmw), ac)) "\t%2ADDV(%0);\n" mincpu7(if_rmw(a, 30))
 asgn: ASGNU2(rmw, ADDU2(INDIRU2(rmw), ac)) "\t%2ADDV(%0);\n" mincpu7(if_rmw(a, 30))
 asgn: ASGNP2(rmw, ADDP2(INDIRP2(rmw), ac)) "\t%2ADDV(%0);\n" mincpu7(if_rmw(a, 30))
@@ -1382,6 +1407,23 @@ static int if_zpglobal(Node p)
     if (isarray(s->type) && fnqual(unqual(s->type)->type) == NEAR)
       return 0;
   }
+  return LBURG_MAX;
+}
+
+static int if_caddr(Node p, int cc)
+{
+  Symbol c;
+  Symbol s = p->syms[0];
+  if (cc == 0 && (s->name == string("_fzero") || s->name == string("_lzero")))
+    return 0;
+  if (cc == 1 && (s->name == string("_fone") || s->name == string("_lone")))
+    return 0;
+  if (s->oolconst && (c = s->u.c.loc))
+    if (c->scope == CONSTANTS && c->type) 
+      if (c->type->op == FLOAT && c->u.c.v.d == cc ||
+          c->type->op == INT && c->u.c.v.i == cc ||
+          c->type->op == UNSIGNED && c->u.c.v.u == cc)
+        return 0;
   return LBURG_MAX;
 }
 

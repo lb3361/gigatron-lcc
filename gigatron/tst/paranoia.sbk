@@ -152,7 +152,7 @@ def code17():
 	_STLW(4);
 	CALLI('TstCond');
 	_MOVF('Zero',FAC);_FNEG();_MOVF(FAC,'Z');
-	_MOVF('.6',FAC);LDWI('Z');_FCMP();_BEQ('.16');
+	_MOVF('Z',FAC);_FSGN();_BEQ('.16');
 	MOVIW('ErrCnt',R23);
 	DEEKV(R23);ADDI(1);DOKE(R23);
 	MOVIW('.18',R8);
@@ -3262,7 +3262,7 @@ def code19():
 def code20():
 	label('Sign');
 	PUSH();
-	_MOVF(F8,FAC);LDWI('.6');_FCMP();_BLT('.822');
+	_MOVF(F8,FAC);_FSGN();_BLT('.822');
 	_MOVF('.7',F17);
 	_BRA('.823');
 	label('.822');
@@ -3803,7 +3803,7 @@ def code43():
 	_MOVF(F11,F2);
 	LDI(0);STW(R1);
 	_STLW(-14+44);
-	_MOVF(F2,FAC);LDWI('.6');_FCMP();_BNE('.1002');
+	_MOVF(F2,FAC);_FSGN();_BNE('.1002');
 	_MOVF('.7',FAC);
 	_BRA('.1001');
 	label('.1002');
@@ -3820,7 +3820,7 @@ def code43():
 	
 	_BRA('.1001');
 	label('.1004');
-	_MOVF(F2,FAC);LDWI('.6');_FCMP();_BGE('.1009');
+	_MOVF(F2,FAC);_FSGN();_BGE('.1009');
 	_FNEG();_MOVF(FAC,F2);
 	LDI(1);_STLW(-14+44);
 	label('.1009');
@@ -3830,7 +3830,7 @@ def code43():
 	_STLW(6);
 	CALLI('modf');
 	_MOVF(FAC,F2);
-	_MOVF(F2,FAC);LDWI('.6');_FCMP();_BEQ('.1011');
+	_MOVF(F2,FAC);_FSGN();_BEQ('.1011');
 	_MOVF(F5,F8);
 	_MOVF(F8,[SP,0]);
 	CALLI('log');_MOVF(FAC,F21);
@@ -3850,15 +3850,15 @@ def code43():
 	_MOVF(FAC,F5);
 	_MOVF([SP,-19+44],FAC);_FTOI();
 	_MOVL(LAC,[SP,-4+44]);
-	LDWI('.1015');_LCMPX();_BEQ('.1013');
+	LDW(LAC+2);ORW(LAC);_BEQ('.1013');
 	label('.1016');
-	_MOVL('.1022',LAC);_SP(-4+44);_LAND();LDWI('.1015');_LCMPX();_BEQ('.1020');
+	_MOVL('.1022',LAC);_SP(-4+44);_LAND();LDW(LAC+2);ORW(LAC);_BEQ('.1020');
 	_MOVF(F5,FAC);_SP(-11+44);_FMUL();_MOVF(FAC,[SP,-11+44]);
 	_LDLW(-6+44);ADDV(R1);
 	label('.1020');
 	_SP(-4+44);_MOVL([vAC],LAC);LDI(1);_LSHRS();_MOVL(LAC,[SP,-4+44]);
 	_MOVL([SP,-4+44],LAC);
-	LDWI('.1015');_LCMPX();_BNE('.1023');
+	LDW(LAC+2);ORW(LAC);_BNE('.1023');
 	_BRA('.1018');
 	label('.1023');
 	_MOVF(F5,FAC);LDI(F5);_FMUL();_MOVF(FAC,F5);

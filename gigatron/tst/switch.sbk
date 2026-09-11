@@ -34,7 +34,7 @@ def code0():
 	label('.9');
 	LDW(R6);_STLS(LAC);LDWI('.12');_LADD();LDW(LAC);STW(R6);
 	label('.11');
-	LDW(R6);_STLS(LAC);LDWI('.13');_LAND();LDWI('.14');_LCMPX();_BNE('.8');
+	LDW(R6);_STLS(LAC);LDWI('.13');_LAND();LDW(LAC+2);ORW(LAC);_BNE('.8');
 	CALLI('limit');
 	LDI(0);
 	label('.1');
@@ -408,7 +408,7 @@ def code9():
 	label('.118');
 	_MOVL(L5,LAC);LDWI('.121');_LCMPX();_BEQ('.113');
 	LDWI('.122');_LCMPX();_BEQ('.113');
-	LDWI('.14');_LCMPX();_BEQ('.113');
+	LDW(LAC+2);ORW(LAC);_BEQ('.113');
 	_BRA('.109');
 	label('.119');
 	_MOVL(L5,LAC);LDWI('.123');_LCMPX();_BEQ('.116');

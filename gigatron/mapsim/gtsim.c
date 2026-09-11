@@ -603,7 +603,7 @@ void sys_io_read(void)
 
   /* Validate */
   if (fd < 0 || (flg & 1) == 0) /* _IOREAD */
-    err = EINVAL;
+    err = G_EINVAL;
   if (buf + cnt >= 0x10000)
     cnt = 0x10000 - buf;
   if (cnt < 0)

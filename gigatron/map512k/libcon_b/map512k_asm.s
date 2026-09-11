@@ -19,7 +19,7 @@ def scope():
         _MOVIW(0,R8)
         label('_console_reset')
         # setup video mode
-        LDWI('SYS_ExpanderControl_v4_40');STW('sysFn')
+        _MOVIW('SYS_ExpanderControl_v4_40','sysFn')
         if cons_dblwidth:
             # Row YY even pixels at 0x70800 + 0xYY00 + [0..159] (banks 14/15)
             # Row YY odd pixels at  0x60800 + 0xYY00 + [0..159] (banks 12/13)
@@ -30,8 +30,8 @@ def scope():
         if cons_dblheight:
             LD(videoModeC);ORI(1);ST(videoModeC)
         # setup video table
-        LDWI('videoTable');STW(R10)
-        LDI(screenStart);STW(R9)
+        _MOVIW('videoTable',R10)
+        _MOVIW(screenStart,R9)
         label('.c128loop')
         LDW(R9);DOKE(R10)
         if cons_dblheight:
@@ -41,11 +41,11 @@ def scope():
         INC(R10);INC(R10)
         LD(R10);XORI(240);BNE('.c128loop')
         # clear screen
+        _MOVW(R8,R9)
         if cons_dblheight:
             _MOVIW(240,R10)
         else:
             _MOVIW(120,R10)
-        LDW(R8);STW(R9)
         if args.cpu >= 7:
             MOVIW(screenStart << 8,R8)
             JGE('_console_clear')

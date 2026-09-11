@@ -5,6 +5,10 @@
 
 #include "_doprint.h"
 
+/* See _support.s for the actual _doprint_double
+   and the machinery that only links this when
+   floating point is used in the program. */
+
 void _doprint_double_imp(doprintspec_t *spec, __va_list *ap)
 {
 	char buffer[64];

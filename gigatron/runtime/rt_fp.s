@@ -624,19 +624,15 @@ def scope():
     def code_fadd():
         '''_@_fadd: Add the float at address vAC to FAC'''
         nohop()
+        label('_@_fsubr')
+        STW(T3)
+        LD(AS);XORI(0x81);ST(AS)
+        bytes(0x11) # LDWI!
         label('_@_fadd')
         STW(T3)
         if args.cpu >= 6:
             JNE('__@fadd_t3');RET()
         else:
-            BRA('.fa')
-        label('_@_fsubr')
-        STW(T3)
-        LD(AS);XORI(0x81);ST(AS)
-        if args.cpu >= 6:
-            JGE('__@fadd_t3')
-        else:
-            label('.fa')
             PUSH();_CALLJ('__@fadd_t3');POP()
             RET()
 

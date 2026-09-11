@@ -11,16 +11,20 @@ def scope():
         label('.raise1')
         _MOVW(R9,T0)                         # store message in T0 
         LDW(R8)
-        label('__@raisem')                   # signo in vAC, msg in T0, vSP_v7 long aligned!
+        label('__@raisem')                   # signo in vAC, msg in T0, vSP%4 unknown
         STW(T1)                              # store signo in T1
         label('_raise_disposition', pc()+1)
         LDWI(0)
         _BEQ('.raise2')
-        PUSH()             # warning vSP_v7 % 4 unknown
+        PUSH()
         CALL(vAC)          # dispatcher (no return)
         label('.raise2')
-        _MOVIW(20,R8);
+        _MOVIW(20,R8);     # exit code
         _MOVW(T0,R9);      # saved message
+        if False and args.cpu >= 7:
+            # Aligning the stack pointer only matters
+            # when exitm_msgfunc is complex (it isn't).
+            LD(vSP);ANDI(0xfc);ST(vSP)
         _CALLJ('_exitm')
         HALT()
 

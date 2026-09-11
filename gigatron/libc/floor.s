@@ -9,7 +9,7 @@ def scope():
         _CALLJ('_@_frndz')
         LDW(R11)
         _MOVF(FAC, [vAC])
-        _FNEG();LDI(F8);_FADD()
+        LDI(F8);_FSUBR()
         POP();RET()
 
     module(name='modf.s',

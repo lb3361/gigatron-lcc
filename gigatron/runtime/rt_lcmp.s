@@ -78,6 +78,20 @@ def scope():
            code= [ ('EXPORT', '_@_lcmpx'),
                    ('CODE', '_@_lcmpx', code1) ] )
 
+    # LSGN: returns integer -1,0,+1 according to LAC
+    def code1():
+        nohop()
+        label('_@_lsgn')
+        LDW(LAC+2);_BNE('.ret')
+        LDW(LAC);_BEQ('.ret')
+        LDI(1)
+        label('.ret')
+        RET()
+
+    module(name='lsgn.s',
+           code=[ ('EXPORT', '_@_lsgn'),
+                  ('CODE', '_@_lsgn', code1) ] )
+
 scope()
 
 # Local Variables:

@@ -1979,6 +1979,10 @@ def _LXOR():
         extern('_@_lxor')
         _CALLI('_@_lxor')       # LAC^[vAC] --> LAC
 @vasm
+def _LSGN():
+    extern('_@_lsgn')
+    _CALLJ('_@_lsgn')           # SGN(LAC) --> vAC
+@vasm
 def _LCMPS():
     if args.cpu >= 6:
         CMPLS()

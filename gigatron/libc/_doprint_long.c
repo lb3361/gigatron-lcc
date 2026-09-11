@@ -5,6 +5,10 @@
 
 #include "_doprint.h"
 
+/* See _support.s for the actual _doprint_long
+   and the machinery that only links this when
+   long integers are used in the program. */
+
 void _doprint_long_imp(doprintspec_t *spec, int b, __va_list *ap)
 {
 	char buffer[16];

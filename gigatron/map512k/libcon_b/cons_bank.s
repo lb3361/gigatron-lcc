@@ -58,6 +58,17 @@ def scope():
                   ('CODE', '_membank_restore', code_membank_restore),
                   ('PLACE', '_membank_restore', 0x0200, 0x7fff) ] )
 
+    def code_set_framebuffer_bank():
+        error("_membank_set_framebuffer_bank() cannot work with -map=512k")
+        label('_membank_set_program_bank')
+        label('_membank_set_framebuffer_bank')
+        RET()
+
+    module(name='_membank_set_framebuffer_bank',
+           code=[('EXPORT','_membank_set_program_bank'),
+                 ('EXPORT','_membank_set_framebuffer_bank'),
+                 ('CODE','_membank_set_bank', code_set_framebuffer_bank) ] )
+
     def code_membank_set():
         nohop()
         label('_membank_set')

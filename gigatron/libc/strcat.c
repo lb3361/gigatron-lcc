@@ -4,7 +4,6 @@
 char *
 strcat(register char *dst, register const char *src)
 {
-	register char *e = __memchr2(dst, 0, 0xffffu);
-	strcpy(e, src);
+	strcpy((char*)__memchr2(dst, 0, 0xffffu), src);
 	return dst;
 }

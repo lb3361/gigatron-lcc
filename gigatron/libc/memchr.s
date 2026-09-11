@@ -5,23 +5,23 @@ def scope():
     # -- void *__memchr2(const void *s, int c0c1, size_t n)
     # scan at most n bytes from s until finding one equal to c0 or c1
     # return pointer to the byte if found, 0 if not found.
-    # known to leave R8/R9/R10 unchanged!!!
+    # known to leave R8 unchanged!!!
     def code1():
         nohop()
         label('memchr')
         LD(R9);ST(R9+1)
         label('__memchr2')                          # R8=d, R9=c0c1, R10=l
         LDW(R9);STW('sysArgs2')
-        LDW(R8);STW('sysArgs0');ADDW(R10);STW(R12)
+        LDW(R8);STW('sysArgs0');ADDW(R10);STW(T2)
         if 'has_SYS_ScanMemory' in rominfo:
             info = rominfo['has_SYS_ScanMemory']
             addr = int(str(info['addr']),0)
             cycs = int(str(info['cycs']),0)
             _MOVIW(addr,'sysFn')
             label('.loop')
-            LDW(R12);XORW('sysArgs0');_BEQ('.done')
+            LDW(T2);XORW('sysArgs0');_BEQ('.done')
             LD(vACH);_BNE('.s1')
-            LDW(R12);SUBW('sysArgs0');_BLT('.s1')
+            LDW(T2);SUBW('sysArgs0');_BLT('.s1')
             SYS(cycs);RET()
             label('.s1')
             LDI(0);SUBW('sysArgs0')
@@ -31,10 +31,10 @@ def scope():
         else:
             LDW('sysArgs0')
             label('.loop')
-            XORW(R12);_BEQ('.done')
-            LDW('sysArgs0');PEEK();ST(vACH);XORW('sysArgs2');ST(R13)
+            XORW(T2);_BEQ('.done')
+            LDW('sysArgs0');PEEK();ST(vACH);XORW('sysArgs2');ST(T3)
             LD(vACH);_BEQ('.ok')
-            LD(R13);_BEQ('.ok')
+            LD(T3);_BEQ('.ok')
             LDI(1);ADDW('sysArgs0');STW('sysArgs0')
             _BRA('.loop')
             label('.ok')

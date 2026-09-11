@@ -22,7 +22,7 @@ typedef struct gt_thread_s {
 #define GT_THREAD(name) struct gt_thread_s __attribute__((offset(0xaa))) name
 
 /* Define a stack of size bytes */
-#define GT_STACK(name,size) long name[(size<128)?(128>>2):((size|3)>>2)]
+#define GT_STACK(name,size) long name[(size<96)?(96>>2):((size|3)>>2)]
 
 /* Return the number of elapsed frames since the program start (the clock.) */
 extern long gt_clock(void);

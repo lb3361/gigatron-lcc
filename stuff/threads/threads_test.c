@@ -50,7 +50,7 @@ void safe_cprintf(int x, int y, int clr, const char *fmt, ...)
 // prime numbers thread
 
 GT_THREAD(th1);
-GT_STACK(th1s, 128);
+GT_STACK(th1s, 96); // not a big stack!
 
 void run_primes(void *arg)
 {
@@ -76,7 +76,7 @@ void run_primes(void *arg)
 // maze thread
 
 GT_THREAD(th2);
-GT_STACK(th2s, 128);
+GT_STACK(th2s, 96); // not a big stack
 
 void draw(char *addr, int dir)
 {

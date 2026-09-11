@@ -38,7 +38,8 @@ segments = [ (0x7dc0, 0x8240, None,   None,   'CDH'),
 args.initsp = 0x7ffc
 
 # tweak long fonction placement
-args.lfss = args.lfss or 256
+args.lfss = args.lfss or 128
+args.sfst = args.sfst or 256
 
 # Specify an onload function to reorganize the memory
 args.onload.append('_map512ksetup')

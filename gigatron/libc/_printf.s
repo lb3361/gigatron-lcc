@@ -4,7 +4,7 @@ def scope():
         nohop()
         label('printf')
         _SP(2);STW(R9)
-        if args.cpu >= 7:
+        if args.cpu >= 6:
             JNE('vprintf')
         else:
             PUSH();_CALLJ('vprintf')
@@ -20,7 +20,7 @@ def scope():
         nohop()
         label('cprintf')
         _SP(2);STW(R9)
-        if args.cpu >= 7:
+        if args.cpu >= 6:
             JNE('vcprintf')
         else:
             PUSH();_CALLJ('vcprintf')
@@ -36,7 +36,7 @@ def scope():
         nohop()
         label('sprintf')
         _SP(4);STW(R10)
-        if args.cpu >= 7:
+        if args.cpu >= 6:
             JNE('vsprintf')
         else:
             PUSH();_CALLJ('vsprintf')
@@ -51,7 +51,7 @@ def scope():
         nohop()
         label('snprintf')
         _SP(6);STW(R11)
-        if args.cpu >= 7:
+        if args.cpu >= 6:
             JNE('vsnprintf')
         else:
             PUSH();_CALLJ('vsnprintf')
@@ -66,7 +66,7 @@ def scope():
         nohop()
         label('fprintf')
         _SP(4);STW(R10)
-        if args.cpu >= 7:
+        if args.cpu >= 6:
             JNE('vfprintf')
         else:
             PUSH();_CALLJ('vfprintf')

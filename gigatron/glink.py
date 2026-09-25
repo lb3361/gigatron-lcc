@@ -346,7 +346,7 @@ class Segment:
             # Compatibility
             self.flags =  'c' if flags & 1 else 'C';
             self.flags += 'd' if flags & 2 else 'D';
-            self.flags += ''  if flags & 8 else 'H';
+            self.flags += ''  if flags & 4 else 'H';
 
     def __repr__(self):
         return f"Segment({hex(self.saddr)},{hex(self.eaddr)},\'{self.flags}\')"

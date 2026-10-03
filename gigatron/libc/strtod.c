@@ -43,12 +43,12 @@ int _strtod_push(strtod_t *d, int c, const char *p)
 			f |= FLG_PERIOD;
 			goto ret;
 		} else if (_isdigit(c)) {
-			register double x = d->x;
+			register double *xp = &(d->x);
 			f |= FLG_DIGIT;
-			if (x < 1e16) {
+			if (*xp < 1e16) {
 				if (f & FLG_PERIOD)
 					d->e0 -= 1;
-				d->x = x * _ften + (double)(c - '0');
+				*xp = _ldexp10p(xp, 1) + (double)(c - '0');
 			} else if (! (f & FLG_PERIOD)) 
 					d->e0 += 1;
 			goto ret;

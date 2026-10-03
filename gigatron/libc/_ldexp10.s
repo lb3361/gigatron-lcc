@@ -30,7 +30,6 @@ def scope():
            code=[ ('EXPORT', '_ldexp10p'),
                   ('IMPORT', '_@_fscald'),
                   ('IMPORT', '_@_fscalb'),
-                  ('IMPORT', '_@_clrfac'),
                   ('IMPORT', '_fone'),
                   ('CODE', '_ldexp10p', code_ldexp10p) ] )
 

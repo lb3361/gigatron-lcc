@@ -1112,7 +1112,12 @@ def scope():
         '''_@_fscalb: Multiplies FAC by 2^vAC'''
         nohop()
         label('_@_fscalb')
-        STW(T3);LD(AE);ADDW(T3)
+        STW(T3);LD(AE)
+        if args.cpu >= 6:
+            JEQ('_@_clrfac')
+        else:
+            _BEQ('.zero')
+        ADDW(T3)
         if args.cpu >= 6:
             JLE('_@_clrfac')
         else:
@@ -1144,7 +1149,9 @@ def scope():
                Calling _@_fscalb afterwards gives x * 10^m.'''
         label('_@_fscald')
         PUSH()
-        STW(T3);_BEQ('.ret');_MOVIW(0,T2)
+        STW(T3);_BEQ('.ret')
+        LD(AE);_BEQ('.ret')
+        _MOVIW(0,T2)
         label('.loop')
         if args.cpu >= 7:
             MOVF(AM,BM)

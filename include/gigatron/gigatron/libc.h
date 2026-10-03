@@ -80,7 +80,8 @@ extern double _foverflow(double defval)
 	__attribute__((quickcall));
 
 /* Multiply x by 10^n. */
-extern double _ldexp10p(const double *x, int n);
+extern double _ldexp10p(const double *x, int n)
+	__attribute__((quickcall));
 
 /* Return an exponent exp and patches x to ensure that:
    - x * 10^exp on return is equal to the old value of x

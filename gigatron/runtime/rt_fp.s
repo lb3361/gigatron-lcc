@@ -72,17 +72,11 @@ def scope():
                   ('CODE', '__@fexception', code_fexception),
                   ('CODE', '__@fsavevsp', code_fsavevsp) ] )
 
-    def code_clrfac():
-        '''_@_clrfac: -- Set FAC to zero
-           _@_rndfac: -- Round FAC to 32 bit mantissa.'''
+    def code_rndfac():
+        '''_@_rndfac: -- Round FAC to 32 bit mantissa.'''
         nohop()
-        label('_@_clrfac')
-        LDI(0);STW(AE)        # [AE,AM]
-        STW(AM+1);STW(AM+3)   # [AM+1,AM+2] [AM+3,AM+4]
-        RET()
-        ## Round fac
         label('_@_rndfac')
-        LD(AE);_BEQ('_@_clrfac')
+        LD(AE);_BEQ('.rnd0')
         LDW(AM-1);_BGE('.rnd0')
         if args.cpu >= 6:
             INCVL(AM+1);LDW(AM+3);_BNE('.rnd0')
@@ -97,8 +91,7 @@ def scope():
 
     module(name='rt_rndfac.s',
            code=[ ('EXPORT', '_@_rndfac'),
-                  ('EXPORT', '_@_clrfac'),
-                  ('CODE', '_@_clrfac', code_clrfac) ] )
+                  ('CODE', '_@_rndfac', code_rndfac) ] )
 
     # ==== Load/store
 
@@ -230,7 +223,6 @@ def scope():
 
     module(name = 'rt_fstfac.s',
            code = [ ('EXPORT', '_@_fstfac'),
-                    ('IMPORT', '_@_clrfac'),
                     ('CODE', '_@_fstfac', code_fstfac) ] )
 
     def code_fac2farg():
@@ -388,13 +380,14 @@ def scope():
             MOVQW(0,T3);_BNE('.norm1a') # known >=0
             ADDSV(16,T3);LDW(AM+1);_BNE('.norm1b')
             ADDSV(16,T3);LD(AM);ST(vACH);_BNE('.norm1b')
-            JEQ('_@_clrfac')
+            label('.normz')
+            _MOVIB(0,AE);RET()
             label('.norm1a')
             LSLW();INC(T3)
             label('.norm1b')
             _BGE('.norm1a')
-            LD(AE);SUBW(T3);JLT('_@_clrfac');ST(AE)
-            LD(T3);LSLXA();
+            LD(AE);SUBW(T3);JLT('.normz');ST(AE)
+            LD(T3);LSLXA()
         else:
             PUSH();_BNE('.norm1')
             LD(AM);ORW(AM+1);_BEQ('.normz')
@@ -410,7 +403,7 @@ def scope():
             LDW(AM+3);_BGE('.norm2')
             tryhop(2);POP();RET()
             label('.normz')
-            _CALLJ('_@_clrfac')
+            _MOVIB(0,AE)
             tryhop(2);POP()
         label('.ret')
         RET()
@@ -418,7 +411,6 @@ def scope():
     module(name='rt_fnorm.s',
            code=[ ('EXPORT', '__@fnorm'),
                   ('CODE', '__@fnorm', code_fnorm),
-                  ('IMPORT', '_@_clrfac'),
                   ('IMPORT', '__@amshl1') if args.cpu < 7 else ('NOP',) ] )
 
 
@@ -460,17 +452,16 @@ def scope():
            Both return 0x80000000 on overflow.'''
         nohop()
         label('_@_ftoi')
-        PUSH()
         LD(AE);SUBI(160);_BLT('.ok')
         label('.ovf')
-        _CALLJ('_@_clrfac')
-        LDI(128);ST(LAC+3)
-        tryhop(2);POP();RET()
+        LDWI(0x8000);STW(LAC+2)
+        LDI(0);STW(LAC)
+        RET()
         label('_@_ftou')
-        PUSH()
         LD(AS);ANDI(128);_BNE('.ovf')
         LD(AE);SUBI(160);_BGT('.ovf')
         label('.ok')
+        PUSH()
         if args.cpu >= 6:
             NEGV(vAC)
         else:
@@ -479,13 +470,12 @@ def scope():
         LD(AS);ANDI(128);_BEQ('.ret')
         _LNEG()
         label('.ret')
-        tryhop(2);POP();RET()
+        POP();RET()
 
-    module(name='rt_fto.s',
+    module(name='rt_ftoi.s',
            code=[ ('EXPORT', '_@_ftoi'),
                   ('EXPORT', '_@_ftou'),
                   ('IMPORT', '__@amshra'),
-                  ('IMPORT', '_@_clrfac'),
                   ('CODE', '_@_ftoi', code_ftoi) ] )
 
     # ==== additions and subtractions
@@ -606,11 +596,8 @@ def scope():
         label('.fsubx2')
         _CALLJ('__@fnorm')               # - normalize
         label('.fadd3')
-        if args.cpu >= 7:
-            tryhop(4);POP();JMP('_@_rndfac')
-        else:
-            _CALLJ('_@_rndfac')
-            tryhop(2);POP();RET()
+        _CALLJ('_@_rndfac')
+        tryhop(2);POP();RET()
 
     module(name='rt_faddt3.s',
            code=[ ('EXPORT', '__@fadd_t3'),
@@ -791,22 +778,20 @@ def scope():
             JNE('__@foverflow')
             POP();JEQ('_@_rndfac')
             label('.zero')
-            POP();JLE('_@_clrfac')
+            POP();_MOVIB(0,AE);RET()
         else:
-            BNE('.ovf')
-            _CALLJ('_@_rndfac')
-            tryhop(2);POP();RET()
-            label('.ovf')
+            BEQ('.ret')
             _CALLJ('__@foverflow')
             label('.zero')
-            _CALLJ('_@_clrfac')
+            _MOVIB(0,AE)
+            label('.ret')
+            _CALLJ('_@_rndfac')
             tryhop(2);POP();RET()
 
     module(name='rt_fmul.s',
            code=[ ('EXPORT', '_@_fmul'),
                   ('IMPORT', '__@fsavevsp'),
                   ('IMPORT', '__@foverflow'),
-                  ('IMPORT', '_@_clrfac'),
                   ('IMPORT', '_@_rndfac'),
                   ('IMPORT', '__@macx') if args.cpu < 7 else ('NOP',),
                   ('IMPORT', '__@macxsha') if args.cpu < 7 else ('NOP',),
@@ -942,15 +927,12 @@ def scope():
         _MOVW(CM, AM+1)
         _MOVW(CM+2, AM+3)
         tryhop(2);POP();RET()
-        if args.cpu >= 6:
-            label('.zero')
-            POP();JLE('_@_clrfac')
-        else:
+        if args.cpu < 6:
             label('.ovf')
             _CALLJ('__@foverflow')
-            label('.zero')
-            _CALLJ('_@_clrfac')
-            tryhop(2);POP();RET()
+        label('.zero')
+        _MOVIB(0,AE)
+        tryhop(2);POP();RET()
 
     module(name='rt_fdiv.s',
            code=[ ('EXPORT', '_@_fdiv'),
@@ -960,7 +942,6 @@ def scope():
                   ('IMPORT', '__@fexception'),
                   ('IMPORT', '__@fdivloop'),
                   ('IMPORT', '__@fdivrnd'),
-                  ('IMPORT', '_@_clrfac'),
                   ('IMPORT', '__@foverflow'),
                   ('CODE', '_@_fdiv', code_fdiv) ] )
 
@@ -1012,7 +993,7 @@ def scope():
         LDW(CM)
         tryhop(2);POP();RET()
         label('.zero')
-        _CALLJ('_@_clrfac')
+        _MOVIB(0,AE)
         label('.zquo')
         LDI(0)
         tryhop(2);POP();RET()
@@ -1024,7 +1005,6 @@ def scope():
                   ('IMPORT', '_@_rndfac'),
                   ('IMPORT', '__@fldarg_t3') if args.cpu < 7 else ('NOP',),
                   ('IMPORT', '__@fdivloop'),
-                  ('IMPORT', '_@_clrfac'),
                   ('IMPORT', '__@fnorm') ] )
 
     # ==== comparisons
@@ -1112,32 +1092,20 @@ def scope():
         '''_@_fscalb: Multiplies FAC by 2^vAC'''
         nohop()
         label('_@_fscalb')
-        STW(T3);LD(AE)
-        if args.cpu >= 6:
-            JEQ('_@_clrfac')
-        else:
-            _BEQ('.zero')
-        ADDW(T3)
-        if args.cpu >= 6:
-            JLE('_@_clrfac')
-        else:
-            _BLE('.zero')
+        STW(T3);LD(AE);_BEQ('.zero')
+        ADDW(T3);_BLE('.zero')
         ST(AE);LD(vACH);_BEQ('.ret')
         PUSH()
         _CALLJ('__@fsavevsp')
         _CALLJ('__@foverflow')
-        if args.cpu < 6:
-            label('.zero')
-            PUSH()
-            _CALLJ('_@_clrfac')
-            tryhop(2);POP()
+        label('.zero')
+        _MOVIB(0,AE)
         label('.ret')
         RET()
 
     module(name='rt_fscalb.s',
            code=[ ('IMPORT', '__@fsavevsp'),
                   ('IMPORT', '__@foverflow'),
-                  ('IMPORT', '_@_clrfac'),
                   ('EXPORT', '_@_fscalb'),
                   ('CODE', '_@_fscalb', code_fscalb) ] )
 

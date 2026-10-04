@@ -13,7 +13,7 @@
 #define FLG_DIGIT 8
 #define FLG_OVF   128
 
-int _strtol_push(strtol_t *d, int c)
+int _strtol_push(strtol_t *d, int c, const char *p)
 {
 	register int v = 0;
 	register int base = d->base;
@@ -30,18 +30,18 @@ int _strtol_push(strtol_t *d, int c)
 	}
 	if (base == 0) {
 		if (f & FLG_0X) {
+			base = 8;
 			if ((c | 0x20) == 'x') {
-				base = d->base = 16;
-				goto ret;
-			} else {
-				f |= FLG_DIGIT;
-				base = d->base = 8;
+				d->base = 16;
+				if (p == 0 || _isxdigit(*p))
+					goto ret;
 			}
 		} else if (c == '0') {
-			f |= FLG_0X;
+			f |= FLG_0X | FLG_DIGIT;
 			goto ret;
 		} else
-			base = d->base = 10;
+			base = 10;
+		d->base = base;
 	}
 	if ((v = c - '0') > 9)
 		if ((v = (c | 0x20) - 'a') >= 0)
@@ -105,7 +105,7 @@ static const char *worker(register strtol_t *d, register const char *p, register
 	d->base = base;
 	while (isspace(p[0]))
 		p += 1;
-	while (_strtol_push(d, p[0]))
+	while (_strtol_push(d, p[0], p+1))
 		p += 1;
 	return p;
 }

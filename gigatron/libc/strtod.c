@@ -55,10 +55,9 @@ int _strtod_push(strtod_t *d, int c, const char *p)
 		} else if ((c | 0x20) == 'e') {
 			f = f ^ (ST_MANT ^ ST_EXPSGN);
 			if (p) {
-				c = p[1];
-				if (c == '+' || c == '-')
-					c = p[2];
-				if (!_isdigit(c))
+				if (*p == '+' || *p == '-')
+					p++;
+				if (!_isdigit(*p))
 					goto end;
 			}
 			goto ret;
@@ -124,7 +123,7 @@ double strtod(const char *nptr, char **endptr)
 	memset(d, 0, sizeof(dobj));
 	while (isspace(p[0]))
 		p += 1;
-	while (_strtod_push(d, p[0], &p[1]))
+	while (_strtod_push(d, p[0], p+1))
 		p += 1;
 	if (! _strtod_decode(d, &x))
 		p = nptr;

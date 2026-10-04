@@ -4,31 +4,37 @@
 /* Table based ctype does not make sense in the gigatron 
    because it requires too much contiguous memory. */
 
-extern int isascii(int);
-extern int isalnum(int);
-extern int isalpha(int);
-extern int iscntrl(int);
-extern int isdigit(int);
-extern int isgraph(int);
-extern int islower(int);
-extern int isprint(int);
-extern int ispunct(int);
-extern int isspace(int);
-extern int isupper(int);
-extern int isxdigit(int);
-extern int tolower(int);
-extern int toupper(int);
+extern int isascii(int)  __attribute__((quickcall));
+extern int isalnum(int)  __attribute__((quickcall));
+extern int isalpha(int)  __attribute__((quickcall));
+extern int iscntrl(int)  __attribute__((quickcall));
+extern int isdigit(int)  __attribute__((quickcall));
+extern int isgraph(int)  __attribute__((quickcall));
+extern int islower(int)  __attribute__((quickcall));
+extern int isprint(int)  __attribute__((quickcall));
+extern int ispunct(int)  __attribute__((quickcall));
+extern int isspace(int)  __attribute__((quickcall));
+extern int isupper(int)  __attribute__((quickcall));
+extern int isxdigit(int) __attribute__((quickcall));
+extern int tolower(int)  __attribute__((quickcall));
+extern int toupper(int)  __attribute__((quickcall));
 
 #define isascii(c)      (!((c)&~0x7fU))
 
-/* Macro alternatives that might evaluate c multiple times. 
-   Using a-b?0 instead of a?b to use SUBI over _CMPWI */
+/* Macro versions can be cheaper */
 
-#define	_isalpha(c)	((int)(((c)|0x20)-'a')>=0 && (int)(((c)|0x20)-'z')<=0)
+#define _isalpha(c)     isalpha(c)
 #define	_isdigit(c)	((int)((c)-'0')>=0 && (int)((c)-'9')<=0)
-#define	_islower(c)	((int)((c)-'a')>=0 && (int)((c)-'z')<=0)
-#define	_isspace(c)	((c)==32 || (int)((c)-9)>=0 && (int)((c)-13)<=0)
-#define	_isupper(c)	((int)((c)-'A')>=0 && (int)((c)-'Z')<=0)
-#define	_isxdigit(c)	(_isdigit(c) || (int)(((c)|0x20)-'a')>=0 && (int)(((c)|0x20)-'z')<=0)
+//#define	_islower(c)	((int)((c)-'a')>=0 && (int)((c)-'z')<=0)
+#define _islower(c)     islower(c)
+#define _isspace(c)     isspace(c)
+//#define	_isupper(c)	((int)((c)-'A')>=0 && (int)((c)-'Z')<=0)
+#define _isupper(c)     isupper(c)
+#define	_isxdigit(c)    isxdigit(c)
+
+
+
+#if 0
+#endif
 
 #endif /* __CTYPE */

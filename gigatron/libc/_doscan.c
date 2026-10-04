@@ -78,7 +78,7 @@ static int do_lng(register doscan_t *dd, int conv, register int cnvf, register v
 	else if (conv == 'o')
 		d->base = 8;
 	d->x = 0;
-	while (_strtol_push(d, dd->c))
+	while (_strtol_push(d, dd->c, 0))
 		_doscan_next(dd);
 	lp = &x;
 	if (cnvf & FLG_LONG)

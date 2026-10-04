@@ -17,7 +17,7 @@ typedef struct {
 	unsigned long x;
 } strtol_t;
 
-extern int _strtol_push(strtol_t*, int c);
+extern int _strtol_push(strtol_t*, int c, const char *p);
 extern int _strtol_decode_u(strtol_t*, unsigned long *px);
 extern int _strtol_decode_s(strtol_t*, long *px);
 

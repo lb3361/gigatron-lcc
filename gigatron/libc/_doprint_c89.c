@@ -91,7 +91,7 @@ static void upcase(char *s)
 {
 	register int c;
 	while (c = *s) {
-		if (_islower(c))
+		if (c - 'a' >= 0 && c - 'z' <= 0)
 			*s = c ^ 0x20;
 		s += 1;
 	}

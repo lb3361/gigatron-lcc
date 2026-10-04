@@ -13,8 +13,10 @@ def scope():
 
     more_imports = []
     def more_code(*args):
-        return [('IMPORT',x) for x in more_imports ] \
-            +  [('PLACE',x,0x200,0x7fff) for x in args ]
+        if cons_512k or cons_128k:
+            return [('IMPORT',x) for x in more_imports ] \
+                +  [('PLACE',x,0x200,0x7fff) for x in args ]
+        return []
 
     if cons_512k or cons_128k:
         # banked framebuffer
@@ -185,9 +187,11 @@ def scope():
     # ------------------------------------------------------------
     # HELPERS FOR CONSOLE_PRINT
     # ------------------------------------------------------------
-    # These functions optimize the size of console_print.
+    # These functions used to be coded in C but have been
+    # hand-optimized to reduce the size of the console logic.
     # They depend on the layout of console_state and console_info.
-    # They assume console_state is in page zero
+    # They assume console_state is in page zero.
+    # 
     # ------------------------------------------------------------
 
 

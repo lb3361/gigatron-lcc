@@ -25,19 +25,24 @@ typedef struct gt_thread_s {
 #define GT_STACK(name,size) long name[(size<96)?(96>>2):((size|3)>>2)]
 
 /* Return the number of elapsed frames since the program start (the clock.) */
-extern long gt_clock(void);
+extern long gt_clock(void)
+	__attribute__((quickcall));
 
 /* Call the scheduler and possibly run another thread for a while */
-extern void gt_yield(void);
+extern void gt_yield(void)
+	__attribute__((quickcall));
 
 /* Kill the specified thread. */
-extern void gt_kill(gt_thread_p tp);
+extern void gt_kill(gt_thread_p tp)
+	__attribute__((quickcall));
 
 /* Kill the currently running thread */
-extern void gt_exit(void);
+extern void gt_exit(void)
+	__attribute__((quickcall));
 
 /* Returns a pointer to the current thread */
-extern gt_thread_p gt_current(void);
+extern gt_thread_p gt_current(void)
+	__attribute__((quickcall));
 
 /* Tells whether thread tp is running (i.e., started and not killed) */
 #define gt_running(tp)  ((tp)->next!=0)
@@ -48,16 +53,19 @@ extern gt_thread_p gt_current(void);
 /* Starts thread tp with stack stk of size stksz.
    Argument f is the function to execute. Argument arg is passed to f. */
 extern gt_thread_p gt_start(gt_thread_p tp, void *stk, int stksz,
-			    void(*f)(void*), void *arg);
+			    void(*f)(void*), void *arg)
+	__attribute__((quickcall));
 
 /* Wait until termination of thread tp  */
-extern void gt_join(gt_thread_p tp);
+extern void gt_join(gt_thread_p tp)
+	__attribute__((quickcall));
 
 /* Suspend the thread until the clock reaches clk */
 extern void gt_wait(long clk);
 
 /* Suspend the thread for t frames */
 extern void gt_sleep(long t);
+
 
 /* Only one thread can lock a mutex at any given time. */
 typedef char gt_mutex_t, *gt_mutex_p;
@@ -67,13 +75,17 @@ typedef char gt_mutex_t, *gt_mutex_p;
 #define GT_MUTEX(name) gt_mutex_t name = GT_MUTEX_INIT
 
 /* Lock mutex m, blocking until available */
-extern void gt_mutex_lock(gt_mutex_p m);
+extern void gt_mutex_lock(gt_mutex_p m)
+	__attribute__((quickcall));
 
 /* Try locking mutex m without blocking, returning 0 on success, -1 on failure */
-extern int gt_mutex_trylock(gt_mutex_p m);
+extern int gt_mutex_trylock(gt_mutex_p m)
+	__attribute__((quickcall));
 
 /* Unlock mutex m, allowing other threads to lock it. */
-extern void gt_mutex_unlock(gt_mutex_p m);
+extern void gt_mutex_unlock(gt_mutex_p m)
+	__attribute__((quickcall));
+
 
 /* Condition variable. */
 typedef char gt_cond_t, *gt_cond_p;

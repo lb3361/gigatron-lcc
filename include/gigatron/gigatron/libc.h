@@ -226,6 +226,11 @@ extern char *_strtok(char *str, const char *delim, char **ps);
 /* Swap two memory blocks of size n. */
 extern void _memswp(void *a, void *b, size_t n);
 
+/* Convert string to lowercase or uppercase in place. */
+extern char *_strlwr(char *s)
+	__attribute__((quickcall));
+extern char *_strupr(char *s)
+	__attribute__((quickcall));
 
 /* ---- Clock ---- */
 

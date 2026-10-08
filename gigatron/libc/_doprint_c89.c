@@ -87,23 +87,12 @@ static void do_str(doprintspec_t *spec, const char *s, size_t l)
 }
 
 
-static void upcase(char *s)
-{
-	register int c;
-	while (c = *s) {
-		if (c - 'a' >= 0 && c - 'z' <= 0)
-			*s = c ^ 0x20;
-		s += 1;
-	}
-}
-
 void _doprint_num(register doprintspec_t *spec,
 		  register int b, register char *s)
 {
 	register int l, z;
 	register int f = spec->flags;
-	register char *p = "";
-	register int plen;
+	register char *p = 0;
 
 	if (*s == '-') {
 		p = "-";
@@ -136,14 +125,13 @@ void _doprint_num(register doprintspec_t *spec,
 	}
 	b = spec->width - l - b - z;
 	if (spec->conv - 'a' < 0) {
-		upcase(s);
-		if (p[1]=='x')
-			p = "0X";
+		_strupr(s);
+		if (p[1] == 'x')   // gigatron hack when p==0
+			p = "0X";  // and clumsy update
 	}
 	if (b > 0 && !(f & DPR_LEFTJ))
 		_doprint_putc(' ', b);
-	if (*p)
-		_doprint_puts(p, strlen(p));
+	_doprint_puts(p, strlen(p));
 	if (z > 0)
 		_doprint_putc('0', z);
 	_doprint_puts(s, l);

@@ -112,7 +112,7 @@ def scope():
         label('.no')
         LDI(0);RET()
         label('.yes')
-        LDI(0x20);RET()
+        RET()
 
     module(name="islower.s",
            code=[('EXPORT', 'islower'),
@@ -201,7 +201,7 @@ def scope():
         label('.no')
         LDI(0);RET()
         label('.yes')
-        LDI(0x20);RET()
+        RET()
 
     module(name="isupper.s",
            code=[('EXPORT', 'isupper'),
@@ -234,30 +234,93 @@ def scope():
     def code():
         nohop()
         label('tolower')
-        PUSH()
-        _CALLJ('isupper')
-        XORW(R8)
-        tryhop(2);POP();RET()
+        LDW(R8)
+        _ADDI(-ord('A'))
+        BLT('.no')
+        _ADDI(ord('A')-(ord('Z')))
+        BGT('.no')
+        _ADDI(ord('Z')+32)
+        RET()
+        label('.no')
+        LDW(R8)
+        RET()
 
     module(name="tolower.s",
            code=[('EXPORT', 'tolower'),
-                 ('IMPORT', 'isupper'),
                  ('CODE', 'tolower', code) ] )
 
     # int toupper(int)
     def code():
         nohop()
         label('toupper')
-        PUSH()
-        _CALLJ('islower')
-        XORW(R8)
-        tryhop(2);POP();RET()
+        LDW(R8)
+        _ADDI(-ord('a'))
+        BLT('.no')
+        _ADDI(ord('a')-(ord('z')))
+        BGT('.no')
+        _ADDI(ord('z')-32)
+        RET()
+        label('.no')
+        LDW(R8)
+        RET()
 
     module(name="toupper.s",
            code=[('EXPORT', 'toupper'),
-                 ('IMPORT', 'islower'),
                  ('CODE', 'toupper', code) ] )
 
+    # void _strupr(char *s)
+    def code():
+        nohop()
+        label('_strupr')
+        _MOVW(R8,T0)
+        _BRA('.tst')
+        label('.loop')
+        _ADDI(-ord('a')); _BLT('.no')
+        _ADDI(ord('a')-(ord('z'))); _BGT('.no')
+        _ADDI(ord('z')-32); POKE(R8)
+        label('.no')
+        if args.cpu < 6:
+            LDI(1);ADDW(R8);STW(R8)
+            label('.tst')
+            PEEK()
+        else:
+            INCV(R8)
+            label('.tst')
+            PEEKV(R8)
+        _BNE('.loop')
+        LDW(T0)
+        RET()
+
+    module(name="strupr.s",
+           code=[('EXPORT', '_strupr'),
+                 ('CODE', '_strupr', code) ] )
+    
+    # void _strlwr(char *s)
+    def code():
+        nohop()
+        label('_strlwr')
+        _MOVW(R8,T0)
+        _BRA('.tst')
+        label('.loop')
+        _ADDI(-ord('A')); _BLT('.no')
+        _ADDI(ord('A')-(ord('Z'))); _BGT('.no')
+        _ADDI(ord('Z')+32); POKE(R8)
+        label('.no')
+        if args.cpu < 6:
+            LDI(1);ADDW(R8);STW(R8)
+            label('.tst')
+            PEEK()
+        else:
+            INCV(R8)
+            label('.tst')
+            PEEKV(R8)
+        _BNE('.loop')
+        LDW(T0)
+        RET()
+
+    module(name="strupr.s",
+           code=[('EXPORT', '_strlwr'),
+                 ('CODE', '_strlwr', code) ] )
 
 scope()
 

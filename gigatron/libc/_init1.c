@@ -11,11 +11,13 @@ struct bsschain {
 
 void _init_bss(void)
 {
-  struct bsschain *r = __glink_magic_bss;
-  while (r != 0 && r != (void*)0xBEEF)
+  struct bsschain *r;
+  struct bsschain * const beef = (void*)0xBEEF;
+  r = __glink_magic_bss;
+  __glink_magic_bss = 0;
+  while (r  && r != beef)
     {
       struct bsschain *n = r->next;
-      __glink_magic_bss = 0;
       memset(r, 0, r->size);
       r = n;
     }

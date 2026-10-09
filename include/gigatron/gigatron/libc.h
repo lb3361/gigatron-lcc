@@ -232,6 +232,10 @@ extern char *_strlwr(char *s)
 extern char *_strupr(char *s)
 	__attribute__((quickcall));
 
+/* Returns a pointer to the zero terminating byte. */
+extern char *_strend(const char *s)
+	__attribute__((quickcall));
+
 /* ---- Clock ---- */
 
 /* The standard function clock() returns a clock_t which is a long

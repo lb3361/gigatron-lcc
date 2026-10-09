@@ -6,7 +6,7 @@ strspn(register const char *s0, register const char *set)
 {
 	register int c;
 	register const char *s = s0;
-	while ((c = *s0) && *(char*)__memchr2(set, (char)c, 255))
+	while ((c = *s0) && strchr(set, c))
 		s0 += 1;
 	return s0 - s;
 }
@@ -16,7 +16,7 @@ strcspn(register const char *s0, register const char *set)
 {
 	register int c;
 	register const char *s = s0;
-	while ((c = *s0) && !*(char*)__memchr2(set, (char)c, 255))
+	while ((c = *s0) && !strchr(set,c))
 		s0 += 1;
 	return s0 - s;
 }

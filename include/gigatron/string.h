@@ -22,7 +22,7 @@ extern int memcmp(const void *, const void *, size_t);
 extern int strcmp(const char *, const char *);
 extern int strncmp(const char *, const char *, size_t);
 extern void *memchr(const void *, int, size_t) __attribute__((quickcall));
-extern char *strchr(const char *, int);
+extern char *strchr(const char *, int) __attribute__((quickcall));
 extern size_t strcspn(const char *, const char *);
 extern char *strpbrk(const char *, const char *);
 extern char *strrchr(const char *, int);

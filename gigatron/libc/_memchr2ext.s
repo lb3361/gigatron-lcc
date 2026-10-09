@@ -57,6 +57,8 @@ def scope():
     # - return pointer to the byte if found, 0 if not found.
 
     def code1():
+        label('_memchr2ext');   # R8=bank R9=d, R10=c0, R11=c1, R12=len
+        LD(R11);ST(R10+1);_MOVW(R12,R11)
         label('__memchr2ext');   # R8=bank R9=d, R10=c0c1, R11=len
         PUSH();
         LD(R10);STW('sysArgs2')
@@ -75,28 +77,11 @@ def scope():
         label('.done')
         tryhop(2);POP();RET()
 
+    code.append(('EXPORT', '_memchr2ext'))
     code.append(('EXPORT', '__memchr2ext'))
     code.append(('CODE', '__memchr2ext', code1))
 
     module(name='memchr2ext.s', code=code)
-
-    # void *_memchr2ext(char bank, const void *s, char c0, char c1, size_t len)
-    # - scans at most n bytes from s until finding one equal to c0 or c1
-    # - return pointer to the byte if found, 0 if not found.
-    def code2():
-        nohop(9)
-        label('_memchr2ext');   # R8=bank R9=d, R10=c0, R11=c1, R12=len
-        LD(R11);ST(R10+1);LDW(R12);STW(R11)
-        if args.cpu >= 6:
-            JNE('__memchr2ext')
-        else:
-            PUSH();_CALLJ('__memchr2ext');POP()
-        RET()
-
-    module(name='_memchr2ext.s',
-           code=[('EXPORT', '_memchr2ext'),
-                 ('IMPORT', '__memchr2ext'),
-                 ('CODE', '_memchr2ext', code2) ] )
 
 scope()
 

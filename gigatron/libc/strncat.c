@@ -4,11 +4,11 @@
 char *
 strncat(register char *dst, register const char *src, register size_t n)
 {
-	register char *e = __memchr2(dst, 0, 0xffffu);
+	register char *e;
 	register int l = strlen(src);
 	if (l > n)
 		l = n;
-	memcpy(e, src, l);
+	memcpy(e = _strend(dst), src, l);
 	e[l] = 0;
 	return dst;
 }

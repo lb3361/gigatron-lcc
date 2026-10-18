@@ -213,8 +213,12 @@ def scope():
     nohop()
     label('getch')
     PUSH()
-    LDWI('getch.buf');STW(R20);PEEK();ST(R21)
-    LDI(0);POKE(R20);LD(R21);_BGT('.ret')
+    if args.cpu >= 6:
+       LDWI('getch.buf');PEEKA(R21);POKEQ(0)
+    else:
+      LDWI('getch.buf');STW(R20);PEEK();ST(R21)
+      LDI(0);POKE(R20)
+    LD(R21);_BGT('.ret')
     label('.loop')
     _CALLJ('kbget');_BLT('.loop')
     label('.ret')

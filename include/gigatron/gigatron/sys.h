@@ -169,11 +169,11 @@ extern void SYS_Exec(void *romptr, void *vlr) __quickcall;
 
 /* -- SYS_SetMode */
 extern void SYS_SetMode(int) __quickcall;
-#define has_SYS_SetMode 1
+#define has_SYS_SetMode() 1
 
 /* -- SYS_SetMemory */
 extern void SYS_SetMemory(int count, int val, void *addr) __quickcall;
-#define has_SYS_SetMemory 1
+#define has_SYS_SetMemory() 1
 
 /* -- SYS_ReadRomDir
    Notes: the name is copied into buf8 */

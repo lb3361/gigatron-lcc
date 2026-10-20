@@ -3,7 +3,7 @@
 # GLCC-2.0: a C compiler for the Gigatron
 
 
-This LCC-derived compiler and C library targets the [Gigatron](http://gigatron.io) VCPU.
+This LCC-derived compiler and C library targets the [Gigatron](http://gigatronttl.eu) VCPU.
 It keeps many of the ideas of the previous attempt to port LCC to the
 Gigatron (pgavlin's).  For instance it outputs assembly code that can be parsed by
 Python and it features a linker writen in Python that can directly
@@ -200,7 +200,7 @@ it depends on the cygwin infrastructure.
   It is also highly recommended to install Git-for-Windows (https://gitforwindows.org/)
   and a version of GNU make for windows, for instance using 
   Chocolatey (https://community.chocolatey.org/packages/make).
-  The forum post https://forum.gigatron.io/viewtopic.php?p=2484#p2484
+  The forum post https://forum.gigatronttl.eu/viewtopic.php?p=2484#p2484
   provices more information
   
 * **Native GLCC with CMake** You can also create a native windows glcc

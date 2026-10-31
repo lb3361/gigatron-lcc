@@ -36,7 +36,7 @@ def scope():
         label('gt_clock')
         # make sure that no interrupt intervenes
         LD('frameCount');INC(vAC);BNE('.clock')
-        LD('videoY');ORI(3);XORI(0xee);BEQ('gt_clock')
+        LD('videoY');ORI(0xe);XORI(0xee);BEQ('gt_clock')
         # now we can subtract framecount from _gt_clk
         label('.clock')
         LD('frameCount');ADDHI(0xff)
@@ -362,7 +362,7 @@ def scope():
     module(name='gt_sleep.s',
            code=[('EXPORT','gt_sleep'),
                  ('IMPORT','_gt_wait'),
-                 ('IMPORT','_gt_clock'),
+                 ('IMPORT','gt_clock'),
                  ('CODE','gt_sleep', code_sleep) ] )
 
 
@@ -385,7 +385,7 @@ def scope():
     def code_mutex_trylock():
         nohop()
         label('gt_mutex_trylock')
-        LDW(R8);EXBA(1);_BNE('.m1')
+        LDW(R8);EXBA(1);_BEQ('.m1')
         LDWI(-1)
         label('.m1')
         RET()
@@ -401,7 +401,7 @@ def scope():
         label('gt_cond_signal')
         LDI(0);POKE(R8);RET()
 
-    module(name='gt_mutex_unlock',
+    module(name='gt_mutex_unlock.s',
            code=[('EXPORT','gt_mutex_unlock'),
                  ('EXPORT','gt_cond_signal'),
                  ('CODE','gt_mutex_unlock', code_mutex_unlock) ] )

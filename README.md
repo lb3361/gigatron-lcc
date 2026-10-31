@@ -260,7 +260,7 @@ $ ./build/glcc -map=sim tst/8q.c
 tst/8q.c:30: warning: missing return value
 tst/8q.c:37: warning: implicit declaration of function `printf'
 tst/8q.c:39: warning: missing return value
-$ ./build/gtsim -rom gigatron/roms/dev.rom a.gt1 
+$ ./build/gtsim -rom gigatron/roms/v6.rom a.gt1 
 1 5 8 6 3 7 2 4 
 1 6 8 3 7 4 2 5 
 1 7 4 6 8 2 5 3 

@@ -26,7 +26,7 @@ typedef long time_t;
 #define _SIZE_T
 #define _SIZE_T_
 #define _SIZE_T_DEFINED
-typedef unsigned long size_t;
+typedef unsigned int size_t;
 #endif
 
 struct tm {

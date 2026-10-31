@@ -184,6 +184,9 @@ def scope():
                 label('_midi.bank')
                 space(1)
 
+        # only use v6 opcodes during v5a-style virq
+        # because the irq code does not save sysArgs!
+
         def code_midi_note():
             nohop()
             label('.midi_note')
@@ -293,8 +296,9 @@ def scope():
             LDW(LAC+2);STW(v('_vIrqTicks')+2)
             # set interrupt
             label('.play1')
-            LDW(R8);STW('_midi.q')
-            LDI(0xff);ST('frameCount')
+            _MOVW(R8,'_midi.q')
+            _MOVW('_vIrqTicks','_midi.t')
+            _MOVIB(0xff,'frameCount')
             # wait for first play
             label('.play2')
             LDW('_midi.p');_BEQ('.play2')

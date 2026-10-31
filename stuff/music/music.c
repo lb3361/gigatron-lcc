@@ -159,7 +159,6 @@ void main()
     mindex = mindex + 1;
     if (mindex >= NMIDIS)
       mindex = 0;
-    _wait(30);
   }
 }
 

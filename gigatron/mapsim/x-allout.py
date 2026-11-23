@@ -1,5 +1,6 @@
 
 # Map overlay that allows using all the available memory
+# except the sound registers and the waveform page.
 # Note that we do not use segments greater
 # than 32k because this breaks malloc.
 
@@ -11,7 +12,9 @@
 # when an explicit placement constraint is provided.
 #
 # ------------size----addr----step----end------flags
-segments = [(0x7e00, 0x0200, None,   None,   'CDH'),
+segments = [(0x00fa, 0x0200, 0x0100, 0x0500, 'CDH'),
+            (0x0200, 0x0500, None,   None,   'CDH'),
+            (0x7800, 0x0800, None,   None,   'CDH'),
             (0x7c00, 0x8000, None,   None,   'CDH') ]
 
 # Local Variables:

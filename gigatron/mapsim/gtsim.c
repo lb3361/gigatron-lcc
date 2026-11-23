@@ -79,7 +79,7 @@ struct cpustate_s { // TTL state that the CPU controls
 
 uint8_t ROM[1<<16][2], RAM[1<<17], IN=0xff;
 uint8_t CTRL;
-uint32_t bank;
+uint32_t bank = 0x8000; /* default to 64k for rom<4 */
 long long t;
 
 uint8_t pfx;

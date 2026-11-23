@@ -169,7 +169,8 @@ extern void SYS_Exec(void *romptr, void *vlr) __quickcall;
 
 /* -- SYS_SetMode */
 extern void SYS_SetMode(int) __quickcall;
-#define has_SYS_SetMode() 1
+#define has_SYS_SetMode() \
+	((romType & 0xfc) >= romTypeValue_ROMv2)
 
 /* -- SYS_SetMemory */
 extern void SYS_SetMemory(int count, int val, void *addr) __quickcall;

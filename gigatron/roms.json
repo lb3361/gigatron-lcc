@@ -6,6 +6,28 @@
     "#" : "- Key 'romType' is used for runtime ROM check",
     "#" : "- Other keys can be tested by the runtime libraries",
 
+    "v1"    : { "cpu" : 4,
+		"romType" : "0x1c",
+		"maxTicks" : 14,
+		"without_SYS_SetMemory" : 1,
+		"warning" : "ROMv1 support is experimental!",
+		"info" : "compiles for the canonical ROMv1"
+	      },
+
+    "v2"    : { "cpu" : 4,
+		"romType" : "0x20",
+		"maxTicks" : 14,
+		"warning" : "ROMv2 support is experimental!",
+		"info" : "compiles for the canonical ROMv2"
+	      },
+
+    "v3"    : { "cpu" : 4,
+		"romType" : "0x28",
+		"maxTicks" : 14,
+		"warning" : "ROMv3 support is experimental!",
+		"info" : "compiles for the canonical ROMv3"
+	      },
+
     "v4"    : { "cpu" : 4,
 		"romType" : "0x38",
 		"maxTicks" : 14,
